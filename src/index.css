@@ -1,0 +1,172 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 214 27% 97%;
+    --foreground: 215 25% 27%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 27%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 27%;
+    --primary: 179 52% 16%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 27% 92%;
+    --secondary-foreground: 215 25% 27%;
+    --muted: 214 27% 92%;
+    --muted-foreground: 215 15% 55%;
+    --accent: 214 32% 91%;
+    --accent-foreground: 215 25% 27%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 33% 87%;
+    --input: 220 33% 87%;
+    --ring: 6 78% 67%;
+    --radius: 0.75rem;
+    --success: 142 71% 45%;
+    --success-foreground: 142 71% 35%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 40%;
+    --info: 217 91% 60%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    --calendar-available: 173 59% 49%;
+    --calendar-blocked: 346 100% 64%;
+    --calendar-booked: 220 33% 87%;
+    --calendar-selected: 178 49% 16%;
+  }
+
+  .dark {
+    --background: 215 28% 17%;
+    --foreground: 213 31% 91%;
+    --card: 215 25% 20%;
+    --card-foreground: 213 31% 91%;
+    --popover: 215 25% 20%;
+    --popover-foreground: 213 31% 91%;
+    --primary: 179 52% 25%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 20% 25%;
+    --secondary-foreground: 213 31% 91%;
+    --muted: 215 20% 25%;
+    --muted-foreground: 215 15% 65%;
+    --accent: 215 20% 25%;
+    --accent-foreground: 213 31% 91%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 213 31% 91%;
+    --border: 215 20% 30%;
+    --input: 215 20% 30%;
+    --ring: 6 78% 67%;
+    --success: 142 71% 45%;
+    --success-foreground: 142 71% 55%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 60%;
+    --info: 217 91% 60%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    --calendar-available: 173 59% 49%;
+    --calendar-blocked: 346 100% 64%;
+    --calendar-booked: 220 33% 87%;
+    --calendar-selected: 178 49% 16%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Clash Display', sans-serif;
+    font-weight: 500;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-sm border border-border/50;
+  }
+  
+  .stat-card {
+    @apply bg-card rounded-xl p-6 shadow-sm border border-border/50 hover:shadow-md transition-shadow;
+  }
+
+  .search-highlight {
+    animation: highlight-pulse 2s ease-out;
+  }
+
+  @keyframes highlight-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(20, 62, 61, 0.4), 0 0 20px rgba(20, 62, 61, 0.3);
+      transform: scale(1);
+    }
+    10% {
+      box-shadow: 0 0 0 8px rgba(20, 62, 61, 0.25), 0 0 40px rgba(20, 62, 61, 0.35), 0 10px 30px rgba(20, 62, 61, 0.15);
+      transform: scale(1.02);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(20, 62, 61, 0.2), 0 0 35px rgba(20, 62, 61, 0.3), 0 8px 25px rgba(20, 62, 61, 0.12);
+      transform: scale(1.01);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(20, 62, 61, 0), 0 0 0 rgba(20, 62, 61, 0);
+      transform: scale(1);
+    }
+  }
+}
+
+/* Ensure Leaflet map doesn't interfere with popovers/dialogs */
+.leaflet-map-pane,
+.leaflet-tile-pane,
+.leaflet-overlay-pane,
+.leaflet-shadow-pane,
+.leaflet-marker-pane,
+.leaflet-tooltip-pane {
+  z-index: 4 !important;
+}
+
+/* Ensure popups appear above all map content */
+.leaflet-popup-pane {
+  z-index: 700 !important;
+}
+
+.leaflet-map-pane {
+  z-index: 1 !important;
+}
+
+.leaflet-control-container {
+  z-index: 5 !important;
+}
+
+/* Custom popup styles for listing cards */
+.listing-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.listing-popup .leaflet-popup-content {
+  margin: 0;
+  width: 208px !important;
+}
