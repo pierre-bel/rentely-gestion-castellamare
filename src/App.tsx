@@ -20,6 +20,8 @@ import CreateListing from "./pages/host/CreateListing";
 import EditListing from "./pages/host/EditListing";
 import ListingsManagement from "./pages/host/ListingsManagement";
 import HostBookings from "./pages/host/Bookings";
+import HostAvailability from "./pages/host/Availability";
+import PublicAvailability from "./pages/PublicAvailability";
 import HostPayouts from "./pages/host/Payouts";
 import EarningsReport from "./pages/host/EarningsReport";
 import ListingDetail from "./pages/ListingDetail";
