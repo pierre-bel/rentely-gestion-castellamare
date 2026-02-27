@@ -56,7 +56,7 @@ export default function PublicAvailability() {
         .select("listing_id, checkin_date, checkout_date, status")
         .gte("checkout_date", rangeStart)
         .lte("checkin_date", rangeEnd)
-        .in("status", ["confirmed", "checked_in", "pending_payment"]);
+        .in("status", ["confirmed", "pending_payment"]);
 
       if (error) throw error;
       return data || [];
