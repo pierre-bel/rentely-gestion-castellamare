@@ -70,9 +70,11 @@ const App = () => (
             <Route path="/support" element={<><Navbar /><Support /></>} />
             <Route path="/forgot-password" element={<><Navbar /><ForgotPassword /></>} />
             <Route path="/become-host" element={<><Navbar /><BecomeHost /></>} />
+            <Route path="/disponibilites" element={<PublicAvailability />} />
             <Route path="/host" element={<HostLayout />}>
               <Route path="dashboard" element={<HostDashboard />} />
               <Route path="listings" element={<ListingsManagement />} />
+              <Route path="availability" element={<HostAvailability />} />
               <Route path="bookings" element={<HostBookings />} />
               <Route path="payouts" element={<HostPayouts />} />
               <Route path="earnings-report" element={<EarningsReport />} />

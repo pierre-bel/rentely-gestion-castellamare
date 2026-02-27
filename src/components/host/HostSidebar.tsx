@@ -13,12 +13,13 @@ export interface NavigationItem {
 }
 
 const defaultNavigation: NavigationItem[] = [
-  { name: "Dashboard", href: "/host/dashboard", icon: LayoutGrid },
-  { name: "Listings & Availability", href: "/host/listings", icon: Home },
-  { name: "Inbox", href: "/host/inbox", icon: Inbox },
-  { name: "Bookings", href: "/host/bookings", icon: Calendar },
-  { name: "Payouts", href: "/host/payouts", icon: DollarSign },
-  { name: "Earnings Report", href: "/host/earnings-report", icon: TrendingUp },
+  { name: "Tableau de bord", href: "/host/dashboard", icon: LayoutGrid },
+  { name: "Mes biens", href: "/host/listings", icon: Home },
+  { name: "Calendrier", href: "/host/availability", icon: Calendar },
+  { name: "Messages", href: "/host/inbox", icon: Inbox },
+  { name: "Réservations", href: "/host/bookings", icon: Calendar },
+  { name: "Paiements", href: "/host/payouts", icon: DollarSign },
+  { name: "Revenus", href: "/host/earnings-report", icon: TrendingUp },
 ];
 
 interface SidebarContentProps {
