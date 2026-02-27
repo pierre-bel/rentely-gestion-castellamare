@@ -38,15 +38,6 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Registration is disabled - show toast notification
-    toast({
-      title: "Registration is disabled",
-      description: "Registration is disabled, use demo mode",
-      variant: "destructive",
-    });
-
-    /* REGISTRATION DISABLED - Original code commented out
     setLoadingStates(prev => ({ ...prev, regular: true }));
 
     const { error } = await supabase.auth.signUp({
@@ -63,29 +54,19 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
 
     if (error) {
       toast({
-        title: "Sign up failed",
+        title: "Erreur d'inscription",
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Success!",
-        description: "Your account has been created.",
+        title: "Compte créé !",
+        description: "Votre compte a été créé avec succès.",
       });
       onOpenChange(false);
-      
-      // Check for pending booking and redirect to checkout
-      const pendingBooking = sessionStorage.getItem('pendingBooking');
-      if (pendingBooking) {
-        const params = JSON.parse(pendingBooking);
-        sessionStorage.removeItem('pendingBooking');
-        navigate(`/checkout?listingId=${params.listingId}&checkIn=${params.checkIn}&checkOut=${params.checkOut}&guests=${params.guests}`);
-      } else {
-        navigate("/");
-      }
+      navigate("/host/dashboard");
     }
     setLoadingStates(prev => ({ ...prev, regular: false }));
-    */
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
