@@ -11,15 +11,16 @@ import { useToast } from "@/hooks/use-toast";
 
 // Map routes to page titles
 const getPageTitle = (pathname: string): string => {
-  if (pathname === "/host/dashboard") return "Dashboard";
-  if (pathname === "/host/listings") return "Listings & Availability";
-  if (pathname === "/host/bookings") return "Bookings";
-  if (pathname === "/host/payouts") return "Payouts";
-  if (pathname === "/host/earnings-report") return "Earnings Report";
+  if (pathname === "/host/dashboard") return "Tableau de bord";
+  if (pathname === "/host/listings") return "Mes biens";
+  if (pathname === "/host/availability") return "Calendrier des disponibilités";
+  if (pathname === "/host/bookings") return "Réservations";
+  if (pathname === "/host/payouts") return "Paiements";
+  if (pathname === "/host/earnings-report") return "Rapport de revenus";
   if (pathname === "/host/inbox") return "Messages";
-  if (pathname.startsWith("/host/edit-listing/")) return "Edit Listing";
-  if (pathname === "/host/create-listing") return "Create Listing";
-  return "Dashboard";
+  if (pathname.startsWith("/host/edit-listing/")) return "Modifier le bien";
+  if (pathname === "/host/create-listing") return "Créer un bien";
+  return "Tableau de bord";
 };
 
 // Check if current route should hide the header (create/edit pages)

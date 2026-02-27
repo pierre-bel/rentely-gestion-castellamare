@@ -20,6 +20,8 @@ import CreateListing from "./pages/host/CreateListing";
 import EditListing from "./pages/host/EditListing";
 import ListingsManagement from "./pages/host/ListingsManagement";
 import HostBookings from "./pages/host/Bookings";
+import HostAvailability from "./pages/host/Availability";
+import PublicAvailability from "./pages/PublicAvailability";
 import HostPayouts from "./pages/host/Payouts";
 import EarningsReport from "./pages/host/EarningsReport";
 import ListingDetail from "./pages/ListingDetail";
@@ -68,9 +70,11 @@ const App = () => (
             <Route path="/support" element={<><Navbar /><Support /></>} />
             <Route path="/forgot-password" element={<><Navbar /><ForgotPassword /></>} />
             <Route path="/become-host" element={<><Navbar /><BecomeHost /></>} />
+            <Route path="/disponibilites" element={<PublicAvailability />} />
             <Route path="/host" element={<HostLayout />}>
               <Route path="dashboard" element={<HostDashboard />} />
               <Route path="listings" element={<ListingsManagement />} />
+              <Route path="availability" element={<HostAvailability />} />
               <Route path="bookings" element={<HostBookings />} />
               <Route path="payouts" element={<HostPayouts />} />
               <Route path="earnings-report" element={<EarningsReport />} />
