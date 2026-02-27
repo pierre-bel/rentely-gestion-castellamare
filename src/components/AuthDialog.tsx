@@ -131,20 +131,11 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
       });
     } else {
       toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
+        title: "Bienvenue !",
+        description: "Connexion réussie.",
       });
       onOpenChange(false);
-      
-      // Check for pending booking and redirect to checkout
-      const pendingBooking = sessionStorage.getItem('pendingBooking');
-      if (pendingBooking) {
-        const params = JSON.parse(pendingBooking);
-        sessionStorage.removeItem('pendingBooking');
-        navigate(`/checkout?listingId=${params.listingId}&checkIn=${params.checkIn}&checkOut=${params.checkOut}&guests=${params.guests}`);
-      } else {
-        navigate("/");
-      }
+      navigate("/host/dashboard");
     }
 
     setLoadingStates(prev => ({ ...prev, regular: false }));
