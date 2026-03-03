@@ -23,6 +23,9 @@ import { useDemoData } from "@/hooks/useDemoData";
 import { BookingsFiltersSheet } from "./BookingsFiltersSheet";
 import { BookingsTable } from "./BookingsTable";
 import { CreateDisputeDialog } from "@/components/dispute/CreateDisputeDialog";
+import { CreateManualBookingDialog } from "./CreateManualBookingDialog";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 interface Booking {
   id: string;
@@ -60,6 +63,7 @@ export default function HostBookings() {
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
   const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
   const [bookingForDispute, setBookingForDispute] = useState<Booking | null>(null);
+  const [manualBookingOpen, setManualBookingOpen] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
@@ -368,6 +372,15 @@ export default function HostBookings() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
+              placeholder="Rechercher par bien ou locataire..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-background border-border"
+            />
+          </div>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
               placeholder="Search by listing or guest name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -377,6 +390,10 @@ export default function HostBookings() {
 
           {/* Filter and Sort */}
           <div className="flex items-center gap-2">
+            <Button onClick={() => setManualBookingOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouvelle réservation
+            </Button>
             <BookingsFiltersSheet
               statusFilter={statusFilter}
               minPrice={minPrice}
@@ -394,12 +411,12 @@ export default function HostBookings() {
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="created_at-desc">Booking Date: Newest First</SelectItem>
-                <SelectItem value="created_at-asc">Booking Date: Oldest First</SelectItem>
-                <SelectItem value="host_payout_gross-desc">Amount: High to Low</SelectItem>
-                <SelectItem value="host_payout_gross-asc">Amount: Low to High</SelectItem>
-                <SelectItem value="checkin_date-desc">Check-in: Newest First</SelectItem>
-                <SelectItem value="checkin_date-asc">Check-in: Oldest First</SelectItem>
+                <SelectItem value="created_at-desc">Date : Plus récent</SelectItem>
+                <SelectItem value="created_at-asc">Date : Plus ancien</SelectItem>
+                <SelectItem value="host_payout_gross-desc">Montant : Décroissant</SelectItem>
+                <SelectItem value="host_payout_gross-asc">Montant : Croissant</SelectItem>
+                <SelectItem value="checkin_date-desc">Arrivée : Plus récent</SelectItem>
+                <SelectItem value="checkin_date-asc">Arrivée : Plus ancien</SelectItem>
               </SelectContent>
             </Select>
           </div>
