@@ -466,4 +466,4 @@ export default function HostBookings() {
     </Card>
   );
 }
-}
+
