@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 const getPageTitle = (pathname: string): string => {
   if (pathname === "/host/dashboard") return "Tableau de bord";
   if (pathname === "/host/listings") return "Mes biens";
+  if (pathname === "/host/tenants") return "Locataires";
   if (pathname === "/host/availability") return "Calendrier des disponibilités";
   if (pathname === "/host/bookings") return "Réservations";
   if (pathname === "/host/payouts") return "Paiements";
