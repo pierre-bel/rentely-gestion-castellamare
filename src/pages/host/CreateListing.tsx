@@ -75,7 +75,7 @@ export type ListingFormData = {
   availability_rules: AvailabilityRule[];
 }
 
-const STEPS = ["Address", "Property Type", "Photos", "Amenities", "Rules", "Pricing", "Availability", "Review"];
+const STEPS = ["Adresse", "Type de bien", "Photos", "Équipements", "Règles", "Tarifs", "Disponibilité", "Récapitulatif"];
 
 const CreateListing = () => {
   const { user } = useAuth();
@@ -141,8 +141,8 @@ const CreateListing = () => {
     // Phase 1: Validation
     if (!user) {
       toast({
-        title: "Error",
-        description: "You must be logged in to create listings",
+        title: "Erreur",
+        description: "Vous devez être connecté pour créer une annonce",
         variant: "destructive",
       });
       return;
@@ -152,8 +152,8 @@ const CreateListing = () => {
 
     if (isDemoMode && !migrationComplete) {
       toast({
-        title: "Please wait",
-        description: "Demo data is still loading...",
+        title: "Veuillez patienter",
+        description: "Les données de démonstration sont en cours de chargement...",
         variant: "default",
       });
       setLoading(false);
@@ -221,8 +221,8 @@ const CreateListing = () => {
         
         setLoading(false);
         toast({
-          title: "Success!",
-          description: "Your listing has been submitted for review",
+          title: "Succès !",
+          description: "Votre annonce a été soumise pour examen",
         });
         navigate("/host/dashboard");
         return;
@@ -271,23 +271,21 @@ const CreateListing = () => {
         .select()
         .single();
 
-      // Phase 2: Handle listing creation error
       if (listingError) {
         setLoading(false);
         toast({
-          title: "Error",
+          title: "Erreur",
           description: listingError.message,
           variant: "destructive",
         });
         return;
       }
 
-      // Phase 3: Defensive check for listing ID
       if (!createdListing || !createdListing.id) {
         setLoading(false);
         toast({
-          title: "Error",
-          description: "Listing was created but ID is missing",
+          title: "Erreur",
+          description: "L'annonce a été créée mais l'identifiant est manquant",
           variant: "destructive",
         });
         return;
@@ -306,12 +304,11 @@ const CreateListing = () => {
           .from("listing_availability")
           .insert(availabilityRecords);
 
-        // Phase 3: Handle availability error (partial failure)
         if (availabilityError) {
           setLoading(false);
           toast({
-            title: "Partial Success",
-            description: "Your listing was created, but availability rules could not be saved. You can add them later by editing the listing.",
+            title: "Succès partiel",
+            description: "Votre annonce a été créée, mais les règles de disponibilité n'ont pas pu être enregistrées. Vous pourrez les ajouter en modifiant l'annonce.",
             variant: "destructive",
           });
           navigate("/host/dashboard");
@@ -319,11 +316,10 @@ const CreateListing = () => {
         }
       }
 
-      // Phase 4: Complete success
       setLoading(false);
       toast({
-        title: "Success!",
-        description: "Your listing has been submitted for review",
+        title: "Succès !",
+        description: "Votre annonce a été soumise pour examen",
       });
       navigate("/host/dashboard");
 
@@ -331,8 +327,8 @@ const CreateListing = () => {
       // Catch any unexpected errors
       setLoading(false);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Une erreur inattendue s'est produite",
         variant: "destructive",
       });
     }
@@ -352,14 +348,14 @@ const CreateListing = () => {
           className="mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
+          Retour
         </Button>
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Create New Listing</CardTitle>
+            <CardTitle className="text-2xl">Créer une annonce</CardTitle>
             <div className="space-y-2 mt-4">
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Step {currentStep + 1} of {STEPS.length}: {STEPS[currentStep]}</span>
+                <span>Étape {currentStep + 1} sur {STEPS.length} : {STEPS[currentStep]}</span>
                 <span>{Math.round(progress)}%</span>
               </div>
               <Progress value={progress} />
@@ -395,24 +391,24 @@ const CreateListing = () => {
                 onClick={handleBack}
                 disabled={currentStep === 0 || loading}
               >
-                Back
+                Précédent
               </Button>
               {currentStep < STEPS.length - 1 ? (
                 <Button 
                   onClick={handleNext} 
                   disabled={loading}
                 >
-                  Next
+                  Suivant
                 </Button>
               ) : (
                 <Button onClick={handleSubmit} disabled={loading}>
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Submitting...
+                      Envoi en cours...
                     </>
                   ) : (
-                    "Submit for Review"
+                    "Soumettre pour examen"
                   )}
                 </Button>
               )}

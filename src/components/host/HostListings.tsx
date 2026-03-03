@@ -98,7 +98,7 @@ export default function HostListings() {
         </div>
         <p className="text-sm text-muted-foreground">{listing.city}</p>
         <div className="flex items-center gap-4 mt-1">
-          <p className="text-sm font-medium">${listing.base_price}/night</p>
+          <p className="text-sm font-medium">{listing.base_price} €/nuit</p>
           {listing.rating_count > 0 && (
             <p className="text-sm text-muted-foreground">
               ⭐ {listing.rating_avg.toFixed(1)} ({listing.rating_count})
@@ -130,10 +130,10 @@ export default function HostListings() {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Your Listings</CardTitle>
-          <Button onClick={handleCreateListing}>
+          <CardTitle>Vos annonces</CardTitle>
+           <Button onClick={handleCreateListing}>
             <Plus className="h-4 w-4 mr-2" />
-            New Listing
+            Nouvelle annonce
           </Button>
         </div>
       </CardHeader>
@@ -141,23 +141,23 @@ export default function HostListings() {
         {listings.length === 0 ? (
           <div className="text-center py-12">
             <Home className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No listings yet</h3>
-            <p className="text-muted-foreground mb-4">Create your first listing to start hosting</p>
+            <h3 className="text-lg font-semibold mb-2">Aucune annonce</h3>
+            <p className="text-muted-foreground mb-4">Créez votre première annonce pour commencer</p>
             <Button onClick={handleCreateListing}>
               <Plus className="h-4 w-4 mr-2" />
-              Create Listing
+              Créer une annonce
             </Button>
           </div>
         ) : (
           <Tabs defaultValue="active" className="space-y-4">
             <TabsList>
-              <TabsTrigger value="active">Active ({activeListings.length})</TabsTrigger>
-              <TabsTrigger value="draft">Draft ({draftListings.length})</TabsTrigger>
+              <TabsTrigger value="active">Actives ({activeListings.length})</TabsTrigger>
+              <TabsTrigger value="draft">Brouillons ({draftListings.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="active">
               {activeListings.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">No active listings</p>
+                <p className="text-center text-muted-foreground py-8">Aucune annonce active</p>
               ) : (
                 <div className="space-y-3">
                   {activeListings.map(listing => (
@@ -169,7 +169,7 @@ export default function HostListings() {
 
             <TabsContent value="draft">
               {draftListings.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">No draft listings</p>
+                <p className="text-center text-muted-foreground py-8">Aucun brouillon</p>
               ) : (
                 <div className="space-y-3">
                   {draftListings.map(listing => (
