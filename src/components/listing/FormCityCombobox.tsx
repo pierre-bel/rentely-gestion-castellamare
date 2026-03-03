@@ -144,11 +144,11 @@ const FormCityCombobox = ({ value, onChange, required = false }: FormCityCombobo
             type="text"
             value={manualCity}
             onChange={(e) => setManualCity(e.target.value)}
-            placeholder="City name"
+            placeholder="Nom de la ville"
             className="h-14 w-full rounded-full px-6 border border-[#D5DAE7] bg-white text-base focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 outline-none"
           />
           <label className="absolute -top-2 left-4 text-xs text-primary bg-white px-2 pointer-events-none">
-            City {required && "*"}
+            Ville {required && "*"}
           </label>
         </div>
         
@@ -157,11 +157,11 @@ const FormCityCombobox = ({ value, onChange, required = false }: FormCityCombobo
             type="text"
             value={manualState}
             onChange={(e) => setManualState(e.target.value)}
-            placeholder="State/Region (optional)"
+            placeholder="État/Région (optionnel)"
             className="h-14 w-full rounded-full px-6 border border-[#D5DAE7] bg-white text-base focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 outline-none"
           />
           <label className="absolute -top-2 left-4 text-xs text-primary bg-white px-2 pointer-events-none">
-            State/Region
+            État/Région
           </label>
         </div>
         
@@ -170,11 +170,11 @@ const FormCityCombobox = ({ value, onChange, required = false }: FormCityCombobo
             type="text"
             value={manualCountry}
             onChange={(e) => setManualCountry(e.target.value)}
-            placeholder="Country"
+            placeholder="Pays"
             className="h-14 w-full rounded-full px-6 border border-[#D5DAE7] bg-white text-base focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 outline-none"
           />
           <label className="absolute -top-2 left-4 text-xs text-primary bg-white px-2 pointer-events-none">
-            Country {required && "*"}
+            Pays {required && "*"}
           </label>
         </div>
         
@@ -185,7 +185,7 @@ const FormCityCombobox = ({ value, onChange, required = false }: FormCityCombobo
             disabled={!manualCity.trim() || !manualCountry.trim()}
             className="flex-1"
           >
-            Save Location
+            Enregistrer la localisation
           </Button>
           <Button
             type="button"
@@ -197,7 +197,7 @@ const FormCityCombobox = ({ value, onChange, required = false }: FormCityCombobo
               setManualCountry("");
             }}
           >
-            Search Database
+            Chercher dans la base
           </Button>
         </div>
       </div>
@@ -217,7 +217,7 @@ const FormCityCombobox = ({ value, onChange, required = false }: FormCityCombobo
             <span className={cn(
               displayValue ? "text-foreground" : "text-muted-foreground"
             )}>
-              {displayValue || "Select city..."}
+              {displayValue || "Sélectionner une ville..."}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -225,7 +225,7 @@ const FormCityCombobox = ({ value, onChange, required = false }: FormCityCombobo
         <PopoverContent className="w-[400px] p-0" align="start">
           <Command shouldFilter={false}>
             <CommandInput 
-              placeholder="Search cities..." 
+              placeholder="Rechercher une ville..." 
               value={searchTerm}
               onValueChange={setSearchTerm}
             />
@@ -239,12 +239,12 @@ const FormCityCombobox = ({ value, onChange, required = false }: FormCityCombobo
                   <CommandEmpty>
                     {searchTerm.length < 2 ? (
                       <div className="py-6 text-center text-sm">
-                        Type at least 2 characters to search...
+                        Tapez au moins 2 caractères pour rechercher...
                       </div>
                     ) : (
                       <div className="py-6 px-4 space-y-3">
                         <p className="text-center text-sm text-muted-foreground">
-                          No cities found in our database.
+                          Aucune ville trouvée dans notre base.
                         </p>
                         <Button
                           type="button"
@@ -256,7 +256,7 @@ const FormCityCombobox = ({ value, onChange, required = false }: FormCityCombobo
                             setOpen(false);
                           }}
                         >
-                          Enter "{searchTerm}" manually
+                          Saisir « {searchTerm} » manuellement
                         </Button>
                       </div>
                     )}
@@ -306,9 +306,8 @@ const FormCityCombobox = ({ value, onChange, required = false }: FormCityCombobo
         </PopoverContent>
       </Popover>
       
-      {/* Floating label */}
       <label className="absolute -top-2 left-4 text-xs text-primary bg-white px-2 pointer-events-none">
-        City {required && "*"}
+        Ville {required && "*"}
       </label>
     </div>
   );
