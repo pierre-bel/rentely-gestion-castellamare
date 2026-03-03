@@ -1,4 +1,4 @@
-import { Home, LayoutGrid, Inbox, Calendar, DollarSign, TrendingUp, LogOut, Building2, Menu } from "lucide-react";
+import { Home, LayoutGrid, Inbox, Calendar, DollarSign, TrendingUp, LogOut, Building2, Menu, Users } from "lucide-react";
 import { NavLink, useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,6 +18,7 @@ const defaultNavigation: NavigationItem[] = [
   { name: "Calendrier", href: "/host/availability", icon: Calendar },
   { name: "Messages", href: "/host/inbox", icon: Inbox },
   { name: "Réservations", href: "/host/bookings", icon: Calendar },
+  { name: "Locataires", href: "/host/tenants", icon: Users },
   { name: "Paiements", href: "/host/payouts", icon: DollarSign },
   { name: "Revenus", href: "/host/earnings-report", icon: TrendingUp },
 ];
@@ -113,7 +114,7 @@ const SidebarContent = ({
         className="w-full justify-center gap-3 mt-auto rounded-full border-border bg-transparent text-foreground hover:bg-accent/30"
       >
         <LogOut className="h-5 w-5" />
-        <span>Log Out</span>
+        <span>Déconnexion</span>
       </Button>
     </div>
   );
