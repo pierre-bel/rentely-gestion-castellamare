@@ -367,7 +367,6 @@ export default function HostBookings() {
       <CardContent className="p-6">
         {/* Controls Row */}
         <div className="flex items-center justify-between gap-4 mb-6">
-          {/* Search Input */}
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -378,17 +377,7 @@ export default function HostBookings() {
               className="pl-10 bg-background border-border"
             />
           </div>
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search by listing or guest name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-background border-border"
-            />
-          </div>
 
-          {/* Filter and Sort */}
           <div className="flex items-center gap-2">
             <Button onClick={() => setManualBookingOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -405,10 +394,9 @@ export default function HostBookings() {
               onApplyFilters={handleApplyFilters}
               onClearFilters={handleClearFilters}
             />
-
             <Select value={sortValue} onValueChange={setSortValue}>
               <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Sort by" />
+                <SelectValue placeholder="Trier par" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="created_at-desc">Date : Plus récent</SelectItem>
@@ -422,7 +410,6 @@ export default function HostBookings() {
           </div>
         </div>
 
-        {/* Table */}
         <BookingsTable
           bookings={bookings}
           loading={isLoading}
@@ -435,29 +422,29 @@ export default function HostBookings() {
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
+            <AlertDialogTitle>Annuler la réservation ?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p className="text-foreground">
-                The guest will be fully refunded the total amount they paid 
-                (${bookingToCancel?.host_payout_gross.toFixed(2)}). This action cannot be undone.
+                Le locataire sera intégralement remboursé du montant total 
+                ({bookingToCancel?.host_payout_gross.toFixed(2)} €). Cette action est irréversible.
               </p>
               <div className="pt-2 text-sm text-foreground">
-                <p className="font-semibold">Booking Details:</p>
+                <p className="font-semibold">Détails :</p>
                 <ul className="list-disc list-inside">
-                  <li>Guest: {bookingToCancel?.guest_name}</li>
-                  <li>Dates: {bookingToCancel?.checkin_date} to {bookingToCancel?.checkout_date}</li>
-                  <li>Listing: {bookingToCancel?.listing_title}</li>
+                  <li>Locataire : {bookingToCancel?.guest_name}</li>
+                  <li>Dates : {bookingToCancel?.checkin_date} au {bookingToCancel?.checkout_date}</li>
+                  <li>Bien : {bookingToCancel?.listing_title}</li>
                 </ul>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+            <AlertDialogCancel>Conserver</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleCancelConfirm}
               className="bg-destructive hover:bg-destructive/90"
             >
-              Yes, Cancel Booking
+              Oui, annuler
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -471,6 +458,12 @@ export default function HostBookings() {
           listingTitle={bookingForDispute.listing_title}
         />
       )}
+
+      <CreateManualBookingDialog
+        open={manualBookingOpen}
+        onOpenChange={setManualBookingOpen}
+      />
     </Card>
   );
+}
 }
