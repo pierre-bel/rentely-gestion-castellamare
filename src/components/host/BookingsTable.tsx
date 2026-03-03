@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
 import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface Booking {
   id: string;
@@ -37,17 +38,16 @@ interface BookingsTableProps {
   onContactGuest: (booking: Booking) => void;
 }
 
-
 const formatBookingDates = (checkin: string, checkout: string) => {
   const checkinDate = new Date(checkin);
   const checkoutDate = new Date(checkout);
-  return `${format(checkinDate, "MMM d")} - ${format(checkoutDate, "MMM d, yyyy")}`;
+  return `${format(checkinDate, "d MMM", { locale: fr })} - ${format(checkoutDate, "d MMM yyyy", { locale: fr })}`;
 };
 
 const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("fr-FR", {
     style: "currency",
-    currency: "USD",
+    currency: "EUR",
   }).format(price);
 };
 
@@ -60,32 +60,22 @@ const getInitials = (name: string | null) => {
   return name.slice(0, 2).toUpperCase();
 };
 
+const headers = ["ID", "Bien", "Locataire", "Dates", "Montant", "Statut", "Action"];
+
 export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSupport, onContactGuest }: BookingsTableProps) => {
   if (loading) {
-  return (
-    <div className="rounded-lg border overflow-hidden">
-      <Table>
+    return (
+      <div className="rounded-lg border overflow-hidden">
+        <Table>
           <TableHeader>
             <TableRow className="bg-background hover:bg-background">
-              <TableHead className="font-semibold">Booking ID</TableHead>
-              <TableHead className="font-semibold">Listing Name</TableHead>
-              <TableHead className="font-semibold">Guest Name</TableHead>
-              <TableHead className="font-semibold">Booking Dates</TableHead>
-              <TableHead className="font-semibold">Amount</TableHead>
-              <TableHead className="font-semibold">Status</TableHead>
-              <TableHead className="font-semibold text-right">Action</TableHead>
+              {headers.map((h) => <TableHead key={h} className="font-semibold">{h}</TableHead>)}
             </TableRow>
           </TableHeader>
           <TableBody>
             {[...Array(5)].map((_, i) => (
-              <TableRow key={i} className={i % 2 === 0 ? "bg-[#F8FAFF]" : ""}>
-                <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-36" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                <TableCell><Skeleton className="h-6 w-24" /></TableCell>
-                <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+              <TableRow key={i} className={i % 2 === 0 ? "bg-muted/30" : ""}>
+                {headers.map((h) => <TableCell key={h}><Skeleton className="h-4 w-20" /></TableCell>)}
               </TableRow>
             ))}
           </TableBody>
@@ -97,9 +87,9 @@ export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSup
   if (bookings.length === 0) {
     return (
       <div className="rounded-lg border bg-card p-12 text-center">
-        <p className="text-muted-foreground text-lg">No bookings found</p>
+        <p className="text-muted-foreground text-lg">Aucune réservation trouvée</p>
         <p className="text-muted-foreground text-sm mt-2">
-          Try adjusting your filters or search criteria
+          Essayez de modifier vos filtres ou critères de recherche
         </p>
       </div>
     );
@@ -110,20 +100,16 @@ export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSup
       <Table>
         <TableHeader>
           <TableRow className="bg-background hover:bg-background">
-            <TableHead className="font-semibold">Booking ID</TableHead>
-            <TableHead className="font-semibold">Listing Name</TableHead>
-            <TableHead className="font-semibold">Guest Name</TableHead>
-            <TableHead className="font-semibold">Booking Dates</TableHead>
-            <TableHead className="font-semibold">Amount</TableHead>
-            <TableHead className="font-semibold">Status</TableHead>
-            <TableHead className="font-semibold text-right">Action</TableHead>
+            {headers.map((h, i) => (
+              <TableHead key={h} className={`font-semibold ${i === headers.length - 1 ? "text-right" : ""}`}>{h}</TableHead>
+            ))}
           </TableRow>
         </TableHeader>
         <TableBody>
           {bookings.map((booking, index) => (
             <TableRow
               key={booking.id}
-              className={index % 2 === 0 ? "bg-[#F8FAFF] hover:bg-muted/50" : "hover:bg-muted/50"}
+              className={index % 2 === 0 ? "bg-muted/30 hover:bg-muted/50" : "hover:bg-muted/50"}
             >
               <TableCell className="font-mono text-sm">
                 {booking.id.slice(0, 8)}
@@ -134,10 +120,10 @@ export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSup
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={booking.guest_avatar || ""} alt={booking.guest_name || "Guest"} />
+                    <AvatarImage src={booking.guest_avatar || ""} alt={booking.guest_name || "Locataire"} />
                     <AvatarFallback>{getInitials(booking.guest_name)}</AvatarFallback>
                   </Avatar>
-                  <span className="font-medium">{booking.guest_name || "Unknown Guest"}</span>
+                  <span className="font-medium">{booking.guest_name || "Locataire inconnu"}</span>
                 </div>
               </TableCell>
               <TableCell>
@@ -162,16 +148,16 @@ export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSup
                         onClick={() => onCancelBooking(booking)}
                         className="text-destructive focus:text-destructive"
                       >
-                        Cancel Booking
+                        Annuler la réservation
                       </DropdownMenuItem>
                     )}
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onContactGuest(booking)}>
-                        Contact Guest
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onContactSupport(booking)}>
-                        Contact Support
-                      </DropdownMenuItem>
+                    <DropdownMenuItem>Voir les détails</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onContactGuest(booking)}>
+                      Contacter le locataire
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onContactSupport(booking)}>
+                      Contacter le support
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
