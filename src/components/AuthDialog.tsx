@@ -347,20 +347,20 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Welcome</DialogTitle>
-          <DialogDescription>Sign in to your account or create a new one</DialogDescription>
+          <DialogTitle>Bienvenue</DialogTitle>
+          <DialogDescription>Connectez-vous à votre compte ou créez-en un nouveau</DialogDescription>
         </DialogHeader>
         
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsTrigger value="login">Connexion</TabsTrigger>
+            <TabsTrigger value="signup">Inscription</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
             <form onSubmit={handleSignIn} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="login-email">Email</Label>
+                <Label htmlFor="login-email">E-mail</Label>
                 <Input
                   id="login-email"
                   type="email"
@@ -371,7 +371,7 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="login-password">Password</Label>
+                <Label htmlFor="login-password">Mot de passe</Label>
                 <Input
                   id="login-password"
                   type="password"
@@ -386,10 +386,10 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
                 {loadingStates.regular ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Logging in...
+                    Connexion...
                   </>
                 ) : (
-                  "Login"
+                  "Se connecter"
                 )}
               </Button>
             </form>
@@ -397,7 +397,7 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
             <Separator className="my-4" />
             
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground text-center">Try Demo Mode</p>
+              <p className="text-sm text-muted-foreground text-center">Mode démonstration</p>
               <Button
                 type="button"
                 variant="outline"
@@ -453,7 +453,7 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
             <form onSubmit={handleSignUp} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="first-name">First Name</Label>
+                  <Label htmlFor="first-name">Prénom</Label>
                   <Input
                     id="first-name"
                     type="text"
@@ -464,7 +464,7 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="last-name">Last Name</Label>
+                  <Label htmlFor="last-name">Nom</Label>
                   <Input
                     id="last-name"
                     type="text"
@@ -476,7 +476,7 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
+                <Label htmlFor="signup-email">E-mail</Label>
                 <Input
                   id="signup-email"
                   type="email"
@@ -487,7 +487,7 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="signup-password">Password</Label>
+                <Label htmlFor="signup-password">Mot de passe</Label>
                 <Input
                   id="signup-password"
                   type="password"

@@ -9,10 +9,10 @@ interface StepPropertyTypeProps {
 }
 
 const PROPERTY_TYPES = [
-  { value: "apartment", label: "Apartment" },
+  { value: "apartment", label: "Appartement" },
   { value: "villa", label: "Villa" },
-  { value: "room", label: "Room" },
-  { value: "house", label: "House" },
+  { value: "room", label: "Chambre" },
+  { value: "house", label: "Maison" },
 ];
 
 const GUEST_OPTIONS = Array.from({ length: 16 }, (_, i) => ({
@@ -38,19 +38,19 @@ const BATHROOM_OPTIONS = Array.from({ length: 10 }, (_, i) => ({
 const StepPropertyType = ({ formData, updateFormData }: StepPropertyTypeProps) => {
   return (
     <div className="space-y-6">
-      <p className="text-base text-foreground">Define basic property attributes.</p>
+      <p className="text-base text-foreground">Définissez les caractéristiques de votre bien.</p>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormSelect
-          label="Property Type"
+          label="Type de bien"
           value={formData.type}
           onChange={(value) => updateFormData({ type: value })}
           options={PROPERTY_TYPES}
           required
         />
         <FormInput
-          label="Listing Title"
-          placeholder="Bright 2-bedroom apartment in Example"
+          label="Titre de l'annonce"
+          placeholder="Bel appartement 2 pièces lumineux"
           value={formData.title}
           onChange={(value) => updateFormData({ title: value })}
           required
@@ -58,8 +58,8 @@ const StepPropertyType = ({ formData, updateFormData }: StepPropertyTypeProps) =
       </div>
 
       <FormTextarea
-        label="Short Description"
-        placeholder="Spacious and modern flat near Sagrada Família."
+        label="Description courte"
+        placeholder="Appartement spacieux et moderne, proche du centre-ville."
         value={formData.description}
         onChange={(value) => updateFormData({ description: value })}
         rows={4}
@@ -68,14 +68,14 @@ const StepPropertyType = ({ formData, updateFormData }: StepPropertyTypeProps) =
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormSelect
-          label="Guests Max"
+          label="Voyageurs max"
           value={String(formData.guests_max)}
           onChange={(value) => updateFormData({ guests_max: parseInt(value) })}
           options={GUEST_OPTIONS}
           required
         />
         <FormSelect
-          label="Bedrooms"
+          label="Chambres"
           value={String(formData.bedrooms)}
           onChange={(value) => updateFormData({ bedrooms: parseInt(value) })}
           options={BEDROOM_OPTIONS}
@@ -85,14 +85,14 @@ const StepPropertyType = ({ formData, updateFormData }: StepPropertyTypeProps) =
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormSelect
-          label="Beds"
+          label="Lits"
           value={String(formData.beds)}
           onChange={(value) => updateFormData({ beds: parseInt(value) })}
           options={BED_OPTIONS}
           required
         />
         <FormSelect
-          label="Bathrooms"
+          label="Salles de bain"
           value={String(formData.bathrooms)}
           onChange={(value) => updateFormData({ bathrooms: parseInt(value) })}
           options={BATHROOM_OPTIONS}
@@ -101,8 +101,8 @@ const StepPropertyType = ({ formData, updateFormData }: StepPropertyTypeProps) =
       </div>
 
       <FormInput
-        label="Size (sq ft)"
-        placeholder="938"
+        label="Surface (m²)"
+        placeholder="85"
         value={formData.square_feet ? String(formData.square_feet) : ""}
         onChange={(value) => updateFormData({ square_feet: value ? parseInt(value) : 0 })}
         type="number"

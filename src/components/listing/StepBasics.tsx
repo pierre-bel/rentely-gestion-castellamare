@@ -34,11 +34,10 @@ const StepBasics = ({ formData, updateFormData }: StepBasicsProps) => {
   }, []);
 
   const handleShowOnMap = async () => {
-    // Check if required fields are filled
     if (!formData.country || !formData.address || !formData.city) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in Street Address and City before showing on map",
+        title: "Informations manquantes",
+        description: "Veuillez remplir l'adresse et la ville avant d'afficher sur la carte",
         variant: "destructive",
       });
       return;
@@ -47,7 +46,6 @@ const StepBasics = ({ formData, updateFormData }: StepBasicsProps) => {
     setIsGeocoding(true);
 
     try {
-      // Use Nominatim geocoding with full address
       const addressParts = [
         formData.address,
         formData.city,
@@ -75,21 +73,21 @@ const StepBasics = ({ formData, updateFormData }: StepBasicsProps) => {
           longitude: parseFloat(lon)
         });
         toast({
-          title: "Location Found",
-          description: "Your property has been located on the map",
+          title: "Localisation trouvée",
+          description: "Votre bien a été localisé sur la carte",
         });
       } else {
         toast({
-          title: "Location Not Found",
-          description: "Could not find this address. Please check the details and try again.",
+          title: "Localisation introuvable",
+          description: "Impossible de trouver cette adresse. Vérifiez les informations et réessayez.",
           variant: "destructive",
         });
       }
     } catch (error) {
       console.error('Geocoding error:', error);
       toast({
-        title: "Error",
-        description: "Failed to find location. Please try again.",
+        title: "Erreur",
+        description: "Impossible de localiser l'adresse. Veuillez réessayer.",
         variant: "destructive",
       });
     } finally {
@@ -127,22 +125,22 @@ const StepBasics = ({ formData, updateFormData }: StepBasicsProps) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormInput
-          label="Street Address"
-          placeholder="123 Main Street"
+          label="Adresse"
+          placeholder="123 Rue Principale"
           value={formData.address}
           onChange={(value) => updateFormData({ address: value })}
           required
         />
         <FormInput
-          label="Postal Code"
-          placeholder="08036"
+          label="Code postal"
+          placeholder="75001"
           value={formData.postal_code}
           onChange={(value) => updateFormData({ postal_code: value })}
         />
       </div>
 
       <div className="flex items-center justify-between pt-4">
-        <h3 className="text-xl font-semibold">Location</h3>
+        <h3 className="text-xl font-semibold">Localisation</h3>
         <Button
           variant="outline"
           size="sm"
@@ -152,12 +150,12 @@ const StepBasics = ({ formData, updateFormData }: StepBasicsProps) => {
           {isGeocoding ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Locating...
+              Recherche...
             </>
           ) : (
             <>
               <MapPin className="mr-2 h-4 w-4" />
-              Show on map
+              Voir sur la carte
             </>
           )}
         </Button>
@@ -171,7 +169,7 @@ const StepBasics = ({ formData, updateFormData }: StepBasicsProps) => {
 
       {!formData.latitude && !formData.longitude && (
         <p className="text-sm text-muted-foreground text-center py-4">
-          Click "Show on map" to verify your property location
+          Cliquez sur « Voir sur la carte » pour vérifier la localisation de votre bien
         </p>
       )}
     </div>

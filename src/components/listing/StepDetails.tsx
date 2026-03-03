@@ -1,5 +1,4 @@
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ListingFormData } from "@/pages/host/CreateListing";
 
@@ -10,17 +9,17 @@ interface StepDetailsProps {
 
 const AMENITIES = [
   "WiFi",
-  "Kitchen",
-  "Washer",
-  "Dryer",
-  "Air conditioning",
-  "Heating",
+  "Cuisine",
+  "Lave-linge",
+  "Sèche-linge",
+  "Climatisation",
+  "Chauffage",
   "TV",
-  "Pool",
-  "Gym",
+  "Piscine",
+  "Salle de sport",
   "Parking",
-  "Elevator",
-  "Pet friendly",
+  "Ascenseur",
+  "Animaux acceptés",
 ];
 
 const StepDetails = ({ formData, updateFormData }: StepDetailsProps) => {
@@ -34,7 +33,7 @@ const StepDetails = ({ formData, updateFormData }: StepDetailsProps) => {
   return (
     <div className="space-y-6">
       <div>
-        <Label className="mb-3 block">Amenities</Label>
+        <Label className="mb-3 block">Équipements</Label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {AMENITIES.map((amenity) => (
             <div key={amenity} className="flex items-center space-x-2">
