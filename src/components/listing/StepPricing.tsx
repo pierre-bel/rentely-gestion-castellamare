@@ -11,7 +11,7 @@ const StepPricing = ({ formData, updateFormData }: StepPricingProps) => {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-base text-foreground mb-6">Configure base and dynamic pricing.</p>
+        <p className="text-base text-foreground mb-6">Configurez vos tarifs.</p>
       </div>
 
       <div className="relative">
@@ -26,23 +26,23 @@ const StepPricing = ({ formData, updateFormData }: StepPricingProps) => {
           className="peer h-14 rounded-full pl-10 pr-6 border-[#D5DAE7] bg-white text-base placeholder-transparent focus:outline-none focus-visible:ring-0 focus:ring-0 focus:ring-offset-0 focus:border-primary"
         />
         <span className="absolute left-6 top-1/2 -translate-y-1/2 text-base text-foreground pointer-events-none z-10">
-          $
+          €
         </span>
         <label className="absolute left-10 top-1/2 -translate-y-1/2 text-base text-muted-foreground transition-all duration-200 pointer-events-none peer-focus:top-0 peer-focus:left-4 peer-focus:text-xs peer-focus:text-primary peer-focus:bg-white peer-focus:px-2 peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:left-4 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:px-2">
-          Base Price per Night *
+          Tarif par nuit *
         </label>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormInput
-          label="Weekly Discount (%)"
+          label="Réduction à la semaine (%)"
           type="number"
           value={formData.weekly_discount && formData.weekly_discount > 0 ? formData.weekly_discount.toString() : ""}
           onChange={(value) => updateFormData({ weekly_discount: value ? parseFloat(value) : 0 })}
           placeholder="0"
         />
         <FormInput
-          label="Monthly Discount (%)"
+          label="Réduction au mois (%)"
           type="number"
           value={formData.monthly_discount && formData.monthly_discount > 0 ? formData.monthly_discount.toString() : ""}
           onChange={(value) => updateFormData({ monthly_discount: value ? parseFloat(value) : 0 })}
@@ -52,12 +52,12 @@ const StepPricing = ({ formData, updateFormData }: StepPricingProps) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <p className="text-sm text-muted-foreground mb-1">Platform Fee</p>
-          <p className="text-base font-medium text-foreground">Auto-calculated</p>
+          <p className="text-sm text-muted-foreground mb-1">Frais de plateforme</p>
+          <p className="text-base font-medium text-foreground">Calculés automatiquement</p>
         </div>
         <div>
-          <p className="text-sm text-muted-foreground mb-1">Estimated Host Payout</p>
-          <p className="text-base font-medium text-foreground">Auto-calculated after fee</p>
+          <p className="text-sm text-muted-foreground mb-1">Revenu estimé</p>
+          <p className="text-base font-medium text-foreground">Calculé après frais</p>
         </div>
       </div>
     </div>

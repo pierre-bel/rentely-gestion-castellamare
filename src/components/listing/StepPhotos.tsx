@@ -56,13 +56,13 @@ const StepPhotos = ({ formData, updateFormData }: StepPhotosProps) => {
         }
 
         toast({
-          title: "Success",
-          description: `${uploadedUrls.length} image(s) uploaded successfully`,
+          title: "Succès",
+          description: `${uploadedUrls.length} photo(s) téléchargée(s) avec succès`,
         });
       }
     } catch (error: any) {
       toast({
-        title: "Upload failed",
+        title: "Échec du téléchargement",
         description: error.message,
         variant: "destructive",
       });
@@ -83,12 +83,11 @@ const StepPhotos = ({ formData, updateFormData }: StepPhotosProps) => {
   };
 
   const setCoverImage = (index: number) => {
-    if (index === 0) return; // Already cover image
+    if (index === 0) return;
     
     const newCoverUrl = allImages[index];
     const oldCoverUrl = allImages[0];
     
-    // Build new images array without the new cover
     const newImages = [
       oldCoverUrl,
       ...formData.images.filter((_, i) => i !== index - 1)
@@ -108,9 +107,9 @@ const StepPhotos = ({ formData, updateFormData }: StepPhotosProps) => {
   return (
     <div className="space-y-4">
       <div>
-        <Label>Property Photos</Label>
+        <Label>Photos du bien</Label>
         <p className="text-sm text-muted-foreground mb-4">
-          Upload photos of your property. The first photo will be used as the cover image.
+          Téléchargez les photos de votre bien. La première photo sera utilisée comme image de couverture.
         </p>
 
         <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
@@ -130,10 +129,10 @@ const StepPhotos = ({ formData, updateFormData }: StepPhotosProps) => {
               <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             )}
             <p className="text-sm font-medium mb-1">
-              {uploading ? "Uploading..." : "Click to upload photos"}
+              {uploading ? "Téléchargement en cours..." : "Cliquez pour ajouter des photos"}
             </p>
             <p className="text-xs text-muted-foreground">
-              PNG, JPG, WEBP up to 10MB
+              PNG, JPG, WEBP jusqu'à 10 Mo
             </p>
           </label>
         </div>
@@ -149,18 +148,18 @@ const StepPhotos = ({ formData, updateFormData }: StepPhotosProps) => {
             >
               <img
                 src={url}
-                alt={`Property ${index + 1}`}
+                alt={`Photo ${index + 1}`}
                 className="w-full h-40 object-cover rounded-lg"
               />
               {index === 0 && (
                 <div className="absolute top-2 left-2 bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-medium">
-                  Cover
+                  Couverture
                 </div>
               )}
               {index !== 0 && (
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors rounded-lg flex items-center justify-center">
                   <span className="text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                    Set as cover
+                    Définir comme couverture
                   </span>
                 </div>
               )}
@@ -183,7 +182,7 @@ const StepPhotos = ({ formData, updateFormData }: StepPhotosProps) => {
       {allImages.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
           <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-          <p>No photos uploaded yet</p>
+          <p>Aucune photo téléchargée</p>
         </div>
       )}
     </div>
