@@ -188,6 +188,12 @@ const StepAvailability = ({ formData, updateFormData, listingId }: StepAvailabil
           disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
           modifiers={modifiers}
           modifiersStyles={modifiersStyles}
+          modifiersClassNames={{
+            bookedCheckin: "day-booked-checkin",
+            bookedCheckout: "day-booked-checkout",
+            bookedMiddle: "day-booked-middle",
+            bookedTurnover: "day-booked-turnover",
+          }}
           className="rounded-xl border"
         />
       </div>

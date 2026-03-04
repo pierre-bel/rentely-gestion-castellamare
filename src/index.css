@@ -136,6 +136,28 @@ All colors MUST be HSL.
   }
 }
 
+/* Half-cell booking indicators for availability calendar */
+.day-booked-checkin {
+  background: linear-gradient(to left, hsl(var(--primary)) 50%, transparent 50%) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  font-weight: 600;
+}
+.day-booked-checkout {
+  background: linear-gradient(to right, hsl(var(--primary)) 50%, transparent 50%) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  font-weight: 600;
+}
+.day-booked-middle {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  font-weight: 600;
+}
+.day-booked-turnover {
+  background: linear-gradient(to left, hsl(var(--primary)) 50%, hsl(var(--primary)) 50%) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  font-weight: 600;
+}
+
 /* Ensure Leaflet map doesn't interfere with popovers/dialogs */
 .leaflet-map-pane,
 .leaflet-tile-pane,
