@@ -55,8 +55,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
 
   const [checkinDate, setCheckinDate] = useState<Date>();
   const [checkoutDate, setCheckoutDate] = useState<Date>();
-  const [guests, setGuests] = useState("1");
-  const [totalPrice, setTotalPrice] = useState("");
+  const [rentalPrice, setRentalPrice] = useState("");
   const [cleaningFee, setCleaningFee] = useState("");
   const [deposit, setDeposit] = useState("");
   const [notes, setNotes] = useState("");
@@ -83,18 +82,20 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
     if (booking && open) {
       setCheckinDate(parseISO(booking.checkin_date));
       setCheckoutDate(parseISO(booking.checkout_date));
-      setGuests(String(booking.guests));
-      setTotalPrice(String(booking.total_price));
-      setCleaningFee(String(booking.cleaning_fee || 0));
+      const cf = booking.cleaning_fee || 0;
+      setCleaningFee(String(cf));
+      // Derive rental price = total - cleaning
+      const rental = booking.total_price - cf;
+      setRentalPrice(String(rental));
+
       const bd = booking.pricing_breakdown;
       setDeposit(bd?.deposit ? String(bd.deposit) : String(Math.round(booking.total_price * DEPOSIT_PERCENTAGE / 100)));
       
-      // Pre-select tenant from pricing_breakdown.tenant_id
+      // Pre-select tenant
       if (bd?.tenant_id && tenants.length > 0) {
         const found = tenants.find(t => t.id === bd.tenant_id);
         if (found) setSelectedTenantId(found.id);
       } else {
-        // Fallback: try to match tenant from notes
         const rawNotes = booking.notes || "";
         const tenantMatch = rawNotes.match(/Locataire:\s*([^|]+)/);
         if (tenantMatch && tenants.length > 0) {
@@ -115,15 +116,17 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
     ? differenceInCalendarDays(checkoutDate, checkinDate)
     : 0;
 
+  const rentalNum = parseFloat(rentalPrice) || 0;
+  const cleaningNum = parseFloat(cleaningFee) || 0;
+  const totalNum = rentalNum + cleaningNum;
+
   // Recalc deposit when total changes
   useEffect(() => {
-    const total = parseFloat(totalPrice) || 0;
-    if (total > 0) {
-      setDeposit(Math.round(total * DEPOSIT_PERCENTAGE / 100).toFixed(2));
+    if (totalNum > 0) {
+      setDeposit(Math.round(totalNum * DEPOSIT_PERCENTAGE / 100).toFixed(2));
     }
-  }, [totalPrice]);
+  }, [totalNum]);
 
-  const totalNum = parseFloat(totalPrice) || 0;
   const depositNum = parseFloat(deposit) || 0;
   const remaining = Math.max(0, totalNum - depositNum);
 
@@ -133,19 +136,19 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
 
     try {
       const tenant = tenants.find((t) => t.id === selectedTenantId);
-      const cf = parseFloat(cleaningFee) || 0;
 
       const { error } = await supabase.from("bookings").update({
         checkin_date: format(checkinDate, "yyyy-MM-dd"),
         checkout_date: format(checkoutDate, "yyyy-MM-dd"),
         nights,
-        guests: parseInt(guests) || 1,
-        subtotal: totalNum - cf,
-        cleaning_fee: cf,
+        guests: 1,
+        subtotal: rentalNum,
+        cleaning_fee: cleaningNum,
         total_price: totalNum,
         host_payout_gross: totalNum,
         host_payout_net: totalNum,
         pricing_breakdown: {
+          rental_price: rentalNum,
           deposit: depositNum,
           remaining: remaining,
           deposit_percentage: DEPOSIT_PERCENTAGE,
@@ -255,23 +258,22 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
 
           {nights > 0 && <p className="text-sm text-muted-foreground">{nights} nuit(s)</p>}
 
-          <div>
-            <Label>Voyageurs</Label>
-            <Input type="number" min="1" value={guests} onChange={(e) => setGuests(e.target.value)} />
-          </div>
-
           <Separator />
           <p className="text-sm font-medium">Tarification</p>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Frais de ménage (€)</Label>
-              <Input type="number" min="0" step="0.01" value={cleaningFee} onChange={(e) => setCleaningFee(e.target.value)} />
-            </div>
-            <div>
-              <Label>Prix total (€)</Label>
-              <Input type="number" min="0" step="0.01" value={totalPrice} onChange={(e) => setTotalPrice(e.target.value)} />
-            </div>
+          <div>
+            <Label>Prix de location (€)</Label>
+            <Input type="number" min="0" step="0.01" value={rentalPrice} onChange={(e) => setRentalPrice(e.target.value)} />
+          </div>
+
+          <div>
+            <Label>Frais de ménage (€)</Label>
+            <Input type="number" min="0" step="0.01" value={cleaningFee} onChange={(e) => setCleaningFee(e.target.value)} />
+          </div>
+
+          <div>
+            <Label>Prix total (€)</Label>
+            <Input type="number" value={totalNum.toFixed(2)} readOnly className="bg-muted" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
