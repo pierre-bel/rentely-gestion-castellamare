@@ -88,7 +88,7 @@ export default function AvailabilityCalendar() {
         .in("listing_id", listingIds)
         .gte("checkout_date", rangeStart)
         .lte("checkin_date", rangeEnd)
-        .not("status", "eq", "cancelled");
+        .not("status", "in", "(cancelled_guest,cancelled_host,expired)");
 
       if (error) throw error;
       if (!data || data.length === 0) return [];
