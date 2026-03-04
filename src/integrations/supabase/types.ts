@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_payment_items: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          due_date: string | null
+          id: string
+          is_paid: boolean
+          label: string
+          paid_at: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          is_paid?: boolean
+          label: string
+          paid_at?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          is_paid?: boolean
+          label?: string
+          paid_at?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_payment_items_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           cancellation_policy_snapshot: Json | null
@@ -466,6 +513,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      host_payment_schedules: {
+        Row: {
+          created_at: string
+          due_days: number
+          due_type: string
+          host_user_id: string
+          id: string
+          label: string
+          percentage: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          due_days?: number
+          due_type?: string
+          host_user_id: string
+          id?: string
+          label: string
+          percentage: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          due_days?: number
+          due_type?: string
+          host_user_id?: string
+          id?: string
+          label?: string
+          percentage?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       listing_availability: {
         Row: {
