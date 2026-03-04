@@ -89,7 +89,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
       setRentalPrice(String(rental));
 
       const bd = booking.pricing_breakdown;
-      setDeposit(bd?.deposit ? String(bd.deposit) : String(Math.round(booking.total_price * DEPOSIT_PERCENTAGE / 100)));
+      setDeposit(bd?.deposit ? String(bd.deposit) : String(Math.round(booking.total_price * DEPOSIT_PERCENTAGE / 100 / 10) * 10));
       
       // Pre-select tenant
       if (bd?.tenant_id && tenants.length > 0) {
@@ -123,7 +123,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
   // Recalc deposit when total changes
   useEffect(() => {
     if (totalNum > 0) {
-      setDeposit(Math.round(totalNum * DEPOSIT_PERCENTAGE / 100).toFixed(2));
+      setDeposit((Math.round(totalNum * DEPOSIT_PERCENTAGE / 100 / 10) * 10).toFixed(2));
     }
   }, [totalNum]);
 
