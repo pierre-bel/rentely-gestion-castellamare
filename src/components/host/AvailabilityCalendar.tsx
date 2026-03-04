@@ -74,26 +74,27 @@ export default function AvailabilityCalendar() {
   });
 
   const { data: bookings, isLoading: bookingsLoading } = useQuery({
-    queryKey: ["host-calendar-bookings", user?.id, format(currentMonth, "yyyy-MM")],
+    queryKey: ["host-calendar-bookings", user?.id, format(currentMonth, "yyyy-MM"), listings],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user || !listings || listings.length === 0) return [];
       const rangeStart = format(startOfMonth(subMonths(currentMonth, 1)), "yyyy-MM-dd");
       const rangeEnd = format(endOfMonth(addMonths(currentMonth, 1)), "yyyy-MM-dd");
 
+      const listingIds = listings.map((l) => l.id);
+
       const { data, error } = await supabase
         .from("bookings")
-        .select(`
-          id, checkin_date, checkout_date, status, guests, notes,
-          listing_id, guest_user_id,
-          listings!bookings_listing_id_fkey(title, host_user_id)
-        `)
-        .eq("listings.host_user_id", user.id)
+        .select("id, checkin_date, checkout_date, status, guests, notes, listing_id, guest_user_id")
+        .in("listing_id", listingIds)
         .gte("checkout_date", rangeStart)
         .lte("checkin_date", rangeEnd)
         .not("status", "eq", "cancelled");
 
       if (error) throw error;
       if (!data || data.length === 0) return [];
+
+      // Build listing title map
+      const listingMap = new Map(listings.map((l) => [l.id, l.title]));
 
       // Fetch guest profiles separately
       const guestIds = [...new Set(data.map((b: any) => b.guest_user_id))];
@@ -114,7 +115,7 @@ export default function AvailabilityCalendar() {
           guests: b.guests,
           notes: b.notes,
           listing_id: b.listing_id,
-          listing_title: b.listings?.title || "—",
+          listing_title: listingMap.get(b.listing_id) || "—",
           guest_name: profile ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Locataire" : "Locataire",
           guest_email: profile?.email || "",
           guest_phone: profile?.phone || null,
