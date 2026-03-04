@@ -44,6 +44,7 @@ interface TimelineOverviewProps {
   bookings: BookingWithGuest[];
   blockedDates: { id: string; listing_id: string; start_date: string; end_date: string; price: number | null }[];
   currentMonth: Date;
+  onBookingClick?: (booking: BookingWithGuest) => void;
 }
 
 const STATUS_COLORS: Record<string, string> = {
