@@ -128,17 +128,19 @@ export default function HostTenants() {
                   <TableHead className="font-semibold">Nom</TableHead>
                   <TableHead className="font-semibold">Email</TableHead>
                   <TableHead className="font-semibold">Téléphone</TableHead>
-                  <TableHead className="font-semibold">Notes</TableHead>
+                  <TableHead className="font-semibold">Sexe</TableHead>
+                  <TableHead className="font-semibold">Ville</TableHead>
                   <TableHead className="font-semibold text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((tenant, i) => (
                   <TableRow key={tenant.id} className={i % 2 === 0 ? "bg-muted/30" : ""}>
-                    <TableCell className="font-medium">{tenant.first_name} {tenant.last_name || ""}</TableCell>
+                    <TableCell className="font-medium">{tenant.first_name} {tenant.last_name}</TableCell>
                     <TableCell>{tenant.email || "—"}</TableCell>
                     <TableCell>{tenant.phone || "—"}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">{tenant.notes || "—"}</TableCell>
+                    <TableCell>{tenant.gender === "H" ? "Homme" : tenant.gender === "F" ? "Femme" : "—"}</TableCell>
+                    <TableCell>{tenant.city || "—"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingTenant(tenant); setDialogOpen(true); }}>
