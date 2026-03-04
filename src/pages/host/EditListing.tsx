@@ -690,7 +690,7 @@ const EditListing = () => {
               <StepPricing formData={formData} updateFormData={updateFormData} />
             )}
             {currentStep === 6 && (
-              <StepAvailability formData={formData} updateFormData={updateFormData} />
+              <StepAvailability formData={formData} updateFormData={updateFormData} listingId={id} />
             )}
             {currentStep === 7 && <StepReview formData={formData} />}
 
