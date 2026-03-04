@@ -40,12 +40,27 @@ const StepAvailability = ({ formData, updateFormData, listingId }: StepAvailabil
     enabled: !!listingId,
   });
 
-  const isDateBooked = (date: Date): boolean => {
-    return bookings.some((b) => {
+  const getBookingType = (date: Date): 'checkin' | 'checkout' | 'middle' | 'single' | null => {
+    const dateStr = format(date, "yyyy-MM-dd");
+    let isCheckin = false;
+    let isCheckout = false;
+
+    for (const b of bookings) {
+      if (b.checkin_date === dateStr) isCheckin = true;
+      if (b.checkout_date === dateStr) isCheckout = true;
+    }
+
+    if (isCheckin && isCheckout) return 'single'; // turnover day
+    if (isCheckin) return 'checkin';
+    if (isCheckout) return 'checkout';
+
+    // Check if it's a middle day
+    for (const b of bookings) {
       const checkin = parseISO(b.checkin_date);
       const checkout = parseISO(b.checkout_date);
-      return isWithinInterval(date, { start: checkin, end: checkout });
-    });
+      if (isWithinInterval(date, { start: checkin, end: checkout })) return 'middle';
+    }
+    return null;
   };
 
   const getSelectedRangeState = (): 'all-blocked' | 'all-available' | 'mixed' | 'none' => {
@@ -128,13 +143,15 @@ const StepAvailability = ({ formData, updateFormData, listingId }: StepAvailabil
 
   const modifiers = {
     blocked: (date: Date) => getDateStyle(date) === "blocked",
-    booked: (date: Date) => isDateBooked(date),
-    available: (date: Date) => getDateStyle(date) === "available" && !isDateBooked(date),
+    bookedCheckin: (date: Date) => getBookingType(date) === 'checkin',
+    bookedCheckout: (date: Date) => getBookingType(date) === 'checkout',
+    bookedMiddle: (date: Date) => getBookingType(date) === 'middle',
+    bookedTurnover: (date: Date) => getBookingType(date) === 'single',
+    available: (date: Date) => getDateStyle(date) === "available" && getBookingType(date) === null,
   };
 
   const modifiersStyles = {
     blocked: { backgroundColor: "hsl(var(--calendar-blocked) / 0.3)", color: "hsl(var(--foreground))" },
-    booked: { backgroundColor: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", fontWeight: "600" },
     available: { backgroundColor: "hsl(var(--calendar-available) / 0.3)", color: "hsl(var(--foreground))" },
   };
 
@@ -171,6 +188,12 @@ const StepAvailability = ({ formData, updateFormData, listingId }: StepAvailabil
           disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
           modifiers={modifiers}
           modifiersStyles={modifiersStyles}
+          modifiersClassNames={{
+            bookedCheckin: "day-booked-checkin",
+            bookedCheckout: "day-booked-checkout",
+            bookedMiddle: "day-booked-middle",
+            bookedTurnover: "day-booked-turnover",
+          }}
           className="rounded-xl border"
         />
       </div>
