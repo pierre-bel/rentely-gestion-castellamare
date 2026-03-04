@@ -82,7 +82,7 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
         <div className="space-y-4">
           {/* Status */}
           <div className="flex items-center justify-between">
-            <StatusBadge status={booking.status} />
+            <StatusBadge status={booking.status as StatusValue} />
             <span className="text-xs text-muted-foreground font-mono">
               {booking.id.slice(0, 8)}
             </span>
