@@ -149,6 +149,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
           deposit: depositNum,
           remaining: remaining,
           deposit_percentage: DEPOSIT_PERCENTAGE,
+          tenant_id: selectedTenantId || undefined,
         },
         notes: [
           tenant ? `Locataire: ${tenant.first_name} ${tenant.last_name || ""}`.trim() : null,
