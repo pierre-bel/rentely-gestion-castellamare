@@ -38,11 +38,11 @@ interface FormCityComboboxProps {
     country_name: string;
   } | null;
   onChange: (cityData: {
-    city_id: string;
+    city_id: string | null;
     city_name: string;
     state_region_id: string | null;
     state_name: string;
-    country_id: string;
+    country_id: string | null;
     country_name: string;
   }) => void;
   required?: boolean;
@@ -116,11 +116,11 @@ const FormCityCombobox = ({ value, onChange, required = false }: FormCityCombobo
   const handleSelectFreeText = () => {
     if (searchTerm.trim()) {
       onChange({
-        city_id: '',
+        city_id: null,
         city_name: searchTerm.trim(),
         state_region_id: null,
         state_name: '',
-        country_id: '',
+        country_id: null,
         country_name: '',
       });
       setOpen(false);
