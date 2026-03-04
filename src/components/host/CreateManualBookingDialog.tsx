@@ -110,7 +110,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
 
   useEffect(() => {
     if (totalNum > 0) {
-      setDeposit(Math.round(totalNum * DEPOSIT_PERCENTAGE / 100).toFixed(2));
+      setDeposit((Math.round(totalNum * DEPOSIT_PERCENTAGE / 100 / 10) * 10).toFixed(2));
     } else {
       setDeposit("");
     }
