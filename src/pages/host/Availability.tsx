@@ -17,7 +17,7 @@ export default function Availability() {
   const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedListing, setSelectedListing] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("timeline");
 
   const { data: listings, isLoading: listingsLoading } = useQuery({
     queryKey: ["host-listings", user?.id],
@@ -64,6 +64,18 @@ export default function Availability() {
 
       return data.map((b: any) => {
         const profile = profileMap.get(b.guest_user_id);
+        // Extract tenant name from notes if present (format: "Locataire: Prénom Nom | ...")
+        let guestName = "Locataire";
+        if (b.notes) {
+          const tenantMatch = b.notes.match(/Locataire:\s*([^|]+)/);
+          if (tenantMatch) {
+            guestName = tenantMatch[1].trim();
+          } else if (profile) {
+            guestName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Locataire";
+          }
+        } else if (profile) {
+          guestName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Locataire";
+        }
         return {
           id: b.id,
           checkin_date: b.checkin_date,
@@ -73,7 +85,7 @@ export default function Availability() {
           notes: b.notes,
           listing_id: b.listing_id,
           listing_title: listingMap.get(b.listing_id) || "—",
-          guest_name: profile ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Locataire" : "Locataire",
+          guest_name: guestName,
           guest_email: profile?.email || "",
           guest_phone: profile?.phone || null,
         };
