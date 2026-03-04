@@ -78,6 +78,7 @@ export default function TimelineOverview({ listings, bookings, blockedDates, cur
   };
 
   // Calculate bar position & width for a booking within the visible month
+  // Half-cell offset: checkin starts at mid-cell, checkout ends at mid-cell
   const getBarStyle = (checkin: Date, checkout: Date) => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
@@ -87,12 +88,17 @@ export default function TimelineOverview({ listings, bookings, blockedDates, cur
 
     const startIdx = Math.max(0, Math.round((visibleStart.getTime() - monthStart.getTime()) / 86400000));
     const endIdx = Math.min(days.length - 1, Math.round((visibleEnd.getTime() - monthStart.getTime()) / 86400000));
-    const span = endIdx - startIdx + 1;
 
-    return {
-      left: startIdx * CELL_W,
-      width: span * CELL_W - 4, // 4px gap
-    };
+    // Apply half-cell offsets for actual check-in/checkout days (not clipped to month boundary)
+    const halfCell = CELL_W / 2;
+    const startsInMonth = checkin >= monthStart;
+    const endsInMonth = checkout <= monthEnd;
+
+    const left = startIdx * CELL_W + (startsInMonth ? halfCell : 0);
+    const right = (endIdx + 1) * CELL_W - (endsInMonth ? halfCell : 0);
+    const width = right - left - 2; // 2px gap
+
+    return { left, width };
   };
 
   const truncateName = (name: string, maxLen = 12) => {
