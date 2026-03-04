@@ -373,6 +373,7 @@ const ListingsManagement = () => {
                   handleSaveAvailability(data.availability_rules);
                 }
               }}
+              listingId={selectedListing.id}
             />
           )}
         </DialogContent>
