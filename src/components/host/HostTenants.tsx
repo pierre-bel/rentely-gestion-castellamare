@@ -25,9 +25,15 @@ export interface Tenant {
   id: string;
   host_user_id: string;
   first_name: string;
-  last_name: string | null;
-  email: string | null;
+  last_name: string;
+  email: string;
   phone: string | null;
+  gender: string | null;
+  street: string | null;
+  street_number: string | null;
+  postal_code: string | null;
+  city: string | null;
+  country: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
