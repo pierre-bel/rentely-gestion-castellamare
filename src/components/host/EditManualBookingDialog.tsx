@@ -89,18 +89,25 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
       const bd = booking.pricing_breakdown;
       setDeposit(bd?.deposit ? String(bd.deposit) : String(Math.round(booking.total_price * DEPOSIT_PERCENTAGE / 100)));
       
+      // Pre-select tenant from pricing_breakdown.tenant_id
+      if (bd?.tenant_id && tenants.length > 0) {
+        const found = tenants.find(t => t.id === bd.tenant_id);
+        if (found) setSelectedTenantId(found.id);
+      } else {
+        // Fallback: try to match tenant from notes
+        const rawNotes = booking.notes || "";
+        const tenantMatch = rawNotes.match(/Locataire:\s*([^|]+)/);
+        if (tenantMatch && tenants.length > 0) {
+          const name = tenantMatch[1].trim();
+          const found = tenants.find(t => `${t.first_name} ${t.last_name || ""}`.trim() === name);
+          if (found) setSelectedTenantId(found.id);
+        }
+      }
+      
       // Extract notes (remove tenant + deposit info lines)
       const rawNotes = booking.notes || "";
       const parts = rawNotes.split(" | ").filter((p: string) => !p.startsWith("Locataire:") && !p.startsWith("Acompte:"));
       setNotes(parts.join(" | "));
-
-      // Try to match tenant from notes
-      const tenantMatch = rawNotes.match(/Locataire:\s*([^|]+)/);
-      if (tenantMatch && tenants.length > 0) {
-        const name = tenantMatch[1].trim();
-        const found = tenants.find(t => `${t.first_name} ${t.last_name || ""}`.trim() === name);
-        if (found) setSelectedTenantId(found.id);
-      }
     }
   }, [booking, open, tenants]);
 
@@ -142,6 +149,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
           deposit: depositNum,
           remaining: remaining,
           deposit_percentage: DEPOSIT_PERCENTAGE,
+          tenant_id: selectedTenantId || undefined,
         },
         notes: [
           tenant ? `Locataire: ${tenant.first_name} ${tenant.last_name || ""}`.trim() : null,
