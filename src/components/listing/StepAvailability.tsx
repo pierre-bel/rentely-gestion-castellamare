@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Copy, Check, Code } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { DateRange } from "react-day-picker";
 import { format, parseISO, isWithinInterval } from "date-fns";
 import { fr } from "date-fns/locale";
