@@ -24,6 +24,7 @@ import { BookingsFiltersSheet } from "./BookingsFiltersSheet";
 import { BookingsTable } from "./BookingsTable";
 import { CreateDisputeDialog } from "@/components/dispute/CreateDisputeDialog";
 import { CreateManualBookingDialog } from "./CreateManualBookingDialog";
+import { EditManualBookingDialog } from "./EditManualBookingDialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
@@ -64,6 +65,8 @@ export default function HostBookings() {
   const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
   const [bookingForDispute, setBookingForDispute] = useState<Booking | null>(null);
   const [manualBookingOpen, setManualBookingOpen] = useState(false);
+  const [editBookingOpen, setEditBookingOpen] = useState(false);
+  const [bookingToEdit, setBookingToEdit] = useState<any>(null);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
@@ -416,6 +419,18 @@ export default function HostBookings() {
           onCancelBooking={handleCancelBooking}
           onContactSupport={handleContactSupport}
           onContactGuest={handleContactGuest}
+          onEditBooking={async (booking) => {
+            // Fetch full booking data for editing
+            const { data } = await supabase
+              .from("bookings")
+              .select("id, listing_id, checkin_date, checkout_date, nights, guests, total_price, cleaning_fee, notes, status, pricing_breakdown")
+              .eq("id", booking.id)
+              .maybeSingle();
+            if (data) {
+              setBookingToEdit({ ...data, listing_title: booking.listing_title });
+              setEditBookingOpen(true);
+            }
+          }}
         />
       </CardContent>
 
@@ -462,6 +477,12 @@ export default function HostBookings() {
       <CreateManualBookingDialog
         open={manualBookingOpen}
         onOpenChange={setManualBookingOpen}
+      />
+
+      <EditManualBookingDialog
+        open={editBookingOpen}
+        onOpenChange={setEditBookingOpen}
+        booking={bookingToEdit}
       />
     </Card>
   );

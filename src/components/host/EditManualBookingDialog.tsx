@@ -1,0 +1,297 @@
+import { useEffect, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format, differenceInCalendarDays, parseISO } from "date-fns";
+import { fr } from "date-fns/locale";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import type { Tenant } from "./HostTenants";
+import { Separator } from "@/components/ui/separator";
+
+interface BookingToEdit {
+  id: string;
+  listing_id: string;
+  listing_title: string;
+  checkin_date: string;
+  checkout_date: string;
+  nights: number;
+  guests: number;
+  total_price: number;
+  cleaning_fee: number | null;
+  notes: string | null;
+  status: string;
+  pricing_breakdown: any;
+}
+
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  booking: BookingToEdit | null;
+}
+
+const DEPOSIT_PERCENTAGE = 30;
+
+export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
+
+  const [checkinDate, setCheckinDate] = useState<Date>();
+  const [checkoutDate, setCheckoutDate] = useState<Date>();
+  const [guests, setGuests] = useState("1");
+  const [totalPrice, setTotalPrice] = useState("");
+  const [cleaningFee, setCleaningFee] = useState("");
+  const [deposit, setDeposit] = useState("");
+  const [notes, setNotes] = useState("");
+  const [selectedTenantId, setSelectedTenantId] = useState("");
+
+  // Fetch tenants
+  const { data: tenants = [] } = useQuery({
+    queryKey: ["host-tenants", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("tenants")
+        .select("*")
+        .eq("host_user_id", user.id)
+        .order("first_name");
+      if (error) throw error;
+      return data as Tenant[];
+    },
+    enabled: !!user?.id && open,
+  });
+
+  // Populate form when booking changes
+  useEffect(() => {
+    if (booking && open) {
+      setCheckinDate(parseISO(booking.checkin_date));
+      setCheckoutDate(parseISO(booking.checkout_date));
+      setGuests(String(booking.guests));
+      setTotalPrice(String(booking.total_price));
+      setCleaningFee(String(booking.cleaning_fee || 0));
+      const bd = booking.pricing_breakdown;
+      setDeposit(bd?.deposit ? String(bd.deposit) : String(Math.round(booking.total_price * DEPOSIT_PERCENTAGE / 100)));
+      
+      // Extract notes (remove tenant + deposit info lines)
+      const rawNotes = booking.notes || "";
+      const parts = rawNotes.split(" | ").filter((p: string) => !p.startsWith("Locataire:") && !p.startsWith("Acompte:"));
+      setNotes(parts.join(" | "));
+
+      // Try to match tenant from notes
+      const tenantMatch = rawNotes.match(/Locataire:\s*([^|]+)/);
+      if (tenantMatch && tenants.length > 0) {
+        const name = tenantMatch[1].trim();
+        const found = tenants.find(t => `${t.first_name} ${t.last_name || ""}`.trim() === name);
+        if (found) setSelectedTenantId(found.id);
+      }
+    }
+  }, [booking, open, tenants]);
+
+  const nights = checkinDate && checkoutDate
+    ? differenceInCalendarDays(checkoutDate, checkinDate)
+    : 0;
+
+  // Recalc deposit when total changes
+  useEffect(() => {
+    const total = parseFloat(totalPrice) || 0;
+    if (total > 0) {
+      setDeposit(Math.round(total * DEPOSIT_PERCENTAGE / 100).toFixed(2));
+    }
+  }, [totalPrice]);
+
+  const totalNum = parseFloat(totalPrice) || 0;
+  const depositNum = parseFloat(deposit) || 0;
+  const remaining = Math.max(0, totalNum - depositNum);
+
+  const handleSave = async () => {
+    if (!user || !booking || !checkinDate || !checkoutDate || nights <= 0) return;
+    setSaving(true);
+
+    try {
+      const tenant = tenants.find((t) => t.id === selectedTenantId);
+      const cf = parseFloat(cleaningFee) || 0;
+
+      const { error } = await supabase.from("bookings").update({
+        checkin_date: format(checkinDate, "yyyy-MM-dd"),
+        checkout_date: format(checkoutDate, "yyyy-MM-dd"),
+        nights,
+        guests: parseInt(guests) || 1,
+        subtotal: totalNum - cf,
+        cleaning_fee: cf,
+        total_price: totalNum,
+        host_payout_gross: totalNum,
+        host_payout_net: totalNum,
+        pricing_breakdown: {
+          deposit: depositNum,
+          remaining: remaining,
+          deposit_percentage: DEPOSIT_PERCENTAGE,
+        },
+        notes: [
+          tenant ? `Locataire: ${tenant.first_name} ${tenant.last_name || ""}`.trim() : null,
+          depositNum > 0 ? `Acompte: ${depositNum.toFixed(2)} € | Solde: ${remaining.toFixed(2)} €` : null,
+          notes.trim() || null,
+        ].filter(Boolean).join(" | ") || null,
+      }).eq("id", booking.id);
+
+      if (error) throw error;
+
+      toast({ title: "Réservation modifiée", description: "Les modifications ont été enregistrées." });
+      queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["host-calendar-bookings"] });
+      onOpenChange(false);
+    } catch (error: any) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!booking) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Modifier la réservation</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>Bien</Label>
+            <Input value={booking.listing_title} readOnly className="bg-muted" />
+          </div>
+
+          {/* Tenant */}
+          <div>
+            <Label>Locataire</Label>
+            <Select value={selectedTenantId} onValueChange={setSelectedTenantId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choisir un locataire..." />
+              </SelectTrigger>
+              <SelectContent>
+                {tenants.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.first_name} {t.last_name || ""} {t.email ? `(${t.email})` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Dates */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Arrivée *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn("w-full justify-start text-left font-normal", !checkinDate && "text-muted-foreground")}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {checkinDate ? format(checkinDate, "dd/MM/yyyy") : "Choisir"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={checkinDate}
+                    onSelect={setCheckinDate}
+                    locale={fr}
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div>
+              <Label>Départ *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn("w-full justify-start text-left font-normal", !checkoutDate && "text-muted-foreground")}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {checkoutDate ? format(checkoutDate, "dd/MM/yyyy") : "Choisir"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={checkoutDate}
+                    onSelect={setCheckoutDate}
+                    disabled={(date) => checkinDate ? date <= checkinDate : false}
+                    locale={fr}
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {nights > 0 && <p className="text-sm text-muted-foreground">{nights} nuit(s)</p>}
+
+          <div>
+            <Label>Voyageurs</Label>
+            <Input type="number" min="1" value={guests} onChange={(e) => setGuests(e.target.value)} />
+          </div>
+
+          <Separator />
+          <p className="text-sm font-medium">Tarification</p>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Frais de ménage (€)</Label>
+              <Input type="number" min="0" step="0.01" value={cleaningFee} onChange={(e) => setCleaningFee(e.target.value)} />
+            </div>
+            <div>
+              <Label>Prix total (€)</Label>
+              <Input type="number" min="0" step="0.01" value={totalPrice} onChange={(e) => setTotalPrice(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Acompte ({DEPOSIT_PERCENTAGE}%) (€)</Label>
+              <Input type="number" min="0" step="0.01" value={deposit} onChange={(e) => setDeposit(e.target.value)} />
+            </div>
+            <div>
+              <Label>Solde restant (€)</Label>
+              <Input type="number" value={remaining.toFixed(2)} readOnly className="bg-muted" />
+            </div>
+          </div>
+
+          <div>
+            <Label>Notes</Label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes sur la réservation..." rows={2} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
+          <Button
+            onClick={handleSave}
+            disabled={saving || !checkinDate || !checkoutDate || nights <= 0}
+          >
+            {saving ? "Enregistrement..." : "Enregistrer"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
