@@ -85,7 +85,7 @@ export default function AvailabilityCalendar() {
         .select(`
           id, checkin_date, checkout_date, status, guests, notes,
           listing_id, guest_user_id,
-          listings!inner(title, host_user_id)
+          listings!bookings_listing_id_fkey(title, host_user_id)
         `)
         .eq("listings.host_user_id", user.id)
         .gte("checkout_date", rangeStart)
