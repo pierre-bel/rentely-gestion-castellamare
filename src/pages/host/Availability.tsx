@@ -1,9 +1,206 @@
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ChevronLeft, ChevronRight, LayoutGrid, GanttChart } from "lucide-react";
+import { format, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
+import { fr } from "date-fns/locale";
 import AvailabilityCalendar from "@/components/host/AvailabilityCalendar";
+import TimelineOverview from "@/components/host/TimelineOverview";
+
+type ViewMode = "grid" | "timeline";
 
 export default function Availability() {
+  const { user } = useAuth();
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedListing, setSelectedListing] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+
+  const { data: listings, isLoading: listingsLoading } = useQuery({
+    queryKey: ["host-listings", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("listings")
+        .select("id, title, city, status")
+        .eq("host_user_id", user.id)
+        .order("title");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const { data: bookings, isLoading: bookingsLoading } = useQuery({
+    queryKey: ["host-calendar-bookings", user?.id, format(currentMonth, "yyyy-MM"), listings],
+    queryFn: async () => {
+      if (!user || !listings || listings.length === 0) return [];
+      const rangeStart = format(startOfMonth(subMonths(currentMonth, 1)), "yyyy-MM-dd");
+      const rangeEnd = format(endOfMonth(addMonths(currentMonth, 1)), "yyyy-MM-dd");
+      const listingIds = listings.map((l) => l.id);
+
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("id, checkin_date, checkout_date, status, guests, notes, listing_id, guest_user_id")
+        .in("listing_id", listingIds)
+        .gte("checkout_date", rangeStart)
+        .lte("checkin_date", rangeEnd)
+        .not("status", "in", "(cancelled_guest,cancelled_host,expired)");
+
+      if (error) throw error;
+      if (!data || data.length === 0) return [];
+
+      const listingMap = new Map(listings.map((l) => [l.id, l.title]));
+      const guestIds = [...new Set(data.map((b: any) => b.guest_user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, first_name, last_name, email, phone")
+        .in("id", guestIds);
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+
+      return data.map((b: any) => {
+        const profile = profileMap.get(b.guest_user_id);
+        return {
+          id: b.id,
+          checkin_date: b.checkin_date,
+          checkout_date: b.checkout_date,
+          status: b.status,
+          guests: b.guests,
+          notes: b.notes,
+          listing_id: b.listing_id,
+          listing_title: listingMap.get(b.listing_id) || "—",
+          guest_name: profile ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Locataire" : "Locataire",
+          guest_email: profile?.email || "",
+          guest_phone: profile?.phone || null,
+        };
+      });
+    },
+    enabled: !!user,
+  });
+
+  const { data: blockedDates } = useQuery({
+    queryKey: ["host-blocked-dates", user?.id, format(currentMonth, "yyyy-MM")],
+    queryFn: async () => {
+      if (!user) return [];
+      const rangeStart = format(startOfMonth(subMonths(currentMonth, 1)), "yyyy-MM-dd");
+      const rangeEnd = format(endOfMonth(addMonths(currentMonth, 1)), "yyyy-MM-dd");
+
+      const { data, error } = await supabase
+        .from("listing_availability")
+        .select("id, listing_id, start_date, end_date, price")
+        .gte("end_date", rangeStart)
+        .lte("start_date", rangeEnd);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const filteredListings = useMemo(() => {
+    if (!listings) return [];
+    if (selectedListing) return listings.filter((l) => l.id === selectedListing);
+    return listings;
+  }, [listings, selectedListing]);
+
+  const isLoading = listingsLoading || bookingsLoading;
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 pb-8 lg:px-8 space-y-4">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto px-4 pb-8 lg:px-8">
-      <AvailabilityCalendar />
+    <div className="container mx-auto px-4 pb-8 lg:px-8 space-y-6">
+      {/* Controls bar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h2 className="text-lg font-semibold capitalize min-w-[160px] text-center">
+            {format(currentMonth, "MMMM yyyy", { locale: fr })}
+          </h2>
+          <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(new Date())} className="text-xs">
+            Aujourd'hui
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* View toggle */}
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+            <Button
+              variant={viewMode === "grid" ? "default" : "ghost"}
+              size="sm"
+              className="h-7 gap-1.5 text-xs"
+              onClick={() => setViewMode("grid")}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              Grille
+            </Button>
+            <Button
+              variant={viewMode === "timeline" ? "default" : "ghost"}
+              size="sm"
+              className="h-7 gap-1.5 text-xs"
+              onClick={() => setViewMode("timeline")}
+            >
+              <GanttChart className="h-3.5 w-3.5" />
+              Vue d'ensemble
+            </Button>
+          </div>
+
+          {/* Listing filter */}
+          {listings && listings.length > 1 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge
+                variant={selectedListing === null ? "default" : "outline"}
+                className="cursor-pointer text-xs"
+                onClick={() => setSelectedListing(null)}
+              >
+                Tous ({listings.length})
+              </Badge>
+              {listings.map((l) => (
+                <Badge
+                  key={l.id}
+                  variant={selectedListing === l.id ? "default" : "outline"}
+                  className="cursor-pointer text-xs"
+                  onClick={() => setSelectedListing(selectedListing === l.id ? null : l.id)}
+                >
+                  {l.title}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Views */}
+      {viewMode === "timeline" ? (
+        <TimelineOverview
+          listings={filteredListings}
+          bookings={bookings || []}
+          blockedDates={blockedDates || []}
+          currentMonth={currentMonth}
+        />
+      ) : (
+        <AvailabilityCalendar
+          listings={filteredListings}
+          bookings={bookings || []}
+          blockedDates={blockedDates || []}
+          currentMonth={currentMonth}
+        />
+      )}
     </div>
   );
 }
