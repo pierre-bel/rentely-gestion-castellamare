@@ -74,40 +74,53 @@ export default function AvailabilityCalendar() {
   });
 
   const { data: bookings, isLoading: bookingsLoading } = useQuery({
-    queryKey: ["host-calendar-bookings", user?.id, format(currentMonth, "yyyy-MM")],
+    queryKey: ["host-calendar-bookings", user?.id, format(currentMonth, "yyyy-MM"), listings],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user || !listings || listings.length === 0) return [];
       const rangeStart = format(startOfMonth(subMonths(currentMonth, 1)), "yyyy-MM-dd");
       const rangeEnd = format(endOfMonth(addMonths(currentMonth, 1)), "yyyy-MM-dd");
 
+      const listingIds = listings.map((l) => l.id);
+
       const { data, error } = await supabase
         .from("bookings")
-        .select(`
-          id, checkin_date, checkout_date, status, guests, notes,
-          listing_id,
-          listings!inner(title, host_user_id),
-          profiles:guest_user_id(first_name, last_name, email, phone)
-        `)
-        .eq("listings.host_user_id", user.id)
+        .select("id, checkin_date, checkout_date, status, guests, notes, listing_id, guest_user_id")
+        .in("listing_id", listingIds)
         .gte("checkout_date", rangeStart)
         .lte("checkin_date", rangeEnd)
-        .not("status", "eq", "cancelled");
+        .not("status", "in", "(cancelled_guest,cancelled_host,expired)");
 
       if (error) throw error;
+      if (!data || data.length === 0) return [];
 
-      return (data || []).map((b: any) => ({
-        id: b.id,
-        checkin_date: b.checkin_date,
-        checkout_date: b.checkout_date,
-        status: b.status,
-        guests: b.guests,
-        notes: b.notes,
-        listing_id: b.listing_id,
-        listing_title: b.listings?.title || "—",
-        guest_name: `${b.profiles?.first_name || ""} ${b.profiles?.last_name || ""}`.trim() || "Locataire",
-        guest_email: b.profiles?.email || "",
-        guest_phone: b.profiles?.phone || null,
-      })) as BookingWithGuest[];
+      // Build listing title map
+      const listingMap = new Map(listings.map((l) => [l.id, l.title]));
+
+      // Fetch guest profiles separately
+      const guestIds = [...new Set(data.map((b: any) => b.guest_user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, first_name, last_name, email, phone")
+        .in("id", guestIds);
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+
+      return data.map((b: any) => {
+        const profile = profileMap.get(b.guest_user_id);
+        return {
+          id: b.id,
+          checkin_date: b.checkin_date,
+          checkout_date: b.checkout_date,
+          status: b.status,
+          guests: b.guests,
+          notes: b.notes,
+          listing_id: b.listing_id,
+          listing_title: listingMap.get(b.listing_id) || "—",
+          guest_name: profile ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Locataire" : "Locataire",
+          guest_email: profile?.email || "",
+          guest_phone: profile?.phone || null,
+        };
+      }) as BookingWithGuest[];
     },
     enabled: !!user,
   });
