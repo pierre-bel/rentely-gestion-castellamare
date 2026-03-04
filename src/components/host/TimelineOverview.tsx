@@ -217,11 +217,12 @@ export default function TimelineOverview({ listings, bookings, blockedDates, cur
                           <TooltipTrigger asChild>
                             <div
                               className={cn(
-                                "absolute top-2 bottom-2 rounded-md flex items-center px-1.5 cursor-default overflow-hidden",
+                                "absolute top-2 bottom-2 rounded-md flex items-center px-1.5 cursor-pointer overflow-hidden transition-opacity hover:opacity-90",
                                 colorClass,
                                 "text-primary-foreground shadow-sm",
                               )}
                               style={{ left: left + 2, width }}
+                              onClick={() => onBookingClick?.(booking)}
                             >
                               <span className="text-[11px] font-medium truncate leading-none whitespace-nowrap">
                                 {displayName}
