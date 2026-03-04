@@ -61,7 +61,7 @@ const STATUS_LABELS: Record<string, string> = {
   checked_in: "En cours",
 };
 
-export default function TimelineOverview({ listings, bookings, blockedDates, currentMonth }: TimelineOverviewProps) {
+export default function TimelineOverview({ listings, bookings, blockedDates, currentMonth, onBookingClick }: TimelineOverviewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const days = useMemo(() => eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }), [currentMonth]);
 
