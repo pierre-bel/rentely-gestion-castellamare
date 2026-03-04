@@ -24,6 +24,7 @@ import { BookingsFiltersSheet } from "./BookingsFiltersSheet";
 import { BookingsTable } from "./BookingsTable";
 import { CreateDisputeDialog } from "@/components/dispute/CreateDisputeDialog";
 import { CreateManualBookingDialog } from "./CreateManualBookingDialog";
+import { EditManualBookingDialog } from "./EditManualBookingDialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
@@ -64,6 +65,8 @@ export default function HostBookings() {
   const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
   const [bookingForDispute, setBookingForDispute] = useState<Booking | null>(null);
   const [manualBookingOpen, setManualBookingOpen] = useState(false);
+  const [editBookingOpen, setEditBookingOpen] = useState(false);
+  const [bookingToEdit, setBookingToEdit] = useState<any>(null);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
