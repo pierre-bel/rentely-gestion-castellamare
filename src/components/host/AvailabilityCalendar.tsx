@@ -18,8 +18,8 @@ import {
   subMonths,
   startOfWeek,
   endOfWeek,
-  isWithinInterval,
   parseISO,
+  isSameDay,
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -43,13 +43,7 @@ interface BookingWithGuest {
   listing_title: string;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  confirmed: "bg-primary text-primary-foreground",
-  pending_payment: "bg-amber-500 text-white",
-  completed: "bg-muted text-muted-foreground",
-  cancelled: "bg-destructive/30 text-destructive line-through",
-  checked_in: "bg-primary text-primary-foreground",
-};
+type DayStatus = "available" | "booked" | "pending" | "blocked" | "checkin-only" | "checkout-only" | "turnaround";
 
 const STATUS_LABELS: Record<string, string> = {
   confirmed: "Confirmée",
@@ -149,28 +143,92 @@ export default function AvailabilityCalendar() {
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
-  const getBookingsForDay = (day: Date, listingId: string) => {
+  const getBookingsForDay = (day: Date, listingId: string): BookingWithGuest[] => {
     if (!bookings) return [];
-    return bookings.filter(
-      (b) =>
-        b.listing_id === listingId &&
-        isWithinInterval(day, {
-          start: parseISO(b.checkin_date),
-          end: parseISO(b.checkout_date),
-        })
-    );
+    return bookings.filter((b) => {
+      if (b.listing_id !== listingId) return false;
+      const checkin = parseISO(b.checkin_date);
+      const checkout = parseISO(b.checkout_date);
+      return day >= checkin && day <= checkout;
+    });
   };
 
-  const isBlocked = (day: Date, listingId: string) => {
-    if (!blockedDates) return false;
-    return blockedDates.some(
-      (bd) =>
-        bd.listing_id === listingId &&
-        isWithinInterval(day, {
-          start: parseISO(bd.start_date),
-          end: parseISO(bd.end_date),
-        })
-    );
+  const getDayStatus = (day: Date, listingId: string): { status: DayStatus; bookings: BookingWithGuest[] } => {
+    const dayBookings = getBookingsForDay(day, listingId);
+
+    if (dayBookings.length === 0) {
+      // Check blocked
+      const blocked = blockedDates?.some((bd) => {
+        if (bd.listing_id !== listingId) return false;
+        const s = parseISO(bd.start_date);
+        const e = parseISO(bd.end_date);
+        return day >= s && day <= e;
+      });
+      return { status: blocked ? "blocked" : "available", bookings: [] };
+    }
+
+    // Check if this day is ONLY a checkout day for some bookings and ONLY a checkin for others
+    const isCheckinFor = dayBookings.filter((b) => isSameDay(day, parseISO(b.checkin_date)));
+    const isCheckoutFor = dayBookings.filter((b) => isSameDay(day, parseISO(b.checkout_date)));
+    const isMidStay = dayBookings.filter((b) => {
+      const ci = parseISO(b.checkin_date);
+      const co = parseISO(b.checkout_date);
+      return day > ci && day < co;
+    });
+
+    // If there's any mid-stay booking, it's fully booked
+    if (isMidStay.length > 0) {
+      const isPending = isMidStay.some((b) => b.status === "pending_payment");
+      return { status: isPending ? "pending" : "booked", bookings: dayBookings };
+    }
+
+    // Both checkin and checkout on same day (turnaround)
+    if (isCheckinFor.length > 0 && isCheckoutFor.length > 0) {
+      return { status: "turnaround", bookings: dayBookings };
+    }
+
+    // Only checkin day (first day of booking)
+    if (isCheckinFor.length > 0 && isCheckoutFor.length === 0) {
+      // Check if there's only one booking and this is its checkin — if the booking is multi-day, the checkin day is "checkin-only"
+      const b = isCheckinFor[0];
+      if (!isSameDay(parseISO(b.checkin_date), parseISO(b.checkout_date))) {
+        return { status: "checkin-only", bookings: dayBookings };
+      }
+      // Single-day booking = fully booked
+      return { status: "booked", bookings: dayBookings };
+    }
+
+    // Only checkout day
+    if (isCheckoutFor.length > 0 && isCheckinFor.length === 0) {
+      return { status: "checkout-only", bookings: dayBookings };
+    }
+
+    return { status: "booked", bookings: dayBookings };
+  };
+
+  const getDayClasses = (status: DayStatus, inMonth: boolean, today: boolean): string => {
+    const base = "relative flex items-center justify-center h-10 w-10 rounded-full text-sm transition-all cursor-default select-none mx-auto";
+
+    if (!inMonth) return cn(base, "opacity-20 text-muted-foreground");
+
+    switch (status) {
+      case "available":
+        return cn(base, "bg-[hsl(var(--calendar-available)/0.25)] text-foreground hover:bg-[hsl(var(--calendar-available)/0.4)]", today && "ring-2 ring-primary font-bold");
+      case "booked":
+        return cn(base, "bg-primary text-primary-foreground font-semibold");
+      case "pending":
+        return cn(base, "bg-[hsl(var(--warning)/0.8)] text-white font-semibold");
+      case "blocked":
+        return cn(base, "bg-[hsl(var(--calendar-blocked)/0.25)] text-[hsl(var(--calendar-blocked))] line-through");
+      case "checkin-only":
+        return cn(base, "font-medium", today && "ring-2 ring-primary");
+      case "checkout-only":
+        return cn(base, "font-medium", today && "ring-2 ring-primary");
+      case "turnaround":
+        return cn(base, "font-medium", today && "ring-2 ring-primary");
+      default:
+        return base;
+    }
   };
 
   const isLoading = listingsLoading || bookingsLoading;
@@ -250,7 +308,7 @@ export default function AvailabilityCalendar() {
             </CardHeader>
             <CardContent className="px-4 pb-4">
               {/* Week day headers */}
-              <div className="grid grid-cols-7 mb-1">
+              <div className="grid grid-cols-7 mb-2">
                 {weekDays.map((d) => (
                   <div key={d} className="text-center text-[0.7rem] font-medium text-muted-foreground uppercase py-1.5">
                     {d}
@@ -258,48 +316,54 @@ export default function AvailabilityCalendar() {
                 ))}
               </div>
 
-              {/* Calendar grid — compact rounded style */}
-              <div className="grid grid-cols-7 gap-1">
+              {/* Calendar grid */}
+              <div className="grid grid-cols-7 gap-y-1">
                 {calendarDays.map((day) => {
-                  const dayBookings = getBookingsForDay(day, listing.id);
-                  const blocked = isBlocked(day, listing.id);
                   const inMonth = isSameMonth(day, currentMonth);
                   const today = isToday(day);
-                  const hasBooking = dayBookings.length > 0;
+                  const { status, bookings: dayBookings } = getDayStatus(day, listing.id);
                   const booking = dayBookings[0];
-
-                  const statusKey = booking?.status || "";
-                  const isPending = statusKey === "pending_payment";
 
                   return (
                     <Tooltip key={day.toISOString()}>
                       <TooltipTrigger asChild>
-                        <div
-                          className={cn(
-                            "relative flex items-center justify-center h-10 w-full rounded-full text-sm transition-colors cursor-default select-none",
-                            !inMonth && "opacity-30",
-                            // Available
-                            !hasBooking && !blocked && inMonth && "hover:bg-accent",
-                            // Booked
-                            hasBooking && !isPending && "bg-primary text-primary-foreground font-medium",
-                            hasBooking && isPending && "bg-amber-500/80 text-white font-medium",
-                            // Blocked
-                            blocked && !hasBooking && "bg-destructive/20 text-destructive line-through",
-                            // Today ring
-                            today && !hasBooking && "ring-2 ring-primary/50 font-bold",
-                          )}
-                        >
-                          {format(day, "d")}
-                          {/* Small dot for available days */}
-                          {!hasBooking && !blocked && inMonth && (
-                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-500/70" />
+                        <div className="flex items-center justify-center">
+                          {(status === "checkin-only" || status === "checkout-only" || status === "turnaround") ? (
+                            <div className={cn(
+                              "relative flex items-center justify-center h-10 w-10 rounded-full text-sm font-medium cursor-default select-none mx-auto overflow-hidden",
+                              !inMonth && "opacity-20",
+                              today && "ring-2 ring-primary",
+                            )}>
+                              {/* Half-circle backgrounds */}
+                              {(status === "checkout-only" || status === "turnaround") && (
+                                <div className="absolute inset-0 w-1/2 bg-primary/70 rounded-l-full" />
+                              )}
+                              {(status === "checkin-only" || status === "turnaround") && (
+                                <div className="absolute right-0 inset-y-0 w-1/2 bg-primary/70 rounded-r-full" />
+                              )}
+                              {/* Empty halves get available color */}
+                              {status === "checkin-only" && (
+                                <div className="absolute inset-0 w-1/2 bg-[hsl(var(--calendar-available)/0.25)] rounded-l-full" />
+                              )}
+                              {status === "checkout-only" && (
+                                <div className="absolute right-0 inset-y-0 w-1/2 bg-[hsl(var(--calendar-available)/0.25)] rounded-r-full" />
+                              )}
+                              <span className="relative z-10 text-foreground mix-blend-normal">{format(day, "d")}</span>
+                            </div>
+                          ) : (
+                            <div className={getDayClasses(status, inMonth, today)}>
+                              {format(day, "d")}
+                            </div>
                           )}
                         </div>
                       </TooltipTrigger>
-                      {(hasBooking && booking) ? (
+                      {booking ? (
                         <TooltipContent side="bottom" className="max-w-[240px]">
                           <div className="space-y-1">
                             <p className="font-semibold text-sm">{booking.guest_name}</p>
+                            {status === "checkin-only" && <p className="text-xs text-primary font-medium">🔑 Arrivée</p>}
+                            {status === "checkout-only" && <p className="text-xs text-primary font-medium">🚪 Départ</p>}
+                            {status === "turnaround" && <p className="text-xs text-primary font-medium">🔄 Départ + Arrivée</p>}
                             <div className="flex items-center gap-1.5 text-xs">
                               <Mail className="h-3 w-3 text-muted-foreground" />
                               <span>{booking.guest_email}</span>
@@ -320,12 +384,9 @@ export default function AvailabilityCalendar() {
                             <Badge variant="secondary" className="text-[10px]">
                               {STATUS_LABELS[booking.status] || booking.status}
                             </Badge>
-                            {booking.notes && (
-                              <p className="text-xs italic text-muted-foreground border-t pt-1">{booking.notes}</p>
-                            )}
                           </div>
                         </TooltipContent>
-                      ) : blocked ? (
+                      ) : status === "blocked" ? (
                         <TooltipContent side="bottom">
                           <p className="text-xs">Bloqué</p>
                         </TooltipContent>
@@ -336,22 +397,36 @@ export default function AvailabilityCalendar() {
               </div>
 
               {/* Legend */}
-              <div className="flex items-center gap-4 mt-3 flex-wrap">
+              <div className="flex items-center gap-4 mt-4 flex-wrap">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/70" />
+                  <div className="w-3 h-3 rounded-full bg-[hsl(var(--calendar-available)/0.3)]" />
                   Disponible
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                  <div className="w-3 h-3 rounded-full bg-primary" />
                   Réservé
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+                  <div className="w-3 h-3 rounded-full bg-[hsl(var(--warning)/0.8)]" />
                   En attente
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <div className="w-2.5 h-2.5 rounded-full bg-destructive/30" />
+                  <div className="w-3 h-3 rounded-full bg-[hsl(var(--calendar-blocked)/0.25)]" />
                   Bloqué
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="w-3 h-3 rounded-full overflow-hidden flex">
+                    <div className="w-1/2 bg-[hsl(var(--calendar-available)/0.3)]" />
+                    <div className="w-1/2 bg-primary/70" />
+                  </div>
+                  Arrivée
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="w-3 h-3 rounded-full overflow-hidden flex">
+                    <div className="w-1/2 bg-primary/70" />
+                    <div className="w-1/2 bg-[hsl(var(--calendar-available)/0.3)]" />
+                  </div>
+                  Départ
                 </div>
               </div>
             </CardContent>
