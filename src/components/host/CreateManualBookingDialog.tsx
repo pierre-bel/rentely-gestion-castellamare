@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, UserPlus } from "lucide-react";
+import { CalendarIcon, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, differenceInCalendarDays } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -23,17 +23,21 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { Tenant } from "./HostTenants";
 import { CreateEditTenantDialog } from "./CreateEditTenantDialog";
+import { Separator } from "@/components/ui/separator";
 
 interface Listing {
   id: string;
   title: string;
   base_price: number;
+  cleaning_fee: number | null;
 }
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const DEPOSIT_PERCENTAGE = 30; // Fixed deposit percentage
 
 export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   const { user } = useAuth();
@@ -47,6 +51,8 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   const [checkoutDate, setCheckoutDate] = useState<Date>();
   const [guests, setGuests] = useState("1");
   const [totalPrice, setTotalPrice] = useState("");
+  const [cleaningFee, setCleaningFee] = useState("");
+  const [deposit, setDeposit] = useState("");
   const [notes, setNotes] = useState("");
   const [newTenantDialogOpen, setNewTenantDialogOpen] = useState(false);
 
@@ -57,7 +63,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
       if (!user?.id) return [];
       const { data, error } = await supabase
         .from("listings")
-        .select("id, title, base_price")
+        .select("id, title, base_price, cleaning_fee")
         .eq("host_user_id", user.id)
         .order("title");
       if (error) throw error;
@@ -90,11 +96,29 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   useEffect(() => {
     if (selectedListingId && nights > 0) {
       const listing = listings.find((l) => l.id === selectedListingId);
-      if (listing && !totalPrice) {
-        setTotalPrice((listing.base_price * nights).toFixed(2));
+      if (listing) {
+        const nightsTotal = listing.base_price * nights;
+        const cf = listing.cleaning_fee || 0;
+        setCleaningFee(cf.toFixed(2));
+        const total = nightsTotal + cf;
+        setTotalPrice(total.toFixed(2));
+        // Auto-calc deposit
+        setDeposit(Math.round(total * DEPOSIT_PERCENTAGE / 100).toFixed(2));
       }
     }
   }, [selectedListingId, nights, listings]);
+
+  // Recalc deposit when total changes
+  useEffect(() => {
+    const total = parseFloat(totalPrice) || 0;
+    if (total > 0) {
+      setDeposit(Math.round(total * DEPOSIT_PERCENTAGE / 100).toFixed(2));
+    }
+  }, [totalPrice]);
+
+  const totalNum = parseFloat(totalPrice) || 0;
+  const depositNum = parseFloat(deposit) || 0;
+  const remaining = Math.max(0, totalNum - depositNum);
 
   const resetForm = () => {
     setSelectedListingId("");
@@ -103,6 +127,8 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     setCheckoutDate(undefined);
     setGuests("1");
     setTotalPrice("");
+    setCleaningFee("");
+    setDeposit("");
     setNotes("");
   };
 
@@ -111,32 +137,31 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     setSaving(true);
 
     try {
-      // Get a cancellation policy for the booking
-      const { data: policies } = await supabase
-        .from("cancellation_policies")
-        .select("id")
-        .eq("is_active", true)
-        .limit(1);
-
       const tenant = tenants.find((t) => t.id === selectedTenantId);
-      const price = parseFloat(totalPrice) || 0;
+      const cf = parseFloat(cleaningFee) || 0;
 
-      // Insert booking - use host's own ID as guest_user_id for manual bookings
       const { error } = await supabase.from("bookings").insert({
         listing_id: selectedListingId,
-        guest_user_id: user.id, // Host creates on behalf
+        guest_user_id: user.id,
         checkin_date: format(checkinDate, "yyyy-MM-dd"),
         checkout_date: format(checkoutDate, "yyyy-MM-dd"),
         nights,
         guests: parseInt(guests) || 1,
-        subtotal: price,
-        total_price: price,
-        host_payout_gross: price,
-        host_payout_net: price,
+        subtotal: totalNum - cf,
+        cleaning_fee: cf,
+        total_price: totalNum,
+        host_payout_gross: totalNum,
+        host_payout_net: totalNum,
         status: "confirmed",
         currency: "EUR",
+        pricing_breakdown: {
+          deposit: depositNum,
+          remaining: remaining,
+          deposit_percentage: DEPOSIT_PERCENTAGE,
+        },
         notes: [
           tenant ? `Locataire: ${tenant.first_name} ${tenant.last_name || ""}`.trim() : null,
+          depositNum > 0 ? `Acompte: ${depositNum.toFixed(2)} € | Solde: ${remaining.toFixed(2)} €` : null,
           notes.trim() || null,
         ].filter(Boolean).join(" | ") || null,
       });
@@ -145,6 +170,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
 
       toast({ title: "Réservation créée", description: `${nights} nuit(s) ajoutée(s) avec succès.` });
       queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["host-calendar-bookings"] });
       resetForm();
       onOpenChange(false);
     } catch (error: any) {
@@ -260,15 +286,35 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
               <p className="text-sm text-muted-foreground">{nights} nuit(s)</p>
             )}
 
-            {/* Guests & Price */}
+            {/* Guests */}
+            <div>
+              <Label>Voyageurs</Label>
+              <Input type="number" min="1" value={guests} onChange={(e) => setGuests(e.target.value)} />
+            </div>
+
+            {/* Pricing section */}
+            <Separator />
+            <p className="text-sm font-medium">Tarification</p>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Voyageurs</Label>
-                <Input type="number" min="1" value={guests} onChange={(e) => setGuests(e.target.value)} />
+                <Label>Frais de ménage (€)</Label>
+                <Input type="number" min="0" step="0.01" value={cleaningFee} onChange={(e) => setCleaningFee(e.target.value)} placeholder="0.00" />
               </div>
               <div>
                 <Label>Prix total (€)</Label>
                 <Input type="number" min="0" step="0.01" value={totalPrice} onChange={(e) => setTotalPrice(e.target.value)} placeholder="0.00" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Acompte ({DEPOSIT_PERCENTAGE}%) (€)</Label>
+                <Input type="number" min="0" step="0.01" value={deposit} onChange={(e) => setDeposit(e.target.value)} placeholder="0.00" />
+              </div>
+              <div>
+                <Label>Solde restant (€)</Label>
+                <Input type="number" value={remaining.toFixed(2)} readOnly className="bg-muted" />
               </div>
             </div>
 

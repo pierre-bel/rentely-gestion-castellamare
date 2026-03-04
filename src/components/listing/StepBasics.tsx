@@ -101,7 +101,7 @@ const StepBasics = ({ formData, updateFormData }: StepBasicsProps) => {
     <div className="space-y-6">
       <FormCityCombobox
         value={
-          formData.city_id ? {
+          formData.city ? {
             city_id: formData.city_id,
             city_name: formData.city,
             state_region_id: formData.state_region_id,

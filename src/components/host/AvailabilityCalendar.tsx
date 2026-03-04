@@ -18,7 +18,6 @@ import {
   subMonths,
   startOfWeek,
   endOfWeek,
-  isSameDay,
   isWithinInterval,
   parseISO,
 } from "date-fns";
@@ -45,10 +44,10 @@ interface BookingWithGuest {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  confirmed: "bg-primary/80 text-primary-foreground",
-  pending_payment: "bg-warning/80 text-white",
+  confirmed: "bg-primary text-primary-foreground",
+  pending_payment: "bg-amber-500 text-white",
   completed: "bg-muted text-muted-foreground",
-  cancelled: "bg-destructive/30 text-destructive-foreground line-through",
+  cancelled: "bg-destructive/30 text-destructive line-through",
   checked_in: "bg-primary text-primary-foreground",
 };
 
@@ -65,7 +64,6 @@ export default function AvailabilityCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedListing, setSelectedListing] = useState<string | null>(null);
 
-  // Fetch host's listings
   const { data: listings, isLoading: listingsLoading } = useQuery({
     queryKey: ["host-listings", user?.id],
     queryFn: async () => {
@@ -81,7 +79,6 @@ export default function AvailabilityCalendar() {
     enabled: !!user,
   });
 
-  // Fetch bookings for the visible month range (with some padding)
   const { data: bookings, isLoading: bookingsLoading } = useQuery({
     queryKey: ["host-calendar-bookings", user?.id, format(currentMonth, "yyyy-MM")],
     queryFn: async () => {
@@ -121,7 +118,6 @@ export default function AvailabilityCalendar() {
     enabled: !!user,
   });
 
-  // Fetch blocked dates (listing_availability)
   const { data: blockedDates } = useQuery({
     queryKey: ["host-blocked-dates", user?.id, format(currentMonth, "yyyy-MM")],
     queryFn: async () => {
@@ -188,33 +184,32 @@ export default function AvailabilityCalendar() {
     );
   }
 
-  const weekDays = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+  const weekDays = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"];
 
   return (
     <div className="space-y-6">
       {/* Month navigation + Filter */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+          <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h2 className="text-xl font-semibold capitalize min-w-[180px] text-center">
+          <h2 className="text-lg font-semibold capitalize min-w-[160px] text-center">
             {format(currentMonth, "MMMM yyyy", { locale: fr })}
           </h2>
-          <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+          <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(new Date())} className="text-sm">
+          <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(new Date())} className="text-xs">
             Aujourd'hui
           </Button>
         </div>
 
-        {/* Listing filter */}
         {listings && listings.length > 1 && (
           <div className="flex items-center gap-2 flex-wrap">
             <Badge
               variant={selectedListing === null ? "default" : "outline"}
-              className="cursor-pointer"
+              className="cursor-pointer text-xs"
               onClick={() => setSelectedListing(null)}
             >
               Tous ({listings.length})
@@ -223,7 +218,7 @@ export default function AvailabilityCalendar() {
               <Badge
                 key={l.id}
                 variant={selectedListing === l.id ? "default" : "outline"}
-                className="cursor-pointer"
+                className="cursor-pointer text-xs"
                 onClick={() => setSelectedListing(selectedListing === l.id ? null : l.id)}
               >
                 {l.title}
@@ -233,7 +228,6 @@ export default function AvailabilityCalendar() {
         )}
       </div>
 
-      {/* Calendars per listing */}
       {filteredListings.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -242,84 +236,70 @@ export default function AvailabilityCalendar() {
         </Card>
       ) : (
         filteredListings.map((listing) => (
-          <Card key={listing.id}>
-            <CardHeader className="pb-3">
+          <Card key={listing.id} className="overflow-hidden">
+            <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{listing.title}</CardTitle>
-                <Badge variant={listing.status === "approved" ? "default" : "secondary"}>
+                <CardTitle className="text-base">{listing.title}</CardTitle>
+                <Badge variant={listing.status === "approved" ? "default" : "secondary"} className="text-xs">
                   {listing.status === "approved" ? "Actif" : listing.status}
                 </Badge>
               </div>
               {listing.city && (
-                <p className="text-sm text-muted-foreground">{listing.city}</p>
+                <p className="text-xs text-muted-foreground">{listing.city}</p>
               )}
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4">
               {/* Week day headers */}
-              <div className="grid grid-cols-7 gap-px mb-1">
+              <div className="grid grid-cols-7 mb-1">
                 {weekDays.map((d) => (
-                  <div key={d} className="text-center text-xs font-medium text-muted-foreground py-2">
+                  <div key={d} className="text-center text-[0.7rem] font-medium text-muted-foreground uppercase py-1.5">
                     {d}
                   </div>
                 ))}
               </div>
 
-              {/* Calendar grid */}
-              <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden">
+              {/* Calendar grid — compact rounded style */}
+              <div className="grid grid-cols-7 gap-1">
                 {calendarDays.map((day) => {
                   const dayBookings = getBookingsForDay(day, listing.id);
                   const blocked = isBlocked(day, listing.id);
                   const inMonth = isSameMonth(day, currentMonth);
                   const today = isToday(day);
                   const hasBooking = dayBookings.length > 0;
-                  const booking = dayBookings[0]; // Primary booking for the day
+                  const booking = dayBookings[0];
+
+                  const statusKey = booking?.status || "";
+                  const isPending = statusKey === "pending_payment";
 
                   return (
                     <Tooltip key={day.toISOString()}>
                       <TooltipTrigger asChild>
                         <div
                           className={cn(
-                            "min-h-[70px] p-1 bg-card transition-colors relative",
-                            !inMonth && "opacity-40",
-                            today && "ring-2 ring-inset ring-primary/50",
-                            blocked && !hasBooking && "bg-destructive/10",
+                            "relative flex items-center justify-center h-10 w-full rounded-full text-sm transition-colors cursor-default select-none",
+                            !inMonth && "opacity-30",
+                            // Available
+                            !hasBooking && !blocked && inMonth && "hover:bg-accent",
+                            // Booked
+                            hasBooking && !isPending && "bg-primary text-primary-foreground font-medium",
+                            hasBooking && isPending && "bg-amber-500/80 text-white font-medium",
+                            // Blocked
+                            blocked && !hasBooking && "bg-destructive/20 text-destructive line-through",
+                            // Today ring
+                            today && !hasBooking && "ring-2 ring-primary/50 font-bold",
                           )}
                         >
-                          <span
-                            className={cn(
-                              "text-xs font-medium block text-right",
-                              today && "text-primary font-bold",
-                              !inMonth && "text-muted-foreground"
-                            )}
-                          >
-                            {format(day, "d")}
-                          </span>
-                          {hasBooking && booking && (
-                            <div
-                              className={cn(
-                                "text-[10px] leading-tight px-1 py-0.5 rounded mt-0.5 truncate",
-                                STATUS_COLORS[booking.status] || "bg-primary/20 text-foreground"
-                              )}
-                            >
-                              <span className="font-medium">{booking.guest_name}</span>
-                            </div>
-                          )}
-                          {blocked && !hasBooking && (
-                            <div className="text-[10px] text-destructive font-medium mt-1 text-center">
-                              Bloqué
-                            </div>
-                          )}
+                          {format(day, "d")}
+                          {/* Small dot for available days */}
                           {!hasBooking && !blocked && inMonth && (
-                            <div className="absolute bottom-1 left-1/2 -translate-x-1/2">
-                              <div className="w-1.5 h-1.5 rounded-full bg-success/60" />
-                            </div>
+                            <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-500/70" />
                           )}
                         </div>
                       </TooltipTrigger>
-                      {hasBooking && booking && (
-                        <TooltipContent side="bottom" className="max-w-[260px]">
-                          <div className="space-y-1.5">
-                            <p className="font-semibold">{booking.guest_name}</p>
+                      {(hasBooking && booking) ? (
+                        <TooltipContent side="bottom" className="max-w-[240px]">
+                          <div className="space-y-1">
+                            <p className="font-semibold text-sm">{booking.guest_name}</p>
                             <div className="flex items-center gap-1.5 text-xs">
                               <Mail className="h-3 w-3 text-muted-foreground" />
                               <span>{booking.guest_email}</span>
@@ -345,7 +325,11 @@ export default function AvailabilityCalendar() {
                             )}
                           </div>
                         </TooltipContent>
-                      )}
+                      ) : blocked ? (
+                        <TooltipContent side="bottom">
+                          <p className="text-xs">Bloqué</p>
+                        </TooltipContent>
+                      ) : null}
                     </Tooltip>
                   );
                 })}
@@ -354,19 +338,19 @@ export default function AvailabilityCalendar() {
               {/* Legend */}
               <div className="flex items-center gap-4 mt-3 flex-wrap">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <div className="w-2.5 h-2.5 rounded-full bg-success/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/70" />
                   Disponible
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <div className="w-2.5 h-2.5 rounded bg-primary/80" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary" />
                   Réservé
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <div className="w-2.5 h-2.5 rounded bg-warning/80" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
                   En attente
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <div className="w-2.5 h-2.5 rounded bg-destructive/30" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-destructive/30" />
                   Bloqué
                 </div>
               </div>
@@ -379,10 +363,10 @@ export default function AvailabilityCalendar() {
       {bookings && bookings.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Réservations à venir</CardTitle>
+            <CardTitle className="text-base">Réservations à venir</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {bookings
                 .filter((b) => {
                   if (selectedListing && b.listing_id !== selectedListing) return false;
@@ -392,16 +376,16 @@ export default function AvailabilityCalendar() {
                 .map((booking) => (
                   <div
                     key={booking.id}
-                    className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-xl border bg-card hover:bg-accent/30 transition-colors"
                   >
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{booking.guest_name}</span>
+                        <span className="font-medium text-sm">{booking.guest_name}</span>
                         <Badge variant="secondary" className="text-[10px]">
                           {STATUS_LABELS[booking.status] || booking.status}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         {booking.listing_title} — {format(parseISO(booking.checkin_date), "d MMM", { locale: fr })} au{" "}
                         {format(parseISO(booking.checkout_date), "d MMM yyyy", { locale: fr })}
                       </p>
@@ -418,7 +402,7 @@ export default function AvailabilityCalendar() {
                         )}
                       </div>
                     </div>
-                    <div className="text-right text-sm text-muted-foreground">
+                    <div className="text-right text-xs text-muted-foreground">
                       {booking.guests} pers.
                     </div>
                   </div>
