@@ -36,6 +36,7 @@ interface BookingsTableProps {
   onCancelBooking: (booking: Booking) => void;
   onContactSupport: (booking: Booking) => void;
   onContactGuest: (booking: Booking) => void;
+  onEditBooking?: (booking: Booking) => void;
 }
 
 const formatBookingDates = (checkin: string, checkout: string) => {
@@ -62,7 +63,7 @@ const getInitials = (name: string | null) => {
 
 const headers = ["ID", "Bien", "Locataire", "Dates", "Montant", "Statut", "Action"];
 
-export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSupport, onContactGuest }: BookingsTableProps) => {
+export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSupport, onContactGuest, onEditBooking }: BookingsTableProps) => {
   if (loading) {
     return (
       <div className="rounded-lg border overflow-hidden">
@@ -143,6 +144,11 @@ export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSup
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    {(booking.status === 'confirmed' || booking.status === 'pending_payment') && onEditBooking && (
+                      <DropdownMenuItem onClick={() => onEditBooking(booking)}>
+                        Modifier la réservation
+                      </DropdownMenuItem>
+                    )}
                     {booking.status === 'confirmed' && (
                       <DropdownMenuItem 
                         onClick={() => onCancelBooking(booking)}
