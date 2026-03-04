@@ -135,16 +135,22 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
             <div className="w-full">
               <p className="text-xs text-muted-foreground">Tarification</p>
               <div className="space-y-1 mt-1">
-                <div className="flex justify-between text-sm">
-                  <span>Prix total</span>
-                  <span className="font-semibold">{formatPrice(booking.total_price)}</span>
-                </div>
+                {bd?.rental_price != null && (
+                  <div className="flex justify-between text-sm">
+                    <span>Prix de location</span>
+                    <span>{formatPrice(bd.rental_price)}</span>
+                  </div>
+                )}
                 {booking.cleaning_fee != null && booking.cleaning_fee > 0 && (
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>dont frais de ménage</span>
+                  <div className="flex justify-between text-sm">
+                    <span>Frais de ménage</span>
                     <span>{formatPrice(booking.cleaning_fee)}</span>
                   </div>
                 )}
+                <div className="flex justify-between text-sm font-semibold border-t pt-1">
+                  <span>Prix total</span>
+                  <span>{formatPrice(booking.total_price)}</span>
+                </div>
                 {deposit != null && (
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>Acompte ({bd?.deposit_percentage || 30}%)</span>
