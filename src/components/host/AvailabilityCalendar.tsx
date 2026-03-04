@@ -84,9 +84,8 @@ export default function AvailabilityCalendar() {
         .from("bookings")
         .select(`
           id, checkin_date, checkout_date, status, guests, notes,
-          listing_id,
-          listings!inner(title, host_user_id),
-          profiles:guest_user_id(first_name, last_name, email, phone)
+          listing_id, guest_user_id,
+          listings!inner(title, host_user_id)
         `)
         .eq("listings.host_user_id", user.id)
         .gte("checkout_date", rangeStart)
@@ -94,20 +93,33 @@ export default function AvailabilityCalendar() {
         .not("status", "eq", "cancelled");
 
       if (error) throw error;
+      if (!data || data.length === 0) return [];
 
-      return (data || []).map((b: any) => ({
-        id: b.id,
-        checkin_date: b.checkin_date,
-        checkout_date: b.checkout_date,
-        status: b.status,
-        guests: b.guests,
-        notes: b.notes,
-        listing_id: b.listing_id,
-        listing_title: b.listings?.title || "—",
-        guest_name: `${b.profiles?.first_name || ""} ${b.profiles?.last_name || ""}`.trim() || "Locataire",
-        guest_email: b.profiles?.email || "",
-        guest_phone: b.profiles?.phone || null,
-      })) as BookingWithGuest[];
+      // Fetch guest profiles separately
+      const guestIds = [...new Set(data.map((b: any) => b.guest_user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, first_name, last_name, email, phone")
+        .in("id", guestIds);
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+
+      return data.map((b: any) => {
+        const profile = profileMap.get(b.guest_user_id);
+        return {
+          id: b.id,
+          checkin_date: b.checkin_date,
+          checkout_date: b.checkout_date,
+          status: b.status,
+          guests: b.guests,
+          notes: b.notes,
+          listing_id: b.listing_id,
+          listing_title: b.listings?.title || "—",
+          guest_name: profile ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Locataire" : "Locataire",
+          guest_email: profile?.email || "",
+          guest_phone: profile?.phone || null,
+        };
+      }) as BookingWithGuest[];
     },
     enabled: !!user,
   });
