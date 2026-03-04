@@ -161,15 +161,15 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   }, [totalNum, checkinDate, checkoutDate, defaultSchedules]);
 
   const updateScheduleItem = (index: number, field: keyof ScheduleItem, value: any) => {
-    setScheduleItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
-  };
-
-  const removeScheduleItem = (index: number) => {
-    setScheduleItems(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const addScheduleItem = () => {
-    setScheduleItems(prev => [...prev, { label: "", amount: 0, due_date: "" }]);
+    setScheduleItems(prev => {
+      const updated = prev.map((item, i) => i === index ? { ...item, [field]: value } : item);
+      // Auto-adjust last item (décompte) when any other amount changes
+      if (field === "amount" && updated.length > 1 && index < updated.length - 1) {
+        const sumOthers = updated.slice(0, -1).reduce((s, i) => s + i.amount, 0);
+        updated[updated.length - 1] = { ...updated[updated.length - 1], amount: Math.max(0, totalNum - sumOthers) };
+      }
+      return updated;
+    });
   };
 
   const resetForm = () => {
@@ -376,9 +376,6 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
             <Separator />
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">Échéances de paiement</p>
-              <Button type="button" variant="ghost" size="sm" onClick={addScheduleItem}>
-                + Ajouter
-              </Button>
             </div>
 
             {scheduleItems.length === 0 && (
@@ -389,25 +386,33 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
               </p>
             )}
 
-            {scheduleItems.map((item, idx) => (
-              <div key={idx} className="flex gap-2 items-end">
-                <div className="flex-1">
-                  <Label className="text-xs">Libellé</Label>
-                  <Input value={item.label} onChange={e => updateScheduleItem(idx, "label", e.target.value)} placeholder="Acompte" />
+            {scheduleItems.map((item, idx) => {
+              const isLast = idx === scheduleItems.length - 1 && scheduleItems.length > 1;
+              return (
+                <div key={idx} className="flex gap-2 items-end">
+                  <div className="flex-1">
+                    <Label className="text-xs">Libellé</Label>
+                    <Input value={item.label} readOnly className="bg-muted" />
+                  </div>
+                  <div className="w-24">
+                    <Label className="text-xs">Montant</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={item.amount || ""}
+                      readOnly={isLast}
+                      className={isLast ? "bg-muted" : ""}
+                      onChange={e => updateScheduleItem(idx, "amount", parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="w-32">
+                    <Label className="text-xs">Échéance</Label>
+                    <Input type="date" value={item.due_date} onChange={e => updateScheduleItem(idx, "due_date", e.target.value)} />
+                  </div>
                 </div>
-                <div className="w-24">
-                  <Label className="text-xs">Montant</Label>
-                  <Input type="number" min="0" step="0.01" value={item.amount || ""} onChange={e => updateScheduleItem(idx, "amount", parseFloat(e.target.value) || 0)} />
-                </div>
-                <div className="w-32">
-                  <Label className="text-xs">Échéance</Label>
-                  <Input type="date" value={item.due_date} onChange={e => updateScheduleItem(idx, "due_date", e.target.value)} />
-                </div>
-                <Button type="button" variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-destructive" onClick={() => removeScheduleItem(idx)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
+              );
+            })}
 
             {/* Notes */}
             <div>
