@@ -44,6 +44,7 @@ interface TimelineOverviewProps {
   bookings: BookingWithGuest[];
   blockedDates: { id: string; listing_id: string; start_date: string; end_date: string; price: number | null }[];
   currentMonth: Date;
+  onBookingClick?: (booking: BookingWithGuest) => void;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -60,7 +61,7 @@ const STATUS_LABELS: Record<string, string> = {
   checked_in: "En cours",
 };
 
-export default function TimelineOverview({ listings, bookings, blockedDates, currentMonth }: TimelineOverviewProps) {
+export default function TimelineOverview({ listings, bookings, blockedDates, currentMonth, onBookingClick }: TimelineOverviewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const days = useMemo(() => eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }), [currentMonth]);
 
@@ -216,11 +217,12 @@ export default function TimelineOverview({ listings, bookings, blockedDates, cur
                           <TooltipTrigger asChild>
                             <div
                               className={cn(
-                                "absolute top-2 bottom-2 rounded-md flex items-center px-1.5 cursor-default overflow-hidden",
+                                "absolute top-2 bottom-2 rounded-md flex items-center px-1.5 cursor-pointer overflow-hidden transition-opacity hover:opacity-90",
                                 colorClass,
                                 "text-primary-foreground shadow-sm",
                               )}
                               style={{ left: left + 2, width }}
+                              onClick={() => onBookingClick?.(booking)}
                             >
                               <span className="text-[11px] font-medium truncate leading-none whitespace-nowrap">
                                 {displayName}
