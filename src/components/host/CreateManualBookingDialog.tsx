@@ -158,6 +158,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
           deposit: depositNum,
           remaining: remaining,
           deposit_percentage: DEPOSIT_PERCENTAGE,
+          tenant_id: selectedTenantId || undefined,
         },
         notes: [
           tenant ? `Locataire: ${tenant.first_name} ${tenant.last_name || ""}`.trim() : null,
