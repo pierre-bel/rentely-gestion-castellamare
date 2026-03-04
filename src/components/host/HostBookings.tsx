@@ -332,7 +332,7 @@ export default function HostBookings() {
         const refundAmount = response.refund_amount || 0;
         toast({
           title: "Booking Cancelled",
-          description: `The booking has been cancelled. The guest will receive a full refund of $${refundAmount.toFixed(2)}.`,
+          description: `La réservation a été annulée. Le locataire recevra un remboursement de ${refundAmount.toFixed(2)} €.`,
         });
 
         setCancelDialogOpen(false);
