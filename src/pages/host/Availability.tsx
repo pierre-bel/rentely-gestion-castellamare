@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -10,14 +10,21 @@ import { format, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns
 import { fr } from "date-fns/locale";
 import AvailabilityCalendar from "@/components/host/AvailabilityCalendar";
 import TimelineOverview from "@/components/host/TimelineOverview";
+import { BookingDetailDialog, type BookingDetailData } from "@/components/host/BookingDetailDialog";
+import { EditManualBookingDialog } from "@/components/host/EditManualBookingDialog";
 
 type ViewMode = "grid" | "timeline";
 
 export default function Availability() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedListing, setSelectedListing] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("timeline");
+  const [detailBooking, setDetailBooking] = useState<BookingDetailData | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [editBooking, setEditBooking] = useState<any>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const { data: listings, isLoading: listingsLoading } = useQuery({
     queryKey: ["host-listings", user?.id],
@@ -44,7 +51,7 @@ export default function Availability() {
 
       const { data, error } = await supabase
         .from("bookings")
-        .select("id, checkin_date, checkout_date, status, guests, notes, listing_id, guest_user_id")
+        .select("id, checkin_date, checkout_date, status, guests, notes, listing_id, guest_user_id, total_price, cleaning_fee, pricing_breakdown, nights")
         .in("listing_id", listingIds)
         .gte("checkout_date", rangeStart)
         .lte("checkin_date", rangeEnd)
@@ -60,13 +67,37 @@ export default function Availability() {
         .select("id, first_name, last_name, email, phone")
         .in("id", guestIds);
 
+      // Also fetch tenant names for bookings with tenant_id in pricing_breakdown
+      const tenantIds = data
+        .map((b: any) => b.pricing_breakdown?.tenant_id)
+        .filter(Boolean) as string[];
+      
+      let tenantMap = new Map<string, any>();
+      if (tenantIds.length > 0) {
+        const { data: tenants } = await supabase
+          .from("tenants")
+          .select("id, first_name, last_name, email, phone")
+          .in("id", [...new Set(tenantIds)]);
+        tenantMap = new Map((tenants || []).map((t: any) => [t.id, t]));
+      }
+
       const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
 
       return data.map((b: any) => {
         const profile = profileMap.get(b.guest_user_id);
-        // Extract tenant name from notes if present (format: "Locataire: Prénom Nom | ...")
+        const tenantId = b.pricing_breakdown?.tenant_id;
+        const tenant = tenantId ? tenantMap.get(tenantId) : null;
+
+        // Priority: tenant from pricing_breakdown > tenant from notes > profile
         let guestName = "Locataire";
-        if (b.notes) {
+        let guestEmail = profile?.email || "";
+        let guestPhone = profile?.phone || null;
+
+        if (tenant) {
+          guestName = `${tenant.first_name} ${tenant.last_name || ""}`.trim();
+          guestEmail = tenant.email || guestEmail;
+          guestPhone = tenant.phone || guestPhone;
+        } else if (b.notes) {
           const tenantMatch = b.notes.match(/Locataire:\s*([^|]+)/);
           if (tenantMatch) {
             guestName = tenantMatch[1].trim();
@@ -76,18 +107,23 @@ export default function Availability() {
         } else if (profile) {
           guestName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "Locataire";
         }
+
         return {
           id: b.id,
           checkin_date: b.checkin_date,
           checkout_date: b.checkout_date,
           status: b.status,
           guests: b.guests,
+          nights: b.nights,
           notes: b.notes,
           listing_id: b.listing_id,
           listing_title: listingMap.get(b.listing_id) || "—",
           guest_name: guestName,
-          guest_email: profile?.email || "",
-          guest_phone: profile?.phone || null,
+          guest_email: guestEmail,
+          guest_phone: guestPhone,
+          total_price: b.total_price,
+          cleaning_fee: b.cleaning_fee,
+          pricing_breakdown: b.pricing_breakdown,
         };
       });
     },
@@ -118,6 +154,29 @@ export default function Availability() {
     if (selectedListing) return listings.filter((l) => l.id === selectedListing);
     return listings;
   }, [listings, selectedListing]);
+
+  const handleBookingClick = (booking: any) => {
+    setDetailBooking(booking as BookingDetailData);
+    setDetailOpen(true);
+  };
+
+  const handleEditFromDetail = (booking: BookingDetailData) => {
+    setEditBooking({
+      id: booking.id,
+      listing_id: booking.listing_id,
+      listing_title: booking.listing_title,
+      checkin_date: booking.checkin_date,
+      checkout_date: booking.checkout_date,
+      nights: booking.nights,
+      guests: booking.guests,
+      total_price: booking.total_price,
+      cleaning_fee: booking.cleaning_fee,
+      notes: booking.notes,
+      status: booking.status,
+      pricing_breakdown: booking.pricing_breakdown,
+    });
+    setEditOpen(true);
+  };
 
   const isLoading = listingsLoading || bookingsLoading;
 
@@ -204,6 +263,7 @@ export default function Availability() {
           bookings={bookings || []}
           blockedDates={blockedDates || []}
           currentMonth={currentMonth}
+          onBookingClick={handleBookingClick}
         />
       ) : (
         <AvailabilityCalendar
@@ -213,6 +273,21 @@ export default function Availability() {
           currentMonth={currentMonth}
         />
       )}
+
+      {/* Booking detail dialog */}
+      <BookingDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        booking={detailBooking}
+        onEdit={handleEditFromDetail}
+      />
+
+      {/* Edit dialog */}
+      <EditManualBookingDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        booking={editBooking}
+      />
     </div>
   );
 }
