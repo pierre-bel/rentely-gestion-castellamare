@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
+import { Copy, Check, Code } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { DateRange } from "react-day-picker";
 import { format, parseISO, isWithinInterval } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -212,8 +214,51 @@ const StepAvailability = ({ formData, updateFormData, listingId }: StepAvailabil
           <span className="text-muted-foreground">Bloqué</span>
         </div>
       </div>
+
+      {/* Embed code section */}
+      {listingId && <EmbedCodeSection listingId={listingId} />}
     </div>
   );
 };
+
+function EmbedCodeSection({ listingId }: { listingId: string }) {
+  const [copied, setCopied] = useState(false);
+  const baseUrl = window.location.origin;
+  const embedUrl = `${baseUrl}/embed/availability/${listingId}`;
+  const iframeCode = `<iframe src="${embedUrl}" width="100%" height="450" frameborder="0" style="border:none;border-radius:12px;max-width:640px;" title="Disponibilités"></iframe>`;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(iframeCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="border rounded-xl p-4 bg-muted/30 space-y-3">
+      <div className="flex items-center gap-2">
+        <Code className="h-4 w-4 text-muted-foreground" />
+        <h4 className="text-sm font-semibold text-foreground">Intégrer ce calendrier sur un site externe</h4>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Copiez le code ci-dessous et collez-le dans le HTML de votre site pour afficher le calendrier de disponibilité en temps réel.
+      </p>
+      <div className="relative">
+        <pre className="bg-card border rounded-lg p-3 text-xs font-mono text-foreground overflow-x-auto whitespace-pre-wrap break-all">
+          {iframeCode}
+        </pre>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="absolute top-2 right-2 h-7 gap-1.5 text-xs"
+          onClick={handleCopy}
+        >
+          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          {copied ? "Copié" : "Copier"}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export default StepAvailability;
