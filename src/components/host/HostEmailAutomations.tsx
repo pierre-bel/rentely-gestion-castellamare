@@ -101,7 +101,14 @@ export default function HostEmailAutomations() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (automation: Partial<EmailAutomation>) => {
+    mutationFn: async (automation: {
+      name: string;
+      subject: string;
+      body_html: string;
+      trigger_type: "booking_confirmed" | "days_before_checkin" | "day_of_checkin" | "days_after_checkin" | "days_before_checkout" | "day_of_checkout" | "days_after_checkout";
+      trigger_days: number;
+      is_enabled: boolean;
+    }) => {
       if (editingAutomation) {
         const { error } = await supabase
           .from("email_automations")
@@ -111,7 +118,7 @@ export default function HostEmailAutomations() {
       } else {
         const { error } = await supabase
           .from("email_automations")
-          .insert({ ...automation, host_user_id: user!.id });
+          .insert([{ ...automation, host_user_id: user!.id }]);
         if (error) throw error;
       }
     },
