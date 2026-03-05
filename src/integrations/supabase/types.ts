@@ -402,6 +402,114 @@ export type Database = {
           },
         ]
       }
+      email_automations: {
+        Row: {
+          body_html: string
+          created_at: string
+          host_user_id: string
+          id: string
+          is_enabled: boolean
+          listing_id: string | null
+          name: string
+          subject: string
+          trigger_days: number
+          trigger_type: Database["public"]["Enums"]["email_trigger_type"]
+          updated_at: string
+        }
+        Insert: {
+          body_html: string
+          created_at?: string
+          host_user_id: string
+          id?: string
+          is_enabled?: boolean
+          listing_id?: string | null
+          name: string
+          subject: string
+          trigger_days?: number
+          trigger_type: Database["public"]["Enums"]["email_trigger_type"]
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string
+          created_at?: string
+          host_user_id?: string
+          id?: string
+          is_enabled?: boolean
+          listing_id?: string | null
+          name?: string
+          subject?: string
+          trigger_days?: number
+          trigger_type?: Database["public"]["Enums"]["email_trigger_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_automations_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_automations_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_send_log: {
+        Row: {
+          automation_id: string | null
+          booking_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          recipient_email: string
+          resend_id: string | null
+          status: string
+          subject: string
+        }
+        Insert: {
+          automation_id?: string | null
+          booking_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          recipient_email: string
+          resend_id?: string | null
+          status?: string
+          subject: string
+        }
+        Update: {
+          automation_id?: string | null
+          booking_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          recipient_email?: string
+          resend_id?: string | null
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_send_log_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "email_automations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_send_log_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faqs: {
         Row: {
           answer: string
@@ -2448,6 +2556,14 @@ export type Database = {
         | "on_hold"
         | "resolved_approved"
         | "resolved_declined"
+      email_trigger_type:
+        | "booking_confirmed"
+        | "days_before_checkin"
+        | "day_of_checkin"
+        | "days_after_checkin"
+        | "days_before_checkout"
+        | "day_of_checkout"
+        | "days_after_checkout"
       listing_status: "draft" | "pending" | "approved" | "rejected" | "blocked"
       payout_status_enum: "pending" | "completed" | "failed" | "cancelled"
       property_type: "apartment" | "villa" | "room" | "house" | "condo"
@@ -2611,6 +2727,15 @@ export const Constants = {
         "on_hold",
         "resolved_approved",
         "resolved_declined",
+      ],
+      email_trigger_type: [
+        "booking_confirmed",
+        "days_before_checkin",
+        "day_of_checkin",
+        "days_after_checkin",
+        "days_before_checkout",
+        "day_of_checkout",
+        "days_after_checkout",
       ],
       listing_status: ["draft", "pending", "approved", "rejected", "blocked"],
       payout_status_enum: ["pending", "completed", "failed", "cancelled"],
