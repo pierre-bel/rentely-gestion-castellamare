@@ -411,6 +411,7 @@ export type Database = {
           is_enabled: boolean
           listing_id: string | null
           name: string
+          reply_to_email: string | null
           subject: string
           trigger_days: number
           trigger_type: Database["public"]["Enums"]["email_trigger_type"]
@@ -424,6 +425,7 @@ export type Database = {
           is_enabled?: boolean
           listing_id?: string | null
           name: string
+          reply_to_email?: string | null
           subject: string
           trigger_days?: number
           trigger_type: Database["public"]["Enums"]["email_trigger_type"]
@@ -437,6 +439,7 @@ export type Database = {
           is_enabled?: boolean
           listing_id?: string | null
           name?: string
+          reply_to_email?: string | null
           subject?: string
           trigger_days?: number
           trigger_type?: Database["public"]["Enums"]["email_trigger_type"]
