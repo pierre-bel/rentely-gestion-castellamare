@@ -47,11 +47,20 @@ Deno.serve(async (req) => {
     const { action } = body;
 
     if (action === 'test') {
-      // Test send: send a test email to the host's own email
-      const { subject, body_html, test_email, variables } = body;
+      const { subject, body_html, test_email, variables, reply_to_email } = body;
 
       const processedSubject = replacePlaceholders(subject, variables || {});
       const processedBody = replacePlaceholders(body_html, variables || {});
+
+      const emailPayload: Record<string, unknown> = {
+        from: 'Rentely <onboarding@resend.dev>',
+        to: [test_email],
+        subject: processedSubject,
+        html: processedBody,
+      };
+      if (reply_to_email) {
+        emailPayload.reply_to = reply_to_email;
+      }
 
       const resendRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -59,12 +68,7 @@ Deno.serve(async (req) => {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          from: 'Rentely <onboarding@resend.dev>',
-          to: [test_email],
-          subject: processedSubject,
-          html: processedBody,
-        }),
+        body: JSON.stringify(emailPayload),
       });
 
       const resendData = await resendRes.json();
@@ -142,18 +146,23 @@ Deno.serve(async (req) => {
       const processedSubject = replacePlaceholders(automation.subject, variables);
       const processedBody = replacePlaceholders(automation.body_html, variables);
 
+      const emailPayload: Record<string, unknown> = {
+        from: 'Rentely <onboarding@resend.dev>',
+        to: [guest.email],
+        subject: processedSubject,
+        html: processedBody,
+      };
+      if (automation.reply_to_email) {
+        emailPayload.reply_to = automation.reply_to_email;
+      }
+
       const resendRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          from: 'Rentely <onboarding@resend.dev>',
-          to: [guest.email],
-          subject: processedSubject,
-          html: processedBody,
-        }),
+        body: JSON.stringify(emailPayload),
       });
 
       const resendData = await resendRes.json();
