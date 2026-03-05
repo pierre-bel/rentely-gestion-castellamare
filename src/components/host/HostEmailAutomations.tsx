@@ -3,18 +3,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, Send, Mail, Info, Copy } from "lucide-react";
+import { Plus, Pencil, Trash2, Send, Mail } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import DynamicVariablesPanel, { DYNAMIC_VARIABLES } from "./email/DynamicVariablesPanel";
+import EmailBodyEditor from "./email/EmailBodyEditor";
 
 const TRIGGER_LABELS: Record<string, string> = {
   booking_confirmed: "À la confirmation de réservation",
@@ -26,23 +27,6 @@ const TRIGGER_LABELS: Record<string, string> = {
   days_after_checkout: "X jours après le départ",
 };
 
-const DYNAMIC_VARIABLES = [
-  { key: "guest_first_name", label: "Prénom du locataire" },
-  { key: "guest_last_name", label: "Nom du locataire" },
-  { key: "guest_full_name", label: "Nom complet du locataire" },
-  { key: "guest_email", label: "E-mail du locataire" },
-  { key: "checkin_date", label: "Date d'arrivée" },
-  { key: "checkout_date", label: "Date de départ" },
-  { key: "nights", label: "Nombre de nuits" },
-  { key: "guests_count", label: "Nombre de voyageurs" },
-  { key: "total_price", label: "Prix total" },
-  { key: "listing_title", label: "Nom du bien" },
-  { key: "listing_address", label: "Adresse du bien" },
-  { key: "listing_city", label: "Ville du bien" },
-  { key: "listing_country", label: "Pays du bien" },
-  { key: "booking_id", label: "ID de réservation" },
-];
-
 interface EmailAutomation {
   id: string;
   name: string;
@@ -52,20 +36,9 @@ interface EmailAutomation {
   trigger_days: number;
   is_enabled: boolean;
   listing_id: string | null;
+  reply_to_email: string | null;
   created_at: string;
 }
-
-const DEFAULT_BODY = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <h2>Bonjour {{guest_first_name}},</h2>
-  <p>Votre réservation pour <strong>{{listing_title}}</strong> est confirmée.</p>
-  <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-    <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Arrivée</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">{{checkin_date}}</td></tr>
-    <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Départ</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">{{checkout_date}}</td></tr>
-    <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Nuits</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">{{nights}}</td></tr>
-    <tr><td style="padding: 8px;"><strong>Total</strong></td><td style="padding: 8px;">{{total_price}}</td></tr>
-  </table>
-  <p>À bientôt !</p>
-</div>`;
 
 export default function HostEmailAutomations() {
   const { user } = useAuth();
@@ -81,10 +54,11 @@ export default function HostEmailAutomations() {
   // Form state
   const [formName, setFormName] = useState("");
   const [formSubject, setFormSubject] = useState("");
-  const [formBody, setFormBody] = useState(DEFAULT_BODY);
+  const [formBody, setFormBody] = useState("");
   const [formTrigger, setFormTrigger] = useState("booking_confirmed");
   const [formDays, setFormDays] = useState(1);
   const [formEnabled, setFormEnabled] = useState(true);
+  const [formReplyTo, setFormReplyTo] = useState("");
 
   const { data: automations = [], isLoading } = useQuery({
     queryKey: ["email-automations", user?.id],
@@ -95,7 +69,7 @@ export default function HostEmailAutomations() {
         .eq("host_user_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as EmailAutomation[];
+      return data as unknown as EmailAutomation[];
     },
     enabled: !!user?.id,
   });
@@ -108,17 +82,18 @@ export default function HostEmailAutomations() {
       trigger_type: "booking_confirmed" | "days_before_checkin" | "day_of_checkin" | "days_after_checkin" | "days_before_checkout" | "day_of_checkout" | "days_after_checkout";
       trigger_days: number;
       is_enabled: boolean;
+      reply_to_email: string | null;
     }) => {
       if (editingAutomation) {
         const { error } = await supabase
           .from("email_automations")
-          .update(automation)
+          .update(automation as any)
           .eq("id", editingAutomation.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("email_automations")
-          .insert([{ ...automation, host_user_id: user!.id }]);
+          .insert([{ ...automation, host_user_id: user!.id } as any]);
         if (error) throw error;
       }
     },
@@ -160,10 +135,11 @@ export default function HostEmailAutomations() {
     setEditingAutomation(null);
     setFormName("");
     setFormSubject("Confirmation de votre réservation - {{listing_title}}");
-    setFormBody(DEFAULT_BODY);
+    setFormBody("");
     setFormTrigger("booking_confirmed");
     setFormDays(1);
     setFormEnabled(true);
+    setFormReplyTo(user?.email || "");
     setDialogOpen(true);
   };
 
@@ -175,6 +151,7 @@ export default function HostEmailAutomations() {
     setFormTrigger(auto.trigger_type);
     setFormDays(auto.trigger_days);
     setFormEnabled(auto.is_enabled);
+    setFormReplyTo(auto.reply_to_email || "");
     setDialogOpen(true);
   };
 
@@ -190,6 +167,7 @@ export default function HostEmailAutomations() {
       trigger_type: formTrigger as any,
       trigger_days: formDays,
       is_enabled: formEnabled,
+      reply_to_email: formReplyTo || null,
     });
   };
 
@@ -201,7 +179,6 @@ export default function HostEmailAutomations() {
       DYNAMIC_VARIABLES.forEach((v) => {
         testVariables[v.key] = `[${v.label}]`;
       });
-      // Override some with sample data
       testVariables.guest_first_name = "Jean";
       testVariables.guest_last_name = "Dupont";
       testVariables.guest_full_name = "Jean Dupont";
@@ -223,6 +200,7 @@ export default function HostEmailAutomations() {
           body_html: testAutomation.body_html,
           test_email: testEmail,
           variables: testVariables,
+          reply_to_email: testAutomation.reply_to_email,
         },
       });
 
@@ -242,11 +220,6 @@ export default function HostEmailAutomations() {
     setTestAutomation(auto);
     setTestEmail(user?.email || "");
     setTestDialogOpen(true);
-  };
-
-  const copyVariable = (key: string) => {
-    navigator.clipboard.writeText(`{{${key}}}`);
-    toast({ title: "Copié !", description: `{{${key}}} copié dans le presse-papier` });
   };
 
   const showDays = ["days_before_checkin", "days_after_checkin", "days_before_checkout", "days_after_checkout"].includes(formTrigger);
@@ -275,98 +248,77 @@ export default function HostEmailAutomations() {
           </Button>
         </div>
 
-        {/* Variables reference */}
-        <div className="mb-6 p-4 rounded-lg border border-border bg-muted/30">
-          <div className="flex items-center gap-2 mb-3">
-            <Info className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Variables dynamiques disponibles</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {DYNAMIC_VARIABLES.map((v) => (
-              <Tooltip key={v.key}>
-                <TooltipTrigger asChild>
-                  <Badge
-                    variant="secondary"
-                    className="cursor-pointer hover:bg-accent transition-colors"
-                    onClick={() => copyVariable(v.key)}
-                  >
-                    <Copy className="h-3 w-3 mr-1" />
-                    {`{{${v.key}}}`}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>{v.label} — cliquer pour copier</TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
-        </div>
+        <DynamicVariablesPanel />
 
-        {isLoading ? (
-          <p className="text-muted-foreground text-sm">Chargement...</p>
-        ) : automations.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Aucune automatisation e-mail configurée.</p>
-            <p className="text-sm">Créez votre premier modèle pour commencer.</p>
-          </div>
-        ) : (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Déclencheur</TableHead>
-                  <TableHead>Sujet</TableHead>
-                  <TableHead>Actif</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {automations.map((auto) => (
-                  <TableRow key={auto.id}>
-                    <TableCell className="font-medium">{auto.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{getTriggerLabel(auto)}</Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                      {auto.subject}
-                    </TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={auto.is_enabled}
-                        onCheckedChange={(checked) =>
-                          toggleMutation.mutate({ id: auto.id, enabled: checked })
-                        }
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => openTestDialog(auto)}>
-                              <Send className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Envoyer un test</TooltipContent>
-                        </Tooltip>
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(auto)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteMutation.mutate(auto.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+        <div className="mt-6">
+          {isLoading ? (
+            <p className="text-muted-foreground text-sm">Chargement...</p>
+          ) : automations.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Aucune automatisation e-mail configurée.</p>
+              <p className="text-sm">Créez votre premier modèle pour commencer.</p>
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Déclencheur</TableHead>
+                    <TableHead>Sujet</TableHead>
+                    <TableHead>Actif</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+                </TableHeader>
+                <TableBody>
+                  {automations.map((auto) => (
+                    <TableRow key={auto.id}>
+                      <TableCell className="font-medium">{auto.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{getTriggerLabel(auto)}</Badge>
+                      </TableCell>
+                      <TableCell className="max-w-[200px] truncate text-muted-foreground">
+                        {auto.subject}
+                      </TableCell>
+                      <TableCell>
+                        <Switch
+                          checked={auto.is_enabled}
+                          onCheckedChange={(checked) =>
+                            toggleMutation.mutate({ id: auto.id, enabled: checked })
+                          }
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" onClick={() => openTestDialog(auto)}>
+                                <Send className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Envoyer un test</TooltipContent>
+                          </Tooltip>
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(auto)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteMutation.mutate(auto.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </div>
       </CardContent>
 
       {/* Create/Edit Dialog */}
@@ -386,6 +338,19 @@ export default function HostEmailAutomations() {
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder="Ex: Confirmation de réservation"
               />
+            </div>
+
+            <div>
+              <Label>Adresse e-mail de réponse (Reply-To)</Label>
+              <Input
+                type="email"
+                value={formReplyTo}
+                onChange={(e) => setFormReplyTo(e.target.value)}
+                placeholder="votre@email.com"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                L'adresse à laquelle le locataire répondra. Laissez vide pour utiliser votre e-mail par défaut.
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -429,16 +394,7 @@ export default function HostEmailAutomations() {
               </p>
             </div>
 
-            <div>
-              <Label>Corps de l'e-mail (HTML) *</Label>
-              <Textarea
-                value={formBody}
-                onChange={(e) => setFormBody(e.target.value)}
-                rows={12}
-                className="font-mono text-xs"
-                placeholder="<div>Bonjour {{guest_first_name}},...</div>"
-              />
-            </div>
+            <EmailBodyEditor value={formBody} onChange={setFormBody} />
 
             <div className="flex items-center gap-2">
               <Switch checked={formEnabled} onCheckedChange={setFormEnabled} />
