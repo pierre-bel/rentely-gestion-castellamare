@@ -19,6 +19,79 @@ function getCivility(gender: string | null): string {
   return '';
 }
 
+async function buildVariablesFromBooking(supabase: any, bookingId: string): Promise<Record<string, string>> {
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('id, checkin_date, checkout_date, nights, guests, total_price, guest_user_id, listing_id, pricing_breakdown')
+    .eq('id', bookingId)
+    .single();
+
+  if (!booking) throw new Error('Booking not found');
+
+  const { data: listing } = await supabase
+    .from('listings')
+    .select('title, address, city, country')
+    .eq('id', booking.listing_id)
+    .single();
+
+  const pricingBreakdown = booking.pricing_breakdown as Record<string, unknown> | null;
+  const tenantId = pricingBreakdown?.tenant_id as string | undefined;
+
+  let tenantFirstName = '';
+  let tenantLastName = '';
+  let tenantEmail = '';
+  let tenantGender: string | null = null;
+
+  if (tenantId) {
+    const serviceClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+    const { data: tenant } = await serviceClient
+      .from('tenants')
+      .select('first_name, last_name, email, gender')
+      .eq('id', tenantId)
+      .single();
+    if (tenant) {
+      tenantFirstName = tenant.first_name || '';
+      tenantLastName = tenant.last_name || '';
+      tenantEmail = tenant.email || '';
+      tenantGender = tenant.gender;
+    }
+  }
+
+  if (!tenantFirstName) {
+    const { data: guest } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, email')
+      .eq('id', booking.guest_user_id)
+      .single();
+    if (guest) {
+      tenantFirstName = guest.first_name || '';
+      tenantLastName = guest.last_name || '';
+      tenantEmail = tenantEmail || guest.email || '';
+    }
+  }
+
+  return {
+    guest_first_name: tenantFirstName,
+    guest_last_name: tenantLastName,
+    guest_full_name: `${tenantFirstName} ${tenantLastName}`.trim(),
+    guest_email: tenantEmail,
+    guest_civility: getCivility(tenantGender),
+    checkin_date: booking.checkin_date,
+    checkout_date: booking.checkout_date,
+    nights: String(booking.nights),
+    guests_count: String(booking.guests),
+    total_price: booking.total_price ? `${Number(booking.total_price).toFixed(2)} €` : '',
+    listing_title: listing?.title || '',
+    listing_address: listing?.address || '',
+    listing_city: listing?.city || '',
+    listing_country: listing?.country || '',
+    booking_id: booking.id,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -52,10 +125,18 @@ Deno.serve(async (req) => {
     const { action } = body;
 
     if (action === 'test') {
-      const { subject, body_html, test_email, variables, reply_to_email } = body;
+      const { subject, body_html, test_email, variables, reply_to_email, booking_id } = body;
 
-      const processedSubject = replacePlaceholders(subject, variables || {});
-      const processedBody = replacePlaceholders(body_html, variables || {});
+      // Build variables from real booking or use provided sample
+      let finalVariables: Record<string, string>;
+      if (booking_id) {
+        finalVariables = await buildVariablesFromBooking(supabase, booking_id);
+      } else {
+        finalVariables = variables || {};
+      }
+
+      const processedSubject = replacePlaceholders(subject, finalVariables);
+      const processedBody = replacePlaceholders(body_html, finalVariables);
 
       const emailPayload: Record<string, unknown> = {
         from: 'Rentely <onboarding@resend.dev>',
@@ -99,86 +180,16 @@ Deno.serve(async (req) => {
         throw new Error('Automation not found');
       }
 
-      const { data: booking, error: bookError } = await supabase
-        .from('bookings')
-        .select('id, checkin_date, checkout_date, nights, guests, total_price, guest_user_id, listing_id, pricing_breakdown')
-        .eq('id', booking_id)
-        .single();
-
-      if (bookError || !booking) {
-        throw new Error('Booking not found');
-      }
-
-      const { data: listing } = await supabase
-        .from('listings')
-        .select('title, address, city, country')
-        .eq('id', booking.listing_id)
-        .single();
+      const variables = await buildVariablesFromBooking(supabase, booking_id);
 
       // Determine recipient
       let recipientEmail: string;
-      const pricingBreakdown = booking.pricing_breakdown as Record<string, unknown> | null;
-      const tenantId = pricingBreakdown?.tenant_id as string | undefined;
-
-      // Get tenant info for variables (civility, email)
-      let tenantGender: string | null = null;
-      let tenantEmail: string | null = null;
-      let tenantFirstName = '';
-      let tenantLastName = '';
-
-      if (tenantId) {
-        const serviceClient = createClient(
-          Deno.env.get('SUPABASE_URL')!,
-          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-        );
-        const { data: tenant } = await serviceClient
-          .from('tenants')
-          .select('first_name, last_name, email, gender')
-          .eq('id', tenantId)
-          .single();
-        if (tenant) {
-          tenantGender = tenant.gender;
-          tenantEmail = tenant.email;
-          tenantFirstName = tenant.first_name || '';
-          tenantLastName = tenant.last_name || '';
-        }
-      }
-
-      // Determine recipient based on automation settings
       if (automation.recipient_type === 'fixed' && automation.recipient_email) {
         recipientEmail = automation.recipient_email;
-      } else if (tenantEmail) {
-        recipientEmail = tenantEmail;
       } else {
-        // Fallback to guest profile
-        const { data: guest } = await supabase
-          .from('profiles')
-          .select('first_name, last_name, email')
-          .eq('id', booking.guest_user_id)
-          .single();
-        if (!guest?.email) throw new Error('Recipient email not found');
-        recipientEmail = guest.email;
-        if (!tenantFirstName) tenantFirstName = guest.first_name || '';
-        if (!tenantLastName) tenantLastName = guest.last_name || '';
+        recipientEmail = variables.guest_email;
+        if (!recipientEmail) throw new Error('Recipient email not found');
       }
-
-      const variables: Record<string, string> = {
-        guest_first_name: tenantFirstName,
-        guest_last_name: tenantLastName,
-        guest_full_name: `${tenantFirstName} ${tenantLastName}`.trim(),
-        guest_email: tenantEmail || recipientEmail,
-        guest_civility: getCivility(tenantGender),
-        checkin_date: booking.checkin_date,
-        checkout_date: booking.checkout_date,
-        nights: String(booking.nights),
-        guests_count: String(booking.guests),
-        total_price: booking.total_price ? `${Number(booking.total_price).toFixed(2)} €` : '',
-        listing_title: listing?.title || '',
-        listing_address: listing?.address || '',
-        listing_city: listing?.city || '',
-        listing_country: listing?.country || '',
-        booking_id: booking.id,
-      };
 
       const processedSubject = replacePlaceholders(automation.subject, variables);
       const processedBody = replacePlaceholders(automation.body_html, variables);
@@ -211,7 +222,7 @@ Deno.serve(async (req) => {
 
       await serviceClient.from('email_send_log').insert({
         automation_id: automation.id,
-        booking_id: booking.id,
+        booking_id: booking_id,
         recipient_email: recipientEmail,
         subject: processedSubject,
         status: resendRes.ok ? 'sent' : 'failed',

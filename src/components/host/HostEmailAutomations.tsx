@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Pencil, Trash2, Send, Mail } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,11 +42,22 @@ interface EmailAutomation {
   trigger_type: string;
   trigger_days: number;
   is_enabled: boolean;
-  listing_id: string | null;
+  listing_ids: string[] | null;
   reply_to_email: string | null;
   recipient_type: string;
   recipient_email: string | null;
   created_at: string;
+}
+
+interface BookingForTest {
+  id: string;
+  checkin_date: string;
+  checkout_date: string;
+  nights: number;
+  guests: number;
+  total_price: number;
+  listing_id: string;
+  pricing_breakdown: Record<string, unknown> | null;
 }
 
 export default function HostEmailAutomations() {
@@ -58,6 +70,7 @@ export default function HostEmailAutomations() {
   const [testAutomation, setTestAutomation] = useState<EmailAutomation | null>(null);
   const [testEmail, setTestEmail] = useState("castellamare345@gmail.com");
   const [sendingTest, setSendingTest] = useState(false);
+  const [testBookingId, setTestBookingId] = useState<string>("sample");
 
   // Form state
   const [formName, setFormName] = useState("");
@@ -67,7 +80,7 @@ export default function HostEmailAutomations() {
   const [formDays, setFormDays] = useState(1);
   const [formEnabled, setFormEnabled] = useState(true);
   const [formReplyTo, setFormReplyTo] = useState("");
-  const [formListingId, setFormListingId] = useState<string>("all");
+  const [formListingIds, setFormListingIds] = useState<string[]>([]);
   const [formRecipientType, setFormRecipientType] = useState("tenant");
   const [formRecipientEmail, setFormRecipientEmail] = useState("");
 
@@ -95,6 +108,21 @@ export default function HostEmailAutomations() {
         .order("title");
       if (error) throw error;
       return data as Listing[];
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fetch recent bookings for test
+  const { data: recentBookings = [] } = useQuery({
+    queryKey: ["host-recent-bookings-for-test", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("id, checkin_date, checkout_date, nights, guests, total_price, listing_id, pricing_breakdown")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data as unknown as BookingForTest[];
     },
     enabled: !!user?.id,
   });
@@ -157,7 +185,7 @@ export default function HostEmailAutomations() {
     setFormDays(1);
     setFormEnabled(true);
     setFormReplyTo(user?.email || "");
-    setFormListingId("all");
+    setFormListingIds([]);
     setFormRecipientType("tenant");
     setFormRecipientEmail("");
     setDialogOpen(true);
@@ -172,7 +200,7 @@ export default function HostEmailAutomations() {
     setFormDays(auto.trigger_days);
     setFormEnabled(auto.is_enabled);
     setFormReplyTo(auto.reply_to_email || "");
-    setFormListingId(auto.listing_id || "all");
+    setFormListingIds(auto.listing_ids || []);
     setFormRecipientType(auto.recipient_type || "tenant");
     setFormRecipientEmail(auto.recipient_email || "");
     setDialogOpen(true);
@@ -195,7 +223,7 @@ export default function HostEmailAutomations() {
       trigger_days: formDays,
       is_enabled: formEnabled,
       reply_to_email: formReplyTo || null,
-      listing_id: formListingId === "all" ? null : formListingId,
+      listing_ids: formListingIds.length > 0 ? formListingIds : [],
       recipient_type: formRecipientType,
       recipient_email: formRecipientType === "fixed" ? formRecipientEmail : null,
     });
@@ -205,7 +233,28 @@ export default function HostEmailAutomations() {
     if (!testEmail || !testAutomation) return;
     setSendingTest(true);
     try {
-      const testVariables: Record<string, string> = {};
+      let testVariables: Record<string, string> = {};
+
+      if (testBookingId && testBookingId !== "sample") {
+        // Use real booking data via edge function
+        const { data, error } = await supabase.functions.invoke("send-email", {
+          body: {
+            action: "test",
+            subject: testAutomation.subject,
+            body_html: testAutomation.body_html,
+            test_email: testEmail,
+            booking_id: testBookingId,
+            reply_to_email: testAutomation.reply_to_email,
+          },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        toast({ title: "E-mail de test envoyé !", description: `Envoyé à ${testEmail}` });
+        setTestDialogOpen(false);
+        return;
+      }
+
+      // Fallback: sample data
       DYNAMIC_VARIABLES.forEach((v) => {
         testVariables[v.key] = `[${v.label}]`;
       });
@@ -251,6 +300,7 @@ export default function HostEmailAutomations() {
   const openTestDialog = (auto: EmailAutomation) => {
     setTestAutomation(auto);
     setTestEmail("castellamare345@gmail.com");
+    setTestBookingId("sample");
     setTestDialogOpen(true);
   };
 
@@ -264,9 +314,32 @@ export default function HostEmailAutomations() {
     return base;
   };
 
-  const getListingName = (listingId: string | null) => {
-    if (!listingId) return "Tous les biens";
-    return listings.find((l) => l.id === listingId)?.title || "—";
+  const getListingNames = (listingIds: string[] | null) => {
+    if (!listingIds || listingIds.length === 0) return "Tous les biens";
+    if (listingIds.length === listings.length && listings.length > 0) return "Tous les biens";
+    const names = listingIds.map((id) => listings.find((l) => l.id === id)?.title).filter(Boolean);
+    if (names.length <= 2) return names.join(", ");
+    return `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
+  };
+
+  const toggleListingId = (id: string) => {
+    setFormListingIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleAllListings = () => {
+    if (formListingIds.length === listings.length) {
+      setFormListingIds([]);
+    } else {
+      setFormListingIds(listings.map((l) => l.id));
+    }
+  };
+
+  const getBookingLabel = (b: BookingForTest) => {
+    const listing = listings.find((l) => l.id === b.listing_id);
+    const listingName = listing?.title || "—";
+    return `${listingName} — ${b.checkin_date} → ${b.checkout_date}`;
   };
 
   return (
@@ -302,7 +375,7 @@ export default function HostEmailAutomations() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nom</TableHead>
-                    <TableHead>Bien</TableHead>
+                    <TableHead>Bien(s)</TableHead>
                     <TableHead>Déclencheur</TableHead>
                     <TableHead>Destinataire</TableHead>
                     <TableHead>Actif</TableHead>
@@ -313,8 +386,8 @@ export default function HostEmailAutomations() {
                   {automations.map((auto) => (
                     <TableRow key={auto.id}>
                       <TableCell className="font-medium">{auto.name}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {getListingName(auto.listing_id)}
+                      <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">
+                        {getListingNames(auto.listing_ids)}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{getTriggerLabel(auto)}</Badge>
@@ -381,22 +454,51 @@ export default function HostEmailAutomations() {
               />
             </div>
 
-            {/* Listing selection */}
+            {/* Listing multi-select */}
             <div>
-              <Label>Bien concerné</Label>
-              <Select value={formListingId} onValueChange={setFormListingId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tous les biens" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les biens</SelectItem>
-                  {listings.map((l) => (
-                    <SelectItem key={l.id} value={l.id}>{l.title}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Bien(s) concerné(s)</Label>
+              <div className="mt-2 border rounded-md p-3 max-h-[160px] overflow-y-auto space-y-2">
+                <div className="flex items-center gap-2 pb-2 border-b mb-1">
+                  <Checkbox
+                    id="listing-all"
+                    checked={formListingIds.length === 0 || formListingIds.length === listings.length}
+                    onCheckedChange={() => {
+                      if (formListingIds.length === 0 || formListingIds.length === listings.length) {
+                        // If currently "all" (empty), keep empty
+                        setFormListingIds([]);
+                      } else {
+                        setFormListingIds([]);
+                      }
+                    }}
+                  />
+                  <Label htmlFor="listing-all" className="font-medium cursor-pointer text-sm">
+                    Tous les biens
+                  </Label>
+                </div>
+                {listings.map((l) => (
+                  <div key={l.id} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`listing-${l.id}`}
+                      checked={formListingIds.length === 0 || formListingIds.includes(l.id)}
+                      onCheckedChange={() => {
+                        if (formListingIds.length === 0) {
+                          // Was "all", now deselect this one
+                          setFormListingIds(listings.filter((x) => x.id !== l.id).map((x) => x.id));
+                        } else {
+                          toggleListingId(l.id);
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`listing-${l.id}`} className="font-normal cursor-pointer text-sm">
+                      {l.title}
+                    </Label>
+                  </div>
+                ))}
+              </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Choisissez un bien spécifique ou laissez « Tous les biens » pour l'appliquer partout.
+                {formListingIds.length === 0
+                  ? "Appliqué à tous les biens."
+                  : `${formListingIds.length} bien(s) sélectionné(s).`}
               </p>
             </div>
 
@@ -504,9 +606,6 @@ export default function HostEmailAutomations() {
             <DialogTitle>Envoyer un e-mail de test</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <p className="text-sm text-muted-foreground">
-              Un e-mail de test sera envoyé avec des données d'exemple pour les variables dynamiques.
-            </p>
             <div>
               <Label>Adresse e-mail de test</Label>
               <Input
@@ -519,6 +618,27 @@ export default function HostEmailAutomations() {
                 En mode sandbox Resend, les e-mails ne peuvent être envoyés qu'à l'adresse du propriétaire du compte.
               </p>
             </div>
+
+            <div>
+              <Label>Données de test</Label>
+              <Select value={testBookingId} onValueChange={setTestBookingId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisir une source de données" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sample">Données d'exemple fictives</SelectItem>
+                  {recentBookings.map((b) => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {getBookingLabel(b)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Choisissez une réservation existante pour tester les variables dynamiques avec de vraies données.
+              </p>
+            </div>
+
             {testAutomation && (
               <div className="p-3 rounded-lg bg-muted/50 text-sm">
                 <p><strong>Modèle :</strong> {testAutomation.name}</p>
