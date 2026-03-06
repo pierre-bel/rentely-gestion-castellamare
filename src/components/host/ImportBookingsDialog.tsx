@@ -256,7 +256,7 @@ export function ImportBookingsDialog({ open, onOpenChange }: Props) {
 
         const tenantName = [tenantFirstName, tenantLastName].filter(Boolean).join(" ");
 
-        const { error: bErr } = await supabase.from("bookings").insert({
+        const { data: newBooking, error: bErr } = await supabase.from("bookings").insert({
           listing_id: listing.id,
           guest_user_id: user.id,
           checkin_date: format(checkin, "yyyy-MM-dd"),
@@ -279,9 +279,41 @@ export function ImportBookingsDialog({ open, onOpenChange }: Props) {
             `Locataire: ${tenantName}`,
             d.notes ? String(d.notes).trim() : null,
           ].filter(Boolean).join(" | ") || null,
-        });
+        }).select("id").single();
 
         if (bErr) throw bErr;
+
+        // Mark payment items as paid based on import columns
+        const depositPaid = d.deposit_paid && ["oui", "yes", "1", "true"].includes(String(d.deposit_paid).toLowerCase().trim());
+        const balancePaid = d.balance_paid && ["oui", "yes", "1", "true"].includes(String(d.balance_paid).toLowerCase().trim());
+
+        if ((depositPaid || balancePaid) && newBooking?.id) {
+          // Wait briefly for payment items to be created by trigger
+          await new Promise(r => setTimeout(r, 500));
+          const { data: items } = await supabase
+            .from("booking_payment_items")
+            .select("id, sort_order")
+            .eq("booking_id", newBooking.id)
+            .order("sort_order");
+
+          if (items && items.length > 0) {
+            const idsToMark: string[] = [];
+            if (depositPaid && items[0]) idsToMark.push(items[0].id);
+            if (balancePaid && items.length > 1) {
+              // Mark all remaining items as paid
+              items.slice(1).forEach(i => idsToMark.push(i.id));
+            } else if (balancePaid && items.length === 1) {
+              idsToMark.push(items[0].id);
+            }
+            if (idsToMark.length > 0) {
+              await supabase
+                .from("booking_payment_items")
+                .update({ is_paid: true, paid_at: new Date().toISOString() })
+                .in("id", idsToMark);
+            }
+          }
+        }
+
         success++;
       } catch (err: any) {
         failed++;
