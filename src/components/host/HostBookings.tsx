@@ -25,8 +25,9 @@ import { BookingsTable } from "./BookingsTable";
 import { CreateDisputeDialog } from "@/components/dispute/CreateDisputeDialog";
 import { CreateManualBookingDialog } from "./CreateManualBookingDialog";
 import { EditManualBookingDialog } from "./EditManualBookingDialog";
+import { ImportBookingsDialog } from "./ImportBookingsDialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 
 interface Booking {
   id: string;
