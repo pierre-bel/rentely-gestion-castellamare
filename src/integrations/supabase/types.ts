@@ -1252,6 +1252,54 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_settings: {
+        Row: {
+          created_at: string
+          custom_footer_text: string | null
+          host_user_id: string
+          id: string
+          show_access_code: boolean
+          show_address: boolean
+          show_amenities: boolean
+          show_house_rules: boolean
+          show_map_link: boolean
+          show_payment_schedule: boolean
+          show_price: boolean
+          updated_at: string
+          welcome_message: string | null
+        }
+        Insert: {
+          created_at?: string
+          custom_footer_text?: string | null
+          host_user_id: string
+          id?: string
+          show_access_code?: boolean
+          show_address?: boolean
+          show_amenities?: boolean
+          show_house_rules?: boolean
+          show_map_link?: boolean
+          show_payment_schedule?: boolean
+          show_price?: boolean
+          updated_at?: string
+          welcome_message?: string | null
+        }
+        Update: {
+          created_at?: string
+          custom_footer_text?: string | null
+          host_user_id?: string
+          id?: string
+          show_access_code?: boolean
+          show_address?: boolean
+          show_amenities?: boolean
+          show_house_rules?: boolean
+          show_map_link?: boolean
+          show_payment_schedule?: boolean
+          show_price?: boolean
+          updated_at?: string
+          welcome_message?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           about: string | null
@@ -1785,6 +1833,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      public_portal_settings: {
+        Row: {
+          custom_footer_text: string | null
+          host_user_id: string | null
+          show_access_code: boolean | null
+          show_address: boolean | null
+          show_amenities: boolean | null
+          show_house_rules: boolean | null
+          show_map_link: boolean | null
+          show_payment_schedule: boolean | null
+          show_price: boolean | null
+          welcome_message: string | null
+        }
+        Insert: {
+          custom_footer_text?: string | null
+          host_user_id?: string | null
+          show_access_code?: boolean | null
+          show_address?: boolean | null
+          show_amenities?: boolean | null
+          show_house_rules?: boolean | null
+          show_map_link?: boolean | null
+          show_payment_schedule?: boolean | null
+          show_price?: boolean | null
+          welcome_message?: string | null
+        }
+        Update: {
+          custom_footer_text?: string | null
+          host_user_id?: string | null
+          show_access_code?: boolean | null
+          show_address?: boolean | null
+          show_amenities?: boolean | null
+          show_house_rules?: boolean | null
+          show_map_link?: boolean | null
+          show_payment_schedule?: boolean | null
+          show_price?: boolean | null
+          welcome_message?: string | null
+        }
+        Relationships: []
       }
       public_profiles: {
         Row: {
