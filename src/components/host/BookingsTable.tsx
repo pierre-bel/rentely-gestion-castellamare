@@ -12,7 +12,6 @@ import {
 import { MoreVertical } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { PaymentStatusBadge, getPaymentStatusFromItems, type PaymentItemForStatus } from "./PaymentStatusBadge";
 
 interface Booking {
   id: string;
@@ -34,7 +33,6 @@ interface Booking {
 interface BookingsTableProps {
   bookings: Booking[];
   loading: boolean;
-  paymentItemsMap?: Record<string, PaymentItemForStatus[]>;
   onCancelBooking: (booking: Booking) => void;
   onContactSupport: (booking: Booking) => void;
   onContactGuest: (booking: Booking) => void;
@@ -64,9 +62,9 @@ const getInitials = (name: string | null) => {
   return name.slice(0, 2).toUpperCase();
 };
 
-const headers = ["ID", "Bien", "Locataire", "Dates", "Montant", "Paiement", "Statut", "Action"];
+const headers = ["ID", "Bien", "Locataire", "Dates", "Montant", "Statut", "Action"];
 
-export const BookingsTable = ({ bookings, loading, paymentItemsMap, onCancelBooking, onContactSupport, onContactGuest, onEditBooking, onViewDetails }: BookingsTableProps) => {
+export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSupport, onContactGuest, onEditBooking, onViewDetails }: BookingsTableProps) => {
   if (loading) {
     return (
       <div className="rounded-lg border overflow-hidden">
@@ -135,9 +133,6 @@ export const BookingsTable = ({ bookings, loading, paymentItemsMap, onCancelBook
               </TableCell>
               <TableCell className="font-semibold">
                 {formatPrice(booking.host_payout_gross)}
-              </TableCell>
-              <TableCell>
-                <PaymentStatusBadge status={getPaymentStatusFromItems(paymentItemsMap?.[booking.id] || [])} />
               </TableCell>
               <TableCell>
                 <StatusBadge status={booking.status} />
