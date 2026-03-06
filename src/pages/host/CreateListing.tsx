@@ -168,7 +168,7 @@ const CreateListing = () => {
         const demoListing = {
           id: newListingId,
           host_user_id: user.id,
-          status: 'pending',
+          status: 'approved',
           title: formData.title,
           description: formData.description,
           type: formData.type,
@@ -222,7 +222,7 @@ const CreateListing = () => {
         setLoading(false);
         toast({
           title: "Succès !",
-          description: "Votre annonce a été soumise pour examen",
+      description: "Votre annonce a été créée et publiée avec succès",
         });
         navigate("/host/dashboard");
         return;
@@ -262,7 +262,7 @@ const CreateListing = () => {
         weekly_discount: formData.weekly_discount,
         monthly_discount: formData.monthly_discount,
         cleaning_fee: formData.cleaning_fee ?? 0,
-        status: "pending" as any,
+        status: "approved" as any,
       };
 
       const { data: createdListing, error: listingError } = await supabase
