@@ -25,6 +25,7 @@ import { BookingsTable } from "./BookingsTable";
 import { CreateDisputeDialog } from "@/components/dispute/CreateDisputeDialog";
 import { CreateManualBookingDialog } from "./CreateManualBookingDialog";
 import { EditManualBookingDialog } from "./EditManualBookingDialog";
+import { BookingDetailDialog, type BookingDetailData } from "./BookingDetailDialog";
 import { ImportBookingsDialog } from "./ImportBookingsDialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload } from "lucide-react";
@@ -69,6 +70,8 @@ export default function HostBookings() {
   const [editBookingOpen, setEditBookingOpen] = useState(false);
   const [bookingToEdit, setBookingToEdit] = useState<any>(null);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [bookingDetail, setBookingDetail] = useState<BookingDetailData | null>(null);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
@@ -426,7 +429,6 @@ export default function HostBookings() {
           onContactSupport={handleContactSupport}
           onContactGuest={handleContactGuest}
           onEditBooking={async (booking) => {
-            // Fetch full booking data for editing
             const { data } = await supabase
               .from("bookings")
               .select("id, listing_id, checkin_date, checkout_date, nights, guests, total_price, cleaning_fee, notes, status, pricing_breakdown")
@@ -435,6 +437,23 @@ export default function HostBookings() {
             if (data) {
               setBookingToEdit({ ...data, listing_title: booking.listing_title });
               setEditBookingOpen(true);
+            }
+          }}
+          onViewDetails={async (booking) => {
+            const { data } = await supabase
+              .from("bookings")
+              .select("id, listing_id, checkin_date, checkout_date, nights, guests, total_price, cleaning_fee, notes, status, pricing_breakdown")
+              .eq("id", booking.id)
+              .maybeSingle();
+            if (data) {
+              setBookingDetail({
+                ...data,
+                listing_title: booking.listing_title,
+                guest_name: booking.guest_name || "Locataire inconnu",
+                guest_email: booking.guest_email,
+                guest_phone: null,
+              } as BookingDetailData);
+              setDetailDialogOpen(true);
             }
           }}
         />
@@ -494,6 +513,16 @@ export default function HostBookings() {
       <ImportBookingsDialog
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
+      />
+
+      <BookingDetailDialog
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        booking={bookingDetail}
+        onEdit={(b) => {
+          setBookingToEdit({ ...b, listing_title: b.listing_title });
+          setEditBookingOpen(true);
+        }}
       />
     </Card>
   );
