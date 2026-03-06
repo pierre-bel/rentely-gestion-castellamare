@@ -27,6 +27,7 @@ import EmbedAvailability from "./pages/EmbedAvailability";
 import HostPayouts from "./pages/host/Payouts";
 import EarningsReport from "./pages/host/EarningsReport";
 import EmailAutomations from "./pages/host/EmailAutomations";
+import PortalSettings from "./pages/host/PortalSettings";
 import ListingDetail from "./pages/ListingDetail";
 import BookingConfirmation from "./pages/BookingConfirmation";
 import Checkout from "./pages/Checkout";
@@ -87,6 +88,7 @@ const App = () => (
               <Route path="earnings-report" element={<EarningsReport />} />
               <Route path="inbox" element={<HostInbox />} />
               <Route path="email-automations" element={<EmailAutomations />} />
+              <Route path="portal-settings" element={<PortalSettings />} />
               <Route path="create-listing" element={<CreateListing />} />
               <Route path="edit-listing/:id" element={<EditListing />} />
             </Route>
