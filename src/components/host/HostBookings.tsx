@@ -428,33 +428,49 @@ export default function HostBookings() {
           onCancelBooking={handleCancelBooking}
           onContactSupport={handleContactSupport}
           onContactGuest={handleContactGuest}
-          onEditBooking={async (booking) => {
-            const { data } = await supabase
-              .from("bookings")
-              .select("id, listing_id, checkin_date, checkout_date, nights, guests, total_price, cleaning_fee, notes, status, pricing_breakdown")
-              .eq("id", booking.id)
-              .maybeSingle();
-            if (data) {
-              setBookingToEdit({ ...data, listing_title: booking.listing_title });
-              setEditBookingOpen(true);
-            }
+          onEditBooking={(booking) => {
+            (async () => {
+              try {
+                const { data, error } = await supabase
+                  .from("bookings")
+                  .select("id, listing_id, checkin_date, checkout_date, nights, guests, total_price, cleaning_fee, notes, status, pricing_breakdown")
+                  .eq("id", booking.id)
+                  .maybeSingle();
+                if (error) throw error;
+                if (data) {
+                  setBookingToEdit({ ...data, listing_title: booking.listing_title });
+                  setEditBookingOpen(true);
+                }
+              } catch (err) {
+                console.error("Error fetching booking for edit:", err);
+                toast({ title: "Erreur", description: "Impossible de charger la réservation.", variant: "destructive" });
+              }
+            })();
           }}
-          onViewDetails={async (booking) => {
-            const { data } = await supabase
-              .from("bookings")
-              .select("id, listing_id, checkin_date, checkout_date, nights, guests, total_price, cleaning_fee, notes, status, pricing_breakdown, access_token")
-              .eq("id", booking.id)
-              .maybeSingle();
-            if (data) {
-              setBookingDetail({
-                ...data,
-                listing_title: booking.listing_title,
-                guest_name: booking.guest_name || "Locataire inconnu",
-                guest_email: booking.guest_email,
-                guest_phone: null,
-              } as BookingDetailData);
-              setDetailDialogOpen(true);
-            }
+          onViewDetails={(booking) => {
+            (async () => {
+              try {
+                const { data, error } = await supabase
+                  .from("bookings")
+                  .select("id, listing_id, checkin_date, checkout_date, nights, guests, total_price, cleaning_fee, notes, status, pricing_breakdown, access_token")
+                  .eq("id", booking.id)
+                  .maybeSingle();
+                if (error) throw error;
+                if (data) {
+                  setBookingDetail({
+                    ...data,
+                    listing_title: booking.listing_title,
+                    guest_name: booking.guest_name || "Locataire inconnu",
+                    guest_email: booking.guest_email,
+                    guest_phone: null,
+                  } as BookingDetailData);
+                  setDetailDialogOpen(true);
+                }
+              } catch (err) {
+                console.error("Error fetching booking details:", err);
+                toast({ title: "Erreur", description: "Impossible de charger les détails.", variant: "destructive" });
+              }
+            })();
           }}
         />
       </CardContent>
