@@ -12,9 +12,12 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarDays, Users, Home, Euro, FileText, Pencil, Mail, Link2, Check } from "lucide-react";
+import { CalendarDays, Users, Home, Euro, FileText, Pencil, Mail, Link2, Check, CreditCard, Phone, MapPin } from "lucide-react";
 import BookingEmailsTab from "./BookingEmailsTab";
+import { BookingPaymentSection } from "./BookingPaymentSection";
 import { toast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface BookingDetailData {
   id: string;
@@ -57,6 +60,24 @@ const STATUS_LABELS: Record<string, string> = {
 
 export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Props) {
   const [linkCopied, setLinkCopied] = useState(false);
+  
+  const tenantId = booking?.pricing_breakdown?.tenant_id;
+  
+  const { data: tenant } = useQuery({
+    queryKey: ["tenant-detail", tenantId],
+    queryFn: async () => {
+      if (!tenantId) return null;
+      const { data, error } = await supabase
+        .from("tenants")
+        .select("*")
+        .eq("id", tenantId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!tenantId && open,
+  });
+
   if (!booking) return null;
 
   const checkin = parseISO(booking.checkin_date);
@@ -75,6 +96,12 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
         .trim()
     : null;
 
+  const tenantAddress = tenant
+    ? [tenant.street_number, tenant.street, tenant.postal_code, tenant.city, tenant.country]
+        .filter(Boolean)
+        .join(", ")
+    : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
@@ -87,6 +114,10 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
         <Tabs defaultValue="details">
           <TabsList className="w-full">
             <TabsTrigger value="details" className="flex-1">Détails</TabsTrigger>
+            <TabsTrigger value="payments" className="flex-1 gap-1.5">
+              <CreditCard className="h-3.5 w-3.5" />
+              Paiements
+            </TabsTrigger>
             <TabsTrigger value="emails" className="flex-1 gap-1.5">
               <Mail className="h-3.5 w-3.5" />
               E-mails
@@ -113,17 +144,31 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
               </div>
             </div>
 
-            {/* Guest */}
+            {/* Guest / Tenant */}
             <div className="flex items-start gap-3">
               <Users className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-              <div>
+              <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Locataire</p>
                 <p className="text-sm font-medium">{booking.guest_name}</p>
-                {booking.guest_email && (
-                  <p className="text-xs text-muted-foreground">{booking.guest_email}</p>
+                {(tenant?.email || booking.guest_email) && (
+                  <p className="text-xs text-muted-foreground">{tenant?.email || booking.guest_email}</p>
                 )}
-                {booking.guest_phone && (
-                  <p className="text-xs text-muted-foreground">{booking.guest_phone}</p>
+                {(tenant?.phone || booking.guest_phone) && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Phone className="h-3 w-3" />
+                    {tenant?.phone || booking.guest_phone}
+                  </p>
+                )}
+                {tenant?.gender && (
+                  <p className="text-xs text-muted-foreground">
+                    {tenant.gender === "male" ? "Homme" : tenant.gender === "female" ? "Femme" : tenant.gender}
+                  </p>
+                )}
+                {tenantAddress && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {tenantAddress}
+                  </p>
                 )}
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {booking.guests} voyageur{booking.guests > 1 ? "s" : ""}
@@ -191,6 +236,10 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="payments" className="mt-4">
+            <BookingPaymentSection bookingId={booking.id} totalPrice={booking.total_price} />
           </TabsContent>
 
           <TabsContent value="emails" className="mt-4">

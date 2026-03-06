@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -42,11 +42,19 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
   const [newLabel, setNewLabel] = useState("");
   const [newAmount, setNewAmount] = useState("");
   const [newDueDate, setNewDueDate] = useState("");
+  const [editingDateId, setEditingDateId] = useState<string | null>(null);
+  const [editDateValue, setEditDateValue] = useState("");
 
   if (!booking) return null;
 
   const paidTotal = booking.payment_items.filter(i => i.is_paid).reduce((s, i) => s + i.amount, 0);
   const remaining = booking.total_price - paidTotal;
+  const today = new Date().toISOString().split("T")[0];
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
+    queryClient.invalidateQueries({ queryKey: ["booking-payment-items"] });
+  };
 
   const handleTogglePaid = async (item: PaymentItem) => {
     setSaving(true);
@@ -60,7 +68,7 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
         })
         .eq("id", item.id);
       if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
+      invalidate();
       toast({ title: item.is_paid ? "Marqué comme non payé" : "Marqué comme payé" });
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
@@ -81,7 +89,7 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
         sort_order: booking.payment_items.length,
       });
       if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
+      invalidate();
       setNewLabel("");
       setNewAmount("");
       setNewDueDate("");
@@ -98,8 +106,26 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
     try {
       const { error } = await supabase.from("booking_payment_items").delete().eq("id", itemId);
       if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
+      invalidate();
       toast({ title: "Échéance supprimée" });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveDueDate = async (itemId: string) => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("booking_payment_items")
+        .update({ due_date: editDateValue || null, updated_at: new Date().toISOString() })
+        .eq("id", itemId);
+      if (error) throw error;
+      invalidate();
+      setEditingDateId(null);
+      toast({ title: "Date d'échéance modifiée" });
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
     } finally {
@@ -114,7 +140,6 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
           <DialogTitle>Détail des paiements</DialogTitle>
         </DialogHeader>
 
-        {/* Booking info */}
         <div className="space-y-1 text-sm">
           <p><span className="font-medium">Bien :</span> {booking.listing_title}</p>
           <p><span className="font-medium">Locataire :</span> {booking.tenant_name}</p>
@@ -124,7 +149,6 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
 
         <Separator />
 
-        {/* Payment summary */}
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <p className="text-muted-foreground">Encaissé</p>
@@ -138,45 +162,76 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
 
         <Separator />
 
-        {/* Payment items list */}
         <div className="space-y-3">
           <p className="text-sm font-medium">Échéances de paiement</p>
           {booking.payment_items.length === 0 && (
             <p className="text-sm text-muted-foreground">Aucune échéance configurée</p>
           )}
-          {booking.payment_items.map(item => (
-            <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
-              <Checkbox
-                checked={item.is_paid}
-                onCheckedChange={() => handleTogglePaid(item)}
-                disabled={saving}
-              />
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${item.is_paid ? "line-through text-muted-foreground" : ""}`}>
-                  {item.label}
-                </p>
-                {item.due_date && (
-                  <p className="text-xs text-muted-foreground">
-                    Échéance : {format(new Date(item.due_date), "dd/MM/yyyy")}
+          {booking.payment_items.map(item => {
+            const isOverdue = !item.is_paid && item.due_date && item.due_date < today;
+            return (
+              <div key={item.id} className={`flex items-center gap-3 p-3 rounded-lg border bg-card ${isOverdue ? "border-destructive/50 bg-destructive/5" : ""}`}>
+                <Checkbox
+                  checked={item.is_paid}
+                  onCheckedChange={() => handleTogglePaid(item)}
+                  disabled={saving}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium ${item.is_paid ? "line-through text-muted-foreground" : ""}`}>
+                    {item.label}
+                    {isOverdue && <span className="text-destructive text-xs ml-2 animate-pulse">En retard</span>}
                   </p>
-                )}
-                {item.is_paid && item.paid_at && (
-                  <p className="text-xs text-green-600">
-                    Payé le {format(new Date(item.paid_at), "dd/MM/yyyy")}
-                  </p>
-                )}
+                  {editingDateId === item.id ? (
+                    <div className="flex items-center gap-1 mt-1">
+                      <Input
+                        type="date"
+                        value={editDateValue}
+                        onChange={e => setEditDateValue(e.target.value)}
+                        className="h-7 text-xs w-36"
+                      />
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleSaveDueDate(item.id)} disabled={saving}>
+                        <Check className="h-3 w-3" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditingDateId(null)}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      {item.due_date ? (
+                        <p className={`text-xs ${isOverdue ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                          Échéance : {format(new Date(item.due_date), "dd/MM/yyyy")}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Pas de date d'échéance</p>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                        onClick={() => { setEditingDateId(item.id); setEditDateValue(item.due_date || ""); }}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                  {item.is_paid && item.paid_at && (
+                    <p className="text-xs text-green-600">
+                      Payé le {format(new Date(item.paid_at), "dd/MM/yyyy")}
+                    </p>
+                  )}
+                </div>
+                <p className="text-sm font-semibold whitespace-nowrap">{item.amount.toFixed(2)} €</p>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteItem(item.id)} disabled={saving}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
               </div>
-              <p className="text-sm font-semibold whitespace-nowrap">{item.amount.toFixed(2)} €</p>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteItem(item.id)} disabled={saving}>
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <Separator />
 
-        {/* Add new item */}
         <div className="space-y-3">
           <p className="text-sm font-medium">Ajouter une échéance</p>
           <div className="grid grid-cols-2 gap-2">
