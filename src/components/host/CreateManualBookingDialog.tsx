@@ -58,6 +58,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   const [rentalPrice, setRentalPrice] = useState("");
   const [cleaningFee, setCleaningFee] = useState("");
   const [notes, setNotes] = useState("");
+  const [igloohomeCode, setIgloohomeCode] = useState("");
   const [newTenantDialogOpen, setNewTenantDialogOpen] = useState(false);
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
 
@@ -115,13 +116,14 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
 
   // Auto-fill prices when listing or dates change
   useEffect(() => {
-    if (selectedListingId && nights > 0) {
-      const listing = listings.find((l) => l.id === selectedListingId);
-      if (listing) {
+    const listing = listings.find((l) => l.id === selectedListingId);
+    if (listing) {
+      if (nights > 0) {
         const nightsTotal = listing.base_price * nights;
         setRentalPrice(nightsTotal.toFixed(2));
-        setCleaningFee((listing.cleaning_fee || 0).toFixed(2));
       }
+      // Always suggest the listing's default cleaning fee when listing changes
+      setCleaningFee((listing.cleaning_fee || 0).toFixed(2));
     }
   }, [selectedListingId, nights, listings]);
 
@@ -180,6 +182,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     setRentalPrice("");
     setCleaningFee("");
     setNotes("");
+    setIgloohomeCode("");
     setScheduleItems([]);
   };
 
@@ -204,6 +207,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
         host_payout_net: totalNum,
         status: "confirmed",
         currency: "EUR",
+        igloohome_code: igloohomeCode.replace(/\D/g, "") || null,
         pricing_breakdown: {
           rental_price: rentalNum,
           tenant_id: selectedTenantId || undefined,
@@ -413,6 +417,20 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
                 </div>
               );
             })}
+
+            {/* Igloohome Code */}
+            <div>
+              <Label>Code clé Igloohome</Label>
+              <Input
+                type="text"
+                inputMode="numeric"
+                value={igloohomeCode.replace(/\D/g, "").replace(/(\d{3})(?=\d)/g, "$1 ")}
+                onChange={(e) => setIgloohomeCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="123 456 789"
+                maxLength={15}
+              />
+              <p className="text-xs text-muted-foreground mt-1">Chiffres uniquement, espacés tous les 3 pour lisibilité.</p>
+            </div>
 
             {/* Notes */}
             <div>

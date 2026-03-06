@@ -1,49 +1,27 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Eye, Code } from "lucide-react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { TextStyle } from "@tiptap/extension-text-style";
+import Color from "@tiptap/extension-color";
+import Highlight from "@tiptap/extension-highlight";
+import { Eye } from "lucide-react";
+import EmailToolbar from "./EmailToolbar";
 
 interface EmailBodyEditorProps {
   value: string;
   onChange: (html: string) => void;
 }
 
-function plainTextToHtml(text: string): string {
-  // Convert plain text to styled HTML email
-  const lines = text.split("\n");
-  const htmlLines = lines.map((line) => {
-    if (!line.trim()) return "<br/>";
-    // Detect heading lines (lines starting with #)
-    if (line.startsWith("### ")) return `<h4 style="margin:12px 0 4px;color:#1a1a1a;">${escapeHtml(line.slice(4))}</h4>`;
-    if (line.startsWith("## ")) return `<h3 style="margin:16px 0 4px;color:#1a1a1a;">${escapeHtml(line.slice(3))}</h3>`;
-    if (line.startsWith("# ")) return `<h2 style="margin:20px 0 6px;color:#1a1a1a;">${escapeHtml(line.slice(2))}</h2>`;
-    // Bold: **text**
-    let processed = escapeHtml(line);
-    processed = processed.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-    processed = processed.replace(/\*(.+?)\*/g, "<em>$1</em>");
-    return `<p style="margin:0 0 8px;line-height:1.6;color:#333;">${processed}</p>`;
-  });
-
-  return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;background:#ffffff;border-radius:8px;">
-${htmlLines.join("\n")}
-</div>`;
+function editorHtmlToEmailHtml(html: string): string {
+  // Wrap the editor output in a styled email container
+  return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;background:#ffffff;border-radius:8px;">${html}</div>`;
 }
 
-function htmlToPlainText(html: string): string {
-  // Try to extract text content from HTML
-  const temp = document.createElement("div");
-  temp.innerHTML = html;
-  return temp.textContent || temp.innerText || "";
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    // Preserve {{variables}}
-    .replace(/\{\{(\w+)\}\}/g, "{{$1}}");
+function emailHtmlToEditorHtml(html: string): string {
+  // Strip the wrapper div if present
+  const match = html.match(/<div[^>]*style="[^"]*font-family[^"]*"[^>]*>([\s\S]*)<\/div>\s*$/);
+  return match ? match[1] : html;
 }
 
 // Re-inject variable placeholders that were escaped
@@ -51,84 +29,50 @@ function restoreVariables(html: string): string {
   return html.replace(/\{\{(\w+)\}\}/g, "{{$1}}");
 }
 
-const PLACEHOLDER_TEXT = `# Confirmation de réservation
-
-Bonjour **{{guest_first_name}}**,
-
-Votre réservation pour **{{listing_title}}** est confirmée !
-
-## Détails du séjour
-
-**Arrivée :** {{checkin_date}}
-**Départ :** {{checkout_date}}
-**Nombre de nuits :** {{nights}}
-**Nombre de voyageurs :** {{guests_count}}
-**Total :** {{total_price}}
-
-## Adresse
-
-{{listing_address}}, {{listing_city}}, {{listing_country}}
-
-À très bientôt !`;
-
 export default function EmailBodyEditor({ value, onChange }: EmailBodyEditorProps) {
-  // Determine if the current value looks like raw HTML or plain text
-  const isHtml = value.trim().startsWith("<");
-  const [plainText, setPlainText] = useState(() => {
-    if (!value) return "";
-    if (isHtml) return htmlToPlainText(value);
-    return value;
+  const isWrapped = value.includes("font-family");
+  const initialContent = value ? (isWrapped ? emailHtmlToEditorHtml(value) : value) : "<p></p>";
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      TextStyle,
+      Color,
+      Highlight.configure({ multicolor: true }),
+    ],
+    content: initialContent,
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML();
+      onChange(editorHtmlToEmailHtml(html));
+    },
   });
-  const [mode, setMode] = useState<"write" | "html">("write");
 
-  const generatedHtml = plainTextToHtml(plainText);
+  // Sync external value changes (e.g., on edit dialog open)
+  useEffect(() => {
+    if (editor && value) {
+      const editorHtml = isWrapped ? emailHtmlToEditorHtml(value) : value;
+      if (editor.getHTML() !== editorHtml) {
+        editor.commands.setContent(editorHtml);
+      }
+    }
+  }, [value, editor]);
 
-  const handleTextChange = (text: string) => {
-    setPlainText(text);
-    onChange(plainTextToHtml(text));
-  };
-
-  const handleHtmlChange = (html: string) => {
-    onChange(html);
-  };
+  const generatedHtml = editor ? editorHtmlToEmailHtml(editor.getHTML()) : "";
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <Label>Corps de l'e-mail *</Label>
-        <Tabs value={mode} onValueChange={(v) => setMode(v as "write" | "html")} className="h-auto">
-          <TabsList className="h-8">
-            <TabsTrigger value="write" className="text-xs h-7 px-3">Éditeur</TabsTrigger>
-            <TabsTrigger value="html" className="text-xs h-7 px-3">
-              <Code className="h-3 w-3 mr-1" />
-              HTML
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <Label>Corps de l'e-mail *</Label>
+
+      <div className="border rounded-lg overflow-hidden">
+        <EmailToolbar editor={editor} />
+        <EditorContent
+          editor={editor}
+          className="prose prose-sm max-w-none p-4 min-h-[200px] focus-within:outline-none [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[180px]"
+        />
       </div>
 
-      {mode === "write" ? (
-        <Textarea
-          value={plainText}
-          onChange={(e) => handleTextChange(e.target.value)}
-          rows={10}
-          className="text-sm"
-          placeholder={PLACEHOLDER_TEXT}
-        />
-      ) : (
-        <Textarea
-          value={value || generatedHtml}
-          onChange={(e) => handleHtmlChange(e.target.value)}
-          rows={10}
-          className="font-mono text-xs"
-          placeholder="<div>...</div>"
-        />
-      )}
-
       <p className="text-xs text-muted-foreground">
-        {mode === "write"
-          ? "Utilisez **gras**, *italique*, et # pour les titres. Les variables {{...}} seront remplacées automatiquement."
-          : "Mode avancé : modifiez directement le HTML de l'e-mail."}
+        Utilisez la barre d'outils pour mettre en forme. Les variables {"{{...}}"} seront remplacées automatiquement.
       </p>
 
       {/* Live Preview */}
@@ -139,7 +83,7 @@ export default function EmailBodyEditor({ value, onChange }: EmailBodyEditorProp
         </div>
         <div
           className="border rounded-lg p-4 bg-white max-h-[300px] overflow-y-auto"
-          dangerouslySetInnerHTML={{ __html: restoreVariables(mode === "write" ? generatedHtml : (value || "")) }}
+          dangerouslySetInnerHTML={{ __html: restoreVariables(generatedHtml) }}
         />
       </div>
     </div>

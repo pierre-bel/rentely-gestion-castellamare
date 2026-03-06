@@ -8,6 +8,7 @@ export const DYNAMIC_VARIABLES = [
   { key: "guest_last_name", label: "Nom du locataire" },
   { key: "guest_full_name", label: "Nom complet du locataire" },
   { key: "guest_email", label: "E-mail du locataire" },
+  { key: "guest_civility", label: "Civilité (Monsieur/Madame)" },
   { key: "checkin_date", label: "Date d'arrivée" },
   { key: "checkout_date", label: "Date de départ" },
   { key: "nights", label: "Nombre de nuits" },
