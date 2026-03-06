@@ -75,6 +75,7 @@ export default function HostBookings() {
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
+  // Fetch bookings
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: [
       "host-bookings",
@@ -94,14 +95,8 @@ export default function HostBookings() {
       if (!user?.id) return [];
 
       if (isDemoMode) {
-        // DEMO MODE: Use localStorage with client-side filtering
-        if (!migrationComplete) {
-          console.log('⏳ Waiting for migration to complete...');
-          return [];
-        }
-
+        if (!migrationComplete) return [];
         const [sortBy, sortOrder] = sortValue.split("-");
-        
         return getHostBookingsFiltered({
           searchQuery: debouncedSearch || null,
           statusFilter: statusFilter !== "all" ? statusFilter : null,
@@ -115,9 +110,7 @@ export default function HostBookings() {
           sortOrder,
         });
       } else {
-        // REAL MODE: Use Supabase RPC
         const [sortBy, sortOrder] = sortValue.split("-");
-
         const { data, error } = await supabase.rpc("host_search_bookings", {
           host_id: user.id,
           search_query: debouncedSearch || null,
@@ -131,13 +124,32 @@ export default function HostBookings() {
           sort_by: sortBy,
           sort_order: sortOrder,
         });
-
         if (error) throw error;
-
         return data as Booking[];
       }
     },
     enabled: !!user?.id,
+  });
+
+  // Fetch payment items for all bookings
+  const bookingIds = bookings.map(b => b.id);
+  const { data: paymentItemsMap = {} } = useQuery({
+    queryKey: ["host-bookings-payment-items", bookingIds],
+    queryFn: async () => {
+      if (bookingIds.length === 0) return {};
+      const { data, error } = await supabase
+        .from("booking_payment_items")
+        .select("booking_id, is_paid, due_date")
+        .in("booking_id", bookingIds);
+      if (error) throw error;
+      const map: Record<string, { is_paid: boolean; due_date: string | null }[]> = {};
+      for (const item of data || []) {
+        if (!map[item.booking_id]) map[item.booking_id] = [];
+        map[item.booking_id].push({ is_paid: item.is_paid, due_date: item.due_date });
+      }
+      return map;
+    },
+    enabled: bookingIds.length > 0,
   });
 
   const handleClearFilters = () => {
@@ -425,6 +437,7 @@ export default function HostBookings() {
         <BookingsTable
           bookings={bookings}
           loading={isLoading}
+          paymentItemsMap={paymentItemsMap}
           onCancelBooking={handleCancelBooking}
           onContactSupport={handleContactSupport}
           onContactGuest={handleContactGuest}
