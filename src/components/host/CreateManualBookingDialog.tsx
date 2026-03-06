@@ -116,13 +116,14 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
 
   // Auto-fill prices when listing or dates change
   useEffect(() => {
-    if (selectedListingId && nights > 0) {
-      const listing = listings.find((l) => l.id === selectedListingId);
-      if (listing) {
+    const listing = listings.find((l) => l.id === selectedListingId);
+    if (listing) {
+      if (nights > 0) {
         const nightsTotal = listing.base_price * nights;
         setRentalPrice(nightsTotal.toFixed(2));
-        setCleaningFee((listing.cleaning_fee || 0).toFixed(2));
       }
+      // Always suggest the listing's default cleaning fee when listing changes
+      setCleaningFee((listing.cleaning_fee || 0).toFixed(2));
     }
   }, [selectedListingId, nights, listings]);
 
