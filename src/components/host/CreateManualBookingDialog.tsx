@@ -182,6 +182,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     setRentalPrice("");
     setCleaningFee("");
     setNotes("");
+    setIgloohomeCode("");
     setScheduleItems([]);
   };
 
@@ -206,6 +207,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
         host_payout_net: totalNum,
         status: "confirmed",
         currency: "EUR",
+        igloohome_code: igloohomeCode.replace(/\D/g, "") || null,
         pricing_breakdown: {
           rental_price: rentalNum,
           tenant_id: selectedTenantId || undefined,
