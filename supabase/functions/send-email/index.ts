@@ -186,6 +186,17 @@ Deno.serve(async (req) => {
       let recipientEmail: string;
       if (automation.recipient_type === 'fixed' && automation.recipient_email) {
         recipientEmail = automation.recipient_email;
+      } else if (automation.recipient_type === 'host' && automation.recipient_email) {
+        recipientEmail = automation.recipient_email;
+      } else if (automation.recipient_type === 'host') {
+        // Fallback: fetch host email from profile
+        const { data: hostProfile } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('id', userId)
+          .single();
+        recipientEmail = hostProfile?.email || '';
+        if (!recipientEmail) throw new Error('Host email not found');
       } else {
         recipientEmail = variables.guest_email;
         if (!recipientEmail) throw new Error('Recipient email not found');

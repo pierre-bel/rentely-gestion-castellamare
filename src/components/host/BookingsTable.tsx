@@ -37,6 +37,7 @@ interface BookingsTableProps {
   onContactSupport: (booking: Booking) => void;
   onContactGuest: (booking: Booking) => void;
   onEditBooking?: (booking: Booking) => void;
+  onViewDetails?: (booking: Booking) => void;
 }
 
 const formatBookingDates = (checkin: string, checkout: string) => {
@@ -63,7 +64,7 @@ const getInitials = (name: string | null) => {
 
 const headers = ["ID", "Bien", "Locataire", "Dates", "Montant", "Statut", "Action"];
 
-export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSupport, onContactGuest, onEditBooking }: BookingsTableProps) => {
+export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSupport, onContactGuest, onEditBooking, onViewDetails }: BookingsTableProps) => {
   if (loading) {
     return (
       <div className="rounded-lg border overflow-hidden">
@@ -157,7 +158,7 @@ export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSup
                         Annuler la réservation
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem>Voir les détails</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onViewDetails?.(booking)}>Voir les détails</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onContactGuest(booking)}>
                       Contacter le locataire
                     </DropdownMenuItem>
