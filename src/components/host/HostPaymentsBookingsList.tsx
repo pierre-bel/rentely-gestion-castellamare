@@ -37,14 +37,20 @@ export interface PaymentItem {
   sort_order: number;
 }
 
-type PaymentStatus = "unpaid" | "partial" | "paid";
+type PaymentStatus = "unpaid" | "partial" | "paid" | "late";
 
 function getPaymentStatus(items: PaymentItem[], totalPrice: number): PaymentStatus {
   if (items.length === 0) return "unpaid";
+  const today = new Date().toISOString().split("T")[0];
   const paidCount = items.filter(i => i.is_paid).length;
-  if (paidCount === 0) return "unpaid";
   if (paidCount === items.length) return "paid";
-  return "partial";
+  
+  // Check overdue
+  const hasLate = items.some(i => !i.is_paid && i.due_date && i.due_date < today);
+  if (hasLate) return "late";
+  
+  if (paidCount > 0) return "partial";
+  return "unpaid";
 }
 
 function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
@@ -53,6 +59,8 @@ function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
       return <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100">Payé</Badge>;
     case "partial":
       return <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100">Acompte payé</Badge>;
+    case "late":
+      return <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100 animate-pulse gap-1"><AlertTriangle className="h-3 w-3" />En retard</Badge>;
     case "unpaid":
       return <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100">Non payé</Badge>;
   }

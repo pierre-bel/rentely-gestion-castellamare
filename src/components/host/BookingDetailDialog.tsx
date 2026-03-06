@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,11 +10,17 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge, type StatusValue } from "@/components/ui/status-badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarDays, Users, Home, Euro, FileText, Pencil, Mail, Link2, Check } from "lucide-react";
+import { CalendarDays, Users, Home, Euro, FileText, Pencil, Mail, Link2, Check, CreditCard, Plus, Trash2, AlertTriangle, Phone, MapPin } from "lucide-react";
 import BookingEmailsTab from "./BookingEmailsTab";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { PaymentStatusBadge, getPaymentStatusFromItems } from "./PaymentStatusBadge";
 
 export interface BookingDetailData {
   id: string;
@@ -57,6 +63,12 @@ const STATUS_LABELS: Record<string, string> = {
 
 export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Props) {
   const [linkCopied, setLinkCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [newLabel, setNewLabel] = useState("");
+  const [newAmount, setNewAmount] = useState("");
+  const [newDueDate, setNewDueDate] = useState("");
+  const queryClient = useQueryClient();
+
   if (!booking) return null;
 
   const checkin = parseISO(booking.checkin_date);
@@ -66,14 +78,134 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
   const deposit = bd?.deposit;
   const remaining = bd?.remaining;
   const canEdit = booking.status === "confirmed" || booking.status === "pending_payment";
+  const tenantId = bd?.tenant_id;
 
   const cleanNotes = booking.notes
     ? booking.notes
         .split(" | ")
-        .filter((p) => !p.startsWith("Locataire:") && !p.startsWith("Acompte:"))
+        .filter((p: string) => !p.startsWith("Locataire:") && !p.startsWith("Acompte:"))
         .join(" | ")
         .trim()
     : null;
+
+  // Fetch tenant info
+  const { data: tenant } = useQuery({
+    queryKey: ["tenant-detail", tenantId],
+    queryFn: async () => {
+      if (!tenantId) return null;
+      const { data, error } = await supabase
+        .from("tenants")
+        .select("*")
+        .eq("id", tenantId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!tenantId && open,
+  });
+
+  // Fetch payment items
+  const { data: paymentItems = [] } = useQuery({
+    queryKey: ["booking-payment-items-detail", booking.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("booking_payment_items")
+        .select("*")
+        .eq("booking_id", booking.id)
+        .order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+    enabled: open,
+  });
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const handleTogglePaid = async (item: any) => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("booking_payment_items")
+        .update({
+          is_paid: !item.is_paid,
+          paid_at: !item.is_paid ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", item.id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["booking-payment-items-detail", booking.id] });
+      queryClient.invalidateQueries({ queryKey: ["host-bookings-payment-items"] });
+      queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
+      toast({ title: item.is_paid ? "Marqué comme non payé" : "Marqué comme payé" });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUpdateItem = async (itemId: string, field: string, value: any) => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("booking_payment_items")
+        .update({ [field]: value, updated_at: new Date().toISOString() })
+        .eq("id", itemId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["booking-payment-items-detail", booking.id] });
+      queryClient.invalidateQueries({ queryKey: ["host-bookings-payment-items"] });
+      queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddItem = async () => {
+    if (!newLabel.trim() || !newAmount) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("booking_payment_items").insert({
+        booking_id: booking.id,
+        label: newLabel.trim(),
+        amount: parseFloat(newAmount),
+        due_date: newDueDate || null,
+        sort_order: paymentItems.length,
+      });
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["booking-payment-items-detail", booking.id] });
+      queryClient.invalidateQueries({ queryKey: ["host-bookings-payment-items"] });
+      queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
+      setNewLabel("");
+      setNewAmount("");
+      setNewDueDate("");
+      toast({ title: "Échéance ajoutée" });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteItem = async (itemId: string) => {
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("booking_payment_items").delete().eq("id", itemId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["booking-payment-items-detail", booking.id] });
+      queryClient.invalidateQueries({ queryKey: ["host-bookings-payment-items"] });
+      queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
+      toast({ title: "Échéance supprimée" });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const paidTotal = paymentItems.filter((i: any) => i.is_paid).reduce((s: number, i: any) => s + Number(i.amount), 0);
+  const remainingPayment = booking.total_price - paidTotal;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,6 +219,10 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
         <Tabs defaultValue="details">
           <TabsList className="w-full">
             <TabsTrigger value="details" className="flex-1">Détails</TabsTrigger>
+            <TabsTrigger value="payments" className="flex-1 gap-1.5">
+              <CreditCard className="h-3.5 w-3.5" />
+              Paiements
+            </TabsTrigger>
             <TabsTrigger value="emails" className="flex-1 gap-1.5">
               <Mail className="h-3.5 w-3.5" />
               E-mails
@@ -113,16 +249,34 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
               </div>
             </div>
 
-            {/* Guest */}
+            {/* Tenant / Guest info */}
             <div className="flex items-start gap-3">
               <Users className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-              <div>
+              <div className="w-full">
                 <p className="text-xs text-muted-foreground">Locataire</p>
-                <p className="text-sm font-medium">{booking.guest_name}</p>
-                {booking.guest_email && (
-                  <p className="text-xs text-muted-foreground">{booking.guest_email}</p>
+                <p className="text-sm font-medium">
+                  {tenant ? `${tenant.first_name} ${tenant.last_name || ""}`.trim() : booking.guest_name}
+                </p>
+                {(tenant?.email || booking.guest_email) && (
+                  <p className="text-xs text-muted-foreground">{tenant?.email || booking.guest_email}</p>
                 )}
-                {booking.guest_phone && (
+                {tenant?.phone && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Phone className="h-3 w-3" /> {tenant.phone}
+                  </p>
+                )}
+                {tenant?.gender && (
+                  <p className="text-xs text-muted-foreground">
+                    {tenant.gender === "male" ? "Homme" : tenant.gender === "female" ? "Femme" : tenant.gender}
+                  </p>
+                )}
+                {(tenant?.street || tenant?.city) && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <MapPin className="h-3 w-3" />
+                    {[tenant?.street_number, tenant?.street, tenant?.postal_code, tenant?.city, tenant?.country].filter(Boolean).join(", ")}
+                  </p>
+                )}
+                {!tenant && booking.guest_phone && (
                   <p className="text-xs text-muted-foreground">{booking.guest_phone}</p>
                 )}
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -165,18 +319,6 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
                     <span>Prix total</span>
                     <span>{formatPrice(booking.total_price)}</span>
                   </div>
-                  {deposit != null && (
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Acompte ({bd?.deposit_percentage || 30}%)</span>
-                      <span>{formatPrice(deposit)}</span>
-                    </div>
-                  )}
-                  {remaining != null && (
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Solde restant</span>
-                      <span>{formatPrice(remaining)}</span>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -191,6 +333,115 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          {/* PAYMENTS TAB */}
+          <TabsContent value="payments" className="space-y-4 mt-4">
+            {/* Payment status */}
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">Statut</p>
+              <PaymentStatusBadge status={getPaymentStatusFromItems(paymentItems.map((i: any) => ({ is_paid: i.is_paid, due_date: i.due_date })))} />
+            </div>
+
+            {/* Summary */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">Encaissé</p>
+                <p className="text-lg font-bold text-success-foreground">{formatPrice(paidTotal)}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">Restant</p>
+                <p className="text-lg font-bold text-warning-foreground">{formatPrice(remainingPayment)}</p>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Payment items */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Échéances de paiement</p>
+              {paymentItems.length === 0 && (
+                <p className="text-sm text-muted-foreground">Aucune échéance configurée</p>
+              )}
+              {paymentItems.map((item: any) => {
+                const isLate = !item.is_paid && item.due_date && item.due_date < today;
+                return (
+                  <div key={item.id} className={`p-3 rounded-lg border ${isLate ? "border-destructive/50 bg-destructive/5" : "bg-card"}`}>
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={item.is_paid}
+                        onCheckedChange={() => handleTogglePaid(item)}
+                        disabled={saving}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className={`text-sm font-medium ${item.is_paid ? "line-through text-muted-foreground" : ""}`}>
+                            {item.label}
+                          </p>
+                          {isLate && (
+                            <span className="text-xs text-destructive flex items-center gap-0.5">
+                              <AlertTriangle className="h-3 w-3" /> En retard
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Input
+                            type="date"
+                            value={item.due_date || ""}
+                            onChange={(e) => handleUpdateItem(item.id, "due_date", e.target.value || null)}
+                            className="h-7 text-xs w-36"
+                            disabled={saving}
+                          />
+                          <Input
+                            type="number"
+                            value={item.amount}
+                            onChange={(e) => handleUpdateItem(item.id, "amount", parseFloat(e.target.value) || 0)}
+                            className="h-7 text-xs w-24"
+                            step="0.01"
+                            min="0"
+                            disabled={saving}
+                          />
+                          <span className="text-xs text-muted-foreground">€</span>
+                        </div>
+                        {item.is_paid && item.paid_at && (
+                          <p className="text-xs text-success-foreground mt-1">
+                            Payé le {format(new Date(item.paid_at), "dd/MM/yyyy")}
+                          </p>
+                        )}
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteItem(item.id)} disabled={saving}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <Separator />
+
+            {/* Add new item */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Ajouter une échéance</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Libellé</Label>
+                  <Input value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Ex: Acompte" className="h-8" />
+                </div>
+                <div>
+                  <Label className="text-xs">Montant (€)</Label>
+                  <Input type="number" min="0" step="0.01" value={newAmount} onChange={e => setNewAmount(e.target.value)} placeholder="0.00" className="h-8" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Date d'échéance</Label>
+                <Input type="date" value={newDueDate} onChange={e => setNewDueDate(e.target.value)} className="h-8" />
+              </div>
+              <Button onClick={handleAddItem} disabled={saving || !newLabel.trim() || !newAmount} size="sm" className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter
+              </Button>
+            </div>
           </TabsContent>
 
           <TabsContent value="emails" className="mt-4">
