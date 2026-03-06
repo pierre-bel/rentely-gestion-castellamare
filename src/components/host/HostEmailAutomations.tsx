@@ -225,7 +225,7 @@ export default function HostEmailAutomations() {
       reply_to_email: formReplyTo || null,
       listing_ids: formListingIds.length > 0 ? formListingIds : [],
       recipient_type: formRecipientType,
-      recipient_email: formRecipientType === "fixed" ? formRecipientEmail : null,
+      recipient_email: formRecipientType === "fixed" ? formRecipientEmail : formRecipientType === "host" ? user?.email || null : null,
     });
   };
 
@@ -393,7 +393,7 @@ export default function HostEmailAutomations() {
                         <Badge variant="outline">{getTriggerLabel(auto)}</Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {auto.recipient_type === "fixed" ? auto.recipient_email : "Locataire"}
+                        {auto.recipient_type === "fixed" ? auto.recipient_email : auto.recipient_type === "host" ? "Moi-même" : "Locataire"}
                       </TableCell>
                       <TableCell>
                         <Switch
@@ -511,6 +511,10 @@ export default function HostEmailAutomations() {
                   <Label htmlFor="recipient-tenant" className="font-normal cursor-pointer">Le locataire de la réservation</Label>
                 </div>
                 <div className="flex items-center gap-2">
+                  <RadioGroupItem value="host" id="recipient-host" />
+                  <Label htmlFor="recipient-host" className="font-normal cursor-pointer">Moi-même</Label>
+                </div>
+                <div className="flex items-center gap-2">
                   <RadioGroupItem value="fixed" id="recipient-fixed" />
                   <Label htmlFor="recipient-fixed" className="font-normal cursor-pointer">Une adresse e-mail fixe</Label>
                 </div>
@@ -581,6 +585,8 @@ export default function HostEmailAutomations() {
             </div>
 
             <EmailBodyEditor value={formBody} onChange={setFormBody} />
+
+            <DynamicVariablesPanel />
 
             <div className="flex items-center gap-2">
               <Switch checked={formEnabled} onCheckedChange={setFormEnabled} />
