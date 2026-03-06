@@ -134,6 +134,9 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   // Auto-generate schedule items from default templates when total or dates change
   useEffect(() => {
     if (totalNum > 0 && checkinDate && checkoutDate && defaultSchedules.length > 0) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       const items: ScheduleItem[] = defaultSchedules.map((s: any) => {
         const amount = Math.round(totalNum * s.percentage / 100 / 10) * 10;
         let dueDate: Date;
@@ -150,6 +153,22 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
           due_date: format(dueDate, "yyyy-MM-dd"),
         };
       });
+
+      // If the last item (décompte) due date is in the past, collapse into single payment
+      if (items.length > 1) {
+        const lastDue = new Date(items[items.length - 1].due_date);
+        lastDue.setHours(0, 0, 0, 0);
+        if (lastDue < today) {
+          // Use first item's due date rules for a single full payment
+          setScheduleItems([{
+            label: items[0].label,
+            amount: totalNum,
+            due_date: items[0].due_date,
+          }]);
+          return;
+        }
+      }
+
       // Adjust last item to match total exactly
       if (items.length > 0) {
         const sumSoFar = items.slice(0, -1).reduce((s, i) => s + i.amount, 0);
@@ -157,7 +176,6 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
       }
       setScheduleItems(items);
     } else if (totalNum > 0 && defaultSchedules.length === 0) {
-      // Fallback: single item = total
       setScheduleItems([]);
     }
   }, [totalNum, checkinDate, checkoutDate, defaultSchedules]);
@@ -429,7 +447,6 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
                 placeholder="123 456 789"
                 maxLength={15}
               />
-              <p className="text-xs text-muted-foreground mt-1">Chiffres uniquement, espacés tous les 3 pour lisibilité.</p>
             </div>
 
             {/* Notes */}
