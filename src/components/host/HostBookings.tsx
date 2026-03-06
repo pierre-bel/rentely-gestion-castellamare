@@ -25,8 +25,9 @@ import { BookingsTable } from "./BookingsTable";
 import { CreateDisputeDialog } from "@/components/dispute/CreateDisputeDialog";
 import { CreateManualBookingDialog } from "./CreateManualBookingDialog";
 import { EditManualBookingDialog } from "./EditManualBookingDialog";
+import { ImportBookingsDialog } from "./ImportBookingsDialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 
 interface Booking {
   id: string;
@@ -67,6 +68,7 @@ export default function HostBookings() {
   const [manualBookingOpen, setManualBookingOpen] = useState(false);
   const [editBookingOpen, setEditBookingOpen] = useState(false);
   const [bookingToEdit, setBookingToEdit] = useState<any>(null);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
@@ -386,6 +388,10 @@ export default function HostBookings() {
               <Plus className="h-4 w-4 mr-2" />
               Nouvelle réservation
             </Button>
+            <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Importer
+            </Button>
             <BookingsFiltersSheet
               statusFilter={statusFilter}
               minPrice={minPrice}
@@ -483,6 +489,11 @@ export default function HostBookings() {
         open={editBookingOpen}
         onOpenChange={setEditBookingOpen}
         booking={bookingToEdit}
+      />
+
+      <ImportBookingsDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
       />
     </Card>
   );
