@@ -257,7 +257,7 @@ export function ImportBookingsDialog({ open, onOpenChange }: Props) {
 
         const tenantName = [tenantFirstName, tenantLastName].filter(Boolean).join(" ");
 
-        const { error: bErr } = await supabase.from("bookings").insert({
+        const { data: newBooking, error: bErr } = await supabase.from("bookings").insert({
           listing_id: listing.id,
           guest_user_id: user.id,
           checkin_date: format(checkin, "yyyy-MM-dd"),
@@ -280,9 +280,41 @@ export function ImportBookingsDialog({ open, onOpenChange }: Props) {
             `Locataire: ${tenantName}`,
             d.notes ? String(d.notes).trim() : null,
           ].filter(Boolean).join(" | ") || null,
-        });
+        }).select("id").single();
 
         if (bErr) throw bErr;
+
+        // Mark payment items as paid if specified
+        if (newBooking) {
+          const isYes = (v: any) => v && ["oui", "yes", "true", "1", "o"].includes(String(v).toLowerCase().trim());
+          const depositPaid = isYes(d.deposit_paid);
+          const balancePaid = isYes(d.balance_paid);
+
+          if (depositPaid || balancePaid) {
+            const { data: payItems } = await supabase
+              .from("booking_payment_items")
+              .select("id, sort_order")
+              .eq("booking_id", newBooking.id)
+              .order("sort_order");
+
+            if (payItems && payItems.length > 0) {
+              const now = new Date().toISOString();
+              const idsToMark: string[] = [];
+              if (depositPaid && payItems[0]) idsToMark.push(payItems[0].id);
+              if (balancePaid && payItems.length > 1) {
+                payItems.slice(1).forEach(p => idsToMark.push(p.id));
+              } else if (balancePaid && payItems.length === 1) {
+                idsToMark.push(payItems[0].id);
+              }
+              if (idsToMark.length > 0) {
+                await supabase
+                  .from("booking_payment_items")
+                  .update({ is_paid: true, paid_at: now, updated_at: now })
+                  .in("id", idsToMark);
+              }
+            }
+          }
+        }
         success++;
       } catch (err: any) {
         failed++;
