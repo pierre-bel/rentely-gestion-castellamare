@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Eye, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { BookingPaymentDetailDialog } from "./BookingPaymentDetailDialog";
 
