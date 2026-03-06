@@ -1252,12 +1252,49 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_custom_sections: {
+        Row: {
+          body_html: string
+          created_at: string
+          host_user_id: string
+          id: string
+          is_enabled: boolean
+          section_key: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body_html?: string
+          created_at?: string
+          host_user_id: string
+          id?: string
+          is_enabled?: boolean
+          section_key?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string
+          created_at?: string
+          host_user_id?: string
+          id?: string
+          is_enabled?: boolean
+          section_key?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       portal_settings: {
         Row: {
           created_at: string
           custom_footer_text: string | null
           host_user_id: string
           id: string
+          section_order: Json | null
           show_access_code: boolean
           show_address: boolean
           show_amenities: boolean
@@ -1273,6 +1310,7 @@ export type Database = {
           custom_footer_text?: string | null
           host_user_id: string
           id?: string
+          section_order?: Json | null
           show_access_code?: boolean
           show_address?: boolean
           show_amenities?: boolean
@@ -1288,6 +1326,7 @@ export type Database = {
           custom_footer_text?: string | null
           host_user_id?: string
           id?: string
+          section_order?: Json | null
           show_access_code?: boolean
           show_address?: boolean
           show_amenities?: boolean
@@ -1834,10 +1873,41 @@ export type Database = {
           },
         ]
       }
+      public_portal_custom_sections: {
+        Row: {
+          body_html: string | null
+          host_user_id: string | null
+          id: string | null
+          is_enabled: boolean | null
+          section_key: string | null
+          sort_order: number | null
+          title: string | null
+        }
+        Insert: {
+          body_html?: string | null
+          host_user_id?: string | null
+          id?: string | null
+          is_enabled?: boolean | null
+          section_key?: string | null
+          sort_order?: number | null
+          title?: string | null
+        }
+        Update: {
+          body_html?: string | null
+          host_user_id?: string | null
+          id?: string | null
+          is_enabled?: boolean | null
+          section_key?: string | null
+          sort_order?: number | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       public_portal_settings: {
         Row: {
           custom_footer_text: string | null
           host_user_id: string | null
+          section_order: Json | null
           show_access_code: boolean | null
           show_address: boolean | null
           show_amenities: boolean | null
@@ -1850,6 +1920,7 @@ export type Database = {
         Insert: {
           custom_footer_text?: string | null
           host_user_id?: string | null
+          section_order?: Json | null
           show_access_code?: boolean | null
           show_address?: boolean | null
           show_amenities?: boolean | null
@@ -1862,6 +1933,7 @@ export type Database = {
         Update: {
           custom_footer_text?: string | null
           host_user_id?: string | null
+          section_order?: Json | null
           show_access_code?: boolean | null
           show_address?: boolean | null
           show_amenities?: boolean | null
