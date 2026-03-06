@@ -418,6 +418,20 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
               );
             })}
 
+            {/* Igloohome Code */}
+            <div>
+              <Label>Code clé Igloohome</Label>
+              <Input
+                type="text"
+                inputMode="numeric"
+                value={igloohomeCode.replace(/\D/g, "").replace(/(\d{3})(?=\d)/g, "$1 ")}
+                onChange={(e) => setIgloohomeCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="123 456 789"
+                maxLength={15}
+              />
+              <p className="text-xs text-muted-foreground mt-1">Chiffres uniquement, espacés tous les 3 pour lisibilité.</p>
+            </div>
+
             {/* Notes */}
             <div>
               <Label>Notes</Label>
