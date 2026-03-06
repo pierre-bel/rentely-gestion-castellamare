@@ -5,13 +5,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Dynamic variable replacements
 function replacePlaceholders(template: string, variables: Record<string, string>): string {
   let result = template;
   for (const [key, value] of Object.entries(variables)) {
     result = result.replaceAll(`{{${key}}}`, value || '');
   }
   return result;
+}
+
+function getCivility(gender: string | null): string {
+  if (gender === 'male' || gender === 'homme') return 'Monsieur';
+  if (gender === 'female' || gender === 'femme') return 'Madame';
+  return '';
 }
 
 Deno.serve(async (req) => {
@@ -81,10 +86,8 @@ Deno.serve(async (req) => {
       });
 
     } else if (action === 'send_for_booking') {
-      // Send an automated email for a specific booking
       const { automation_id, booking_id } = body;
 
-      // Get automation
       const { data: automation, error: autoError } = await supabase
         .from('email_automations')
         .select('*')
@@ -96,10 +99,9 @@ Deno.serve(async (req) => {
         throw new Error('Automation not found');
       }
 
-      // Get booking with listing and guest info
       const { data: booking, error: bookError } = await supabase
         .from('bookings')
-        .select('id, checkin_date, checkout_date, nights, guests, total_price, guest_user_id, listing_id')
+        .select('id, checkin_date, checkout_date, nights, guests, total_price, guest_user_id, listing_id, pricing_breakdown')
         .eq('id', booking_id)
         .single();
 
@@ -107,30 +109,65 @@ Deno.serve(async (req) => {
         throw new Error('Booking not found');
       }
 
-      // Get listing
       const { data: listing } = await supabase
         .from('listings')
         .select('title, address, city, country')
         .eq('id', booking.listing_id)
         .single();
 
-      // Get guest profile
-      const { data: guest } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, email')
-        .eq('id', booking.guest_user_id)
-        .single();
+      // Determine recipient
+      let recipientEmail: string;
+      const pricingBreakdown = booking.pricing_breakdown as Record<string, unknown> | null;
+      const tenantId = pricingBreakdown?.tenant_id as string | undefined;
 
-      if (!guest?.email) {
-        throw new Error('Guest email not found');
+      // Get tenant info for variables (civility, email)
+      let tenantGender: string | null = null;
+      let tenantEmail: string | null = null;
+      let tenantFirstName = '';
+      let tenantLastName = '';
+
+      if (tenantId) {
+        const serviceClient = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+        );
+        const { data: tenant } = await serviceClient
+          .from('tenants')
+          .select('first_name, last_name, email, gender')
+          .eq('id', tenantId)
+          .single();
+        if (tenant) {
+          tenantGender = tenant.gender;
+          tenantEmail = tenant.email;
+          tenantFirstName = tenant.first_name || '';
+          tenantLastName = tenant.last_name || '';
+        }
       }
 
-      // Build variables
+      // Determine recipient based on automation settings
+      if (automation.recipient_type === 'fixed' && automation.recipient_email) {
+        recipientEmail = automation.recipient_email;
+      } else if (tenantEmail) {
+        recipientEmail = tenantEmail;
+      } else {
+        // Fallback to guest profile
+        const { data: guest } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, email')
+          .eq('id', booking.guest_user_id)
+          .single();
+        if (!guest?.email) throw new Error('Recipient email not found');
+        recipientEmail = guest.email;
+        if (!tenantFirstName) tenantFirstName = guest.first_name || '';
+        if (!tenantLastName) tenantLastName = guest.last_name || '';
+      }
+
       const variables: Record<string, string> = {
-        guest_first_name: guest.first_name || '',
-        guest_last_name: guest.last_name || '',
-        guest_full_name: `${guest.first_name || ''} ${guest.last_name || ''}`.trim(),
-        guest_email: guest.email,
+        guest_first_name: tenantFirstName,
+        guest_last_name: tenantLastName,
+        guest_full_name: `${tenantFirstName} ${tenantLastName}`.trim(),
+        guest_email: tenantEmail || recipientEmail,
+        guest_civility: getCivility(tenantGender),
         checkin_date: booking.checkin_date,
         checkout_date: booking.checkout_date,
         nights: String(booking.nights),
@@ -148,7 +185,7 @@ Deno.serve(async (req) => {
 
       const emailPayload: Record<string, unknown> = {
         from: 'Rentely <onboarding@resend.dev>',
-        to: [guest.email],
+        to: [recipientEmail],
         subject: processedSubject,
         html: processedBody,
       };
@@ -167,7 +204,6 @@ Deno.serve(async (req) => {
 
       const resendData = await resendRes.json();
 
-      // Log the send
       const serviceClient = createClient(
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -176,7 +212,7 @@ Deno.serve(async (req) => {
       await serviceClient.from('email_send_log').insert({
         automation_id: automation.id,
         booking_id: booking.id,
-        recipient_email: guest.email,
+        recipient_email: recipientEmail,
         subject: processedSubject,
         status: resendRes.ok ? 'sent' : 'failed',
         resend_id: resendData.id || null,

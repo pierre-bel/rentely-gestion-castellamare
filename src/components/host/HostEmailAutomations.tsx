@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Plus, Pencil, Trash2, Send, Mail } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +28,11 @@ const TRIGGER_LABELS: Record<string, string> = {
   days_after_checkout: "X jours après le départ",
 };
 
+interface Listing {
+  id: string;
+  title: string;
+}
+
 interface EmailAutomation {
   id: string;
   name: string;
@@ -37,6 +43,8 @@ interface EmailAutomation {
   is_enabled: boolean;
   listing_id: string | null;
   reply_to_email: string | null;
+  recipient_type: string;
+  recipient_email: string | null;
   created_at: string;
 }
 
@@ -48,7 +56,7 @@ export default function HostEmailAutomations() {
   const [editingAutomation, setEditingAutomation] = useState<EmailAutomation | null>(null);
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testAutomation, setTestAutomation] = useState<EmailAutomation | null>(null);
-  const [testEmail, setTestEmail] = useState("");
+  const [testEmail, setTestEmail] = useState("castellamare345@gmail.com");
   const [sendingTest, setSendingTest] = useState(false);
 
   // Form state
@@ -59,6 +67,9 @@ export default function HostEmailAutomations() {
   const [formDays, setFormDays] = useState(1);
   const [formEnabled, setFormEnabled] = useState(true);
   const [formReplyTo, setFormReplyTo] = useState("");
+  const [formListingId, setFormListingId] = useState<string>("all");
+  const [formRecipientType, setFormRecipientType] = useState("tenant");
+  const [formRecipientEmail, setFormRecipientEmail] = useState("");
 
   const { data: automations = [], isLoading } = useQuery({
     queryKey: ["email-automations", user?.id],
@@ -74,16 +85,22 @@ export default function HostEmailAutomations() {
     enabled: !!user?.id,
   });
 
+  const { data: listings = [] } = useQuery({
+    queryKey: ["host-listings-simple", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("listings")
+        .select("id, title")
+        .eq("host_user_id", user!.id)
+        .order("title");
+      if (error) throw error;
+      return data as Listing[];
+    },
+    enabled: !!user?.id,
+  });
+
   const saveMutation = useMutation({
-    mutationFn: async (automation: {
-      name: string;
-      subject: string;
-      body_html: string;
-      trigger_type: "booking_confirmed" | "days_before_checkin" | "day_of_checkin" | "days_after_checkin" | "days_before_checkout" | "day_of_checkout" | "days_after_checkout";
-      trigger_days: number;
-      is_enabled: boolean;
-      reply_to_email: string | null;
-    }) => {
+    mutationFn: async (automation: Record<string, unknown>) => {
       if (editingAutomation) {
         const { error } = await supabase
           .from("email_automations")
@@ -140,6 +157,9 @@ export default function HostEmailAutomations() {
     setFormDays(1);
     setFormEnabled(true);
     setFormReplyTo(user?.email || "");
+    setFormListingId("all");
+    setFormRecipientType("tenant");
+    setFormRecipientEmail("");
     setDialogOpen(true);
   };
 
@@ -152,6 +172,9 @@ export default function HostEmailAutomations() {
     setFormDays(auto.trigger_days);
     setFormEnabled(auto.is_enabled);
     setFormReplyTo(auto.reply_to_email || "");
+    setFormListingId(auto.listing_id || "all");
+    setFormRecipientType(auto.recipient_type || "tenant");
+    setFormRecipientEmail(auto.recipient_email || "");
     setDialogOpen(true);
   };
 
@@ -160,14 +183,21 @@ export default function HostEmailAutomations() {
       toast({ title: "Erreur", description: "Veuillez remplir tous les champs obligatoires.", variant: "destructive" });
       return;
     }
+    if (formRecipientType === "fixed" && !formRecipientEmail) {
+      toast({ title: "Erreur", description: "Veuillez saisir une adresse e-mail destinataire.", variant: "destructive" });
+      return;
+    }
     saveMutation.mutate({
       name: formName,
       subject: formSubject,
       body_html: formBody,
-      trigger_type: formTrigger as any,
+      trigger_type: formTrigger,
       trigger_days: formDays,
       is_enabled: formEnabled,
       reply_to_email: formReplyTo || null,
+      listing_id: formListingId === "all" ? null : formListingId,
+      recipient_type: formRecipientType,
+      recipient_email: formRecipientType === "fixed" ? formRecipientEmail : null,
     });
   };
 
@@ -182,6 +212,8 @@ export default function HostEmailAutomations() {
       testVariables.guest_first_name = "Jean";
       testVariables.guest_last_name = "Dupont";
       testVariables.guest_full_name = "Jean Dupont";
+      testVariables.guest_email = "jean.dupont@example.com";
+      testVariables.guest_civility = "Monsieur";
       testVariables.checkin_date = "2026-04-15";
       testVariables.checkout_date = "2026-04-20";
       testVariables.nights = "5";
@@ -218,7 +250,7 @@ export default function HostEmailAutomations() {
 
   const openTestDialog = (auto: EmailAutomation) => {
     setTestAutomation(auto);
-    setTestEmail(user?.email || "");
+    setTestEmail("castellamare345@gmail.com");
     setTestDialogOpen(true);
   };
 
@@ -232,6 +264,11 @@ export default function HostEmailAutomations() {
     return base;
   };
 
+  const getListingName = (listingId: string | null) => {
+    if (!listingId) return "Tous les biens";
+    return listings.find((l) => l.id === listingId)?.title || "—";
+  };
+
   return (
     <Card className="bg-card">
       <CardContent className="p-6">
@@ -239,7 +276,7 @@ export default function HostEmailAutomations() {
           <div>
             <h2 className="text-lg font-semibold">E-mails automatiques</h2>
             <p className="text-sm text-muted-foreground">
-              Configurez des e-mails envoyés automatiquement à vos locataires selon des déclencheurs.
+              Configurez des e-mails envoyés automatiquement selon des déclencheurs.
             </p>
           </div>
           <Button onClick={openCreate}>
@@ -265,8 +302,9 @@ export default function HostEmailAutomations() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nom</TableHead>
+                    <TableHead>Bien</TableHead>
                     <TableHead>Déclencheur</TableHead>
-                    <TableHead>Sujet</TableHead>
+                    <TableHead>Destinataire</TableHead>
                     <TableHead>Actif</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -275,11 +313,14 @@ export default function HostEmailAutomations() {
                   {automations.map((auto) => (
                     <TableRow key={auto.id}>
                       <TableCell className="font-medium">{auto.name}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">
+                        {getListingName(auto.listing_id)}
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline">{getTriggerLabel(auto)}</Badge>
                       </TableCell>
-                      <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                        {auto.subject}
+                      <TableCell className="text-sm text-muted-foreground">
+                        {auto.recipient_type === "fixed" ? auto.recipient_email : "Locataire"}
                       </TableCell>
                       <TableCell>
                         <Switch
@@ -340,6 +381,49 @@ export default function HostEmailAutomations() {
               />
             </div>
 
+            {/* Listing selection */}
+            <div>
+              <Label>Bien concerné</Label>
+              <Select value={formListingId} onValueChange={setFormListingId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tous les biens" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les biens</SelectItem>
+                  {listings.map((l) => (
+                    <SelectItem key={l.id} value={l.id}>{l.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Choisissez un bien spécifique ou laissez « Tous les biens » pour l'appliquer partout.
+              </p>
+            </div>
+
+            {/* Recipient */}
+            <div>
+              <Label>Destinataire de l'e-mail *</Label>
+              <RadioGroup value={formRecipientType} onValueChange={setFormRecipientType} className="mt-2 space-y-2">
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="tenant" id="recipient-tenant" />
+                  <Label htmlFor="recipient-tenant" className="font-normal cursor-pointer">Le locataire de la réservation</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="fixed" id="recipient-fixed" />
+                  <Label htmlFor="recipient-fixed" className="font-normal cursor-pointer">Une adresse e-mail fixe</Label>
+                </div>
+              </RadioGroup>
+              {formRecipientType === "fixed" && (
+                <Input
+                  type="email"
+                  value={formRecipientEmail}
+                  onChange={(e) => setFormRecipientEmail(e.target.value)}
+                  placeholder="destinataire@example.com"
+                  className="mt-2"
+                />
+              )}
+            </div>
+
             <div>
               <Label>Adresse e-mail de réponse (Reply-To)</Label>
               <Input
@@ -349,7 +433,7 @@ export default function HostEmailAutomations() {
                 placeholder="votre@email.com"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                L'adresse à laquelle le locataire répondra. Laissez vide pour utiliser votre e-mail par défaut.
+                L'adresse à laquelle le destinataire répondra.
               </p>
             </div>
 
@@ -390,7 +474,7 @@ export default function HostEmailAutomations() {
                 placeholder="Ex: Confirmation - {{listing_title}}"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Vous pouvez utiliser les variables dynamiques ci-dessus.
+                Vous pouvez utiliser les variables dynamiques.
               </p>
             </div>
 
@@ -429,8 +513,11 @@ export default function HostEmailAutomations() {
                 type="email"
                 value={testEmail}
                 onChange={(e) => setTestEmail(e.target.value)}
-                placeholder="votre@email.com"
+                placeholder="castellamare345@gmail.com"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                En mode sandbox Resend, les e-mails ne peuvent être envoyés qu'à l'adresse du propriétaire du compte.
+              </p>
             </div>
             {testAutomation && (
               <div className="p-3 rounded-lg bg-muted/50 text-sm">
