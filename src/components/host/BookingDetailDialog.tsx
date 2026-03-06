@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +56,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Props) {
+  const [linkCopied, setLinkCopied] = useState(false);
   if (!booking) return null;
 
   const checkin = parseISO(booking.checkin_date);
@@ -201,7 +203,24 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
           </TabsContent>
         </Tabs>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2 sm:gap-0 flex-wrap">
+          {booking.access_token && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => {
+                const url = `${window.location.origin}/portal/${booking.access_token}`;
+                navigator.clipboard.writeText(url);
+                setLinkCopied(true);
+                toast({ title: "Lien du portail copié !" });
+                setTimeout(() => setLinkCopied(false), 2000);
+              }}
+            >
+              {linkCopied ? <Check className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
+              {linkCopied ? "Copié" : "Portail client"}
+            </Button>
+          )}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Fermer
           </Button>
