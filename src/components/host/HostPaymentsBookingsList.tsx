@@ -222,7 +222,12 @@ export function HostPaymentsBookingsList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bookings.map(booking => {
+                {[...bookings].sort((a, b) => {
+                  const sa = getPaymentStatus(a.payment_items, a.total_price);
+                  const sb = getPaymentStatus(b.payment_items, b.total_price);
+                  const order: Record<PaymentStatus, number> = { late: 0, unpaid: 1, partial: 2, paid: 3 };
+                  return (order[sa] ?? 4) - (order[sb] ?? 4);
+                }).map(booking => {
                   const status = getPaymentStatus(booking.payment_items, booking.total_price);
                   return (
                     <TableRow key={booking.id} className="hover:bg-muted/30">

@@ -41,6 +41,8 @@ const TEMPLATE_COLUMNS = [
   { key: "cleaning_fee", label: "Frais de ménage (€)", required: false, example: "80" },
   { key: "status", label: "Statut", required: false, example: "confirmed" },
   { key: "igloohome_code", label: "Code clé Igloohome", required: false, example: "123456789" },
+  { key: "deposit_paid", label: "Acompte payé (oui/non)", required: false, example: "oui" },
+  { key: "balance_paid", label: "Solde payé (oui/non)", required: false, example: "non" },
   { key: "notes", label: "Notes", required: false, example: "" },
   // Tenant
   { key: "tenant_first_name", label: "Prénom du locataire", required: true, example: "Jean" },
