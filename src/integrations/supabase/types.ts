@@ -77,6 +77,7 @@ export type Database = {
           host_payout_gross: number | null
           host_payout_net: number | null
           id: string
+          igloohome_code: string | null
           listing_id: string
           nights: number
           notes: string | null
@@ -105,6 +106,7 @@ export type Database = {
           host_payout_gross?: number | null
           host_payout_net?: number | null
           id?: string
+          igloohome_code?: string | null
           listing_id: string
           nights: number
           notes?: string | null
@@ -133,6 +135,7 @@ export type Database = {
           host_payout_gross?: number | null
           host_payout_net?: number | null
           id?: string
+          igloohome_code?: string | null
           listing_id?: string
           nights?: number
           notes?: string | null
@@ -411,6 +414,8 @@ export type Database = {
           is_enabled: boolean
           listing_id: string | null
           name: string
+          recipient_email: string | null
+          recipient_type: string
           reply_to_email: string | null
           subject: string
           trigger_days: number
@@ -425,6 +430,8 @@ export type Database = {
           is_enabled?: boolean
           listing_id?: string | null
           name: string
+          recipient_email?: string | null
+          recipient_type?: string
           reply_to_email?: string | null
           subject: string
           trigger_days?: number
@@ -439,6 +446,8 @@ export type Database = {
           is_enabled?: boolean
           listing_id?: string | null
           name?: string
+          recipient_email?: string | null
+          recipient_type?: string
           reply_to_email?: string | null
           subject?: string
           trigger_days?: number
