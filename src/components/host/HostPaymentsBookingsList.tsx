@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,7 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Eye, Search } from "lucide-react";
 import { format } from "date-fns";
 import { BookingPaymentDetailDialog } from "./BookingPaymentDetailDialog";
 
@@ -37,15 +38,27 @@ export interface PaymentItem {
   sort_order: number;
 }
 
-type PaymentStatus = "unpaid" | "partial" | "paid";
+type PaymentStatus = "overdue" | "unpaid" | "partial" | "paid";
 
-function getPaymentStatus(items: PaymentItem[], totalPrice: number): PaymentStatus {
+function getPaymentStatus(items: PaymentItem[]): PaymentStatus {
   if (items.length === 0) return "unpaid";
+  const today = new Date().toISOString().split("T")[0];
+  const hasOverdue = items.some(i => !i.is_paid && i.due_date && i.due_date < today);
   const paidCount = items.filter(i => i.is_paid).length;
+  if (hasOverdue) return "overdue";
   if (paidCount === 0) return "unpaid";
   if (paidCount === items.length) return "paid";
   return "partial";
 }
+
+function getOverdueAmount(items: PaymentItem[]): number {
+  const today = new Date().toISOString().split("T")[0];
+  return items
+    .filter(i => !i.is_paid && i.due_date && i.due_date < today)
+    .reduce((s, i) => s + i.amount, 0);
+}
+
+const STATUS_ORDER: Record<PaymentStatus, number> = { overdue: 0, unpaid: 1, partial: 2, paid: 3 };
 
 function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
   switch (status) {
@@ -55,6 +68,8 @@ function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
       return <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100">Acompte payé</Badge>;
     case "unpaid":
       return <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100">Non payé</Badge>;
+    case "overdue":
+      return <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100 animate-pulse">En retard</Badge>;
   }
 }
 
@@ -62,13 +77,13 @@ export function HostPaymentsBookingsList() {
   const { user } = useAuth();
   const [selectedBooking, setSelectedBooking] = useState<BookingWithPayments | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: ["host-payments-bookings", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
 
-      // Fetch bookings for host's listings + manual bookings (guest_user_id = host)
       const { data: bookingsData, error: bErr } = await supabase
         .from("bookings")
         .select(`
@@ -83,7 +98,6 @@ export function HostPaymentsBookingsList() {
 
       const bookingIds = (bookingsData || []).map(b => b.id);
 
-      // Fetch payment items for all bookings
       let paymentItemsMap: Record<string, PaymentItem[]> = {};
       if (bookingIds.length > 0) {
         const { data: items, error: pErr } = await supabase
@@ -98,12 +112,8 @@ export function HostPaymentsBookingsList() {
         }
       }
 
-      // Fetch tenant names
       const tenantIds = (bookingsData || [])
-        .map(b => {
-          const pb = b.pricing_breakdown as any;
-          return pb?.tenant_id;
-        })
+        .map(b => (b.pricing_breakdown as any)?.tenant_id)
         .filter(Boolean);
 
       let tenantMap: Record<string, string> = {};
@@ -139,6 +149,22 @@ export function HostPaymentsBookingsList() {
     enabled: !!user?.id,
   });
 
+  const filteredAndSorted = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    const filtered = q
+      ? bookings.filter(b =>
+          b.tenant_name.toLowerCase().includes(q) ||
+          b.listing_title.toLowerCase().includes(q)
+        )
+      : bookings;
+
+    return [...filtered].sort((a, b) => {
+      const sa = STATUS_ORDER[getPaymentStatus(a.payment_items)];
+      const sb = STATUS_ORDER[getPaymentStatus(b.payment_items)];
+      return sa - sb;
+    });
+  }, [bookings, search]);
+
   const handleView = (booking: BookingWithPayments) => {
     setSelectedBooking(booking);
     setDialogOpen(true);
@@ -168,17 +194,18 @@ export function HostPaymentsBookingsList() {
     );
   }
 
-  // Summary cards
   const totalRevenue = bookings.reduce((s, b) => s + b.total_price, 0);
   const paidTotal = bookings
-    .filter(b => getPaymentStatus(b.payment_items, b.total_price) === "paid")
-    .reduce((s, b) => s + b.total_price, 0);
+    .flatMap(b => b.payment_items)
+    .filter(i => i.is_paid)
+    .reduce((s, i) => s + i.amount, 0);
+  const overdueTotal = bookings.reduce((s, b) => s + getOverdueAmount(b.payment_items), 0);
   const pendingTotal = totalRevenue - paidTotal;
 
   return (
     <>
       {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="p-4">
             <p className="text-sm text-muted-foreground">Total attendu</p>
@@ -197,6 +224,25 @@ export function HostPaymentsBookingsList() {
             <p className="text-2xl font-bold text-amber-600">{pendingTotal.toFixed(2)} €</p>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground">En retard</p>
+            <p className={`text-2xl font-bold ${overdueTotal > 0 ? "text-destructive animate-pulse" : "text-muted-foreground"}`}>
+              {overdueTotal.toFixed(2)} €
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Rechercher par locataire ou bien..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="pl-9"
+        />
       </div>
 
       <Card>
@@ -214,10 +260,10 @@ export function HostPaymentsBookingsList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bookings.map(booking => {
-                  const status = getPaymentStatus(booking.payment_items, booking.total_price);
+                {filteredAndSorted.map(booking => {
+                  const status = getPaymentStatus(booking.payment_items);
                   return (
-                    <TableRow key={booking.id} className="hover:bg-muted/30">
+                    <TableRow key={booking.id} className={`hover:bg-muted/30 ${status === "overdue" ? "bg-destructive/5" : ""}`}>
                       <TableCell className="font-medium max-w-[200px] truncate">{booking.listing_title}</TableCell>
                       <TableCell>{booking.tenant_name}</TableCell>
                       <TableCell>
@@ -240,6 +286,13 @@ export function HostPaymentsBookingsList() {
                     </TableRow>
                   );
                 })}
+                {filteredAndSorted.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      Aucun résultat pour « {search} »
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>

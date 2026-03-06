@@ -54,6 +54,9 @@ const TEMPLATE_COLUMNS = [
   { key: "tenant_city", label: "Ville", required: false, example: "Bruxelles" },
   { key: "tenant_country", label: "Pays", required: false, example: "Belgique" },
   { key: "tenant_notes", label: "Notes locataire", required: false, example: "" },
+  // Payment status
+  { key: "deposit_paid", label: "Acompte payé (oui/non)", required: false, example: "non" },
+  { key: "balance_paid", label: "Solde payé (oui/non)", required: false, example: "non" },
 ];
 
 function parseDate(val: any): Date | null {
