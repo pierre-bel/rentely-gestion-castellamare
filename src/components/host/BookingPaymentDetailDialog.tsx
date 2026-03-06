@@ -5,12 +5,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,9 +36,6 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
-  const [newLabel, setNewLabel] = useState("");
-  const [newAmount, setNewAmount] = useState("");
-  const [newDueDate, setNewDueDate] = useState("");
 
   if (!booking) return null;
 
@@ -69,43 +63,7 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
     }
   };
 
-  const handleAddItem = async () => {
-    if (!newLabel.trim() || !newAmount) return;
-    setSaving(true);
-    try {
-      const { error } = await supabase.from("booking_payment_items").insert({
-        booking_id: booking.id,
-        label: newLabel.trim(),
-        amount: parseFloat(newAmount),
-        due_date: newDueDate || null,
-        sort_order: booking.payment_items.length,
-      });
-      if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
-      setNewLabel("");
-      setNewAmount("");
-      setNewDueDate("");
-      toast({ title: "Échéance ajoutée" });
-    } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDeleteItem = async (itemId: string) => {
-    setSaving(true);
-    try {
-      const { error } = await supabase.from("booking_payment_items").delete().eq("id", itemId);
-      if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
-      toast({ title: "Échéance supprimée" });
-    } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  };
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -144,59 +102,41 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
           {booking.payment_items.length === 0 && (
             <p className="text-sm text-muted-foreground">Aucune échéance configurée</p>
           )}
-          {booking.payment_items.map(item => (
-            <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
-              <Checkbox
-                checked={item.is_paid}
-                onCheckedChange={() => handleTogglePaid(item)}
-                disabled={saving}
-              />
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${item.is_paid ? "line-through text-muted-foreground" : ""}`}>
-                  {item.label}
-                </p>
-                {item.due_date && (
-                  <p className="text-xs text-muted-foreground">
-                    Échéance : {format(new Date(item.due_date), "dd/MM/yyyy")}
-                  </p>
-                )}
-                {item.is_paid && item.paid_at && (
-                  <p className="text-xs text-green-600">
-                    Payé le {format(new Date(item.paid_at), "dd/MM/yyyy")}
-                  </p>
-                )}
+          {booking.payment_items.map(item => {
+            const isLate = !item.is_paid && item.due_date && item.due_date < today;
+            return (
+              <div key={item.id} className={`flex items-center gap-3 p-3 rounded-lg border ${isLate ? "border-destructive/50 bg-destructive/5" : "bg-card"}`}>
+                <Checkbox
+                  checked={item.is_paid}
+                  onCheckedChange={() => handleTogglePaid(item)}
+                  disabled={saving}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm font-medium ${item.is_paid ? "line-through text-muted-foreground" : ""}`}>
+                      {item.label}
+                    </p>
+                    <span className="text-sm font-semibold ml-auto">{item.amount.toFixed(2)} €</span>
+                  </div>
+                  {item.due_date && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Échéance : {format(new Date(item.due_date + "T00:00:00"), "dd/MM/yyyy")}
+                    </p>
+                  )}
+                  {isLate && (
+                    <span className="text-xs text-destructive flex items-center gap-0.5 mt-0.5">
+                      <AlertTriangle className="h-3 w-3" /> En retard
+                    </span>
+                  )}
+                  {item.is_paid && item.paid_at && (
+                    <p className="text-xs text-green-600 mt-0.5">
+                      Payé le {format(new Date(item.paid_at), "dd/MM/yyyy")}
+                    </p>
+                  )}
+                </div>
               </div>
-              <p className="text-sm font-semibold whitespace-nowrap">{item.amount.toFixed(2)} €</p>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteItem(item.id)} disabled={saving}>
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          ))}
-        </div>
-
-        <Separator />
-
-        {/* Add new item */}
-        <div className="space-y-3">
-          <p className="text-sm font-medium">Ajouter une échéance</p>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label className="text-xs">Libellé</Label>
-              <Input value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Ex: Acompte" />
-            </div>
-            <div>
-              <Label className="text-xs">Montant (€)</Label>
-              <Input type="number" min="0" step="0.01" value={newAmount} onChange={e => setNewAmount(e.target.value)} placeholder="0.00" />
-            </div>
-          </div>
-          <div>
-            <Label className="text-xs">Date d'échéance (optionnel)</Label>
-            <Input type="date" value={newDueDate} onChange={e => setNewDueDate(e.target.value)} />
-          </div>
-          <Button onClick={handleAddItem} disabled={saving || !newLabel.trim() || !newAmount} size="sm" className="w-full">
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter
-          </Button>
+            );
+          })}
         </div>
       </DialogContent>
     </Dialog>

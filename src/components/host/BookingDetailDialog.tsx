@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarDays, Users, Home, Euro, FileText, Pencil, Mail, Link2, Check, CreditCard, Plus, Trash2, AlertTriangle, Phone, MapPin } from "lucide-react";
+import { CalendarDays, Users, Home, Euro, FileText, Pencil, Mail, Link2, Check, CreditCard, AlertTriangle, Phone, MapPin } from "lucide-react";
 import BookingEmailsTab from "./BookingEmailsTab";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,9 +64,6 @@ const STATUS_LABELS: Record<string, string> = {
 export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Props) {
   const [linkCopied, setLinkCopied] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [newLabel, setNewLabel] = useState("");
-  const [newAmount, setNewAmount] = useState("");
-  const [newDueDate, setNewDueDate] = useState("");
   const queryClient = useQueryClient();
 
   const bd = booking?.pricing_breakdown;
@@ -138,66 +135,6 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
       queryClient.invalidateQueries({ queryKey: ["host-bookings-payment-items"] });
       queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
       toast({ title: item.is_paid ? "Marqué comme non payé" : "Marqué comme payé" });
-    } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleUpdateItem = async (itemId: string, field: string, value: any) => {
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from("booking_payment_items")
-        .update({ [field]: value, updated_at: new Date().toISOString() })
-        .eq("id", itemId);
-      if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["booking-payment-items-detail", booking.id] });
-      queryClient.invalidateQueries({ queryKey: ["host-bookings-payment-items"] });
-      queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
-    } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleAddItem = async () => {
-    if (!newLabel.trim() || !newAmount) return;
-    setSaving(true);
-    try {
-      const { error } = await supabase.from("booking_payment_items").insert({
-        booking_id: booking.id,
-        label: newLabel.trim(),
-        amount: parseFloat(newAmount),
-        due_date: newDueDate || null,
-        sort_order: paymentItems.length,
-      });
-      if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["booking-payment-items-detail", booking.id] });
-      queryClient.invalidateQueries({ queryKey: ["host-bookings-payment-items"] });
-      queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
-      setNewLabel("");
-      setNewAmount("");
-      setNewDueDate("");
-      toast({ title: "Échéance ajoutée" });
-    } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDeleteItem = async (itemId: string) => {
-    setSaving(true);
-    try {
-      const { error } = await supabase.from("booking_payment_items").delete().eq("id", itemId);
-      if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["booking-payment-items-detail", booking.id] });
-      queryClient.invalidateQueries({ queryKey: ["host-bookings-payment-items"] });
-      queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
-      toast({ title: "Échéance supprimée" });
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
     } finally {
@@ -358,7 +295,7 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
 
             <Separator />
 
-            {/* Payment items */}
+            {/* Payment items - read only with checkbox */}
             <div className="space-y-2">
               <p className="text-sm font-medium">Échéances de paiement</p>
               {paymentItems.length === 0 && (
@@ -379,69 +316,28 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
                           <p className={`text-sm font-medium ${item.is_paid ? "line-through text-muted-foreground" : ""}`}>
                             {item.label}
                           </p>
-                          {isLate && (
-                            <span className="text-xs text-destructive flex items-center gap-0.5">
-                              <AlertTriangle className="h-3 w-3" /> En retard
-                            </span>
-                          )}
+                          <span className="text-sm font-semibold ml-auto">{formatPrice(item.amount)}</span>
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Input
-                            type="date"
-                            value={item.due_date || ""}
-                            onChange={(e) => handleUpdateItem(item.id, "due_date", e.target.value || null)}
-                            className="h-7 text-xs w-36"
-                            disabled={saving}
-                          />
-                          <Input
-                            type="number"
-                            value={item.amount}
-                            onChange={(e) => handleUpdateItem(item.id, "amount", parseFloat(e.target.value) || 0)}
-                            className="h-7 text-xs w-24"
-                            step="0.01"
-                            min="0"
-                            disabled={saving}
-                          />
-                          <span className="text-xs text-muted-foreground">€</span>
-                        </div>
+                        {item.due_date && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Échéance : {format(new Date(item.due_date + "T00:00:00"), "dd/MM/yyyy")}
+                          </p>
+                        )}
+                        {isLate && (
+                          <span className="text-xs text-destructive flex items-center gap-0.5 mt-0.5">
+                            <AlertTriangle className="h-3 w-3" /> En retard
+                          </span>
+                        )}
                         {item.is_paid && item.paid_at && (
-                          <p className="text-xs text-success-foreground mt-1">
+                          <p className="text-xs text-success-foreground mt-0.5">
                             Payé le {format(new Date(item.paid_at), "dd/MM/yyyy")}
                           </p>
                         )}
                       </div>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteItem(item.id)} disabled={saving}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
                     </div>
                   </div>
                 );
               })}
-            </div>
-
-            <Separator />
-
-            {/* Add new item */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Ajouter une échéance</p>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-xs">Libellé</Label>
-                  <Input value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Ex: Acompte" className="h-8" />
-                </div>
-                <div>
-                  <Label className="text-xs">Montant (€)</Label>
-                  <Input type="number" min="0" step="0.01" value={newAmount} onChange={e => setNewAmount(e.target.value)} placeholder="0.00" className="h-8" />
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs">Date d'échéance</Label>
-                <Input type="date" value={newDueDate} onChange={e => setNewDueDate(e.target.value)} className="h-8" />
-              </div>
-              <Button onClick={handleAddItem} disabled={saving || !newLabel.trim() || !newAmount} size="sm" className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter
-              </Button>
             </div>
           </TabsContent>
 
