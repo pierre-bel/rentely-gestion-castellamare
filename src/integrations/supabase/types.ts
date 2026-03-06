@@ -412,7 +412,7 @@ export type Database = {
           host_user_id: string
           id: string
           is_enabled: boolean
-          listing_id: string | null
+          listing_ids: string[] | null
           name: string
           recipient_email: string | null
           recipient_type: string
@@ -428,7 +428,7 @@ export type Database = {
           host_user_id: string
           id?: string
           is_enabled?: boolean
-          listing_id?: string | null
+          listing_ids?: string[] | null
           name: string
           recipient_email?: string | null
           recipient_type?: string
@@ -444,7 +444,7 @@ export type Database = {
           host_user_id?: string
           id?: string
           is_enabled?: boolean
-          listing_id?: string | null
+          listing_ids?: string[] | null
           name?: string
           recipient_email?: string | null
           recipient_type?: string
@@ -454,22 +454,7 @@ export type Database = {
           trigger_type?: Database["public"]["Enums"]["email_trigger_type"]
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "email_automations_listing_id_fkey"
-            columns: ["listing_id"]
-            isOneToOne: false
-            referencedRelation: "listings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "email_automations_listing_id_fkey"
-            columns: ["listing_id"]
-            isOneToOne: false
-            referencedRelation: "public_listings"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       email_send_log: {
         Row: {
