@@ -49,12 +49,11 @@ export default function EmbedAvailability() {
       const rangeStart = format(startOfMonth(subMonths(currentMonth, 1)), "yyyy-MM-dd");
       const rangeEnd = format(endOfMonth(addMonths(currentMonth, 2)), "yyyy-MM-dd");
       const { data, error } = await supabase
-        .from("bookings")
+        .from("public_booking_dates")
         .select("checkin_date, checkout_date")
         .eq("listing_id", listingId)
         .gte("checkout_date", rangeStart)
-        .lte("checkin_date", rangeEnd)
-        .in("status", ["confirmed", "pending_payment"]);
+        .lte("checkin_date", rangeEnd);
       if (error) throw error;
       return data || [];
     },
@@ -68,7 +67,7 @@ export default function EmbedAvailability() {
       const rangeStart = format(startOfMonth(subMonths(currentMonth, 1)), "yyyy-MM-dd");
       const rangeEnd = format(endOfMonth(addMonths(currentMonth, 2)), "yyyy-MM-dd");
       const { data, error } = await supabase
-        .from("listing_availability")
+        .from("public_listing_availability")
         .select("start_date, end_date")
         .eq("listing_id", listingId)
         .gte("end_date", rangeStart)
