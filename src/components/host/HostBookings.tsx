@@ -442,7 +442,7 @@ export default function HostBookings() {
           onViewDetails={async (booking) => {
             const { data } = await supabase
               .from("bookings")
-              .select("id, listing_id, checkin_date, checkout_date, nights, guests, total_price, cleaning_fee, notes, status, pricing_breakdown")
+              .select("id, listing_id, checkin_date, checkout_date, nights, guests, total_price, cleaning_fee, notes, status, pricing_breakdown, access_token")
               .eq("id", booking.id)
               .maybeSingle();
             if (data) {

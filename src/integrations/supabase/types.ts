@@ -59,10 +59,18 @@ export type Database = {
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "booking_payment_items_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "public_booking_portal"
+            referencedColumns: ["booking_id"]
+          },
         ]
       }
       bookings: {
         Row: {
+          access_token: string
           cancellation_policy_snapshot: Json | null
           checkin_date: string
           checkout_date: string
@@ -92,6 +100,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_token?: string
           cancellation_policy_snapshot?: Json | null
           checkin_date: string
           checkout_date: string
@@ -121,6 +130,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_token?: string
           cancellation_policy_snapshot?: Json | null
           checkin_date?: string
           checkout_date?: string
@@ -369,6 +379,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "disputes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "public_booking_portal"
+            referencedColumns: ["booking_id"]
+          },
+          {
             foreignKeyName: "disputes_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
@@ -519,6 +536,13 @@ export type Database = {
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "email_send_log_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "public_booking_portal"
+            referencedColumns: ["booking_id"]
+          },
         ]
       }
       faqs: {
@@ -616,6 +640,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guest_debts_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "public_booking_portal"
+            referencedColumns: ["booking_id"]
           },
           {
             foreignKeyName: "guest_debts_dispute_id_fkey"
@@ -1009,6 +1040,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "message_threads_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "public_booking_portal"
+            referencedColumns: ["booking_id"]
+          },
+          {
             foreignKeyName: "message_threads_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
@@ -1075,6 +1113,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "public_booking_portal"
+            referencedColumns: ["booking_id"]
           },
         ]
       }
@@ -1161,6 +1206,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payouts_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "public_booking_portal"
+            referencedColumns: ["booking_id"]
           },
         ]
       }
@@ -1289,6 +1341,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "public_booking_portal"
+            referencedColumns: ["booking_id"]
           },
           {
             foreignKeyName: "reviews_listing_id_fkey"
@@ -1451,6 +1510,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "public_booking_portal"
+            referencedColumns: ["booking_id"]
+          },
+          {
             foreignKeyName: "transactions_dispute_id_fkey"
             columns: ["dispute_id"]
             isOneToOne: false
@@ -1542,6 +1608,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      public_booking_portal: {
+        Row: {
+          access_token: string | null
+          address: string | null
+          amenities: string[] | null
+          bathrooms: number | null
+          bedrooms: number | null
+          beds: number | null
+          booking_id: string | null
+          checkin_date: string | null
+          checkin_from: string | null
+          checkout_date: string | null
+          checkout_until: string | null
+          city: string | null
+          cleaning_fee: number | null
+          country: string | null
+          cover_image: string | null
+          currency: string | null
+          guests: number | null
+          house_rules: string | null
+          igloohome_code: string | null
+          latitude: number | null
+          listing_images: string[] | null
+          listing_title: string | null
+          longitude: number | null
+          nights: number | null
+          notes: string | null
+          postal_code: string | null
+          pricing_breakdown: Json | null
+          property_type: Database["public"]["Enums"]["property_type"] | null
+          service_fee: number | null
+          state: string | null
+          status: Database["public"]["Enums"]["booking_status"] | null
+          subtotal: number | null
+          taxes: number | null
+          total_price: number | null
+        }
+        Relationships: []
       }
       public_listing_availability: {
         Row: {
