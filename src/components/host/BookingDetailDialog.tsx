@@ -69,26 +69,10 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
   const [newDueDate, setNewDueDate] = useState("");
   const queryClient = useQueryClient();
 
-  if (!booking) return null;
-
-  const checkin = parseISO(booking.checkin_date);
-  const checkout = parseISO(booking.checkout_date);
-  const nights = differenceInCalendarDays(checkout, checkin);
-  const bd = booking.pricing_breakdown;
-  const deposit = bd?.deposit;
-  const remaining = bd?.remaining;
-  const canEdit = booking.status === "confirmed" || booking.status === "pending_payment";
+  const bd = booking?.pricing_breakdown;
   const tenantId = bd?.tenant_id;
 
-  const cleanNotes = booking.notes
-    ? booking.notes
-        .split(" | ")
-        .filter((p: string) => !p.startsWith("Locataire:") && !p.startsWith("Acompte:"))
-        .join(" | ")
-        .trim()
-    : null;
-
-  // Fetch tenant info
+  // Fetch tenant info — hooks must be called before any early return
   const { data: tenant } = useQuery({
     queryKey: ["tenant-detail", tenantId],
     queryFn: async () => {
@@ -106,18 +90,35 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
 
   // Fetch payment items
   const { data: paymentItems = [] } = useQuery({
-    queryKey: ["booking-payment-items-detail", booking.id],
+    queryKey: ["booking-payment-items-detail", booking?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("booking_payment_items")
         .select("*")
-        .eq("booking_id", booking.id)
+        .eq("booking_id", booking!.id)
         .order("sort_order");
       if (error) throw error;
       return data;
     },
-    enabled: open,
+    enabled: !!booking && open,
   });
+
+  if (!booking) return null;
+
+  const checkin = parseISO(booking.checkin_date);
+  const checkout = parseISO(booking.checkout_date);
+  const nights = differenceInCalendarDays(checkout, checkin);
+  const deposit = bd?.deposit;
+  const remaining = bd?.remaining;
+  const canEdit = booking.status === "confirmed" || booking.status === "pending_payment";
+
+  const cleanNotes = booking.notes
+    ? booking.notes
+        .split(" | ")
+        .filter((p: string) => !p.startsWith("Locataire:") && !p.startsWith("Acompte:"))
+        .join(" | ")
+        .trim()
+    : null;
 
   const today = new Date().toISOString().split("T")[0];
 
