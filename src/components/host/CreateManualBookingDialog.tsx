@@ -58,6 +58,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   const [rentalPrice, setRentalPrice] = useState("");
   const [cleaningFee, setCleaningFee] = useState("");
   const [notes, setNotes] = useState("");
+  const [igloohomeCode, setIgloohomeCode] = useState("");
   const [newTenantDialogOpen, setNewTenantDialogOpen] = useState(false);
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
 
