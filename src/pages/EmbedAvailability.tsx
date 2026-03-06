@@ -4,28 +4,29 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, ChevronRight, CheckCircle2, XCircle, Ban } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { CheckCircle2, XCircle, Ban, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   format,
   startOfMonth,
   endOfMonth,
-  eachDayOfInterval,
-  isSameMonth,
-  isToday,
   addMonths,
   subMonths,
-  startOfWeek,
-  endOfWeek,
   parseISO,
+  isWithinInterval,
   isBefore,
   startOfDay,
+  isSameMonth,
 } from "date-fns";
 import { fr } from "date-fns/locale";
-import { cn } from "@/lib/utils";
 
 export default function EmbedAvailability() {
   const { listingId } = useParams<{ listingId: string }>();
   const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  const today = startOfDay(new Date());
+  const currentMonthStart = startOfMonth(today);
+  const canGoPrev = !isSameMonth(currentMonth, currentMonthStart) && !isBefore(startOfMonth(currentMonth), currentMonthStart);
 
   const { data: listing, isLoading: listingLoading } = useQuery({
     queryKey: ["embed-listing", listingId],
@@ -78,83 +79,51 @@ export default function EmbedAvailability() {
     enabled: !!listingId,
   });
 
-  const today = startOfDay(new Date());
-  const nextMonth = addMonths(currentMonth, 1);
-  const weekDays = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
-
-  const getDateStatus = (day: Date): "checkin" | "checkout" | "booked" | "blocked" | "available" | "past" => {
-    if (isBefore(day, today)) return "past";
-    const dateStr = format(day, "yyyy-MM-dd");
-
+  const getBookingType = (date: Date): "checkin" | "checkout" | "middle" | "single" | null => {
+    const dateStr = format(date, "yyyy-MM-dd");
     let isCheckin = false;
     let isCheckout = false;
-    let isMiddle = false;
 
     for (const b of bookedRanges) {
       if (b.checkin_date === dateStr) isCheckin = true;
       if (b.checkout_date === dateStr) isCheckout = true;
-      if (dateStr > b.checkin_date && dateStr < b.checkout_date) isMiddle = true;
     }
 
-    if (isMiddle) return "booked";
-    if (isCheckin && isCheckout) return "booked"; // turnover
+    if (isCheckin && isCheckout) return "single";
     if (isCheckin) return "checkin";
     if (isCheckout) return "checkout";
 
-    for (const bd of blockedDates) {
-      if (dateStr >= bd.start_date && dateStr <= bd.end_date) return "blocked";
+    for (const b of bookedRanges) {
+      const checkin = parseISO(b.checkin_date!);
+      const checkout = parseISO(b.checkout_date!);
+      if (isWithinInterval(date, { start: checkin, end: checkout })) return "middle";
     }
-
-    return "available";
+    return null;
   };
 
-  const renderMonth = (monthDate: Date) => {
-    const monthStart = startOfMonth(monthDate);
-    const monthEnd = endOfMonth(monthDate);
-    const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
-    const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
-    const days = eachDayOfInterval({ start: calStart, end: calEnd });
-
-    return (
-      <div>
-        <h3 className="text-center font-semibold capitalize mb-2 text-sm">
-          {format(monthDate, "MMMM yyyy", { locale: fr })}
-        </h3>
-        <div className="grid grid-cols-7 gap-px mb-1">
-          {weekDays.map((d) => (
-            <div key={d} className="text-center text-[10px] font-medium text-muted-foreground py-0.5">
-              {d}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden">
-          {days.map((day) => {
-            const inMonth = isSameMonth(day, monthDate);
-            const status = getDateStatus(day);
-
-            return (
-              <div
-                key={day.toISOString()}
-                className={cn(
-                  "h-8 flex items-center justify-center text-xs bg-card",
-                  !inMonth && "opacity-20",
-                  isToday(day) && "font-bold ring-1 ring-inset ring-primary/50",
-                  status === "available" && inMonth && "bg-[hsl(var(--calendar-available)/0.15)] text-foreground",
-                  status === "booked" && inMonth && "bg-primary text-primary-foreground font-semibold",
-                  status === "checkin" && inMonth && "embed-day-checkin",
-                  status === "checkout" && inMonth && "embed-day-checkout",
-                  status === "blocked" && inMonth && "bg-[hsl(var(--calendar-blocked)/0.15)] text-muted-foreground",
-                  status === "past" && inMonth && "opacity-40",
-                )}
-              >
-                {format(day, "d")}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
+  const isBlocked = (date: Date) => {
+    const dateStr = format(date, "yyyy-MM-dd");
+    for (const bd of blockedDates) {
+      if (dateStr >= bd.start_date! && dateStr <= bd.end_date!) return true;
+    }
+    return false;
   };
+
+  const modifiers = {
+    bookedCheckin: (date: Date) => getBookingType(date) === "checkin",
+    bookedCheckout: (date: Date) => getBookingType(date) === "checkout",
+    bookedMiddle: (date: Date) => getBookingType(date) === "middle",
+    bookedTurnover: (date: Date) => getBookingType(date) === "single",
+    blocked: (date: Date) => isBlocked(date) && getBookingType(date) === null,
+    available: (date: Date) => !isBlocked(date) && getBookingType(date) === null && !isBefore(date, today),
+  };
+
+  const modifiersStyles = {
+    blocked: { backgroundColor: "hsl(var(--calendar-blocked) / 0.3)", color: "hsl(var(--foreground))" },
+    available: { backgroundColor: "hsl(var(--calendar-available) / 0.3)", color: "hsl(var(--foreground))" },
+  };
+
+  const nextMonth = addMonths(currentMonth, 1);
 
   if (listingLoading) {
     return (
@@ -173,47 +142,85 @@ export default function EmbedAvailability() {
   }
 
   return (
-    <div className="p-3 font-sans bg-background text-foreground max-w-2xl mx-auto">
+    <div className="p-4 font-sans bg-background text-foreground max-w-2xl mx-auto">
       {/* Header */}
-      <div className="text-center mb-3">
-        <p className="font-semibold text-sm">{listing.title}</p>
+      <div className="text-center mb-4">
+        <p className="font-semibold text-base">{listing.title}</p>
         {listing.city && (
           <p className="text-xs text-muted-foreground">{listing.city}</p>
         )}
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-center gap-2 mb-3">
-        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
-          <ChevronLeft className="h-3 w-3" />
+      <div className="flex items-center justify-center gap-2 mb-4">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          disabled={!canGoPrev}
+          onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+        >
+          <ChevronLeft className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => setCurrentMonth(new Date())}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs h-8"
+          onClick={() => setCurrentMonth(new Date())}
+        >
           Aujourd'hui
         </Button>
-        <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
-          <ChevronRight className="h-3 w-3" />
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+        >
+          <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Calendars */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {renderMonth(currentMonth)}
-        {renderMonth(nextMonth)}
+      {/* Calendar using the same Calendar component as host */}
+      <div className="flex justify-center">
+        <Calendar
+          mode="single"
+          month={currentMonth}
+          onMonthChange={setCurrentMonth}
+          numberOfMonths={2}
+          defaultMonth={currentMonth}
+          disabled={(date) => isBefore(date, today)}
+          modifiers={modifiers}
+          modifiersStyles={modifiersStyles}
+          modifiersClassNames={{
+            bookedCheckin: "day-booked-checkin",
+            bookedCheckout: "day-booked-checkout",
+            bookedMiddle: "day-booked-middle",
+            bookedTurnover: "day-booked-turnover",
+          }}
+          locale={fr}
+          fromMonth={currentMonthStart}
+          className="rounded-xl border"
+          components={{
+            // Hide default nav since we have our own
+            IconLeft: () => <ChevronLeft className="h-4 w-4" />,
+            IconRight: () => <ChevronRight className="h-4 w-4" />,
+          }}
+        />
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-center gap-4 mt-3 pt-2 border-t text-[11px] text-muted-foreground">
-        <div className="flex items-center gap-1">
-          <CheckCircle2 className="h-3 w-3 text-[hsl(var(--calendar-available))]" />
-          Disponible
+      <div className="flex items-center justify-center gap-6 mt-4 pt-3 border-t text-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-full bg-[hsl(var(--calendar-available)/0.3)]" />
+          <span className="text-muted-foreground">Disponible</span>
         </div>
-        <div className="flex items-center gap-1">
-          <XCircle className="h-3 w-3 text-primary" />
-          Réservé
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-full bg-primary" />
+          <span className="text-muted-foreground">Réservé</span>
         </div>
-        <div className="flex items-center gap-1">
-          <Ban className="h-3 w-3 text-[hsl(var(--calendar-blocked))]" />
-          Indisponible
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-full bg-[hsl(var(--calendar-blocked)/0.3)]" />
+          <span className="text-muted-foreground">Indisponible</span>
         </div>
       </div>
     </div>
