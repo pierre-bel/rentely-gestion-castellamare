@@ -32,7 +32,7 @@ export default function EmbedAvailability() {
     queryFn: async () => {
       if (!listingId) return null;
       const { data, error } = await supabase
-        .from("public_listings")
+        .from("embed_listing_info")
         .select("id, title, city, base_price")
         .eq("id", listingId)
         .maybeSingle();
