@@ -68,16 +68,42 @@ interface PaymentItem {
   sort_order: number;
 }
 
+interface PortalSettings {
+  welcome_message: string | null;
+  show_price: boolean;
+  show_address: boolean;
+  show_house_rules: boolean;
+  show_access_code: boolean;
+  show_payment_schedule: boolean;
+  show_amenities: boolean;
+  show_map_link: boolean;
+  custom_footer_text: string | null;
+}
+
+const DEFAULT_SETTINGS: PortalSettings = {
+  welcome_message: null,
+  show_price: true,
+  show_address: true,
+  show_house_rules: true,
+  show_access_code: true,
+  show_payment_schedule: true,
+  show_amenities: true,
+  show_map_link: true,
+  custom_footer_text: null,
+};
+
 export default function BookingPortal() {
   const { token } = useParams<{ token: string }>();
   const [data, setData] = useState<PortalData | null>(null);
   const [payments, setPayments] = useState<PaymentItem[]>([]);
+  const [settings, setSettings] = useState<PortalSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!token) return;
     (async () => {
+      // Fetch portal data
       const { data: portal, error: err } = await supabase
         .from("public_booking_portal")
         .select("*")
@@ -92,14 +118,38 @@ export default function BookingPortal() {
 
       setData(portal as unknown as PortalData);
 
-      // Fetch payment items
-      const { data: items } = await supabase
-        .from("booking_payment_items")
-        .select("*")
-        .eq("booking_id", portal.booking_id)
-        .order("sort_order");
+      // Fetch payment items & host portal settings in parallel
+      const bookingId = (portal as any).booking_id;
 
-      if (items) setPayments(items as PaymentItem[]);
+      // We need the host_user_id — get it from listings via the booking
+      const { data: bookingRow } = await supabase
+        .from("bookings")
+        .select("listing_id, listings(host_user_id)")
+        .eq("id", bookingId)
+        .maybeSingle();
+
+      const hostUserId = (bookingRow as any)?.listings?.host_user_id;
+
+      const [paymentsRes, settingsRes] = await Promise.all([
+        supabase
+          .from("booking_payment_items")
+          .select("*")
+          .eq("booking_id", bookingId)
+          .order("sort_order"),
+        hostUserId
+          ? supabase
+              .from("public_portal_settings")
+              .select("*")
+              .eq("host_user_id", hostUserId)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+
+      if (paymentsRes.data) setPayments(paymentsRes.data as PaymentItem[]);
+      if (settingsRes.data) {
+        setSettings(settingsRes.data as unknown as PortalSettings);
+      }
+
       setLoading(false);
     })();
   }, [token]);
@@ -156,6 +206,15 @@ export default function BookingPortal() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+        {/* Welcome message */}
+        {settings.welcome_message && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="pt-5 pb-4">
+              <p className="text-sm text-foreground/90 whitespace-pre-line">{settings.welcome_message}</p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Status */}
         <div className="flex items-center justify-between">
           <StatusBadge status={data.status as StatusValue} />
@@ -215,7 +274,7 @@ export default function BookingPortal() {
         </Card>
 
         {/* Access code */}
-        {data.igloohome_code && (
+        {settings.show_access_code && data.igloohome_code && (
           <Card className="border-primary/30 bg-primary/5">
             <CardContent className="pt-5">
               <div className="flex items-center gap-3">
@@ -232,93 +291,99 @@ export default function BookingPortal() {
         )}
 
         {/* Address */}
-        <Card>
-          <CardContent className="pt-5 space-y-3">
-            <div className="flex items-start gap-3">
-              <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Adresse</p>
-                <p className="text-sm font-medium mt-1">{fullAddress}</p>
+        {settings.show_address && (
+          <Card>
+            <CardContent className="pt-5 space-y-3">
+              <div className="flex items-start gap-3">
+                <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Adresse</p>
+                  <p className="text-sm font-medium mt-1">{fullAddress}</p>
+                </div>
               </div>
-            </div>
-            {data.latitude && data.longitude && (
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${data.latitude},${data.longitude}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
-              >
-                Ouvrir dans Google Maps →
-              </a>
-            )}
-          </CardContent>
-        </Card>
+              {settings.show_map_link && data.latitude && data.longitude && (
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${data.latitude},${data.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                >
+                  Ouvrir dans Google Maps →
+                </a>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Property info */}
-        <Card>
-          <CardContent className="pt-5">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-3">Le logement</p>
-            <div className="flex flex-wrap gap-3">
-              {data.bedrooms != null && (
-                <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
-                  <DoorOpen className="h-3.5 w-3.5" /> {data.bedrooms} chambre{data.bedrooms > 1 ? "s" : ""}
-                </Badge>
-              )}
-              {data.beds != null && (
-                <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
-                  <Bed className="h-3.5 w-3.5" /> {data.beds} lit{data.beds > 1 ? "s" : ""}
-                </Badge>
-              )}
-              {data.bathrooms != null && (
-                <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
-                  <Bath className="h-3.5 w-3.5" /> {data.bathrooms} sdb
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {settings.show_amenities && (
+          <Card>
+            <CardContent className="pt-5">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-3">Le logement</p>
+              <div className="flex flex-wrap gap-3">
+                {data.bedrooms != null && (
+                  <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
+                    <DoorOpen className="h-3.5 w-3.5" /> {data.bedrooms} chambre{data.bedrooms > 1 ? "s" : ""}
+                  </Badge>
+                )}
+                {data.beds != null && (
+                  <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
+                    <Bed className="h-3.5 w-3.5" /> {data.beds} lit{data.beds > 1 ? "s" : ""}
+                  </Badge>
+                )}
+                {data.bathrooms != null && (
+                  <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
+                    <Bath className="h-3.5 w-3.5" /> {data.bathrooms} sdb
+                  </Badge>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Pricing */}
-        <Card>
-          <CardContent className="pt-5 space-y-2">
-            <div className="flex items-center gap-2 mb-3">
-              <Euro className="h-5 w-5 text-primary flex-shrink-0" />
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Tarification</p>
-            </div>
-            {data.subtotal > 0 && (
-              <div className="flex justify-between text-sm">
-                <span>Hébergement</span>
-                <span>{formatPrice(data.subtotal, data.currency || "EUR")}</span>
+        {settings.show_price && (
+          <Card>
+            <CardContent className="pt-5 space-y-2">
+              <div className="flex items-center gap-2 mb-3">
+                <Euro className="h-5 w-5 text-primary flex-shrink-0" />
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Tarification</p>
               </div>
-            )}
-            {data.cleaning_fee != null && data.cleaning_fee > 0 && (
-              <div className="flex justify-between text-sm">
-                <span>Frais de ménage</span>
-                <span>{formatPrice(data.cleaning_fee, data.currency || "EUR")}</span>
+              {data.subtotal > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Hébergement</span>
+                  <span>{formatPrice(data.subtotal, data.currency || "EUR")}</span>
+                </div>
+              )}
+              {data.cleaning_fee != null && data.cleaning_fee > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Frais de ménage</span>
+                  <span>{formatPrice(data.cleaning_fee, data.currency || "EUR")}</span>
+                </div>
+              )}
+              {data.service_fee != null && data.service_fee > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Frais de service</span>
+                  <span>{formatPrice(data.service_fee, data.currency || "EUR")}</span>
+                </div>
+              )}
+              {data.taxes != null && data.taxes > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Taxes</span>
+                  <span>{formatPrice(data.taxes, data.currency || "EUR")}</span>
+                </div>
+              )}
+              <Separator />
+              <div className="flex justify-between text-sm font-bold">
+                <span>Total</span>
+                <span>{formatPrice(data.total_price, data.currency || "EUR")}</span>
               </div>
-            )}
-            {data.service_fee != null && data.service_fee > 0 && (
-              <div className="flex justify-between text-sm">
-                <span>Frais de service</span>
-                <span>{formatPrice(data.service_fee, data.currency || "EUR")}</span>
-              </div>
-            )}
-            {data.taxes != null && data.taxes > 0 && (
-              <div className="flex justify-between text-sm">
-                <span>Taxes</span>
-                <span>{formatPrice(data.taxes, data.currency || "EUR")}</span>
-              </div>
-            )}
-            <Separator />
-            <div className="flex justify-between text-sm font-bold">
-              <span>Total</span>
-              <span>{formatPrice(data.total_price, data.currency || "EUR")}</span>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Payment schedule */}
-        {payments.length > 0 && (
+        {settings.show_payment_schedule && payments.length > 0 && (
           <Card>
             <CardContent className="pt-5 space-y-3">
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Échéancier de paiement</p>
@@ -351,7 +416,7 @@ export default function BookingPortal() {
         )}
 
         {/* House rules */}
-        {data.house_rules && (
+        {settings.show_house_rules && data.house_rules && (
           <Card>
             <CardContent className="pt-5 space-y-2">
               <div className="flex items-center gap-2 mb-2">
@@ -378,7 +443,7 @@ export default function BookingPortal() {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground py-4">
-          Ce portail est réservé au locataire de cette réservation.
+          {settings.custom_footer_text || "Ce portail est réservé au locataire de cette réservation."}
         </p>
       </div>
     </div>
