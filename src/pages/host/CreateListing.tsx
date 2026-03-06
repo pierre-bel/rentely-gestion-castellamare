@@ -319,7 +319,7 @@ const CreateListing = () => {
       setLoading(false);
       toast({
         title: "Succès !",
-        description: "Votre annonce a été soumise pour examen",
+        description: "Votre annonce a été créée et publiée avec succès",
       });
       navigate("/host/dashboard");
 
