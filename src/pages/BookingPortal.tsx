@@ -78,6 +78,13 @@ interface PortalSettings {
   show_amenities: boolean;
   show_map_link: boolean;
   custom_footer_text: string | null;
+  section_order: string[];
+}
+
+interface CustomSectionData {
+  section_key: string;
+  title: string;
+  body_html: string;
 }
 
 const DEFAULT_SETTINGS: PortalSettings = {
@@ -90,6 +97,7 @@ const DEFAULT_SETTINGS: PortalSettings = {
   show_amenities: true,
   show_map_link: true,
   custom_footer_text: null,
+  section_order: ["dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules", "notes"],
 };
 
 export default function BookingPortal() {
@@ -97,13 +105,13 @@ export default function BookingPortal() {
   const [data, setData] = useState<PortalData | null>(null);
   const [payments, setPayments] = useState<PaymentItem[]>([]);
   const [settings, setSettings] = useState<PortalSettings>(DEFAULT_SETTINGS);
+  const [customSections, setCustomSections] = useState<CustomSectionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!token) return;
     (async () => {
-      // Fetch portal data
       const { data: portal, error: err } = await supabase
         .from("public_booking_portal")
         .select("*")
@@ -118,10 +126,7 @@ export default function BookingPortal() {
 
       setData(portal as unknown as PortalData);
 
-      // Fetch payment items & host portal settings in parallel
       const bookingId = (portal as any).booking_id;
-
-      // We need the host_user_id — get it from listings via the booking
       const { data: bookingRow } = await supabase
         .from("bookings")
         .select("listing_id, listings(host_user_id)")
@@ -130,25 +135,25 @@ export default function BookingPortal() {
 
       const hostUserId = (bookingRow as any)?.listings?.host_user_id;
 
-      const [paymentsRes, settingsRes] = await Promise.all([
-        supabase
-          .from("booking_payment_items")
-          .select("*")
-          .eq("booking_id", bookingId)
-          .order("sort_order"),
+      const [paymentsRes, settingsRes, customRes] = await Promise.all([
+        supabase.from("booking_payment_items").select("*").eq("booking_id", bookingId).order("sort_order"),
         hostUserId
-          ? supabase
-              .from("public_portal_settings")
-              .select("*")
-              .eq("host_user_id", hostUserId)
-              .maybeSingle()
+          ? supabase.from("public_portal_settings").select("*").eq("host_user_id", hostUserId).maybeSingle()
+          : Promise.resolve({ data: null }),
+        hostUserId
+          ? supabase.from("public_portal_custom_sections").select("*").eq("host_user_id", hostUserId).order("sort_order")
           : Promise.resolve({ data: null }),
       ]);
 
       if (paymentsRes.data) setPayments(paymentsRes.data as PaymentItem[]);
       if (settingsRes.data) {
-        setSettings(settingsRes.data as unknown as PortalSettings);
+        const s = settingsRes.data as any;
+        setSettings({
+          ...s,
+          section_order: s.section_order || DEFAULT_SETTINGS.section_order,
+        });
       }
+      if (customRes.data) setCustomSections(customRes.data as CustomSectionData[]);
 
       setLoading(false);
     })();
@@ -169,9 +174,7 @@ export default function BookingPortal() {
           <CardContent className="pt-8 pb-8 text-center space-y-3">
             <XCircle className="h-12 w-12 text-destructive mx-auto" />
             <h1 className="text-xl font-semibold text-foreground">Portail introuvable</h1>
-            <p className="text-sm text-muted-foreground">
-              Ce lien de réservation n'est pas valide ou a expiré.
-            </p>
+            <p className="text-sm text-muted-foreground">Ce lien de réservation n'est pas valide ou a expiré.</p>
           </CardContent>
         </Card>
       </div>
@@ -181,9 +184,256 @@ export default function BookingPortal() {
   const checkin = parseISO(data.checkin_date);
   const checkout = parseISO(data.checkout_date);
   const heroImage = data.cover_image || data.listing_images?.[0];
-  const fullAddress = [data.address, data.postal_code, data.city, data.state, data.country]
-    .filter(Boolean)
-    .join(", ");
+  const fullAddress = [data.address, data.postal_code, data.city, data.state, data.country].filter(Boolean).join(", ");
+
+  // Section renderers
+  const renderDates = () => (
+    <Card key="dates">
+      <CardContent className="pt-5 space-y-4">
+        <div className="flex items-start gap-3">
+          <CalendarDays className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Séjour</p>
+            <p className="text-sm font-semibold mt-1">{format(checkin, "EEEE d MMMM yyyy", { locale: fr })}</p>
+            <p className="text-xs text-muted-foreground">→</p>
+            <p className="text-sm font-semibold">{format(checkout, "EEEE d MMMM yyyy", { locale: fr })}</p>
+            <p className="text-xs text-muted-foreground mt-1">{data.nights} nuit{data.nights > 1 ? "s" : ""}</p>
+          </div>
+        </div>
+        <Separator />
+        <div className="grid grid-cols-2 gap-4">
+          {data.checkin_from && (
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-primary flex-shrink-0" />
+              <div>
+                <p className="text-xs text-muted-foreground">Arrivée</p>
+                <p className="text-sm font-medium">à partir de {formatTime(data.checkin_from)}</p>
+              </div>
+            </div>
+          )}
+          {data.checkout_until && (
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-primary flex-shrink-0" />
+              <div>
+                <p className="text-xs text-muted-foreground">Départ</p>
+                <p className="text-sm font-medium">avant {formatTime(data.checkout_until)}</p>
+              </div>
+            </div>
+          )}
+        </div>
+        <Separator />
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary flex-shrink-0" />
+          <span className="text-sm">{data.guests} voyageur{data.guests > 1 ? "s" : ""}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderAccessCode = () => {
+    if (!settings.show_access_code || !data.igloohome_code) return null;
+    return (
+      <Card key="access_code" className="border-primary/30 bg-primary/5">
+        <CardContent className="pt-5">
+          <div className="flex items-center gap-3">
+            <KeyRound className="h-5 w-5 text-primary flex-shrink-0" />
+            <div>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Code d'accès</p>
+              <p className="text-lg font-bold font-mono tracking-widest text-primary mt-1">{data.igloohome_code}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderAddress = () => {
+    if (!settings.show_address) return null;
+    return (
+      <Card key="address">
+        <CardContent className="pt-5 space-y-3">
+          <div className="flex items-start gap-3">
+            <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Adresse</p>
+              <p className="text-sm font-medium mt-1">{fullAddress}</p>
+            </div>
+          </div>
+          {settings.show_map_link && data.latitude && data.longitude && (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${data.latitude},${data.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+            >
+              Ouvrir dans Google Maps →
+            </a>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderAmenities = () => {
+    if (!settings.show_amenities) return null;
+    return (
+      <Card key="amenities">
+        <CardContent className="pt-5">
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-3">Le logement</p>
+          <div className="flex flex-wrap gap-3">
+            {data.bedrooms != null && (
+              <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
+                <DoorOpen className="h-3.5 w-3.5" /> {data.bedrooms} chambre{data.bedrooms > 1 ? "s" : ""}
+              </Badge>
+            )}
+            {data.beds != null && (
+              <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
+                <Bed className="h-3.5 w-3.5" /> {data.beds} lit{data.beds > 1 ? "s" : ""}
+              </Badge>
+            )}
+            {data.bathrooms != null && (
+              <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
+                <Bath className="h-3.5 w-3.5" /> {data.bathrooms} sdb
+              </Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderPricing = () => {
+    if (!settings.show_price) return null;
+    return (
+      <Card key="pricing">
+        <CardContent className="pt-5 space-y-2">
+          <div className="flex items-center gap-2 mb-3">
+            <Euro className="h-5 w-5 text-primary flex-shrink-0" />
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Tarification</p>
+          </div>
+          {data.subtotal > 0 && (
+            <div className="flex justify-between text-sm">
+              <span>Hébergement</span>
+              <span>{formatPrice(data.subtotal, data.currency || "EUR")}</span>
+            </div>
+          )}
+          {data.cleaning_fee != null && data.cleaning_fee > 0 && (
+            <div className="flex justify-between text-sm">
+              <span>Frais de ménage</span>
+              <span>{formatPrice(data.cleaning_fee, data.currency || "EUR")}</span>
+            </div>
+          )}
+          {data.service_fee != null && data.service_fee > 0 && (
+            <div className="flex justify-between text-sm">
+              <span>Frais de service</span>
+              <span>{formatPrice(data.service_fee, data.currency || "EUR")}</span>
+            </div>
+          )}
+          {data.taxes != null && data.taxes > 0 && (
+            <div className="flex justify-between text-sm">
+              <span>Taxes</span>
+              <span>{formatPrice(data.taxes, data.currency || "EUR")}</span>
+            </div>
+          )}
+          <Separator />
+          <div className="flex justify-between text-sm font-bold">
+            <span>Total</span>
+            <span>{formatPrice(data.total_price, data.currency || "EUR")}</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderPaymentSchedule = () => {
+    if (!settings.show_payment_schedule || payments.length === 0) return null;
+    return (
+      <Card key="payment_schedule">
+        <CardContent className="pt-5 space-y-3">
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Échéancier de paiement</p>
+          {payments.map((p) => (
+            <div key={p.id} className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                {p.is_paid ? (
+                  <CheckCircle2 className="h-4 w-4 text-[hsl(var(--success))] flex-shrink-0" />
+                ) : (
+                  <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30 flex-shrink-0" />
+                )}
+                <div>
+                  <span className={p.is_paid ? "line-through text-muted-foreground" : ""}>{p.label}</span>
+                  {p.due_date && (
+                    <span className="text-xs text-muted-foreground ml-1.5">
+                      — {format(parseISO(p.due_date), "d MMM yyyy", { locale: fr })}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <span className={p.is_paid ? "text-muted-foreground" : "font-medium"}>
+                {formatPrice(p.amount, data.currency || "EUR")}
+              </span>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderHouseRules = () => {
+    if (!settings.show_house_rules || !data.house_rules) return null;
+    return (
+      <Card key="house_rules">
+        <CardContent className="pt-5 space-y-2">
+          <div className="flex items-center gap-2 mb-2">
+            <ShieldCheck className="h-5 w-5 text-primary flex-shrink-0" />
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Règles de la maison</p>
+          </div>
+          <p className="text-sm whitespace-pre-line text-foreground/90">{data.house_rules}</p>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderNotes = () => {
+    if (!data.notes) return null;
+    return (
+      <Card key="notes">
+        <CardContent className="pt-5 space-y-2">
+          <div className="flex items-center gap-2 mb-2">
+            <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Notes</p>
+          </div>
+          <p className="text-sm whitespace-pre-line text-foreground/90">{data.notes}</p>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderCustomSection = (key: string) => {
+    const sectionKey = key.replace("custom_", "");
+    const cs = customSections.find((s) => s.section_key === sectionKey);
+    if (!cs) return null;
+    return (
+      <Card key={key}>
+        <CardContent className="pt-5 space-y-2">
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{cs.title}</p>
+          <div className="text-sm whitespace-pre-line text-foreground/90">{cs.body_html}</div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const sectionRenderers: Record<string, () => React.ReactNode> = {
+    dates: renderDates,
+    access_code: renderAccessCode,
+    address: renderAddress,
+    amenities: renderAmenities,
+    pricing: renderPricing,
+    payment_schedule: renderPaymentSchedule,
+    house_rules: renderHouseRules,
+    notes: renderNotes,
+  };
+
+  const sectionOrder = settings.section_order.length > 0 ? settings.section_order : DEFAULT_SETTINGS.section_order;
 
   return (
     <div className="min-h-screen bg-background">
@@ -221,225 +471,14 @@ export default function BookingPortal() {
           <span className="text-xs text-muted-foreground font-mono">{data.booking_id.slice(0, 8)}</span>
         </div>
 
-        {/* Dates & Check-in/out times */}
-        <Card>
-          <CardContent className="pt-5 space-y-4">
-            <div className="flex items-start gap-3">
-              <CalendarDays className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Séjour</p>
-                <p className="text-sm font-semibold mt-1">
-                  {format(checkin, "EEEE d MMMM yyyy", { locale: fr })}
-                </p>
-                <p className="text-xs text-muted-foreground">→</p>
-                <p className="text-sm font-semibold">
-                  {format(checkout, "EEEE d MMMM yyyy", { locale: fr })}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {data.nights} nuit{data.nights > 1 ? "s" : ""}
-                </p>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="grid grid-cols-2 gap-4">
-              {data.checkin_from && (
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-primary flex-shrink-0" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Arrivée</p>
-                    <p className="text-sm font-medium">à partir de {formatTime(data.checkin_from)}</p>
-                  </div>
-                </div>
-              )}
-              {data.checkout_until && (
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-primary flex-shrink-0" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Départ</p>
-                    <p className="text-sm font-medium">avant {formatTime(data.checkout_until)}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary flex-shrink-0" />
-              <span className="text-sm">{data.guests} voyageur{data.guests > 1 ? "s" : ""}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Access code */}
-        {settings.show_access_code && data.igloohome_code && (
-          <Card className="border-primary/30 bg-primary/5">
-            <CardContent className="pt-5">
-              <div className="flex items-center gap-3">
-                <KeyRound className="h-5 w-5 text-primary flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Code d'accès</p>
-                  <p className="text-lg font-bold font-mono tracking-widest text-primary mt-1">
-                    {data.igloohome_code}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Address */}
-        {settings.show_address && (
-          <Card>
-            <CardContent className="pt-5 space-y-3">
-              <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Adresse</p>
-                  <p className="text-sm font-medium mt-1">{fullAddress}</p>
-                </div>
-              </div>
-              {settings.show_map_link && data.latitude && data.longitude && (
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${data.latitude},${data.longitude}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
-                >
-                  Ouvrir dans Google Maps →
-                </a>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Property info */}
-        {settings.show_amenities && (
-          <Card>
-            <CardContent className="pt-5">
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-3">Le logement</p>
-              <div className="flex flex-wrap gap-3">
-                {data.bedrooms != null && (
-                  <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
-                    <DoorOpen className="h-3.5 w-3.5" /> {data.bedrooms} chambre{data.bedrooms > 1 ? "s" : ""}
-                  </Badge>
-                )}
-                {data.beds != null && (
-                  <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
-                    <Bed className="h-3.5 w-3.5" /> {data.beds} lit{data.beds > 1 ? "s" : ""}
-                  </Badge>
-                )}
-                {data.bathrooms != null && (
-                  <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
-                    <Bath className="h-3.5 w-3.5" /> {data.bathrooms} sdb
-                  </Badge>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Pricing */}
-        {settings.show_price && (
-          <Card>
-            <CardContent className="pt-5 space-y-2">
-              <div className="flex items-center gap-2 mb-3">
-                <Euro className="h-5 w-5 text-primary flex-shrink-0" />
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Tarification</p>
-              </div>
-              {data.subtotal > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span>Hébergement</span>
-                  <span>{formatPrice(data.subtotal, data.currency || "EUR")}</span>
-                </div>
-              )}
-              {data.cleaning_fee != null && data.cleaning_fee > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span>Frais de ménage</span>
-                  <span>{formatPrice(data.cleaning_fee, data.currency || "EUR")}</span>
-                </div>
-              )}
-              {data.service_fee != null && data.service_fee > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span>Frais de service</span>
-                  <span>{formatPrice(data.service_fee, data.currency || "EUR")}</span>
-                </div>
-              )}
-              {data.taxes != null && data.taxes > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span>Taxes</span>
-                  <span>{formatPrice(data.taxes, data.currency || "EUR")}</span>
-                </div>
-              )}
-              <Separator />
-              <div className="flex justify-between text-sm font-bold">
-                <span>Total</span>
-                <span>{formatPrice(data.total_price, data.currency || "EUR")}</span>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Payment schedule */}
-        {settings.show_payment_schedule && payments.length > 0 && (
-          <Card>
-            <CardContent className="pt-5 space-y-3">
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Échéancier de paiement</p>
-              {payments.map((p) => (
-                <div key={p.id} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    {p.is_paid ? (
-                      <CheckCircle2 className="h-4 w-4 text-[hsl(var(--success))] flex-shrink-0" />
-                    ) : (
-                      <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30 flex-shrink-0" />
-                    )}
-                    <div>
-                      <span className={p.is_paid ? "line-through text-muted-foreground" : ""}>
-                        {p.label}
-                      </span>
-                      {p.due_date && (
-                        <span className="text-xs text-muted-foreground ml-1.5">
-                          — {format(parseISO(p.due_date), "d MMM yyyy", { locale: fr })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <span className={p.is_paid ? "text-muted-foreground" : "font-medium"}>
-                    {formatPrice(p.amount, data.currency || "EUR")}
-                  </span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* House rules */}
-        {settings.show_house_rules && data.house_rules && (
-          <Card>
-            <CardContent className="pt-5 space-y-2">
-              <div className="flex items-center gap-2 mb-2">
-                <ShieldCheck className="h-5 w-5 text-primary flex-shrink-0" />
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Règles de la maison</p>
-              </div>
-              <p className="text-sm whitespace-pre-line text-foreground/90">{data.house_rules}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Notes */}
-        {data.notes && (
-          <Card>
-            <CardContent className="pt-5 space-y-2">
-              <div className="flex items-center gap-2 mb-2">
-                <FileText className="h-5 w-5 text-primary flex-shrink-0" />
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Notes</p>
-              </div>
-              <p className="text-sm whitespace-pre-line text-foreground/90">{data.notes}</p>
-            </CardContent>
-          </Card>
-        )}
+        {/* Sections in configured order */}
+        {sectionOrder.map((key) => {
+          if (key.startsWith("custom_")) {
+            return renderCustomSection(key);
+          }
+          const renderer = sectionRenderers[key];
+          return renderer ? renderer() : null;
+        })}
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground py-4">
