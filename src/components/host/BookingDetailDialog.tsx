@@ -11,8 +11,9 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarDays, Users, Home, Euro, FileText, Pencil, Mail } from "lucide-react";
+import { CalendarDays, Users, Home, Euro, FileText, Pencil, Mail, Link2, Check } from "lucide-react";
 import BookingEmailsTab from "./BookingEmailsTab";
+import { toast } from "@/hooks/use-toast";
 
 export interface BookingDetailData {
   id: string;
@@ -30,6 +31,7 @@ export interface BookingDetailData {
   guest_name: string;
   guest_email: string;
   guest_phone: string | null;
+  access_token?: string | null;
 }
 
 interface Props {
