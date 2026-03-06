@@ -326,7 +326,7 @@ export default function BookingPortal() {
                 <div key={p.id} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     {p.is_paid ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-[hsl(var(--success))] flex-shrink-0" />
                     ) : (
                       <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30 flex-shrink-0" />
                     )}
