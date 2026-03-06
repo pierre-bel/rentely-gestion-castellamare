@@ -1440,6 +1440,52 @@ export type Database = {
       }
     }
     Views: {
+      public_booking_dates: {
+        Row: {
+          checkin_date: string | null
+          checkout_date: string | null
+          listing_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_listing_availability: {
+        Row: {
+          end_date: string | null
+          listing_id: string | null
+          start_date: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_availability_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_availability_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_listings: {
         Row: {
           address: string | null
