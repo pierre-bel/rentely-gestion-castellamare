@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,17 +8,20 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ClipboardList } from "lucide-react";
+import { BookingDetailDialog, type BookingDetailData } from "./BookingDetailDialog";
 
 interface DashboardBooking {
   id: string;
+  listing_id: string;
   listing_title: string;
   guest_name: string | null;
   guest_email: string;
   guest_avatar: string | null;
   checkin_date: string;
   checkout_date: string;
+  guests: number;
   host_payout_gross: number;
-  status: "confirmed" | "pending_payment" | "cancelled" | "completed" | "cancelled_guest" | "cancelled_host" | "expired";
+  status: string;
 }
 
 interface DashboardRecentBookingsProps {
@@ -30,12 +34,8 @@ const formatBookingDates = (checkin: string, checkout: string) => {
   return `${format(checkinDate, "d MMM", { locale: fr })} - ${format(checkoutDate, "d MMM yyyy", { locale: fr })}`;
 };
 
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-  }).format(price);
-};
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(price);
 
 const getInitials = (name: string | null) => {
   if (!name) return "?";
@@ -47,6 +47,9 @@ const getInitials = (name: string | null) => {
 };
 
 export default function DashboardRecentBookings({ userId }: DashboardRecentBookingsProps) {
+  const [selectedBooking, setSelectedBooking] = useState<BookingDetailData | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["dashboard-recent-bookings", userId],
     queryFn: async () => {
@@ -67,6 +70,45 @@ export default function DashboardRecentBookings({ userId }: DashboardRecentBooki
       return (data?.slice(0, 5) || []) as DashboardBooking[];
     },
   });
+
+  const handleRowClick = async (booking: DashboardBooking) => {
+    try {
+      const { data: full, error } = await supabase
+        .from("bookings")
+        .select("*, listings(title)")
+        .eq("id", booking.id)
+        .single();
+      if (error) throw error;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, email, phone")
+        .eq("id", full.guest_user_id)
+        .single();
+
+      setSelectedBooking({
+        id: full.id,
+        listing_id: full.listing_id,
+        listing_title: (full.listings as any)?.title || booking.listing_title,
+        checkin_date: full.checkin_date,
+        checkout_date: full.checkout_date,
+        nights: full.nights,
+        guests: full.guests,
+        total_price: full.total_price,
+        cleaning_fee: full.cleaning_fee,
+        notes: full.notes,
+        status: full.status || "pending_payment",
+        pricing_breakdown: full.pricing_breakdown,
+        guest_name: profile ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || profile.email : booking.guest_email,
+        guest_email: profile?.email || booking.guest_email,
+        guest_phone: profile?.phone || null,
+        access_token: full.access_token,
+      });
+      setDetailOpen(true);
+    } catch (e) {
+      console.error("Failed to load booking details", e);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -107,50 +149,60 @@ export default function DashboardRecentBookings({ userId }: DashboardRecentBooki
   }
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-background hover:bg-background">
-            <TableHead className="font-semibold">ID</TableHead>
-            <TableHead className="font-semibold">Locataire</TableHead>
-            <TableHead className="font-semibold">Dates</TableHead>
-            <TableHead className="font-semibold">Statut</TableHead>
-            <TableHead className="font-semibold text-right">Montant</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {bookings.map((booking, index) => (
-            <TableRow
-              key={booking.id}
-              className={index % 2 === 0 ? "bg-muted/30 hover:bg-muted/50" : "hover:bg-muted/50"}
-            >
-              <TableCell className="font-mono text-sm">
-                {booking.id.slice(0, 8)}
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={booking.guest_avatar || ""} alt={booking.guest_name || "Locataire"} />
-                    <AvatarFallback>{getInitials(booking.guest_name)}</AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium truncate max-w-[150px]">
-                    {booking.guest_name || booking.guest_email}
-                  </span>
-                </div>
-              </TableCell>
-              <TableCell>
-                {formatBookingDates(booking.checkin_date, booking.checkout_date)}
-              </TableCell>
-              <TableCell>
-                <StatusBadge status={booking.status} />
-              </TableCell>
-              <TableCell className="text-right font-semibold">
-                {formatPrice(booking.host_payout_gross)}
-              </TableCell>
+    <>
+      <div className="border border-border rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-background hover:bg-background">
+              <TableHead className="font-semibold">ID</TableHead>
+              <TableHead className="font-semibold">Locataire</TableHead>
+              <TableHead className="font-semibold">Dates</TableHead>
+              <TableHead className="font-semibold">Statut</TableHead>
+              <TableHead className="font-semibold text-right">Montant</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {bookings.map((booking, index) => (
+              <TableRow
+                key={booking.id}
+                className={`cursor-pointer ${index % 2 === 0 ? "bg-muted/30 hover:bg-muted/50" : "hover:bg-muted/50"}`}
+                onClick={() => handleRowClick(booking)}
+              >
+                <TableCell className="font-mono text-sm">
+                  {booking.id.slice(0, 8)}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={booking.guest_avatar || ""} alt={booking.guest_name || "Locataire"} />
+                      <AvatarFallback>{getInitials(booking.guest_name)}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium truncate max-w-[150px]">
+                      {booking.guest_name || booking.guest_email}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {formatBookingDates(booking.checkin_date, booking.checkout_date)}
+                </TableCell>
+                <TableCell>
+                  <StatusBadge status={booking.status as any} />
+                </TableCell>
+                <TableCell className="text-right font-semibold">
+                  {formatPrice(booking.host_payout_gross)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <BookingDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        booking={selectedBooking}
+        onEdit={() => {}}
+      />
+    </>
   );
 }
