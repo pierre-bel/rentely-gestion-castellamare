@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { ClipboardList } from "lucide-react";
 
 interface DashboardBooking {
   id: string;
@@ -25,13 +27,13 @@ interface DashboardRecentBookingsProps {
 const formatBookingDates = (checkin: string, checkout: string) => {
   const checkinDate = new Date(checkin);
   const checkoutDate = new Date(checkout);
-  return `${format(checkinDate, "MMM d")} - ${format(checkoutDate, "MMM d, yyyy")}`;
+  return `${format(checkinDate, "d MMM", { locale: fr })} - ${format(checkoutDate, "d MMM yyyy", { locale: fr })}`;
 };
 
 const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("fr-FR", {
     style: "currency",
-    currency: "USD",
+    currency: "EUR",
   }).format(price);
 };
 
@@ -72,16 +74,16 @@ export default function DashboardRecentBookings({ userId }: DashboardRecentBooki
         <Table>
           <TableHeader>
             <TableRow className="bg-background hover:bg-background">
-              <TableHead className="font-semibold">Booking ID</TableHead>
-              <TableHead className="font-semibold">Guest</TableHead>
-              <TableHead className="font-semibold">Date</TableHead>
-              <TableHead className="font-semibold">Status</TableHead>
-              <TableHead className="font-semibold text-right">Amount</TableHead>
+              <TableHead className="font-semibold">ID</TableHead>
+              <TableHead className="font-semibold">Locataire</TableHead>
+              <TableHead className="font-semibold">Dates</TableHead>
+              <TableHead className="font-semibold">Statut</TableHead>
+              <TableHead className="font-semibold text-right">Montant</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {[...Array(5)].map((_, i) => (
-              <TableRow key={i} className={i % 2 === 0 ? "bg-[#F8FAFF]" : ""}>
+              <TableRow key={i} className={i % 2 === 0 ? "bg-muted/30" : ""}>
                 <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-32" /></TableCell>
@@ -98,7 +100,8 @@ export default function DashboardRecentBookings({ userId }: DashboardRecentBooki
   if (!bookings || bookings.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">No bookings yet</p>
+        <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-muted-foreground">Aucune réservation</p>
       </div>
     );
   }
@@ -108,18 +111,18 @@ export default function DashboardRecentBookings({ userId }: DashboardRecentBooki
       <Table>
         <TableHeader>
           <TableRow className="bg-background hover:bg-background">
-            <TableHead className="font-semibold">Booking ID</TableHead>
-            <TableHead className="font-semibold">Guest</TableHead>
-            <TableHead className="font-semibold">Date</TableHead>
-            <TableHead className="font-semibold">Status</TableHead>
-            <TableHead className="font-semibold text-right">Amount</TableHead>
+            <TableHead className="font-semibold">ID</TableHead>
+            <TableHead className="font-semibold">Locataire</TableHead>
+            <TableHead className="font-semibold">Dates</TableHead>
+            <TableHead className="font-semibold">Statut</TableHead>
+            <TableHead className="font-semibold text-right">Montant</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {bookings.map((booking, index) => (
             <TableRow
               key={booking.id}
-              className={index % 2 === 0 ? "bg-[#F8FAFF] hover:bg-muted/50" : "hover:bg-muted/50"}
+              className={index % 2 === 0 ? "bg-muted/30 hover:bg-muted/50" : "hover:bg-muted/50"}
             >
               <TableCell className="font-mono text-sm">
                 {booking.id.slice(0, 8)}
@@ -127,7 +130,7 @@ export default function DashboardRecentBookings({ userId }: DashboardRecentBooki
               <TableCell>
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={booking.guest_avatar || ""} alt={booking.guest_name || "Guest"} />
+                    <AvatarImage src={booking.guest_avatar || ""} alt={booking.guest_name || "Locataire"} />
                     <AvatarFallback>{getInitials(booking.guest_name)}</AvatarFallback>
                   </Avatar>
                   <span className="font-medium truncate max-w-[150px]">

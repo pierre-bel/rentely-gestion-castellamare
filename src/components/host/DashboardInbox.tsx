@@ -18,24 +18,12 @@ const DashboardInbox = ({ userId }: DashboardInboxProps) => {
   const { data: unreadThreads, isLoading } = useQuery({
     queryKey: ["dashboard-unread-threads", userId, isDemoMode, migrationComplete],
     queryFn: async () => {
-      // Demo mode: use localStorage
       if (isDemoMode) {
-        if (!migrationComplete) {
-          return [];
-        }
+        if (!migrationComplete) return [];
         const allThreads = getDemoThreads(null, 'recent');
-        // Filter to only unread threads
         return allThreads.filter(t => t.unread_count > 0);
       }
-      
-      // Real mode: RPC call
-      const { data, error } = await supabase.rpc(
-        "get_unread_inbox_conversations",
-        {
-          p_user_id: userId,
-        }
-      );
-
+      const { data, error } = await supabase.rpc("get_unread_inbox_conversations", { p_user_id: userId });
       if (error) throw error;
       return data || [];
     },
@@ -64,12 +52,12 @@ const DashboardInbox = ({ userId }: DashboardInboxProps) => {
     return (
       <div className="p-8 flex flex-col items-center justify-center">
         <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold mb-2">All caught up!</h3>
+        <h3 className="text-lg font-semibold mb-2">Tout est à jour !</h3>
         <p className="text-sm text-muted-foreground text-center mb-4">
-          You have no unread messages right now
+          Vous n'avez aucun message non lu
         </p>
         <Button variant="outline" onClick={() => navigate("/host/inbox")}>
-          View All Messages
+          Voir tous les messages
         </Button>
       </div>
     );

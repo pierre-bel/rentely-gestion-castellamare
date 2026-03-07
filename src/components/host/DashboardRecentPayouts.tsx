@@ -19,28 +19,27 @@ interface DashboardRecentPayoutsProps {
 }
 
 const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("fr-FR", {
     style: "currency",
-    currency: "USD",
+    currency: "EUR",
   }).format(price);
 };
 
 const TransactionTypeBadge = ({ type }: { type: string }) => {
   const badgeConfig = {
-    regular_earning: { label: "Earning", variant: "default" as const, className: "bg-green-100 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-700" },
-    booking_payout: { label: "Earning", variant: "default" as const, className: "bg-green-100 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-700" },
-    debt_collection: { label: "Debt Collection", variant: "secondary" as const, className: "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-700" },
-    refund_debt: { label: "Refund Debt", variant: "destructive" as const, className: "bg-red-100 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-700" },
-    refund: { label: "Refund", variant: "destructive" as const, className: "bg-red-100 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-700" },
-    cancelled: { label: "Cancellation Fee", variant: "outline" as const, className: "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 hover:text-amber-700" },
+    regular_earning: { label: "Revenu", variant: "default" as const, className: "bg-green-100 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-700" },
+    booking_payout: { label: "Revenu", variant: "default" as const, className: "bg-green-100 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-700" },
+    debt_collection: { label: "Recouvrement", variant: "secondary" as const, className: "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-700" },
+    refund_debt: { label: "Remboursement dette", variant: "destructive" as const, className: "bg-red-100 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-700" },
+    refund: { label: "Remboursement", variant: "destructive" as const, className: "bg-red-100 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-700" },
+    cancelled: { label: "Frais d'annulation", variant: "outline" as const, className: "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 hover:text-amber-700" },
   };
-
   const config = badgeConfig[type as keyof typeof badgeConfig] || badgeConfig.booking_payout;
   return <Badge variant={config.variant} className={config.className}>{config.label}</Badge>;
 };
 
 const mapPayoutStatus = (status: string): "confirmed" | "pending_payment" | "cancelled" | "completed" | "cancelled_guest" | "cancelled_host" | "expired" => {
-  const statusMap: Record<string, "confirmed" | "pending_payment" | "cancelled" | "completed" | "cancelled_guest" | "cancelled_host" | "expired"> = {
+  const statusMap: Record<string, any> = {
     pending: "pending_payment",
     completed: "completed",
     failed: "cancelled",
@@ -51,14 +50,10 @@ const mapPayoutStatus = (status: string): "confirmed" | "pending_payment" | "can
 
 const getRowClassName = (transactionType: string, status: string): string => {
   const baseClass = "hover:shadow-sm transition-shadow";
-  
   switch (transactionType) {
     case 'regular_earning':
     case 'booking_payout':
-      if (status === 'completed') {
-        return `${baseClass} bg-green-50/50`;
-      }
-      return baseClass;
+      return status === 'completed' ? `${baseClass} bg-green-50/50` : baseClass;
     case 'debt_collection':
       return `${baseClass} bg-blue-50/50`;
     case 'refund_debt':
@@ -96,11 +91,11 @@ export default function DashboardRecentPayouts({ userId }: DashboardRecentPayout
         <Table>
           <TableHeader>
             <TableRow className="bg-background hover:bg-background">
-              <TableHead className="font-semibold">Booking ID</TableHead>
-              <TableHead className="font-semibold">Transaction Type</TableHead>
-              <TableHead className="font-semibold">Amount</TableHead>
-              <TableHead className="font-semibold">Fee</TableHead>
-              <TableHead className="font-semibold">Status</TableHead>
+              <TableHead className="font-semibold">ID Réservation</TableHead>
+              <TableHead className="font-semibold">Type</TableHead>
+              <TableHead className="font-semibold">Montant</TableHead>
+              <TableHead className="font-semibold">Frais</TableHead>
+              <TableHead className="font-semibold">Statut</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -122,7 +117,7 @@ export default function DashboardRecentPayouts({ userId }: DashboardRecentPayout
   if (!payouts || payouts.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">No payouts yet</p>
+        <p className="text-muted-foreground">Aucun versement</p>
       </div>
     );
   }
@@ -132,36 +127,25 @@ export default function DashboardRecentPayouts({ userId }: DashboardRecentPayout
       <Table>
         <TableHeader>
           <TableRow className="bg-background hover:bg-background">
-            <TableHead className="font-semibold">Booking ID</TableHead>
-            <TableHead className="font-semibold">Transaction Type</TableHead>
-            <TableHead className="font-semibold">Amount</TableHead>
-            <TableHead className="font-semibold">Fee</TableHead>
-            <TableHead className="font-semibold">Status</TableHead>
+            <TableHead className="font-semibold">ID Réservation</TableHead>
+            <TableHead className="font-semibold">Type</TableHead>
+            <TableHead className="font-semibold">Montant</TableHead>
+            <TableHead className="font-semibold">Frais</TableHead>
+            <TableHead className="font-semibold">Statut</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {payouts.map((payout) => (
-            <TableRow
-              key={payout.id}
-              className={getRowClassName(payout.transaction_type, payout.status)}
-            >
-              <TableCell className="font-mono text-sm">
-                {payout.booking_id.slice(0, 8)}
-              </TableCell>
-              <TableCell>
-                <TransactionTypeBadge type={payout.transaction_type} />
-              </TableCell>
-              <TableCell className={`font-semibold ${
-                payout.amount >= 0 ? "text-green-600" : "text-red-600"
-              }`}>
+            <TableRow key={payout.id} className={getRowClassName(payout.transaction_type, payout.status)}>
+              <TableCell className="font-mono text-sm">{payout.booking_id.slice(0, 8)}</TableCell>
+              <TableCell><TransactionTypeBadge type={payout.transaction_type} /></TableCell>
+              <TableCell className={`font-semibold ${payout.amount >= 0 ? "text-green-600" : "text-red-600"}`}>
                 {formatPrice(payout.amount)}
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {payout.commission_amount ? formatPrice(payout.commission_amount) : "-"}
               </TableCell>
-              <TableCell>
-                <StatusBadge status={mapPayoutStatus(payout.status)} />
-              </TableCell>
+              <TableCell><StatusBadge status={mapPayoutStatus(payout.status)} /></TableCell>
             </TableRow>
           ))}
         </TableBody>
