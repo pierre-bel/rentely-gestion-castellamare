@@ -186,7 +186,7 @@ export default function DashboardRecentBookings({ userId }: DashboardRecentBooki
                   {formatBookingDates(booking.checkin_date, booking.checkout_date)}
                 </TableCell>
                 <TableCell>
-                  <StatusBadge status={booking.status} />
+                  <StatusBadge status={booking.status as any} />
                 </TableCell>
                 <TableCell className="text-right font-semibold">
                   {formatPrice(booking.host_payout_gross)}

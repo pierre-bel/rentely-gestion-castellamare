@@ -214,7 +214,7 @@ export default function DashboardUpcomingBookings({ userId }: DashboardUpcomingB
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={booking.status} />
+                    <StatusBadge status={booking.status as any} />
                   </TableCell>
                   <TableCell className="text-right font-semibold">
                     {formatPrice(booking.host_payout_gross)}
