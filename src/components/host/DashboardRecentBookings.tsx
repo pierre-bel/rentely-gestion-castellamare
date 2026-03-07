@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,17 +8,27 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ClipboardList } from "lucide-react";
+import BookingDetailDialog, { type BookingDetailData } from "./BookingDetailDialog";
 
 interface DashboardBooking {
   id: string;
+  listing_id: string;
   listing_title: string;
   guest_name: string | null;
   guest_email: string;
   guest_avatar: string | null;
+  guest_phone: string | null;
   checkin_date: string;
   checkout_date: string;
+  nights: number;
+  guests: number;
+  total_price: number;
+  cleaning_fee: number | null;
+  notes: string | null;
   host_payout_gross: number;
   status: "confirmed" | "pending_payment" | "cancelled" | "completed" | "cancelled_guest" | "cancelled_host" | "expired";
+  pricing_breakdown: any;
+  access_token: string | null;
 }
 
 interface DashboardRecentBookingsProps {
@@ -47,6 +58,9 @@ const getInitials = (name: string | null) => {
 };
 
 export default function DashboardRecentBookings({ userId }: DashboardRecentBookingsProps) {
+  const [selectedBooking, setSelectedBooking] = useState<BookingDetailData | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["dashboard-recent-bookings", userId],
     queryFn: async () => {
@@ -67,6 +81,28 @@ export default function DashboardRecentBookings({ userId }: DashboardRecentBooki
       return (data?.slice(0, 5) || []) as DashboardBooking[];
     },
   });
+
+  const handleRowClick = (booking: DashboardBooking) => {
+    setSelectedBooking({
+      id: booking.id,
+      listing_id: booking.listing_id,
+      listing_title: booking.listing_title,
+      checkin_date: booking.checkin_date,
+      checkout_date: booking.checkout_date,
+      nights: booking.nights,
+      guests: booking.guests,
+      total_price: booking.total_price,
+      cleaning_fee: booking.cleaning_fee,
+      notes: booking.notes,
+      status: booking.status,
+      pricing_breakdown: booking.pricing_breakdown,
+      guest_name: booking.guest_name || booking.guest_email,
+      guest_email: booking.guest_email,
+      guest_phone: booking.guest_phone || null,
+      access_token: booking.access_token,
+    });
+    setDetailOpen(true);
+  };
 
   if (isLoading) {
     return (
@@ -107,50 +143,60 @@ export default function DashboardRecentBookings({ userId }: DashboardRecentBooki
   }
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-background hover:bg-background">
-            <TableHead className="font-semibold">ID</TableHead>
-            <TableHead className="font-semibold">Locataire</TableHead>
-            <TableHead className="font-semibold">Dates</TableHead>
-            <TableHead className="font-semibold">Statut</TableHead>
-            <TableHead className="font-semibold text-right">Montant</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {bookings.map((booking, index) => (
-            <TableRow
-              key={booking.id}
-              className={index % 2 === 0 ? "bg-muted/30 hover:bg-muted/50" : "hover:bg-muted/50"}
-            >
-              <TableCell className="font-mono text-sm">
-                {booking.id.slice(0, 8)}
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={booking.guest_avatar || ""} alt={booking.guest_name || "Locataire"} />
-                    <AvatarFallback>{getInitials(booking.guest_name)}</AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium truncate max-w-[150px]">
-                    {booking.guest_name || booking.guest_email}
-                  </span>
-                </div>
-              </TableCell>
-              <TableCell>
-                {formatBookingDates(booking.checkin_date, booking.checkout_date)}
-              </TableCell>
-              <TableCell>
-                <StatusBadge status={booking.status} />
-              </TableCell>
-              <TableCell className="text-right font-semibold">
-                {formatPrice(booking.host_payout_gross)}
-              </TableCell>
+    <>
+      <div className="border border-border rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-background hover:bg-background">
+              <TableHead className="font-semibold">ID</TableHead>
+              <TableHead className="font-semibold">Locataire</TableHead>
+              <TableHead className="font-semibold">Dates</TableHead>
+              <TableHead className="font-semibold">Statut</TableHead>
+              <TableHead className="font-semibold text-right">Montant</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {bookings.map((booking, index) => (
+              <TableRow
+                key={booking.id}
+                className={`cursor-pointer ${index % 2 === 0 ? "bg-muted/30 hover:bg-muted/50" : "hover:bg-muted/50"}`}
+                onClick={() => handleRowClick(booking)}
+              >
+                <TableCell className="font-mono text-sm">
+                  {booking.id.slice(0, 8)}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={booking.guest_avatar || ""} alt={booking.guest_name || "Locataire"} />
+                      <AvatarFallback>{getInitials(booking.guest_name)}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium truncate max-w-[150px]">
+                      {booking.guest_name || booking.guest_email}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {formatBookingDates(booking.checkin_date, booking.checkout_date)}
+                </TableCell>
+                <TableCell>
+                  <StatusBadge status={booking.status} />
+                </TableCell>
+                <TableCell className="text-right font-semibold">
+                  {formatPrice(booking.host_payout_gross)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <BookingDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        booking={selectedBooking}
+        onEdit={() => {}}
+      />
+    </>
   );
 }
