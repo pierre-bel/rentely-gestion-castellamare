@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ClipboardList } from "lucide-react";
-import BookingDetailDialog, { type BookingDetailData } from "./BookingDetailDialog";
+import { BookingDetailDialog, type BookingDetailData } from "./BookingDetailDialog";
 
 interface DashboardBooking {
   id: string;
@@ -17,18 +17,11 @@ interface DashboardBooking {
   guest_name: string | null;
   guest_email: string;
   guest_avatar: string | null;
-  guest_phone: string | null;
   checkin_date: string;
   checkout_date: string;
-  nights: number;
   guests: number;
-  total_price: number;
-  cleaning_fee: number | null;
-  notes: string | null;
   host_payout_gross: number;
-  status: "confirmed" | "pending_payment" | "cancelled" | "completed" | "cancelled_guest" | "cancelled_host" | "expired";
-  pricing_breakdown: any;
-  access_token: string | null;
+  status: string;
 }
 
 interface DashboardRecentBookingsProps {
@@ -41,12 +34,8 @@ const formatBookingDates = (checkin: string, checkout: string) => {
   return `${format(checkinDate, "d MMM", { locale: fr })} - ${format(checkoutDate, "d MMM yyyy", { locale: fr })}`;
 };
 
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-  }).format(price);
-};
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(price);
 
 const getInitials = (name: string | null) => {
   if (!name) return "?";
@@ -82,26 +71,43 @@ export default function DashboardRecentBookings({ userId }: DashboardRecentBooki
     },
   });
 
-  const handleRowClick = (booking: DashboardBooking) => {
-    setSelectedBooking({
-      id: booking.id,
-      listing_id: booking.listing_id,
-      listing_title: booking.listing_title,
-      checkin_date: booking.checkin_date,
-      checkout_date: booking.checkout_date,
-      nights: booking.nights,
-      guests: booking.guests,
-      total_price: booking.total_price,
-      cleaning_fee: booking.cleaning_fee,
-      notes: booking.notes,
-      status: booking.status,
-      pricing_breakdown: booking.pricing_breakdown,
-      guest_name: booking.guest_name || booking.guest_email,
-      guest_email: booking.guest_email,
-      guest_phone: booking.guest_phone || null,
-      access_token: booking.access_token,
-    });
-    setDetailOpen(true);
+  const handleRowClick = async (booking: DashboardBooking) => {
+    try {
+      const { data: full, error } = await supabase
+        .from("bookings")
+        .select("*, listings(title)")
+        .eq("id", booking.id)
+        .single();
+      if (error) throw error;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, email, phone")
+        .eq("id", full.guest_user_id)
+        .single();
+
+      setSelectedBooking({
+        id: full.id,
+        listing_id: full.listing_id,
+        listing_title: (full.listings as any)?.title || booking.listing_title,
+        checkin_date: full.checkin_date,
+        checkout_date: full.checkout_date,
+        nights: full.nights,
+        guests: full.guests,
+        total_price: full.total_price,
+        cleaning_fee: full.cleaning_fee,
+        notes: full.notes,
+        status: full.status || "pending_payment",
+        pricing_breakdown: full.pricing_breakdown,
+        guest_name: profile ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || profile.email : booking.guest_email,
+        guest_email: profile?.email || booking.guest_email,
+        guest_phone: profile?.phone || null,
+        access_token: full.access_token,
+      });
+      setDetailOpen(true);
+    } catch (e) {
+      console.error("Failed to load booking details", e);
+    }
   };
 
   if (isLoading) {
