@@ -22,11 +22,9 @@ interface DashboardEarningsSummaryProps {
 const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => {
   const navigate = useNavigate();
   
-  // Use the same date range as the earnings report default (last 12 months)
   const defaultEndMonth = startOfMonth(addMonths(new Date(), 1));
   const defaultStartMonth = startOfMonth(subMonths(defaultEndMonth, 12));
 
-  // Fetch earnings report data (same source as earnings report page)
   const { data: reports, isLoading: reportsLoading } = useQuery({
     queryKey: ["host-dashboard-earnings-report", userId],
     queryFn: async () => {
@@ -50,7 +48,6 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch pending payouts and fees paid separately
   const { data: payoutData, isLoading: payoutsLoading } = useQuery({
     queryKey: ["host-dashboard-payouts", userId],
     queryFn: async () => {
@@ -66,7 +63,6 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
 
   const isLoading = reportsLoading || payoutsLoading;
 
-  // Calculate summary data from reports (same logic as HostEarningsReport.tsx)
   const summaryData = useMemo(() => {
     if (!reports || reports.length === 0) {
       return {
@@ -78,67 +74,29 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
       };
     }
 
-    const totalGrossRevenue = reports.reduce(
-      (sum, r) => sum + Number(r.gross_earnings),
-      0
-    );
-
-    const actualNetRevenue = reports.reduce(
-      (sum, r) => sum + Number(r.actual_net_earnings),
-      0
-    );
-
-    const hostFeesPaid = reports.reduce(
-      (sum, r) => sum + Number(r.platform_fees),
-      0
-    );
-
-    const totalNights = reports.reduce(
-      (sum, r) => sum + Number(r.nights_booked),
-      0
-    );
-
-    // Calculate weighted average rate (weighted by nights booked)
-    const weightedRate = reports.reduce(
-      (sum, r) =>
-        sum + Number(r.average_nightly_rate) * Number(r.nights_booked),
-      0
-    );
-
+    const totalGrossRevenue = reports.reduce((sum, r) => sum + Number(r.gross_earnings), 0);
+    const actualNetRevenue = reports.reduce((sum, r) => sum + Number(r.actual_net_earnings), 0);
+    const hostFeesPaid = reports.reduce((sum, r) => sum + Number(r.platform_fees), 0);
+    const totalNights = reports.reduce((sum, r) => sum + Number(r.nights_booked), 0);
+    const weightedRate = reports.reduce((sum, r) => sum + Number(r.average_nightly_rate) * Number(r.nights_booked), 0);
     const averageRate = totalNights > 0 ? weightedRate / totalNights : 0;
-
-    // Calculate weighted average occupancy (weighted by nights booked)
-    const weightedOccupancy = reports.reduce(
-      (sum, r) =>
-        sum + Number(r.occupancy_percentage) * Number(r.nights_booked),
-      0
-    );
-
+    const weightedOccupancy = reports.reduce((sum, r) => sum + Number(r.occupancy_percentage) * Number(r.nights_booked), 0);
     const occupancyRate = totalNights > 0 ? weightedOccupancy / totalNights : 0;
 
-    return {
-      totalGrossRevenue,
-      averageRate,
-      actualNetRevenue,
-      occupancyRate,
-      hostFeesPaid,
-    };
+    return { totalGrossRevenue, averageRate, actualNetRevenue, occupancyRate, hostFeesPaid };
   }, [reports]);
 
   const formatCurrency = (value: number, showCents: boolean = false) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("fr-FR", {
       style: "currency",
-      currency: "USD",
+      currency: "EUR",
       minimumFractionDigits: showCents ? 2 : 0,
       maximumFractionDigits: showCents ? 2 : 0,
     }).format(value);
   };
 
-  const formatPercentage = (value: number) => {
-    return `${value.toFixed(1)}%`;
-  };
+  const formatPercentage = (value: number) => `${value.toFixed(1)}%`;
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
@@ -154,16 +112,13 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
     );
   }
 
-  // Empty state (new host with no data)
   const hasNoData = !reports || reports.length === 0;
   if (!isLoading && hasNoData) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground text-lg mb-2">
-          No earnings data yet
-        </p>
+        <p className="text-muted-foreground text-lg mb-2">Aucune donnée de revenus</p>
         <p className="text-sm text-muted-foreground">
-          Start accepting bookings to see your performance metrics
+          Commencez à accepter des réservations pour voir vos indicateurs
         </p>
       </div>
     );
@@ -171,7 +126,7 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
 
   const metrics = [
     {
-      label: "Occupancy Rate",
+      label: "Taux d'occupation",
       value: formatPercentage(summaryData.occupancyRate),
       icon: TrendingUp,
       bgColor: "bg-blue-500/10",
@@ -179,7 +134,7 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
       href: "/host/earnings-report",
     },
     {
-      label: "Average Rate",
+      label: "Tarif moyen",
       value: formatCurrency(summaryData.averageRate, true),
       icon: DollarSign,
       bgColor: "bg-green-500/10",
@@ -187,7 +142,7 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
       href: "/host/earnings-report",
     },
     {
-      label: "Gross Revenue",
+      label: "Revenus bruts",
       value: formatCurrency(summaryData.totalGrossRevenue),
       icon: ArrowUpCircle,
       bgColor: "bg-purple-500/10",
@@ -195,7 +150,7 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
       href: "/host/earnings-report",
     },
     {
-      label: "Net Revenue",
+      label: "Revenus nets",
       value: formatCurrency(summaryData.actualNetRevenue),
       icon: Wallet,
       bgColor: "bg-emerald-500/10",
@@ -203,7 +158,7 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
       href: "/host/earnings-report",
     },
     {
-      label: "Pending Payouts",
+      label: "Versements en attente",
       value: formatCurrency(Number(payoutData?.pending_payouts || 0)),
       icon: Clock,
       bgColor: "bg-amber-500/10",
@@ -211,7 +166,7 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
       href: "/host/payouts",
     },
     {
-      label: "Fees Paid",
+      label: "Frais payés",
       value: formatCurrency(summaryData.hostFeesPaid),
       icon: Receipt,
       bgColor: "bg-slate-500/10",

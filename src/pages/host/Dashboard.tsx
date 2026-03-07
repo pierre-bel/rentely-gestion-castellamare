@@ -7,6 +7,7 @@ import DashboardEarningsSummary from "@/components/host/DashboardEarningsSummary
 import DashboardRecentListings from "@/components/host/DashboardRecentListings";
 import DashboardInbox from "@/components/host/DashboardInbox";
 import DashboardRecentBookings from "@/components/host/DashboardRecentBookings";
+import DashboardUpcomingBookings from "@/components/host/DashboardUpcomingBookings";
 import DashboardRecentPayouts from "@/components/host/DashboardRecentPayouts";
 
 const HostDashboard = () => {
@@ -15,12 +16,12 @@ const HostDashboard = () => {
 
   return (
     <div className="container mx-auto px-4 pb-8 lg:px-8">
-      {/* Earnings Overview Panel */}
+      {/* Aperçu des revenus */}
       <Card className="bg-card">
         <CardHeader className="border-b pb-4">
-          <CardTitle className="text-2xl font-bold">Earnings Overview</CardTitle>
+          <CardTitle className="text-2xl font-bold">Aperçu des revenus</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            Key performance metrics across all time
+            Indicateurs de performance sur toute la période
           </p>
         </CardHeader>
         <CardContent className="p-6">
@@ -28,40 +29,40 @@ const HostDashboard = () => {
             <DashboardEarningsSummary userId={user.id} />
           ) : (
             <div className="text-center py-12 text-muted-foreground">
-              Please log in to view your dashboard
+              Veuillez vous connecter pour voir votre tableau de bord
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Recent Listings and Inbox Row */}
+      {/* Prochaines locations et Messagerie */}
       {user && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          {/* Recent Listings - 2/3 width */}
+          {/* Prochaines locations - 2/3 */}
           <div className="lg:col-span-2">
             <Card className="bg-card h-full flex flex-col">
               <CardHeader className="border-b pb-4">
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-xl font-semibold">Recent Listings</CardTitle>
-                  <Button onClick={() => navigate("/host/create-listing", { state: { from: "/host/dashboard" } })}>
-                    + Add New
-                  </Button>
+                  <CardTitle className="text-xl font-semibold">Prochaines locations</CardTitle>
+                  <TextLinkButton href="/host/bookings">
+                    Voir tout
+                  </TextLinkButton>
                 </div>
               </CardHeader>
               <CardContent className="p-6 flex-1">
-                <DashboardRecentListings userId={user.id} />
+                <DashboardUpcomingBookings userId={user.id} />
               </CardContent>
             </Card>
           </div>
 
-          {/* Inbox - 1/3 width */}
+          {/* Messagerie - 1/3 */}
           <div className="lg:col-span-1">
             <Card className="bg-card h-full flex flex-col">
               <CardHeader className="border-b pb-4">
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-xl font-semibold">Inbox</CardTitle>
+                  <CardTitle className="text-xl font-semibold">Messagerie</CardTitle>
                   <TextLinkButton href="/host/inbox">
-                    View All
+                    Voir tout
                   </TextLinkButton>
                 </div>
               </CardHeader>
@@ -73,16 +74,16 @@ const HostDashboard = () => {
         </div>
       )}
 
-      {/* Recent Bookings and Recent Payouts Row */}
+      {/* Dernières réservations et Annonces */}
       {user && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          {/* Recent Bookings - Left Column */}
+          {/* Dernières réservations encodées */}
           <Card className="bg-card h-full flex flex-col">
             <CardHeader className="border-b pb-4">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-xl font-semibold">Bookings</CardTitle>
+                <CardTitle className="text-xl font-semibold">Dernières réservations</CardTitle>
                 <TextLinkButton href="/host/bookings">
-                  Manage Bookings
+                  Gérer
                 </TextLinkButton>
               </div>
             </CardHeader>
@@ -91,13 +92,32 @@ const HostDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Recent Payouts - Right Column */}
+          {/* Annonces récentes */}
           <Card className="bg-card h-full flex flex-col">
             <CardHeader className="border-b pb-4">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-xl font-semibold">Payouts</CardTitle>
+                <CardTitle className="text-xl font-semibold">Annonces</CardTitle>
+                <Button onClick={() => navigate("/host/create-listing", { state: { from: "/host/dashboard" } })}>
+                  + Ajouter
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6 flex-1">
+              <DashboardRecentListings userId={user.id} />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Versements */}
+      {user && (
+        <div className="mt-6">
+          <Card className="bg-card h-full flex flex-col">
+            <CardHeader className="border-b pb-4">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-xl font-semibold">Versements</CardTitle>
                 <TextLinkButton href="/host/payouts">
-                  Review
+                  Voir tout
                 </TextLinkButton>
               </div>
             </CardHeader>
