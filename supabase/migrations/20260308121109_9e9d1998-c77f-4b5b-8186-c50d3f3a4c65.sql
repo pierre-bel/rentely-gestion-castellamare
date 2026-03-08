@@ -1,0 +1,1 @@
+ALTER TABLE public.email_automations ADD COLUMN send_if_late boolean NOT NULL DEFAULT false;
