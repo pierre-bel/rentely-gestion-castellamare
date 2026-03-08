@@ -36,7 +36,7 @@ interface Booking {
 
 interface Listing { id: string; title: string; }
 interface Tenant { id: string; first_name: string; last_name: string | null; phone: string | null; }
-interface CleaningStaff { id: string; name: string; phone: string | null; }
+interface CleaningStaff { id: string; name: string; phone: string | null; access_token: string; }
 interface StaffAssignment { id: string; cleaning_staff_id: string; listing_id: string; }
 
 interface CleaningSlot {
