@@ -65,8 +65,10 @@ export default function TimelineOverview({ listings, bookings, blockedDates, cur
   const scrollRef = useRef<HTMLDivElement>(null);
   const days = useMemo(() => eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }), [currentMonth]);
 
-  const CELL_W = 38; // px per day
-  const LABEL_W = 140; // px for listing name column
+  // Smaller cells on mobile
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const CELL_W = isMobile ? 30 : 38;
+  const LABEL_W = isMobile ? 100 : 140;
 
   const getBookingsForListing = (listingId: string) => {
     if (!bookings) return [];
