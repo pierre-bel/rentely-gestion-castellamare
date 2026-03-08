@@ -65,6 +65,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   const [igloohomeCode, setIgloohomeCode] = useState("");
   const [newTenantDialogOpen, setNewTenantDialogOpen] = useState(false);
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
+  const [beachCabin, setBeachCabin] = useState(false);
 
   // Fetch host listings
   const { data: listings = [] } = useQuery({
