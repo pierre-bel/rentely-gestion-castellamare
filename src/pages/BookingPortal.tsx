@@ -224,11 +224,6 @@ export default function BookingPortal() {
             </div>
           )}
         </div>
-        <Separator />
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-primary flex-shrink-0" />
-          <span className="text-sm">{data.guests} voyageur{data.guests > 1 ? "s" : ""}</span>
-        </div>
       </CardContent>
     </Card>
   );

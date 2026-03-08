@@ -249,14 +249,7 @@ export default function ListingDetailDialog({ listingId, open, onOpenChange, onU
                   <Home className="h-4 w-4" />
                   Property Details
                 </h3>
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium">{listing.guests_max}</p>
-                      <p className="text-xs text-muted-foreground">Guests</p>
-                    </div>
-                  </div>
+                <div className="grid grid-cols-3 gap-4">
                   <div className="flex items-center gap-2">
                     <Bed className="h-4 w-4 text-muted-foreground" />
                     <div>

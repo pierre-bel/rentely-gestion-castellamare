@@ -385,15 +385,6 @@ const BookingWidget = ({
       return;
     }
 
-    // Check guest limit
-    if (listing.guests_max && guests > listing.guests_max) {
-      toast({
-        title: "Too many guests",
-        description: `This property can accommodate a maximum of ${listing.guests_max} guests`,
-        variant: "destructive",
-      });
-      return;
-    }
 
     // Check for unavailable dates in the range
     if (hasUnavailableDateInRange(start, end)) {
