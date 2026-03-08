@@ -554,6 +554,31 @@ export default function BookingPortal() {
     );
   };
 
+  // Review is available during + after stay (from checkin date)
+  const canReview = isAfter(startOfDay(new Date()), startOfDay(checkin));
+
+  const renderReview = () => {
+    if (!canReview || !reviewChecked) return null;
+    return (
+      <PortalReviewForm
+        key="review"
+        bookingId={data.booking_id}
+        listingId="" // will be fetched from booking
+        guestUserId={""} // anonymous portal, will be resolved server-side
+        existingReview={existingReview}
+        onReviewSubmitted={() => {
+          // Refresh review
+          supabase
+            .from("reviews")
+            .select("id, rating, text, rating_cleanliness, rating_location, rating_communication, rating_value, rating_maintenance")
+            .eq("booking_id", data.booking_id)
+            .maybeSingle()
+            .then(({ data: r }) => { if (r) setExistingReview(r); });
+        }}
+      />
+    );
+  };
+
   const sectionRenderers: Record<string, () => React.ReactNode> = {
     dates: renderDates,
     access_code: renderAccessCode,
@@ -563,9 +588,12 @@ export default function BookingPortal() {
     payment_schedule: renderPaymentSchedule,
     house_rules: renderHouseRules,
     contact: renderContact,
+    review: renderReview,
   };
 
   const sectionOrder = settings.section_order.length > 0 ? settings.section_order : DEFAULT_SETTINGS.section_order;
+  // Always add review at the end if not in section order
+  const finalSectionOrder = sectionOrder.includes("review") ? sectionOrder : [...sectionOrder, "review"];
 
   return (
     <div className="min-h-screen bg-background">
