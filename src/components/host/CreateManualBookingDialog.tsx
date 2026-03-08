@@ -293,6 +293,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
         status: "confirmed",
         currency: "EUR",
         igloohome_code: igloohomeCode.replace(/\D/g, "") || null,
+        beach_cabin: beachCabin,
         pricing_breakdown: {
           rental_price: rentalNum,
           tenant_id: selectedTenantId || undefined,
