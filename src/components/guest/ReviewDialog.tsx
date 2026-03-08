@@ -7,6 +7,56 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useDemoData } from "@/hooks/useDemoData";
 
+const CRITERIA = [
+  { key: "rating_cleanliness", label: "Propreté" },
+  { key: "rating_location", label: "Emplacement" },
+  { key: "rating_communication", label: "Communication" },
+  { key: "rating_value", label: "Rapport qualité/prix" },
+  { key: "rating_maintenance", label: "État du logement" },
+] as const;
+
+type CriterionKey = typeof CRITERIA[number]["key"];
+
+function StarRow({
+  label,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  disabled?: boolean;
+}) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm text-foreground">{label}</span>
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((s) => (
+          <button
+            key={s}
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange(s)}
+            onMouseEnter={() => setHovered(s)}
+            onMouseLeave={() => setHovered(0)}
+            className="focus:outline-none transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Star
+              className={`h-5 w-5 ${
+                s <= (hovered || value)
+                  ? "fill-primary text-primary"
+                  : "text-muted-foreground/40"
+              }`}
+            />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface ReviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -29,8 +79,13 @@ export const ReviewDialog = ({
   existingReview,
   onReviewSubmitted,
 }: ReviewDialogProps) => {
-  const [rating, setRating] = useState(5);
-  const [hoveredRating, setHoveredRating] = useState(0);
+  const [ratings, setRatings] = useState<Record<CriterionKey, number>>({
+    rating_cleanliness: 0,
+    rating_location: 0,
+    rating_communication: 0,
+    rating_value: 0,
+    rating_maintenance: 0,
+  });
   const [reviewText, setReviewText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
@@ -41,23 +96,42 @@ export const ReviewDialog = ({
       2 * 24 * 60 * 60 * 1000
     : true;
 
+  const overallRating = (() => {
+    const filled = Object.values(ratings).filter((v) => v > 0);
+    if (filled.length === 0) return 0;
+    return Math.round((filled.reduce((a, b) => a + b, 0) / filled.length) * 10) / 10;
+  })();
+
+  const allRated = Object.values(ratings).every((v) => v > 0);
+
   useEffect(() => {
     if (existingReview) {
-      setRating(existingReview.rating);
       setReviewText(existingReview.text || "");
+      // We don't have criteria from the existing review in this interface,
+      // so derive overall rating
+      const r = existingReview.rating || 5;
+      setRatings({
+        rating_cleanliness: r,
+        rating_location: r,
+        rating_communication: r,
+        rating_value: r,
+        rating_maintenance: r,
+      });
     } else {
-      setRating(5);
+      setRatings({
+        rating_cleanliness: 0,
+        rating_location: 0,
+        rating_communication: 0,
+        rating_value: 0,
+        rating_maintenance: 0,
+      });
       setReviewText("");
     }
   }, [existingReview, open]);
 
   const handleSubmit = async () => {
-    if (rating < 1 || rating > 5) {
-      toast({
-        title: "Invalid rating",
-        description: "Please select a rating between 1 and 5 stars",
-        variant: "destructive",
-      });
+    if (!allRated) {
+      toast({ title: "Veuillez noter tous les critères", variant: "destructive" });
       return;
     }
 
@@ -65,95 +139,53 @@ export const ReviewDialog = ({
 
     try {
       if (isDemoMode) {
-        // Demo mode: use localStorage
         if (existingReview) {
-          // Update existing review
-          const updated = updateReview(existingReview.id, {
-            rating,
-            text: reviewText,
-          });
-          
-          if (!updated) throw new Error("Failed to update review");
-          
-          toast({
-            title: "Review updated",
-            description: "Your review has been updated successfully",
-          });
+          updateReview(existingReview.id, { rating: overallRating, text: reviewText });
+          toast({ title: "Avis mis à jour" });
         } else {
-          // Create new review - need listing_id from booking
           const booking = getBooking(bookingId);
-          
-          if (!booking) throw new Error("Booking not found");
-          
-          const newReview = addReview({
-            booking_id: bookingId,
-            listing_id: booking.listing_id,
-            rating,
-            text: reviewText,
-          });
-          
-          if (!newReview) throw new Error("Failed to create review");
-          
-          toast({
-            title: "Review submitted",
-            description: "Your review has been submitted for approval",
-          });
+          if (!booking) throw new Error("Réservation introuvable");
+          addReview({ booking_id: bookingId, listing_id: booking.listing_id, rating: overallRating, text: reviewText });
+          toast({ title: "Avis envoyé" });
         }
       } else {
-        // Real mode: use Supabase
+        const reviewData = {
+          rating: overallRating,
+          text: reviewText,
+          ...ratings,
+        };
+
         if (existingReview) {
-          // Update existing review
           const { error } = await supabase
             .from("reviews")
-            .update({
-              rating,
-              text: reviewText,
-            })
+            .update(reviewData as any)
             .eq("id", existingReview.id);
-
           if (error) throw error;
-
-          toast({
-            title: "Review updated",
-            description: "Your review has been updated successfully",
-          });
+          toast({ title: "Avis mis à jour" });
         } else {
-          // Create new review - fetch listing_id from booking first
           const { data: booking } = await supabase
             .from("bookings")
             .select("listing_id")
             .eq("id", bookingId)
             .single();
-
-          if (!booking) throw new Error("Booking not found");
+          if (!booking) throw new Error("Réservation introuvable");
 
           const { error } = await supabase.from("reviews").insert({
             booking_id: bookingId,
             listing_id: booking.listing_id,
             author_user_id: (await supabase.auth.getUser()).data.user?.id,
-            rating,
-            text: reviewText,
             status: "pending",
-          });
-
+            ...reviewData,
+          } as any);
           if (error) throw error;
-
-          toast({
-            title: "Review submitted",
-            description: "Your review has been submitted for approval",
-          });
+          toast({ title: "Avis envoyé" });
         }
       }
 
       onReviewSubmitted();
       onOpenChange(false);
-    } catch (error) {
-      console.error("Error submitting review:", error);
-      toast({
-        title: "Error",
-        description: "Failed to submit review. Please try again.",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -164,79 +196,68 @@ export const ReviewDialog = ({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {existingReview ? "Edit Your Review" : "Leave Review"}
+            {existingReview ? "Modifier votre avis" : "Laisser un avis"}
           </DialogTitle>
           <DialogDescription>
             {existingReview ? (
               <>
-                Update your review for {listingTitle}
+                Modifiez votre avis pour {listingTitle}
                 {!canEdit && (
                   <span className="block mt-2 text-destructive">
-                    Reviews can only be edited within 2 days of posting
+                    Les avis ne peuvent être modifiés que dans les 2 jours suivant la publication
                   </span>
                 )}
               </>
             ) : (
-              `Thank you for staying at ${listingTitle}. Your feedback helps hosts improve and future guests choose confidently.`
+              `Merci d'avoir séjourné à ${listingTitle}. Votre avis aide les hôtes à s'améliorer.`
             )}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block">Overall Rating</label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  disabled={!canEdit}
-                  onClick={() => setRating(star)}
-                  onMouseEnter={() => setHoveredRating(star)}
-                  onMouseLeave={() => setHoveredRating(0)}
-                  className="focus:outline-none transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Star
-                    className={`h-8 w-8 ${
-                      star <= (hoveredRating || rating)
-                        ? "fill-primary text-primary"
-                        : "text-muted-foreground"
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
+        <div className="space-y-5 py-4">
+          {/* Criteria grid */}
+          <div className="space-y-3">
+            {CRITERIA.map((c) => (
+              <StarRow
+                key={c.key}
+                label={c.label}
+                value={ratings[c.key]}
+                onChange={(v) => setRatings((prev) => ({ ...prev, [c.key]: v }))}
+                disabled={!canEdit}
+              />
+            ))}
           </div>
 
+          {/* Overall */}
+          {allRated && (
+            <div className="flex items-center justify-between bg-primary/5 rounded-lg px-4 py-3">
+              <span className="text-sm font-medium">Note globale</span>
+              <div className="flex items-center gap-2">
+                <Star className="h-5 w-5 fill-primary text-primary" />
+                <span className="text-lg font-bold text-primary">{overallRating.toFixed(1)}</span>
+              </div>
+            </div>
+          )}
+
           <div>
-            <label className="text-sm font-medium mb-2 block">
-              Your Review (Optional)
-            </label>
+            <label className="text-sm font-medium mb-2 block">Commentaire (optionnel)</label>
             <Textarea
-              placeholder="Share what you liked, what could be better, and any details future guests should know."
+              placeholder="Partagez ce que vous avez aimé, ce qui pourrait être amélioré…"
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
               disabled={!canEdit}
-              rows={5}
+              rows={4}
               maxLength={1000}
               className="resize-none"
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              {reviewText.length}/1000 characters
-            </p>
+            <p className="text-xs text-muted-foreground mt-1 text-right">{reviewText.length}/1000</p>
           </div>
         </div>
 
         <div className="flex gap-3 justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={submitting || !canEdit}>
-            {submitting
-              ? "Submitting..."
-              : existingReview
-              ? "Update Review"
-              : "Post Review"}
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
+          <Button onClick={handleSubmit} disabled={submitting || !canEdit || !allRated}>
+            {submitting ? "Envoi…" : existingReview ? "Mettre à jour" : "Envoyer"}
           </Button>
         </div>
       </DialogContent>
