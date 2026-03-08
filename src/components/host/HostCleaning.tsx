@@ -111,7 +111,7 @@ export function HostCleaning() {
     queryKey: ["cleaning-staff", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase.from("cleaning_staff").select("id, name, phone").eq("host_user_id", user.id).order("name");
+      const { data, error } = await supabase.from("cleaning_staff").select("id, name, phone, access_token").eq("host_user_id", user.id).order("name");
       if (error) throw error;
       return data as CleaningStaff[];
     },
