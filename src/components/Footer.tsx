@@ -25,17 +25,27 @@ const Footer = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-12">
                 {/* Platform */}
                 <div>
-                  <h3 className="font-bold text-base mb-2">Plateforme</h3>
+                  <h3 className="font-bold text-base mb-2">Fonctionnalités</h3>
                   <div className="w-12 h-1 bg-primary mb-4"></div>
                   <ul className="space-y-2">
                     <li>
-                      <Link to="/" className="text-foreground hover:text-primary transition-colors">
-                        Fonctionnalités
+                      <Link to="/features/calendar" className="text-foreground hover:text-primary transition-colors">
+                        Calendrier
                       </Link>
                     </li>
                     <li>
-                      <Link to="/faq" className="text-foreground hover:text-primary transition-colors">
-                        FAQ
+                      <Link to="/features/bookings" className="text-foreground hover:text-primary transition-colors">
+                        Réservations
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/features/automation" className="text-foreground hover:text-primary transition-colors">
+                        Automatisation
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/features/tools" className="text-foreground hover:text-primary transition-colors">
+                        Outils avancés
                       </Link>
                     </li>
                   </ul>
@@ -67,6 +77,11 @@ const Footer = () => {
                   <h3 className="font-bold text-base mb-2">Support</h3>
                   <div className="w-12 h-1 bg-primary mb-4"></div>
                   <ul className="space-y-2">
+                    <li>
+                      <Link to="/faq" className="text-foreground hover:text-primary transition-colors">
+                        FAQ
+                      </Link>
+                    </li>
                     <li>
                       <Link to="/help-center" className="text-foreground hover:text-primary transition-colors">
                         Centre d'aide

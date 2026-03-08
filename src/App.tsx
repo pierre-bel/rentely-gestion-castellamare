@@ -61,6 +61,10 @@ import ContentManagementPage from "./pages/admin/ContentManagement";
 import NotFound from "./pages/NotFound";
 import BookingPortal from "./pages/BookingPortal";
 import CleaningPortal from "./pages/CleaningPortal";
+import CalendarFeature from "./pages/features/CalendarFeature";
+import BookingsFeature from "./pages/features/BookingsFeature";
+import AutomationFeature from "./pages/features/AutomationFeature";
+import ToolsFeature from "./pages/features/ToolsFeature";
 
 const queryClient = new QueryClient();
 
