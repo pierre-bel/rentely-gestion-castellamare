@@ -119,7 +119,20 @@ export const DisputeCaseSummary = ({ dispute, guest, host, listing, booking }: D
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 shrink-0"
-                    onClick={() => setPreviewImage(url)}
+                    onClick={async () => {
+                      // If it's already a full URL (legacy), use it directly
+                      if (url.startsWith('http')) {
+                        setPreviewImage(url);
+                        return;
+                      }
+                      // Otherwise generate a signed URL from the file path
+                      const { data } = await supabase.storage
+                        .from('dispute-attachments')
+                        .createSignedUrl(url, 300);
+                      if (data?.signedUrl) {
+                        setPreviewImage(data.signedUrl);
+                      }
+                    }}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
