@@ -34,34 +34,8 @@ const CATEGORIES = [
       "Tarification semaine / week-end par période",
     ],
     mockup: (
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-4">
-          <CalendarDays className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-foreground">Mars 2026</span>
-        </div>
-        <div className="grid grid-cols-7 gap-1 text-xs text-center">
-          {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
-            <span key={i} className="text-muted-foreground font-medium py-1">{d}</span>
-          ))}
-          {Array.from({ length: 31 }, (_, i) => {
-            const booked = i >= 6 && i <= 12;
-            const blocked = i >= 20 && i <= 23;
-            return (
-              <span
-                key={i}
-                className={`py-1.5 rounded-md text-xs font-medium ${
-                  booked
-                    ? "bg-primary/20 text-primary"
-                    : blocked
-                    ? "bg-destructive/15 text-destructive"
-                    : "text-foreground hover:bg-muted"
-                }`}
-              >
-                {i + 1}
-              </span>
-            );
-          })}
-        </div>
+      <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
+        <img src={mockupCalendar} alt="Calendrier multi-logements" className="w-full h-auto" loading="lazy" />
       </div>
     ),
   },
