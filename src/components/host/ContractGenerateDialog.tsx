@@ -71,6 +71,7 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       "{{listing_title}}": listing?.title || "N/A",
       "{{listing_address}}": listing?.address || "N/A",
       "{{booking_id}}": booking.id,
+      "{{beach_cabin}}": booking.beach_cabin ? "Oui" : "Non",
     };
 
     Object.entries(replacements).forEach(([key, value]) => {

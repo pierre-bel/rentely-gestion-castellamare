@@ -310,6 +310,25 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
             </div>
           </div>
 
+          {/* Beach Cabin */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="edit-beach-cabin"
+              checked={beachCabin}
+              onCheckedChange={(checked) => setBeachCabin(checked === true)}
+            />
+            <Label htmlFor="edit-beach-cabin" className="text-sm font-normal cursor-pointer">
+              Cabine de plage incluse
+            </Label>
+            {checkinDate && checkoutDate && portalSettings && isBeachCabinPeriod(
+              checkinDate, checkoutDate,
+              portalSettings.beach_cabin_start_month, portalSettings.beach_cabin_start_day,
+              portalSettings.beach_cabin_end_month, portalSettings.beach_cabin_end_day
+            ) && (
+              <Badge variant="secondary" className="text-xs">Période cabine</Badge>
+            )}
+          </div>
+
           <div>
             <Label>Notes</Label>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes sur la réservation..." rows={2} />
