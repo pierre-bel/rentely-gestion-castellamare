@@ -59,31 +59,86 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
     const listing = booking.listings as any;
     const guest = booking.profiles as any;
 
+    // Fetch payment items for this booking
+    const { data: paymentItems } = await supabase
+      .from("booking_payment_items")
+      .select("*")
+      .eq("booking_id", booking.id)
+      .order("sort_order", { ascending: true });
+
+    const items = paymentItems || [];
+    const deposit = items.find((i: any) => i.label?.toLowerCase().includes("acompte")) || items[0];
+    const balance = items.find((i: any) => i.label?.toLowerCase().includes("solde") || i.label?.toLowerCase().includes("décompte")) || items[items.length - 1];
+
+    const formatCurrency = (val: number | null) => val != null ? `${Number(val).toFixed(2)} €` : "N/A";
+    const formatDate = (d: string | null) => d ? format(new Date(d), "d MMMM yyyy", { locale: fr }) : "N/A";
+    const formatStatus = (item: any) => {
+      if (!item) return "N/A";
+      return item.is_paid ? "Payé" : "Non payé";
+    };
+
+    // Build payment schedule table HTML
+    const scheduleRows = items.map((item: any) =>
+      `<tr><td style="border:1px solid #ddd;padding:6px">${item.label}</td><td style="border:1px solid #ddd;padding:6px">${formatCurrency(item.amount)}</td><td style="border:1px solid #ddd;padding:6px">${item.due_date ? formatDate(item.due_date) : "—"}</td><td style="border:1px solid #ddd;padding:6px">${formatStatus(item)}</td></tr>`
+    ).join("");
+    const scheduleTable = items.length > 0
+      ? `<table style="border-collapse:collapse;width:100%"><thead><tr><th style="border:1px solid #ddd;padding:6px;background:#f5f5f5">Échéance</th><th style="border:1px solid #ddd;padding:6px;background:#f5f5f5">Montant</th><th style="border:1px solid #ddd;padding:6px;background:#f5f5f5">Date limite</th><th style="border:1px solid #ddd;padding:6px;background:#f5f5f5">Statut</th></tr></thead><tbody>${scheduleRows}</tbody></table>`
+      : "Aucun échéancier défini";
+
+    const propertyTypeLabels: Record<string, string> = {
+      apartment: "Appartement", house: "Maison", villa: "Villa", cabin: "Chalet",
+      studio: "Studio", loft: "Loft", room: "Chambre", other: "Autre",
+    };
+
     let html = template.body_html;
     const replacements: Record<string, string> = {
+      // Guest
       "{{guest_name}}": `${guest?.first_name || ""} ${guest?.last_name || ""}`.trim() || "N/A",
+      "{{guest_first_name}}": guest?.first_name || "N/A",
+      "{{guest_last_name}}": guest?.last_name || "N/A",
       "{{guest_email}}": guest?.email || "N/A",
       "{{guest_phone}}": guest?.phone || "N/A",
-      "{{checkin_date}}": format(new Date(booking.checkin_date), "d MMMM yyyy", { locale: fr }),
-      "{{checkout_date}}": format(new Date(booking.checkout_date), "d MMMM yyyy", { locale: fr }),
+      // Booking
+      "{{booking_id}}": booking.id,
+      "{{checkin_date}}": formatDate(booking.checkin_date),
+      "{{checkout_date}}": formatDate(booking.checkout_date),
       "{{nights}}": String(booking.nights),
-      "{{total_price}}": `${Number(booking.total_price).toFixed(2)} €`,
+      "{{guests}}": String(booking.guests),
+      // Listing
       "{{listing_title}}": listing?.title || "N/A",
       "{{listing_address}}": listing?.address || "N/A",
-      "{{booking_id}}": booking.id,
+      "{{listing_city}}": listing?.city || "N/A",
+      "{{listing_country}}": listing?.country || "N/A",
+      "{{listing_type}}": propertyTypeLabels[listing?.type] || listing?.type || "N/A",
+      // Pricing
+      "{{total_price}}": formatCurrency(booking.total_price),
+      "{{subtotal}}": formatCurrency(booking.subtotal),
+      "{{cleaning_fee}}": formatCurrency(booking.cleaning_fee),
+      "{{service_fee}}": formatCurrency(booking.service_fee),
+      "{{taxes}}": formatCurrency(booking.taxes),
+      "{{security_deposit}}": formatCurrency(listing?.security_deposit),
+      // Payment schedule
+      "{{deposit_amount}}": deposit ? formatCurrency(deposit.amount) : "N/A",
+      "{{deposit_due_date}}": deposit?.due_date ? formatDate(deposit.due_date) : "N/A",
+      "{{deposit_status}}": formatStatus(deposit),
+      "{{balance_amount}}": balance && balance !== deposit ? formatCurrency(balance.amount) : formatCurrency((booking.total_price || 0) - (deposit?.amount || 0)),
+      "{{balance_due_date}}": balance?.due_date ? formatDate(balance.due_date) : "N/A",
+      "{{balance_status}}": balance ? formatStatus(balance) : "N/A",
+      "{{payment_schedule}}": scheduleTable,
+      // Dates
+      "{{today_date}}": format(new Date(), "d MMMM yyyy", { locale: fr }),
+      "{{booking_created_date}}": formatDate(booking.created_at),
     };
 
     Object.entries(replacements).forEach(([key, value]) => {
       html = html.split(key).join(value);
     });
 
-    // Handle beach_cabin: if true, remove only the tag (keep surrounding text), if false, remove the entire element containing it
+    // Handle beach_cabin
     if (booking.beach_cabin) {
       html = html.split("{{beach_cabin}}").join("Cabine de plage");
     } else {
-      // Remove any HTML element (p, li, tr, div, span) that contains {{beach_cabin}}
       html = html.replace(/<(p|li|tr|div|span)[^>]*>(?:[^<]*|\s)*\{\{beach_cabin\}\}(?:[^<]*|\s)*<\/\1>/gi, "");
-      // Fallback: remove raw text line
       html = html.split("{{beach_cabin}}").join("");
     }
 
