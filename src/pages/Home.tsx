@@ -89,6 +89,18 @@ const Home = () => {
               </Button>
             </div>
           </div>
+
+          {/* Dashboard mockup */}
+          <div className="mt-16 max-w-5xl mx-auto">
+            <div className="rounded-2xl border border-border/60 shadow-2xl shadow-primary/10 overflow-hidden bg-card">
+              <img
+                src={mockupHero}
+                alt="Aperçu du tableau de bord Rentely"
+                className="w-full h-auto"
+                loading="eager"
+              />
+            </div>
+          </div>
         </div>
       </section>
 

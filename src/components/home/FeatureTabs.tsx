@@ -97,25 +97,8 @@ const CATEGORIES = [
       "Tarification par période personnalisable",
     ],
     mockup: (
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-4">
-          <BarChart3 className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-foreground">Aperçu</span>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: "Taux d'occupation", value: "78%", icon: CalendarDays },
-            { label: "Revenus du mois", value: "4 280 €", icon: CreditCard },
-            { label: "Locataires actifs", value: "12", icon: Users },
-            { label: "Réservations", value: "8", icon: ClipboardList },
-          ].map((item, i) => (
-            <div key={i} className="bg-muted/50 rounded-xl p-3">
-              <item.icon className="h-4 w-4 text-primary mb-1" />
-              <p className="text-lg font-bold text-foreground">{item.value}</p>
-              <p className="text-xs text-muted-foreground">{item.label}</p>
-            </div>
-          ))}
-        </div>
+      <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
+        <img src={mockupStats} alt="Statistiques et rapports" className="w-full h-auto" loading="lazy" />
       </div>
     ),
   },
