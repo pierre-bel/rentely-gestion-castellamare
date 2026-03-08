@@ -78,6 +78,7 @@ const App = () => (
             <Route path="/become-host" element={<><Navbar /><BecomeHost /></>} />
             <Route path="/disponibilites" element={<PublicAvailability />} />
             <Route path="/embed/availability/:listingId" element={<EmbedAvailability />} />
+            <Route path="/embed/availability/all/:hostId" element={<EmbedAllAvailability />} />
             <Route path="/portal/:token" element={<BookingPortal />} />
             <Route path="/host" element={<HostLayout />}>
               <Route path="dashboard" element={<HostDashboard />} />
