@@ -98,6 +98,11 @@ const DEFAULT_SETTINGS: PortalSettingsData = {
   custom_footer_text: null,
   section_order: DEFAULT_SECTION_ORDER,
   require_full_payment_for_access_code: true,
+  contact_email: null,
+  contact_phone: null,
+  contact_whatsapp: null,
+  contact_facebook_url: null,
+  show_contact: true,
 };
 
 // Sortable item component
