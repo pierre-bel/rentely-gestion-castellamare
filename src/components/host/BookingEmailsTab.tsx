@@ -25,6 +25,7 @@ interface ScheduledEmail {
   recipient_type: string;
   recipient_email: string | null;
   scheduled_date: string | null;
+  is_late: boolean;
 }
 
 interface Props {
