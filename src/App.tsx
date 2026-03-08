@@ -99,6 +99,7 @@ const App = () => (
               <Route path="payouts" element={<HostPayouts />} />
               <Route path="earnings-report" element={<EarningsReport />} />
               <Route path="statistics" element={<HostStatistics />} />
+              <Route path="contracts" element={<HostContracts />} />
               <Route path="inbox" element={<HostInbox />} />
               <Route path="email-automations" element={<EmailAutomations />} />
               <Route path="portal-settings" element={<PortalSettings />} />
