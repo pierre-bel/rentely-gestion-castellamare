@@ -175,6 +175,15 @@ export default function BookingPortal() {
       }
       if (customRes.data) setCustomSections(customRes.data as CustomSectionData[]);
 
+      // Check for existing review
+      const { data: reviewData } = await supabase
+        .from("reviews")
+        .select("id, rating, text, rating_cleanliness, rating_location, rating_communication, rating_value, rating_maintenance")
+        .eq("booking_id", bookingId)
+        .maybeSingle();
+      if (reviewData) setExistingReview(reviewData);
+      setReviewChecked(true);
+
       setLoading(false);
     })();
   }, [token]);
