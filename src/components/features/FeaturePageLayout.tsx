@@ -67,6 +67,19 @@ const FeaturePageLayout = ({
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
+
+          {heroImage && (
+            <div className="mt-14 max-w-4xl mx-auto">
+              <div className="rounded-2xl border border-border/60 shadow-2xl shadow-primary/10 overflow-hidden bg-card">
+                <img
+                  src={heroImage}
+                  alt={heroImageAlt || "Aperçu de la fonctionnalité"}
+                  className="w-full h-auto"
+                  loading="eager"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
