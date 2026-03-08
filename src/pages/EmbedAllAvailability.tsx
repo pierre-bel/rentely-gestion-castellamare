@@ -71,9 +71,8 @@ export default function EmbedAllAvailability() {
   });
 
   const filteredByHost = useMemo(() => {
-    if (!listings || !hostListingIds) return [];
-    return listings.filter((l) => hostListingIds.includes(l.id!));
-  }, [listings, hostListingIds]);
+    return listings || [];
+  }, [listings]);
 
   const displayListings = useMemo(() => {
     if (selectedListing) return filteredByHost.filter((l) => l.id === selectedListing);
