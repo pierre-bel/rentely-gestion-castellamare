@@ -59,13 +59,6 @@ export type Database = {
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "booking_payment_items_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "public_booking_portal"
-            referencedColumns: ["booking_id"]
-          },
         ]
       }
       bookings: {
@@ -462,13 +455,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "disputes_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "public_booking_portal"
-            referencedColumns: ["booking_id"]
-          },
-          {
             foreignKeyName: "disputes_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
@@ -501,13 +487,6 @@ export type Database = {
             columns: ["resolved_by_admin_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "disputes_resolved_by_admin_id_fkey"
-            columns: ["resolved_by_admin_id"]
-            isOneToOne: false
-            referencedRelation: "user_admin_view"
             referencedColumns: ["id"]
           },
           {
@@ -622,13 +601,6 @@ export type Database = {
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "email_send_log_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "public_booking_portal"
-            referencedColumns: ["booking_id"]
-          },
         ]
       }
       faqs: {
@@ -726,13 +698,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "guest_debts_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "public_booking_portal"
-            referencedColumns: ["booking_id"]
           },
           {
             foreignKeyName: "guest_debts_dispute_id_fkey"
@@ -875,13 +840,6 @@ export type Database = {
             columns: ["admin_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "listing_moderation_feedback_admin_user_id_fkey"
-            columns: ["admin_user_id"]
-            isOneToOne: false
-            referencedRelation: "user_admin_view"
             referencedColumns: ["id"]
           },
           {
@@ -1184,13 +1142,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "message_threads_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "public_booking_portal"
-            referencedColumns: ["booking_id"]
-          },
-          {
             foreignKeyName: "message_threads_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
@@ -1257,13 +1208,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "public_booking_portal"
-            referencedColumns: ["booking_id"]
           },
         ]
       }
@@ -1350,13 +1294,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "bookings"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payouts_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "public_booking_portal"
-            referencedColumns: ["booking_id"]
           },
         ]
       }
@@ -1577,13 +1514,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "reviews_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "public_booking_portal"
-            referencedColumns: ["booking_id"]
-          },
-          {
             foreignKeyName: "reviews_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
@@ -1744,13 +1674,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "transactions_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: false
-            referencedRelation: "public_booking_portal"
-            referencedColumns: ["booking_id"]
-          },
-          {
             foreignKeyName: "transactions_dispute_id_fkey"
             columns: ["dispute_id"]
             isOneToOne: false
@@ -1842,45 +1765,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      public_booking_portal: {
-        Row: {
-          access_token: string | null
-          address: string | null
-          amenities: string[] | null
-          bathrooms: number | null
-          bedrooms: number | null
-          beds: number | null
-          booking_id: string | null
-          checkin_date: string | null
-          checkin_from: string | null
-          checkout_date: string | null
-          checkout_until: string | null
-          city: string | null
-          cleaning_fee: number | null
-          country: string | null
-          cover_image: string | null
-          currency: string | null
-          guests: number | null
-          house_rules: string | null
-          igloohome_code: string | null
-          latitude: number | null
-          listing_images: string[] | null
-          listing_title: string | null
-          longitude: number | null
-          nights: number | null
-          notes: string | null
-          postal_code: string | null
-          pricing_breakdown: Json | null
-          property_type: Database["public"]["Enums"]["property_type"] | null
-          service_fee: number | null
-          state: string | null
-          status: Database["public"]["Enums"]["booking_status"] | null
-          subtotal: number | null
-          taxes: number | null
-          total_price: number | null
-        }
-        Relationships: []
       }
       public_listing_availability: {
         Row: {
@@ -2106,57 +1990,14 @@ export type Database = {
         }
         Relationships: []
       }
-      user_admin_view: {
-        Row: {
-          avatar_url: string | null
-          bookings_count: number | null
-          created_at: string | null
-          email: string | null
-          first_name: string | null
-          full_name: string | null
-          id: string | null
-          last_name: string | null
-          listings_count: number | null
-          primary_role: Database["public"]["Enums"]["app_role"] | null
-          status: Database["public"]["Enums"]["user_status"] | null
-          user_display_id: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          bookings_count?: never
-          created_at?: string | null
-          email?: string | null
-          first_name?: string | null
-          full_name?: never
-          id?: string | null
-          last_name?: string | null
-          listings_count?: never
-          primary_role?: never
-          status?: Database["public"]["Enums"]["user_status"] | null
-          user_display_id?: never
-        }
-        Update: {
-          avatar_url?: string | null
-          bookings_count?: never
-          created_at?: string | null
-          email?: string | null
-          first_name?: string | null
-          full_name?: never
-          id?: string | null
-          last_name?: string | null
-          listings_count?: never
-          primary_role?: never
-          status?: Database["public"]["Enums"]["user_status"] | null
-          user_display_id?: never
-        }
-        Relationships: []
-      }
     }
     Functions: {
-      admin_delete_user_soft: {
-        Args: { p_admin_user_id: string; p_user_id: string }
-        Returns: Json
-      }
+      admin_delete_user_soft:
+        | { Args: { p_user_id: string }; Returns: Json }
+        | {
+            Args: { p_admin_user_id: string; p_user_id: string }
+            Returns: Json
+          }
       admin_export_reviews_custom_report: {
         Args: {
           p_city_ids?: string[]
@@ -2221,23 +2062,37 @@ export type Database = {
           total_reviews: number
         }[]
       }
-      admin_get_support_conversations: {
-        Args: {
-          p_admin_user_id: string
-          p_search_query?: string
-          p_sort_by?: string
-        }
-        Returns: {
-          last_message: string
-          last_message_time: string
-          thread_id: string
-          unread_count: number
-          user_avatar: string
-          user_email: string
-          user_id: string
-          user_name: string
-        }[]
-      }
+      admin_get_support_conversations:
+        | {
+            Args: {
+              p_admin_user_id: string
+              p_search_query?: string
+              p_sort_by?: string
+            }
+            Returns: {
+              last_message: string
+              last_message_time: string
+              thread_id: string
+              unread_count: number
+              user_avatar: string
+              user_email: string
+              user_id: string
+              user_name: string
+            }[]
+          }
+        | {
+            Args: { p_search_query?: string; p_sort_by?: string }
+            Returns: {
+              last_message: string
+              last_message_time: string
+              thread_id: string
+              unread_count: number
+              user_avatar: string
+              user_email: string
+              user_id: string
+              user_name: string
+            }[]
+          }
       admin_get_weekly_bookings: {
         Args: { weeks_back?: number }
         Returns: {
@@ -2610,14 +2465,18 @@ export type Database = {
           user_display_id: string
         }[]
       }
-      admin_suspend_user: {
-        Args: { p_admin_user_id: string; p_user_id: string }
-        Returns: Json
-      }
-      admin_unsuspend_user: {
-        Args: { p_admin_user_id: string; p_user_id: string }
-        Returns: Json
-      }
+      admin_suspend_user:
+        | { Args: { p_user_id: string }; Returns: Json }
+        | {
+            Args: { p_admin_user_id: string; p_user_id: string }
+            Returns: Json
+          }
+      admin_unsuspend_user:
+        | { Args: { p_user_id: string }; Returns: Json }
+        | {
+            Args: { p_admin_user_id: string; p_user_id: string }
+            Returns: Json
+          }
       apply_outstanding_debts_to_payout: {
         Args: { p_payout_id: string }
         Returns: undefined
@@ -2728,6 +2587,62 @@ export type Database = {
           open_disputes: number
           pending_listings: number
           total_revenue: number
+        }[]
+      }
+      get_admin_users: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          bookings_count: number
+          created_at: string
+          email: string
+          first_name: string
+          full_name: string
+          id: string
+          last_name: string
+          listings_count: number
+          primary_role: Database["public"]["Enums"]["app_role"]
+          status: Database["public"]["Enums"]["user_status"]
+          user_display_id: string
+        }[]
+      }
+      get_booking_portal: {
+        Args: { p_access_token: string }
+        Returns: {
+          access_token: string
+          address: string
+          amenities: string[]
+          bathrooms: number
+          bedrooms: number
+          beds: number
+          booking_id: string
+          checkin_date: string
+          checkin_from: string
+          checkout_date: string
+          checkout_until: string
+          city: string
+          cleaning_fee: number
+          country: string
+          cover_image: string
+          currency: string
+          guests: number
+          house_rules: string
+          igloohome_code: string
+          latitude: number
+          listing_images: string[]
+          listing_title: string
+          longitude: number
+          nights: number
+          notes: string
+          postal_code: string
+          pricing_breakdown: Json
+          property_type: Database["public"]["Enums"]["property_type"]
+          service_fee: number
+          state: string
+          status: Database["public"]["Enums"]["booking_status"]
+          subtotal: number
+          taxes: number
+          total_price: number
         }[]
       }
       get_cleaning_portal_data: {
