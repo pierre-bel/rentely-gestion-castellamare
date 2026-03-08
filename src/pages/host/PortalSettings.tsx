@@ -56,7 +56,7 @@ interface CustomSection {
 }
 
 const DEFAULT_SECTION_ORDER = [
-  "dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules", "notes",
+  "dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules",
 ];
 
 const BUILTIN_SECTION_LABELS: Record<string, string> = {
@@ -67,7 +67,7 @@ const BUILTIN_SECTION_LABELS: Record<string, string> = {
   pricing: "Tarification",
   payment_schedule: "Échéancier de paiement",
   house_rules: "Règles de la maison",
-  notes: "Notes",
+  
 };
 
 const BUILTIN_TOGGLE_KEYS: Record<string, keyof PortalSettingsData> = {

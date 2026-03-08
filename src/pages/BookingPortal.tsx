@@ -6,7 +6,7 @@ import { fr } from "date-fns/locale";
 import {
   CalendarDays, Users, Home, Euro, MapPin, Clock,
   ShieldCheck, Bed, Bath, DoorOpen, CheckCircle2, XCircle,
-  KeyRound, FileText, Loader2
+  KeyRound, Loader2
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -97,7 +97,7 @@ const DEFAULT_SETTINGS: PortalSettings = {
   show_amenities: true,
   show_map_link: true,
   custom_footer_text: null,
-  section_order: ["dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules", "notes"],
+  section_order: ["dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules"],
 };
 
 export default function BookingPortal() {
@@ -393,20 +393,6 @@ export default function BookingPortal() {
     );
   };
 
-  const renderNotes = () => {
-    if (!data.notes) return null;
-    return (
-      <Card key="notes">
-        <CardContent className="pt-5 space-y-2">
-          <div className="flex items-center gap-2 mb-2">
-            <FileText className="h-5 w-5 text-primary flex-shrink-0" />
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Notes</p>
-          </div>
-          <p className="text-sm whitespace-pre-line text-foreground/90">{data.notes}</p>
-        </CardContent>
-      </Card>
-    );
-  };
 
   const renderCustomSection = (key: string) => {
     const sectionKey = key.replace("custom_", "");
@@ -430,7 +416,7 @@ export default function BookingPortal() {
     pricing: renderPricing,
     payment_schedule: renderPaymentSchedule,
     house_rules: renderHouseRules,
-    notes: renderNotes,
+    
   };
 
   const sectionOrder = settings.section_order.length > 0 ? settings.section_order : DEFAULT_SETTINGS.section_order;
