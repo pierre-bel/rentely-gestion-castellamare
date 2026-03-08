@@ -224,17 +224,17 @@ const HostEarningsReport = () => {
             }}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Sort by" />
+              <SelectValue placeholder="Trier par" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="month_date-desc">Month (Newest)</SelectItem>
-              <SelectItem value="month_date-asc">Month (Oldest)</SelectItem>
-              <SelectItem value="listing_title-asc">Listing (A-Z)</SelectItem>
-              <SelectItem value="listing_title-desc">Listing (Z-A)</SelectItem>
-              <SelectItem value="gross_earnings-desc">Gross (High-Low)</SelectItem>
-              <SelectItem value="gross_earnings-asc">Gross (Low-High)</SelectItem>
-              <SelectItem value="net_earnings-desc">Net (High-Low)</SelectItem>
-              <SelectItem value="net_earnings-asc">Net (Low-High)</SelectItem>
+              <SelectItem value="month_date-desc">Mois (récent)</SelectItem>
+              <SelectItem value="month_date-asc">Mois (ancien)</SelectItem>
+              <SelectItem value="listing_title-asc">Annonce (A-Z)</SelectItem>
+              <SelectItem value="listing_title-desc">Annonce (Z-A)</SelectItem>
+              <SelectItem value="gross_earnings-desc">Brut (décroissant)</SelectItem>
+              <SelectItem value="gross_earnings-asc">Brut (croissant)</SelectItem>
+              <SelectItem value="net_earnings-desc">Net (décroissant)</SelectItem>
+              <SelectItem value="net_earnings-asc">Net (croissant)</SelectItem>
             </SelectContent>
           </Select>
         </div>

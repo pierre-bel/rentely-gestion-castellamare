@@ -170,9 +170,6 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
                     {tenantAddress}
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {booking.guests} voyageur{booking.guests > 1 ? "s" : ""}
-                </p>
               </div>
             </div>
 
