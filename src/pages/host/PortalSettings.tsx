@@ -491,6 +491,18 @@ export default function PortalSettings() {
                 onCheckedChange={(checked) => setSettings((s) => ({ ...s, show_map_link: checked }))}
               />
             </div>
+
+            {/* Access code payment condition sub-toggle */}
+            <div className="flex items-center justify-between py-2 px-3 ml-6 border-l-2 border-border">
+              <div>
+                <Label className="text-sm">Code d'accès conditionné au paiement</Label>
+                <p className="text-xs text-muted-foreground">Le code n'est visible que si toutes les échéances sont payées</p>
+              </div>
+              <Switch
+                checked={settings.require_full_payment_for_access_code}
+                onCheckedChange={(checked) => setSettings((s) => ({ ...s, require_full_payment_for_access_code: checked }))}
+              />
+            </div>
           </CardContent>
         </Card>
 
