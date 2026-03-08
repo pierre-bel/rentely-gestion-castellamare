@@ -79,6 +79,7 @@ interface PortalSettings {
   show_map_link: boolean;
   custom_footer_text: string | null;
   section_order: string[];
+  require_full_payment_for_access_code: boolean;
 }
 
 interface CustomSectionData {
@@ -98,6 +99,7 @@ const DEFAULT_SETTINGS: PortalSettings = {
   show_map_link: true,
   custom_footer_text: null,
   section_order: ["dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules"],
+  require_full_payment_for_access_code: true,
 };
 
 export default function BookingPortal() {
@@ -151,6 +153,7 @@ export default function BookingPortal() {
         setSettings({
           ...s,
           section_order: s.section_order || DEFAULT_SETTINGS.section_order,
+          require_full_payment_for_access_code: s.require_full_payment_for_access_code ?? true,
         });
       }
       if (customRes.data) setCustomSections(customRes.data as CustomSectionData[]);
@@ -230,8 +233,26 @@ export default function BookingPortal() {
     </Card>
   );
 
+  const isFullyPaid = payments.length === 0 || payments.every((p) => p.is_paid);
+
   const renderAccessCode = () => {
     if (!settings.show_access_code || !data.igloohome_code) return null;
+    // If host requires full payment, hide code until fully paid
+    if (settings.require_full_payment_for_access_code && !isFullyPaid) {
+      return (
+        <Card key="access_code" className="border-warning/30 bg-warning/5">
+          <CardContent className="pt-5">
+            <div className="flex items-center gap-3">
+              <KeyRound className="h-5 w-5 text-warning flex-shrink-0" />
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Code d'accès</p>
+                <p className="text-sm text-muted-foreground mt-1">Le code d'accès sera disponible une fois le paiement intégral effectué.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
     return (
       <Card key="access_code" className="border-primary/30 bg-primary/5">
         <CardContent className="pt-5">

@@ -44,6 +44,7 @@ interface PortalSettingsData {
   show_map_link: boolean;
   custom_footer_text: string | null;
   section_order: string[];
+  require_full_payment_for_access_code: boolean;
 }
 
 interface CustomSection {
@@ -90,6 +91,7 @@ const DEFAULT_SETTINGS: PortalSettingsData = {
   show_map_link: true,
   custom_footer_text: null,
   section_order: DEFAULT_SECTION_ORDER,
+  require_full_payment_for_access_code: true,
 };
 
 // Sortable item component
@@ -192,6 +194,7 @@ export default function PortalSettings() {
           show_map_link: d.show_map_link,
           custom_footer_text: d.custom_footer_text,
           section_order: d.section_order || DEFAULT_SECTION_ORDER,
+          require_full_payment_for_access_code: d.require_full_payment_for_access_code ?? true,
         });
       }
 
@@ -240,6 +243,7 @@ export default function PortalSettings() {
           show_map_link: settings.show_map_link,
           custom_footer_text: settings.custom_footer_text,
           section_order: settings.section_order as any,
+          require_full_payment_for_access_code: settings.require_full_payment_for_access_code,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "host_user_id" }
@@ -485,6 +489,18 @@ export default function PortalSettings() {
               <Switch
                 checked={settings.show_map_link}
                 onCheckedChange={(checked) => setSettings((s) => ({ ...s, show_map_link: checked }))}
+              />
+            </div>
+
+            {/* Access code payment condition sub-toggle */}
+            <div className="flex items-center justify-between py-2 px-3 ml-6 border-l-2 border-border">
+              <div>
+                <Label className="text-sm">Code d'accès conditionné au paiement</Label>
+                <p className="text-xs text-muted-foreground">Le code n'est visible que si toutes les échéances sont payées</p>
+              </div>
+              <Switch
+                checked={settings.require_full_payment_for_access_code}
+                onCheckedChange={(checked) => setSettings((s) => ({ ...s, require_full_payment_for_access_code: checked }))}
               />
             </div>
           </CardContent>
