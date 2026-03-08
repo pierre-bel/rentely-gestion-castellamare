@@ -521,6 +521,54 @@ function ListingCalendar({
             Départ / Ménage
           </div>
         </div>
+
+        {/* Booking details list */}
+        {listing.bookings.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Réservations du mois</p>
+            {[...listing.bookings]
+              .sort((a, b) => a.checkin_date.localeCompare(b.checkin_date))
+              .map(b => {
+                const isSelected = b.id === selectedBookingId;
+                return (
+                  <div
+                    key={b.id}
+                    onClick={() => onSelectBooking(b)}
+                    className={`flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 p-2.5 rounded-lg border text-sm cursor-pointer transition-colors ${
+                      isSelected ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <span className="font-medium truncate">{b.tenant_name}</span>
+                      {b.tenant_phone && (
+                        <a href={`tel:${b.tenant_phone}`} className="text-primary underline text-xs flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                          <Phone className="h-3 w-3" />
+                          {b.tenant_phone}
+                        </a>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground flex-shrink-0">
+                      <span className="capitalize">
+                        {format(parseISO(b.checkin_date), "EEE dd/MM", { locale: fr })} → {format(parseISO(b.checkout_date), "EEE dd/MM", { locale: fr })}
+                      </span>
+                      <span>{b.nights} nuit{b.nights > 1 ? "s" : ""}</span>
+                    </div>
+                    {(listing.checkin_from || listing.checkout_until) && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0">
+                        <Clock className="h-3 w-3" />
+                        <span>
+                          {listing.checkin_from ? `Arrivée ${listing.checkin_from.slice(0, 5)}` : ""}
+                          {listing.checkin_from && listing.checkout_until ? " — " : ""}
+                          {listing.checkout_until ? `Départ ${listing.checkout_until.slice(0, 5)}` : ""}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
