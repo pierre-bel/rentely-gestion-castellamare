@@ -26,6 +26,8 @@ import { CreateEditTenantDialog } from "./CreateEditTenantDialog";
 import { Separator } from "@/components/ui/separator";
 import { calculatePricingFromWeeklyRates } from "@/lib/pricingUtils";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { isBeachCabinPeriod } from "@/lib/beachCabinUtils";
 
 interface Listing {
   id: string;
@@ -63,6 +65,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   const [igloohomeCode, setIgloohomeCode] = useState("");
   const [newTenantDialogOpen, setNewTenantDialogOpen] = useState(false);
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
+  const [beachCabin, setBeachCabin] = useState(false);
 
   // Fetch host listings
   const { data: listings = [] } = useQuery({
@@ -128,11 +131,42 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     enabled: !!user?.id && open,
   });
 
+  // Fetch beach cabin period settings
+  const { data: portalSettings } = useQuery({
+    queryKey: ["portal-settings-beach", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("portal_settings")
+        .select("beach_cabin_start_month, beach_cabin_start_day, beach_cabin_end_month, beach_cabin_end_day")
+        .eq("host_user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id && open,
+  });
+
   const nights = checkinDate && checkoutDate
     ? differenceInCalendarDays(checkoutDate, checkinDate)
     : 0;
 
   const [pricingSuggested, setPricingSuggested] = useState(false);
+
+  // Auto-check beach cabin based on dates
+  useEffect(() => {
+    if (checkinDate && checkoutDate && portalSettings) {
+      const shouldCheck = isBeachCabinPeriod(
+        checkinDate,
+        checkoutDate,
+        portalSettings.beach_cabin_start_month,
+        portalSettings.beach_cabin_start_day,
+        portalSettings.beach_cabin_end_month,
+        portalSettings.beach_cabin_end_day
+      );
+      setBeachCabin(shouldCheck);
+    }
+  }, [checkinDate, checkoutDate, portalSettings]);
 
   // Auto-fill prices when listing or dates change
   useEffect(() => {
@@ -235,6 +269,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     setNotes("");
     setIgloohomeCode("");
     setScheduleItems([]);
+    setBeachCabin(false);
   };
 
   const handleSave = async () => {
@@ -259,6 +294,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
         status: "confirmed",
         currency: "EUR",
         igloohome_code: igloohomeCode.replace(/\D/g, "") || null,
+        beach_cabin: beachCabin,
         pricing_breakdown: {
           rental_price: rentalNum,
           tenant_id: selectedTenantId || undefined,
@@ -473,6 +509,25 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
                 </div>
               );
             })}
+
+            {/* Beach Cabin */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="beach-cabin"
+                checked={beachCabin}
+                onCheckedChange={(checked) => setBeachCabin(checked === true)}
+              />
+              <Label htmlFor="beach-cabin" className="text-sm font-normal cursor-pointer">
+                Cabine de plage incluse
+              </Label>
+              {checkinDate && checkoutDate && portalSettings && isBeachCabinPeriod(
+                checkinDate, checkoutDate,
+                portalSettings.beach_cabin_start_month, portalSettings.beach_cabin_start_day,
+                portalSettings.beach_cabin_end_month, portalSettings.beach_cabin_end_day
+              ) && (
+                <Badge variant="secondary" className="text-xs">Période cabine</Badge>
+              )}
+            </div>
 
             {/* Igloohome Code */}
             <div>

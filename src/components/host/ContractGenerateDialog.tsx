@@ -37,7 +37,7 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       setLoadingBookings(true);
       supabase
         .from("bookings")
-        .select("id, checkin_date, checkout_date, nights, total_price, guests, listing_id, guest_user_id, listings(title, address), profiles:guest_user_id(first_name, last_name, email, phone)")
+        .select("id, checkin_date, checkout_date, nights, total_price, guests, listing_id, guest_user_id, beach_cabin, listings(title, address), profiles:guest_user_id(first_name, last_name, email, phone)")
         .in("status", ["confirmed", "pending_payment"])
         .order("checkin_date", { ascending: false })
         .limit(50)
@@ -71,6 +71,7 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       "{{listing_title}}": listing?.title || "N/A",
       "{{listing_address}}": listing?.address || "N/A",
       "{{booking_id}}": booking.id,
+      "{{beach_cabin}}": booking.beach_cabin ? "Oui" : "Non",
     };
 
     Object.entries(replacements).forEach(([key, value]) => {

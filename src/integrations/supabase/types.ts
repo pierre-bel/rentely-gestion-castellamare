@@ -109,6 +109,7 @@ export type Database = {
       bookings: {
         Row: {
           access_token: string
+          beach_cabin: boolean
           cancellation_policy_snapshot: Json | null
           checkin_date: string
           checkout_date: string
@@ -139,6 +140,7 @@ export type Database = {
         }
         Insert: {
           access_token?: string
+          beach_cabin?: boolean
           cancellation_policy_snapshot?: Json | null
           checkin_date: string
           checkout_date: string
@@ -169,6 +171,7 @@ export type Database = {
         }
         Update: {
           access_token?: string
+          beach_cabin?: boolean
           cancellation_policy_snapshot?: Json | null
           checkin_date?: string
           checkout_date?: string
@@ -1443,6 +1446,10 @@ export type Database = {
       }
       portal_settings: {
         Row: {
+          beach_cabin_end_day: number
+          beach_cabin_end_month: number
+          beach_cabin_start_day: number
+          beach_cabin_start_month: number
           created_at: string
           custom_footer_text: string | null
           host_user_id: string
@@ -1460,6 +1467,10 @@ export type Database = {
           welcome_message: string | null
         }
         Insert: {
+          beach_cabin_end_day?: number
+          beach_cabin_end_month?: number
+          beach_cabin_start_day?: number
+          beach_cabin_start_month?: number
           created_at?: string
           custom_footer_text?: string | null
           host_user_id: string
@@ -1477,6 +1488,10 @@ export type Database = {
           welcome_message?: string | null
         }
         Update: {
+          beach_cabin_end_day?: number
+          beach_cabin_end_month?: number
+          beach_cabin_start_day?: number
+          beach_cabin_start_month?: number
           created_at?: string
           custom_footer_text?: string | null
           host_user_id?: string

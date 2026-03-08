@@ -23,6 +23,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { Tenant } from "./HostTenants";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { isBeachCabinPeriod } from "@/lib/beachCabinUtils";
 
 interface BookingToEdit {
   id: string;
@@ -37,6 +40,7 @@ interface BookingToEdit {
   notes: string | null;
   status: string;
   pricing_breakdown: any;
+  beach_cabin?: boolean;
 }
 
 interface Props {
@@ -60,6 +64,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
   const [deposit, setDeposit] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedTenantId, setSelectedTenantId] = useState("");
+  const [beachCabin, setBeachCabin] = useState(false);
 
   // Fetch tenants
   const { data: tenants = [] } = useQuery({
@@ -73,6 +78,22 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
         .order("first_name");
       if (error) throw error;
       return data as Tenant[];
+    },
+    enabled: !!user?.id && open,
+  });
+
+  // Fetch beach cabin period settings
+  const { data: portalSettings } = useQuery({
+    queryKey: ["portal-settings-beach", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("portal_settings")
+        .select("beach_cabin_start_month, beach_cabin_start_day, beach_cabin_end_month, beach_cabin_end_day")
+        .eq("host_user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
     },
     enabled: !!user?.id && open,
   });
@@ -109,6 +130,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
       const rawNotes = booking.notes || "";
       const parts = rawNotes.split(" | ").filter((p: string) => !p.startsWith("Locataire:") && !p.startsWith("Acompte:"));
       setNotes(parts.join(" | "));
+      setBeachCabin(booking.beach_cabin || false);
     }
   }, [booking, open, tenants]);
 
@@ -147,6 +169,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
         total_price: totalNum,
         host_payout_gross: totalNum,
         host_payout_net: totalNum,
+        beach_cabin: beachCabin,
         pricing_breakdown: {
           rental_price: rentalNum,
           deposit: depositNum,
@@ -285,6 +308,25 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
               <Label>Solde restant (€)</Label>
               <Input type="number" value={remaining.toFixed(2)} readOnly className="bg-muted" />
             </div>
+          </div>
+
+          {/* Beach Cabin */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="edit-beach-cabin"
+              checked={beachCabin}
+              onCheckedChange={(checked) => setBeachCabin(checked === true)}
+            />
+            <Label htmlFor="edit-beach-cabin" className="text-sm font-normal cursor-pointer">
+              Cabine de plage incluse
+            </Label>
+            {checkinDate && checkoutDate && portalSettings && isBeachCabinPeriod(
+              checkinDate, checkoutDate,
+              portalSettings.beach_cabin_start_month, portalSettings.beach_cabin_start_day,
+              portalSettings.beach_cabin_end_month, portalSettings.beach_cabin_end_day
+            ) && (
+              <Badge variant="secondary" className="text-xs">Période cabine</Badge>
+            )}
           </div>
 
           <div>
