@@ -40,6 +40,7 @@ interface BookingToEdit {
   notes: string | null;
   status: string;
   pricing_breakdown: any;
+  beach_cabin?: boolean;
 }
 
 interface Props {
