@@ -84,7 +84,7 @@ export default function EmbedAllAvailability() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!hostListingIds && hostListingIds.length > 0,
+    enabled: hostListingIds.length > 0,
   });
 
   // Fetch blocked dates
