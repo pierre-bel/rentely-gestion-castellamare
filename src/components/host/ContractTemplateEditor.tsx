@@ -21,18 +21,63 @@ import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import ContractToolbar from "./ContractToolbar";
 
-const DYNAMIC_VARIABLES = [
-  { key: "{{guest_name}}", label: "Nom du locataire" },
-  { key: "{{guest_email}}", label: "E-mail locataire" },
-  { key: "{{guest_phone}}", label: "Tél. locataire" },
-  { key: "{{checkin_date}}", label: "Date d'arrivée" },
-  { key: "{{checkout_date}}", label: "Date de départ" },
-  { key: "{{nights}}", label: "Nombre de nuits" },
-  { key: "{{total_price}}", label: "Prix total" },
-  { key: "{{listing_title}}", label: "Nom du bien" },
-  { key: "{{listing_address}}", label: "Adresse" },
-  { key: "{{booking_id}}", label: "ID réservation" },
-  { key: "{{beach_cabin}}", label: "Cabine de plage (ligne masquée si non)" },
+const DYNAMIC_VARIABLES_GROUPS = [
+  {
+    title: "Locataire",
+    vars: [
+      { key: "{{guest_name}}", label: "Nom complet" },
+      { key: "{{guest_first_name}}", label: "Prénom" },
+      { key: "{{guest_last_name}}", label: "Nom" },
+      { key: "{{guest_email}}", label: "E-mail" },
+      { key: "{{guest_phone}}", label: "Téléphone" },
+    ],
+  },
+  {
+    title: "Réservation",
+    vars: [
+      { key: "{{booking_id}}", label: "ID réservation" },
+      { key: "{{checkin_date}}", label: "Date d'arrivée" },
+      { key: "{{checkout_date}}", label: "Date de départ" },
+      { key: "{{nights}}", label: "Nombre de nuits" },
+      { key: "{{guests}}", label: "Nombre de voyageurs" },
+      { key: "{{beach_cabin}}", label: "Cabine de plage (masqué si non)" },
+    ],
+  },
+  {
+    title: "Logement",
+    vars: [
+      { key: "{{listing_title}}", label: "Nom du bien" },
+      { key: "{{listing_address}}", label: "Adresse" },
+      { key: "{{listing_city}}", label: "Ville" },
+      { key: "{{listing_country}}", label: "Pays" },
+      { key: "{{listing_type}}", label: "Type de bien" },
+    ],
+  },
+  {
+    title: "Tarifs & Paiements",
+    vars: [
+      { key: "{{total_price}}", label: "Prix total TTC" },
+      { key: "{{subtotal}}", label: "Sous-total (hors frais)" },
+      { key: "{{cleaning_fee}}", label: "Frais de ménage" },
+      { key: "{{service_fee}}", label: "Frais de service" },
+      { key: "{{taxes}}", label: "Taxes" },
+      { key: "{{security_deposit}}", label: "Dépôt de garantie" },
+      { key: "{{deposit_amount}}", label: "Montant de l'acompte" },
+      { key: "{{deposit_due_date}}", label: "Échéance de l'acompte" },
+      { key: "{{deposit_status}}", label: "Statut de l'acompte" },
+      { key: "{{balance_amount}}", label: "Montant du solde" },
+      { key: "{{balance_due_date}}", label: "Échéance du solde" },
+      { key: "{{balance_status}}", label: "Statut du solde" },
+      { key: "{{payment_schedule}}", label: "Échéancier complet (tableau)" },
+    ],
+  },
+  {
+    title: "Dates",
+    vars: [
+      { key: "{{today_date}}", label: "Date du jour" },
+      { key: "{{booking_created_date}}", label: "Date de réservation" },
+    ],
+  },
 ];
 
 interface ContractTemplateEditorProps {
