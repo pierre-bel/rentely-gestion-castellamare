@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { User, Phone, Mail } from "lucide-react";
+import { Phone, Mail } from "lucide-react";
 import {
   format,
   startOfMonth,
@@ -234,10 +234,6 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
                               <span>{booking.guest_phone}</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-1.5 text-xs">
-                            <User className="h-3 w-3 text-muted-foreground" />
-                            <span>{booking.guests} voyageur{booking.guests > 1 ? "s" : ""}</span>
-                          </div>
                           <p className="text-xs text-muted-foreground">
                             {format(parseISO(booking.checkin_date), "d MMM", { locale: fr })} → {format(parseISO(booking.checkout_date), "d MMM", { locale: fr })}
                           </p>
@@ -335,9 +331,6 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
                           </span>
                         )}
                       </div>
-                    </div>
-                    <div className="text-right text-xs text-muted-foreground">
-                      {booking.guests} pers.
                     </div>
                   </div>
                 ))}

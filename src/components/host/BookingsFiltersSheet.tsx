@@ -119,7 +119,7 @@ export const BookingsFiltersSheet = ({
       <SheetTrigger asChild>
         <Button variant="outline" className="relative">
           <Filter className="h-4 w-4 mr-2" />
-          Filter
+          Filtres
           {activeFiltersCount > 0 && (
             <Badge className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center" variant="default">
               {activeFiltersCount}
@@ -129,48 +129,48 @@ export const BookingsFiltersSheet = ({
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Filter Bookings</SheetTitle>
+          <SheetTitle>Filtrer les réservations</SheetTitle>
           <SheetDescription>
-            Apply filters to find specific bookings
+            Appliquez des filtres pour trouver des réservations spécifiques
           </SheetDescription>
         </SheetHeader>
 
         <div className="space-y-6 py-6">
           {/* Status Filter */}
           <div className="space-y-3">
-            <Label className="text-base font-semibold">Status</Label>
+            <Label className="text-base font-semibold">Statut</Label>
             <RadioGroup value={pendingStatusFilter} onValueChange={setPendingStatusFilter}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="all" id="all" />
-                <Label htmlFor="all" className="font-normal cursor-pointer">All Statuses</Label>
+                <Label htmlFor="all" className="font-normal cursor-pointer">Tous les statuts</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="confirmed" id="confirmed" />
-                <Label htmlFor="confirmed" className="font-normal cursor-pointer">Confirmed</Label>
+                <Label htmlFor="confirmed" className="font-normal cursor-pointer">Confirmée</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="pending_payment" id="pending_payment" />
-                <Label htmlFor="pending_payment" className="font-normal cursor-pointer">Pending Payment</Label>
+                <Label htmlFor="pending_payment" className="font-normal cursor-pointer">En attente de paiement</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="cancelled" id="cancelled" />
-                <Label htmlFor="cancelled" className="font-normal cursor-pointer">Cancelled</Label>
+                <Label htmlFor="cancelled" className="font-normal cursor-pointer">Annulée</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="completed" id="completed" />
-                <Label htmlFor="completed" className="font-normal cursor-pointer">Completed</Label>
+                <Label htmlFor="completed" className="font-normal cursor-pointer">Terminée</Label>
               </div>
             </RadioGroup>
           </div>
 
           {/* Price Range Filter */}
           <div className="space-y-3">
-            <Label className="text-base font-semibold">Amount Range</Label>
+            <Label className="text-base font-semibold">Fourchette de montant</Label>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="minPrice" className="text-sm font-normal mb-2 block">Min Price</Label>
+                <Label htmlFor="minPrice" className="text-sm font-normal mb-2 block">Montant min</Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
                   <Input
                     id="minPrice"
                     type="number"
@@ -183,14 +183,14 @@ export const BookingsFiltersSheet = ({
                 </div>
               </div>
               <div>
-                <Label htmlFor="maxPrice" className="text-sm font-normal mb-2 block">Max Price</Label>
+                <Label htmlFor="maxPrice" className="text-sm font-normal mb-2 block">Montant max</Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
                   <Input
                     id="maxPrice"
                     type="number"
                     min="0"
-                    placeholder="Any"
+                    placeholder="Illimité"
                     value={pendingMaxPrice}
                     onChange={(e) => setPendingMaxPrice(e.target.value)}
                     className="pl-7"
@@ -202,10 +202,10 @@ export const BookingsFiltersSheet = ({
 
           {/* Check-in Date Range */}
           <div className="space-y-3">
-            <Label className="text-base font-semibold">Check-in Date Range</Label>
+            <Label className="text-base font-semibold">Période d'arrivée</Label>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-sm font-normal mb-2 block">From Date</Label>
+                <Label className="text-sm font-normal mb-2 block">Du</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -216,7 +216,7 @@ export const BookingsFiltersSheet = ({
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {pendingCheckinStart ? format(pendingCheckinStart, "MMM dd, yyyy") : "Select"}
+                      {pendingCheckinStart ? format(pendingCheckinStart, "dd/MM/yyyy") : "Choisir"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -231,7 +231,7 @@ export const BookingsFiltersSheet = ({
                 </Popover>
               </div>
               <div>
-                <Label className="text-sm font-normal mb-2 block">To Date</Label>
+                <Label className="text-sm font-normal mb-2 block">Au</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -242,7 +242,7 @@ export const BookingsFiltersSheet = ({
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {pendingCheckinEnd ? format(pendingCheckinEnd, "MMM dd, yyyy") : "Select"}
+                      {pendingCheckinEnd ? format(pendingCheckinEnd, "dd/MM/yyyy") : "Choisir"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -261,10 +261,10 @@ export const BookingsFiltersSheet = ({
 
           {/* Check-out Date Range */}
           <div className="space-y-3">
-            <Label className="text-base font-semibold">Check-out Date Range</Label>
+            <Label className="text-base font-semibold">Période de départ</Label>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-sm font-normal mb-2 block">From Date</Label>
+                <Label className="text-sm font-normal mb-2 block">Du</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -275,7 +275,7 @@ export const BookingsFiltersSheet = ({
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {pendingCheckoutStart ? format(pendingCheckoutStart, "MMM dd, yyyy") : "Select"}
+                      {pendingCheckoutStart ? format(pendingCheckoutStart, "dd/MM/yyyy") : "Choisir"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -290,7 +290,7 @@ export const BookingsFiltersSheet = ({
                 </Popover>
               </div>
               <div>
-                <Label className="text-sm font-normal mb-2 block">To Date</Label>
+                <Label className="text-sm font-normal mb-2 block">Au</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -301,7 +301,7 @@ export const BookingsFiltersSheet = ({
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {pendingCheckoutEnd ? format(pendingCheckoutEnd, "MMM dd, yyyy") : "Select"}
+                      {pendingCheckoutEnd ? format(pendingCheckoutEnd, "dd/MM/yyyy") : "Choisir"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -321,10 +321,10 @@ export const BookingsFiltersSheet = ({
 
         <SheetFooter className="flex gap-2">
           <Button variant="outline" onClick={handleClear} className="flex-1">
-            Clear Filters
+            Réinitialiser
           </Button>
           <Button onClick={handleApply} className="flex-1">
-            Apply
+            Appliquer
           </Button>
         </SheetFooter>
       </SheetContent>
