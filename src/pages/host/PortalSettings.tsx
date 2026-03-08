@@ -312,7 +312,7 @@ export default function PortalSettings() {
     // Fetch bookings with access_token
     const { data } = await supabase
       .from("bookings")
-      .select("id, access_token, checkin_date, checkout_date, pricing_breakdown, listings(title), profiles:guest_user_id(first_name, last_name)")
+      .select("id, access_token, checkin_date, checkout_date, pricing_breakdown, listings!inner(title, host_user_id), profiles:guest_user_id(first_name, last_name)")
       .eq("listings.host_user_id", user.id)
       .limit(20)
       .order("checkin_date", { ascending: false });
