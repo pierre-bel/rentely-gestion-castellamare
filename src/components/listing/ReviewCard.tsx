@@ -9,6 +9,8 @@ interface ReviewCardProps {
     rating: number;
     text: string | null;
     created_at: string;
+    host_response?: string | null;
+    host_response_at?: string | null;
     profiles: {
       first_name: string | null;
       last_name: string | null;
