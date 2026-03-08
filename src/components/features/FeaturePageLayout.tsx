@@ -19,6 +19,8 @@ interface FeaturePageLayoutProps {
   subtitle: string;
   features: FeatureDetail[];
   highlights: string[];
+  heroImage?: string;
+  heroImageAlt?: string;
   nextPage?: { label: string; href: string };
   children?: ReactNode;
 }
