@@ -6,13 +6,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Save, Download, Upload, Trash2, Plus, FileSpreadsheet } from "lucide-react";
-import { format, startOfWeek, addWeeks, parseISO, getISOWeek, getYear } from "date-fns";
+import { format, startOfWeek, addWeeks, parseISO, getISOWeek } from "date-fns";
 import { fr } from "date-fns/locale";
 import * as XLSX from "xlsx";
 
@@ -21,8 +21,8 @@ interface WeeklyPricing {
   listing_id: string;
   host_user_id: string;
   week_start_date: string;
-  nightly_rate: number;
-  weekend_nightly_rate: number;
+  weekly_rate: number;
+  weekend_rate: number;
   extra_night_weekend_rate: number;
 }
 
@@ -36,7 +36,7 @@ export function HostPricing() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedListingId, setSelectedListingId] = useState("");
+  const [selectedListingIds, setSelectedListingIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [weeksToGenerate, setWeeksToGenerate] = useState(12);
   const [editedRows, setEditedRows] = useState<Record<string, Partial<WeeklyPricing>>>({});
@@ -57,20 +57,39 @@ export function HostPricing() {
     enabled: !!user?.id,
   });
 
-  // Fetch weekly pricing for selected listing
+  const allSelected = listings.length > 0 && selectedListingIds.length === listings.length;
+  const primaryListingId = selectedListingIds[0] || "";
+
+  const toggleListing = (id: string) => {
+    setSelectedListingIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+    setEditedRows({});
+  };
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedListingIds([]);
+    } else {
+      setSelectedListingIds(listings.map((l) => l.id));
+    }
+    setEditedRows({});
+  };
+
+  // Fetch weekly pricing for the first selected listing (reference grid)
   const { data: pricingData = [], isLoading } = useQuery({
-    queryKey: ["listing-weekly-pricing", selectedListingId],
+    queryKey: ["listing-weekly-pricing", primaryListingId],
     queryFn: async () => {
-      if (!selectedListingId) return [];
+      if (!primaryListingId) return [];
       const { data, error } = await supabase
         .from("listing_weekly_pricing")
         .select("*")
-        .eq("listing_id", selectedListingId)
+        .eq("listing_id", primaryListingId)
         .order("week_start_date");
       if (error) throw error;
       return data as WeeklyPricing[];
     },
-    enabled: !!selectedListingId,
+    enabled: !!primaryListingId,
   });
 
   // Merged data: existing + edited
@@ -88,27 +107,34 @@ export function HostPricing() {
     }));
   };
 
-  // Generate weeks from today
+  // Generate weeks for all selected listings
   const handleGenerateWeeks = async () => {
-    if (!user?.id || !selectedListingId) return;
-    const listing = listings.find((l) => l.id === selectedListingId);
-    const basePrice = listing?.base_price || 0;
+    if (!user?.id || selectedListingIds.length === 0) return;
 
     const today = new Date();
     const firstSaturday = startOfWeek(today, { weekStartsOn: 6 });
     const existingDates = new Set(pricingData.map((p) => p.week_start_date));
 
     const newRows: WeeklyPricing[] = [];
-    for (let i = 0; i < weeksToGenerate; i++) {
-      const weekStart = addWeeks(firstSaturday, i);
-      const dateStr = format(weekStart, "yyyy-MM-dd");
-      if (!existingDates.has(dateStr)) {
+    for (const listingId of selectedListingIds) {
+      const listing = listings.find((l) => l.id === listingId);
+      const basePrice = listing?.base_price || 0;
+      // Default weekly = basePrice * 7, weekend = basePrice * 2
+      const defaultWeekly = basePrice * 7;
+      const defaultWeekend = basePrice * 2;
+
+      for (let i = 0; i < weeksToGenerate; i++) {
+        const weekStart = addWeeks(firstSaturday, i);
+        const dateStr = format(weekStart, "yyyy-MM-dd");
+        // For the primary listing, skip existing dates
+        if (listingId === primaryListingId && existingDates.has(dateStr)) continue;
+
         newRows.push({
-          listing_id: selectedListingId,
+          listing_id: listingId,
           host_user_id: user.id,
           week_start_date: dateStr,
-          nightly_rate: basePrice,
-          weekend_nightly_rate: basePrice,
+          weekly_rate: defaultWeekly,
+          weekend_rate: defaultWeekend,
           extra_night_weekend_rate: basePrice,
         });
       }
@@ -119,34 +145,61 @@ export function HostPricing() {
       return;
     }
 
-    const { error } = await supabase.from("listing_weekly_pricing").insert(newRows);
+    const { error } = await supabase
+      .from("listing_weekly_pricing")
+      .upsert(newRows, { onConflict: "listing_id,week_start_date" });
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Semaines ajoutées", description: `${newRows.length} semaine(s) générée(s).` });
-      queryClient.invalidateQueries({ queryKey: ["listing-weekly-pricing", selectedListingId] });
+      toast({ title: "Semaines ajoutées", description: `${newRows.length} semaine(s) générée(s) pour ${selectedListingIds.length} bien(s).` });
+      for (const id of selectedListingIds) {
+        queryClient.invalidateQueries({ queryKey: ["listing-weekly-pricing", id] });
+      }
     }
   };
 
-  // Save edited rows
+  // Save edited rows to ALL selected listings
   const handleSave = async () => {
     if (!user?.id || Object.keys(editedRows).length === 0) return;
     setSaving(true);
 
     try {
-      for (const [weekStart, changes] of Object.entries(editedRows)) {
-        const existing = pricingData.find((p) => p.week_start_date === weekStart);
-        if (existing?.id) {
-          const { error } = await supabase
-            .from("listing_weekly_pricing")
-            .update({ ...changes, updated_at: new Date().toISOString() })
-            .eq("id", existing.id);
-          if (error) throw error;
+      for (const listingId of selectedListingIds) {
+        for (const [weekStart, changes] of Object.entries(editedRows)) {
+          // Upsert for each listing
+          const upsertData = {
+            listing_id: listingId,
+            host_user_id: user.id,
+            week_start_date: weekStart,
+            ...changes,
+            updated_at: new Date().toISOString(),
+          };
+
+          if (listingId === primaryListingId) {
+            const existing = pricingData.find((p) => p.week_start_date === weekStart);
+            if (existing?.id) {
+              const { error } = await supabase
+                .from("listing_weekly_pricing")
+                .update({ ...changes, updated_at: new Date().toISOString() })
+                .eq("id", existing.id);
+              if (error) throw error;
+            }
+          } else {
+            // For other listings, update by listing_id + week_start_date
+            const { error } = await supabase
+              .from("listing_weekly_pricing")
+              .update({ ...changes, updated_at: new Date().toISOString() })
+              .eq("listing_id", listingId)
+              .eq("week_start_date", weekStart);
+            if (error) throw error;
+          }
         }
       }
-      toast({ title: "Tarifs sauvegardés" });
+      toast({ title: "Tarifs sauvegardés", description: selectedListingIds.length > 1 ? `Appliqué à ${selectedListingIds.length} bien(s).` : undefined });
       setEditedRows({});
-      queryClient.invalidateQueries({ queryKey: ["listing-weekly-pricing", selectedListingId] });
+      for (const id of selectedListingIds) {
+        queryClient.invalidateQueries({ queryKey: ["listing-weekly-pricing", id] });
+      }
     } catch (error: any) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } finally {
@@ -154,19 +207,28 @@ export function HostPricing() {
     }
   };
 
-  // Delete a row
-  const handleDeleteRow = async (id: string) => {
-    const { error } = await supabase.from("listing_weekly_pricing").delete().eq("id", id);
-    if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    } else {
-      queryClient.invalidateQueries({ queryKey: ["listing-weekly-pricing", selectedListingId] });
+  // Delete a row for all selected listings
+  const handleDeleteRow = async (weekStartDate: string) => {
+    for (const listingId of selectedListingIds) {
+      const { error } = await supabase
+        .from("listing_weekly_pricing")
+        .delete()
+        .eq("listing_id", listingId)
+        .eq("week_start_date", weekStartDate);
+      if (error) {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+        return;
+      }
+    }
+    for (const id of selectedListingIds) {
+      queryClient.invalidateQueries({ queryKey: ["listing-weekly-pricing", id] });
     }
   };
 
   // Download Excel template
   const handleDownloadTemplate = () => {
-    const listing = listings.find((l) => l.id === selectedListingId);
+    const listing = listings.find((l) => l.id === primaryListingId);
+    const basePrice = listing?.base_price || 0;
     const templateData = [];
     const firstSaturday = startOfWeek(new Date(), { weekStartsOn: 6 });
 
@@ -174,14 +236,14 @@ export function HostPricing() {
       const weekStart = addWeeks(firstSaturday, i);
       templateData.push({
         "Semaine du (samedi)": format(weekStart, "dd/MM/yyyy"),
-        "Tarif nuit (semaine) €": listing?.base_price || 0,
-        "Tarif nuit (week-end) €": listing?.base_price || 0,
-        "Nuit supp. week-end €": listing?.base_price || 0,
+        "Tarif semaine (€)": basePrice * 7,
+        "Tarif week-end (€)": basePrice * 2,
+        "Nuit supp. WE (€)": basePrice,
       });
     }
 
     const ws = XLSX.utils.json_to_sheet(templateData);
-    ws["!cols"] = [{ wch: 22 }, { wch: 24 }, { wch: 24 }, { wch: 24 }];
+    ws["!cols"] = [{ wch: 22 }, { wch: 20 }, { wch: 20 }, { wch: 20 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Tarifs");
     XLSX.writeFile(wb, `tarifs_${listing?.title || "bien"}.xlsx`);
@@ -191,7 +253,7 @@ export function HostPricing() {
   const handleImportExcel = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (!file || !user?.id || !selectedListingId) return;
+      if (!file || !user?.id || selectedListingIds.length === 0) return;
 
       const reader = new FileReader();
       reader.onload = async (evt) => {
@@ -207,7 +269,6 @@ export function HostPricing() {
             const dateRaw = row["Semaine du (samedi)"] || row["Semaine du (lundi)"];
             if (!dateRaw) continue;
 
-            // Parse dd/MM/yyyy or Excel serial
             let weekStart: Date;
             if (typeof dateRaw === "number") {
               weekStart = new Date(Math.round((dateRaw - 25569) * 86400 * 1000));
@@ -220,21 +281,22 @@ export function HostPricing() {
               }
             }
 
-            // Align to Saturday
             weekStart = startOfWeek(weekStart, { weekStartsOn: 6 });
 
-            const nightly = parseFloat(row["Tarif nuit (semaine) €"]) || 0;
-            const weekend = parseFloat(row["Tarif nuit (week-end) €"]) || 0;
-            const extra = parseFloat(row["Nuit supp. week-end €"]) || 0;
+            const weekly = parseFloat(row["Tarif semaine (€)"] || row["Tarif semaine (€)"] || row["Tarif nuit (semaine) €"]) || 0;
+            const weekend = parseFloat(row["Tarif week-end (€)"] || row["Tarif week-end (€)"] || row["Tarif nuit (week-end) €"]) || 0;
+            const extra = parseFloat(row["Nuit supp. WE (€)"] || row["Nuit supp. week-end €"]) || 0;
 
-            pricingRows.push({
-              listing_id: selectedListingId,
-              host_user_id: user.id,
-              week_start_date: format(weekStart, "yyyy-MM-dd"),
-              nightly_rate: nightly,
-              weekend_nightly_rate: weekend,
-              extra_night_weekend_rate: extra,
-            });
+            for (const listingId of selectedListingIds) {
+              pricingRows.push({
+                listing_id: listingId,
+                host_user_id: user.id,
+                week_start_date: format(weekStart, "yyyy-MM-dd"),
+                weekly_rate: weekly,
+                weekend_rate: weekend,
+                extra_night_weekend_rate: extra,
+              });
+            }
           }
 
           if (pricingRows.length === 0) {
@@ -242,15 +304,16 @@ export function HostPricing() {
             return;
           }
 
-          // Upsert
           const { error } = await supabase
             .from("listing_weekly_pricing")
             .upsert(pricingRows, { onConflict: "listing_id,week_start_date" });
 
           if (error) throw error;
 
-          toast({ title: "Import réussi", description: `${pricingRows.length} semaine(s) importée(s).` });
-          queryClient.invalidateQueries({ queryKey: ["listing-weekly-pricing", selectedListingId] });
+          toast({ title: "Import réussi", description: `${pricingRows.length} semaine(s) importée(s) pour ${selectedListingIds.length} bien(s).` });
+          for (const id of selectedListingIds) {
+            queryClient.invalidateQueries({ queryKey: ["listing-weekly-pricing", id] });
+          }
         } catch (err: any) {
           toast({ title: "Erreur d'import", description: err.message, variant: "destructive" });
         }
@@ -258,34 +321,58 @@ export function HostPricing() {
       reader.readAsBinaryString(file);
       e.target.value = "";
     },
-    [user?.id, selectedListingId, queryClient, toast]
+    [user?.id, selectedListingIds, queryClient, toast]
   );
 
   const hasEdits = Object.keys(editedRows).length > 0;
+  const hasSelection = selectedListingIds.length > 0;
 
   return (
     <div className="space-y-6">
       {/* Listing selector */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Tarifs hebdomadaires</CardTitle>
+          <CardTitle className="text-lg">Grille tarifaire</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label>Bien</Label>
-            <Select value={selectedListingId} onValueChange={(v) => { setSelectedListingId(v); setEditedRows({}); }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choisir un bien..." />
-              </SelectTrigger>
-              <SelectContent>
+            <Label className="mb-3 block">Appliquer à</Label>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="select-all"
+                  checked={allSelected}
+                  onCheckedChange={toggleAll}
+                />
+                <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
+                  Tous les biens ({listings.length})
+                </label>
+              </div>
+              <Separator />
+              <div className="grid gap-2">
                 {listings.map((l) => (
-                  <SelectItem key={l.id} value={l.id}>{l.title}</SelectItem>
+                  <div key={l.id} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`listing-${l.id}`}
+                      checked={selectedListingIds.includes(l.id)}
+                      onCheckedChange={() => toggleListing(l.id)}
+                    />
+                    <label htmlFor={`listing-${l.id}`} className="text-sm cursor-pointer">
+                      {l.title}
+                    </label>
+                  </div>
                 ))}
-              </SelectContent>
-            </Select>
+              </div>
+            </div>
+            {selectedListingIds.length > 1 && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Les modifications seront appliquées aux {selectedListingIds.length} biens sélectionnés.
+                La grille affichée est celle de « {listings.find((l) => l.id === primaryListingId)?.title} ».
+              </p>
+            )}
           </div>
 
-          {selectedListingId && (
+          {hasSelection && (
             <>
               <Separator />
               <div className="flex flex-wrap gap-2">
@@ -320,7 +407,7 @@ export function HostPricing() {
                 {hasEdits && (
                   <Button onClick={handleSave} disabled={saving}>
                     <Save className="h-4 w-4 mr-2" />
-                    {saving ? "Sauvegarde..." : "Sauvegarder"}
+                    {saving ? "Sauvegarde..." : `Sauvegarder${selectedListingIds.length > 1 ? ` (${selectedListingIds.length} biens)` : ""}`}
                   </Button>
                 )}
               </div>
@@ -330,7 +417,7 @@ export function HostPricing() {
       </Card>
 
       {/* Pricing table */}
-      {selectedListingId && (
+      {hasSelection && (
         <Card>
           <CardContent className="p-0">
             {isLoading ? (
@@ -338,16 +425,16 @@ export function HostPricing() {
             ) : displayData.length === 0 ? (
               <div className="p-6 text-center text-muted-foreground">
                 <FileSpreadsheet className="h-10 w-10 mx-auto mb-2 text-muted-foreground/50" />
-                <p>Aucun tarif configuré pour ce bien.</p>
-                <p className="text-xs mt-1">Utilisez "Générer semaines" ou importez un fichier Excel.</p>
+                <p>Aucun tarif configuré.</p>
+                <p className="text-xs mt-1">Utilisez « Générer semaines » ou importez un fichier Excel.</p>
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Semaine</TableHead>
-                    <TableHead className="text-right">Nuit semaine (€)</TableHead>
-                    <TableHead className="text-right">Nuit week-end (€)</TableHead>
+                    <TableHead className="text-right">Semaine (€)</TableHead>
+                    <TableHead className="text-right">Week-end (€)</TableHead>
                     <TableHead className="text-right">Nuit supp. WE (€)</TableHead>
                     <TableHead className="w-12"></TableHead>
                   </TableRow>
@@ -372,9 +459,9 @@ export function HostPricing() {
                           <Input
                             type="number"
                             min={0}
-                            step={0.01}
-                            value={row.nightly_rate}
-                            onChange={(e) => updateRow(row.week_start_date, "nightly_rate", parseFloat(e.target.value) || 0)}
+                            step={1}
+                            value={row.weekly_rate}
+                            onChange={(e) => updateRow(row.week_start_date, "weekly_rate", parseFloat(e.target.value) || 0)}
                             className="w-24 ml-auto text-right"
                           />
                         </TableCell>
@@ -382,9 +469,9 @@ export function HostPricing() {
                           <Input
                             type="number"
                             min={0}
-                            step={0.01}
-                            value={row.weekend_nightly_rate}
-                            onChange={(e) => updateRow(row.week_start_date, "weekend_nightly_rate", parseFloat(e.target.value) || 0)}
+                            step={1}
+                            value={row.weekend_rate}
+                            onChange={(e) => updateRow(row.week_start_date, "weekend_rate", parseFloat(e.target.value) || 0)}
                             className="w-24 ml-auto text-right"
                           />
                         </TableCell>
@@ -392,18 +479,16 @@ export function HostPricing() {
                           <Input
                             type="number"
                             min={0}
-                            step={0.01}
+                            step={1}
                             value={row.extra_night_weekend_rate}
                             onChange={(e) => updateRow(row.week_start_date, "extra_night_weekend_rate", parseFloat(e.target.value) || 0)}
                             className="w-24 ml-auto text-right"
                           />
                         </TableCell>
                         <TableCell>
-                          {row.id && (
-                            <Button variant="ghost" size="icon" onClick={() => handleDeleteRow(row.id!)}>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          )}
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteRow(row.week_start_date)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );

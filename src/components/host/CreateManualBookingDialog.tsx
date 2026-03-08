@@ -106,7 +106,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
       if (!selectedListingId) return [];
       const { data, error } = await supabase
         .from("listing_weekly_pricing")
-        .select("week_start_date, nightly_rate, weekend_nightly_rate, extra_night_weekend_rate")
+        .select("week_start_date, weekly_rate, weekend_rate, extra_night_weekend_rate")
         .eq("listing_id", selectedListingId)
         .order("week_start_date");
       if (error) throw error;
