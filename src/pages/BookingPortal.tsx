@@ -79,6 +79,7 @@ interface PortalSettings {
   show_map_link: boolean;
   custom_footer_text: string | null;
   section_order: string[];
+  require_full_payment_for_access_code: boolean;
 }
 
 interface CustomSectionData {
