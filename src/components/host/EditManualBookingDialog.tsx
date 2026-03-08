@@ -64,6 +64,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
   const [deposit, setDeposit] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedTenantId, setSelectedTenantId] = useState("");
+  const [beachCabin, setBeachCabin] = useState(false);
 
   // Fetch tenants
   const { data: tenants = [] } = useQuery({

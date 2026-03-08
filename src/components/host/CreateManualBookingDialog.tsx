@@ -269,6 +269,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     setNotes("");
     setIgloohomeCode("");
     setScheduleItems([]);
+    setBeachCabin(false);
   };
 
   const handleSave = async () => {
