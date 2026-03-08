@@ -68,10 +68,6 @@ const ListingCard = ({ listing }: ListingCardProps) => {
           {/* Specs */}
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#5D6174] mt-auto">
             <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              <span>Sleeps {listing.guests_max}</span>
-            </div>
-            <div className="flex items-center gap-1">
               <Bed className="h-4 w-4" />
               <span>{listing.beds} Beds</span>
             </div>

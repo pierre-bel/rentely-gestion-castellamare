@@ -65,10 +65,6 @@ export const DisputeOverviewTab = ({ dispute, booking }: DisputeOverviewTabProps
               <span className="text-muted-foreground">Nights:</span>{" "}
               <span className="font-medium">{booking.nights}</span>
             </div>
-            <div>
-              <span className="text-muted-foreground">Guests:</span>{" "}
-              <span className="font-medium">{booking.guests}</span>
-            </div>
           </div>
         </div>
       </div>

@@ -86,10 +86,6 @@ const StepReview = ({ formData }: StepReviewProps) => {
           )}
           <div className="flex flex-wrap gap-4 pt-2">
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="text-base">{formData.guests_max} voyageurs</span>
-            </div>
-            <div className="flex items-center gap-2">
               <BedDouble className="h-4 w-4 text-muted-foreground" />
               <span className="text-base">{formData.bedrooms} chambre(s)</span>
             </div>

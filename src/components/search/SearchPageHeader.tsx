@@ -142,70 +142,7 @@ const SearchPageHeader = ({
                   </Popover>
                 </div>
                 
-                <div className="hidden sm:block h-6 w-px bg-border" />
-                
-                {/* Guests */}
-                <div className="hidden md:flex flex-1 items-center gap-2 px-2 h-[36px] min-w-0">
-                  <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className={cn(
-                          "flex-1 justify-start text-left font-normal h-auto p-0 hover:bg-transparent text-sm",
-                          (!localSearchQuery.guests || localSearchQuery.guests === "0") && "text-muted-foreground"
-                        )}
-                      >
-                        {localSearchQuery.guests && localSearchQuery.guests !== "0" ? `${localSearchQuery.guests} guest${Number(localSearchQuery.guests) !== 1 ? 's' : ''}` : "Guests"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80 p-6" align="end" sideOffset={12}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-base font-semibold">Guests</span>
-                        <div className="flex items-center gap-4">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8 rounded-full"
-                            onClick={() => {
-                              const current = Number(localSearchQuery.guests) || 0;
-                              if (current > 0) {
-                                setLocalSearchQuery({
-                                  ...localSearchQuery,
-                                  guests: String(current - 1)
-                                });
-                              }
-                            }}
-                            disabled={!localSearchQuery.guests || Number(localSearchQuery.guests) <= 0}
-                          >
-                            <span className="text-lg">−</span>
-                          </Button>
-                          <span className="text-2xl font-semibold w-12 text-center">
-                            {localSearchQuery.guests || "0"}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8 rounded-full"
-                            onClick={() => {
-                              const current = Number(localSearchQuery.guests) || 0;
-                              if (current < 16) {
-                                setLocalSearchQuery({
-                                  ...localSearchQuery,
-                                  guests: String(current + 1)
-                                });
-                              }
-                            }}
-                            disabled={localSearchQuery.guests && Number(localSearchQuery.guests) >= 16}
-                          >
-                            <span className="text-lg">+</span>
-                          </Button>
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                
+
                 {/* Search Button */}
                 <Button 
                   size="icon"

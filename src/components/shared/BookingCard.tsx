@@ -97,13 +97,6 @@ export const BookingCard = ({
                 </p>
               </div>
               <div>
-                <div className="flex items-center gap-1 text-muted-foreground mb-1">
-                  <Users className="h-3 w-3" />
-                  <span>Guests</span>
-                </div>
-                <p className="font-medium">{booking.guests}</p>
-              </div>
-              <div>
                 <p className="text-muted-foreground mb-1">Total</p>
                 <p className="font-semibold text-lg">${booking.total_price.toFixed(2)}</p>
               </div>

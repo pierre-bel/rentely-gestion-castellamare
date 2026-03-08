@@ -68,13 +68,6 @@ const StepPropertyType = ({ formData, updateFormData }: StepPropertyTypeProps) =
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormSelect
-          label="Voyageurs max"
-          value={String(formData.guests_max)}
-          onChange={(value) => updateFormData({ guests_max: parseInt(value) })}
-          options={GUEST_OPTIONS}
-          required
-        />
-        <FormSelect
           label="Chambres"
           value={String(formData.bedrooms)}
           onChange={(value) => updateFormData({ bedrooms: parseInt(value) })}

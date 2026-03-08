@@ -245,7 +245,6 @@ export default function PublicAvailability() {
                       <p className="text-sm text-muted-foreground">
                         {listing.city}
                         {listing.bedrooms ? ` • ${listing.bedrooms} ch.` : ""}
-                        {listing.guests_max ? ` • ${listing.guests_max} pers. max` : ""}
                       </p>
                       {listing.base_price && (
                         <p className="text-sm font-medium text-primary mt-0.5">

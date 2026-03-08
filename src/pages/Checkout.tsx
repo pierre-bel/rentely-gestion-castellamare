@@ -548,10 +548,6 @@ const Checkout = () => {
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Guests</span>
-                  <span>{guests} {guests === 1 ? "guest" : "guests"}</span>
-                </div>
-                <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Nights</span>
                   <span>{nights} {nights === 1 ? "night" : "nights"}</span>
                 </div>

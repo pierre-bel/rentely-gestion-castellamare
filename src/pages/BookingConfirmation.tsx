@@ -286,11 +286,6 @@ const BookingConfirmation = () => {
                       </p>
                     </div>
                   </div>
-                  
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Number of guests</p>
-                    <p className="font-medium">{booking.guests}</p>
-                  </div>
                 </div>
               </CardContent>
             </Card>
