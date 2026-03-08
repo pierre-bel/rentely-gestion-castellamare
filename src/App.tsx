@@ -57,6 +57,7 @@ import AdminSupport from "./pages/admin/Support";
 import ContentManagementPage from "./pages/admin/ContentManagement";
 import NotFound from "./pages/NotFound";
 import BookingPortal from "./pages/BookingPortal";
+import CleaningPortal from "./pages/CleaningPortal";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,7 @@ const App = () => (
             <Route path="/embed/availability/all/:hostId" element={<EmbedAllAvailability />} />
             <Route path="/embed/availability/:listingId" element={<EmbedAvailability />} />
             <Route path="/portal/:token" element={<BookingPortal />} />
+            <Route path="/cleaning-portal/:token" element={<CleaningPortal />} />
             <Route path="/host" element={<HostLayout />}>
               <Route path="dashboard" element={<HostDashboard />} />
               <Route path="listings" element={<ListingsManagement />} />

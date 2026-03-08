@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   Copy, SprayCan, Calendar, Moon, Phone, User, ChevronLeft, ChevronRight,
-  Plus, Trash2, Settings2, UserCheck,
+  Plus, Trash2, Settings2, UserCheck, Link2,
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, differenceInCalendarDays, isWithinInterval, isBefore, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -36,7 +36,7 @@ interface Booking {
 
 interface Listing { id: string; title: string; }
 interface Tenant { id: string; first_name: string; last_name: string | null; phone: string | null; }
-interface CleaningStaff { id: string; name: string; phone: string | null; }
+interface CleaningStaff { id: string; name: string; phone: string | null; access_token: string; }
 interface StaffAssignment { id: string; cleaning_staff_id: string; listing_id: string; }
 
 interface CleaningSlot {
@@ -111,7 +111,7 @@ export function HostCleaning() {
     queryKey: ["cleaning-staff", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase.from("cleaning_staff").select("id, name, phone").eq("host_user_id", user.id).order("name");
+      const { data, error } = await supabase.from("cleaning_staff").select("id, name, phone, access_token").eq("host_user_id", user.id).order("name");
       if (error) throw error;
       return data as CleaningStaff[];
     },
@@ -366,23 +366,36 @@ export function HostCleaning() {
         </div>
       </div>
 
-      {/* Staff copy buttons */}
+      {/* Staff copy & share buttons */}
       {cleaningStaff.length > 0 && (
         <div className="flex gap-2 flex-wrap">
           {cleaningStaff.map(staff => {
             const count = staffCounts.get(staff.id) || 0;
+            const portalUrl = `${window.location.origin}/cleaning-portal/${staff.access_token}`;
             return (
-              <Button
-                key={staff.id}
-                variant="secondary"
-                size="sm"
-                onClick={() => handleCopyForStaff(staff)}
-                className="gap-2"
-              >
-                <Copy className="h-3.5 w-3.5" />
-                {staff.name}
-                {count > 0 && <Badge variant="outline" className="ml-1 text-xs px-1.5">{count}</Badge>}
-              </Button>
+              <div key={staff.id} className="flex gap-1">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleCopyForStaff(staff)}
+                  className="gap-2"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  {staff.name}
+                  {count > 0 && <Badge variant="outline" className="ml-1 text-xs px-1.5">{count}</Badge>}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(portalUrl);
+                    toast({ title: "Lien copié !", description: `Lien du planning de ${staff.name} copié.` });
+                  }}
+                  title={`Copier le lien du planning de ${staff.name}`}
+                >
+                  <Link2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             );
           })}
         </div>
