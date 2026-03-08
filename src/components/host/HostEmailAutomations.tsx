@@ -189,6 +189,7 @@ export default function HostEmailAutomations() {
     setFormListingIds([]);
     setFormRecipientType("tenant");
     setFormRecipientEmail("");
+    setFormSendIfLate(false);
     setDialogOpen(true);
   };
 
