@@ -131,6 +131,22 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     enabled: !!user?.id && open,
   });
 
+  // Fetch beach cabin period settings
+  const { data: portalSettings } = useQuery({
+    queryKey: ["portal-settings-beach", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("portal_settings")
+        .select("beach_cabin_start_month, beach_cabin_start_day, beach_cabin_end_month, beach_cabin_end_day")
+        .eq("host_user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id && open,
+  });
+
   const nights = checkinDate && checkoutDate
     ? differenceInCalendarDays(checkoutDate, checkinDate)
     : 0;
