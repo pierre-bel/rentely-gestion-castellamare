@@ -2731,6 +2731,20 @@ export type Database = {
           text: string
         }[]
       }
+      get_host_statistics: {
+        Args: { _host_user_id: string; _year: number }
+        Returns: {
+          adr: number
+          available_nights: number
+          booked_nights: number
+          listing_id: string
+          listing_title: string
+          month: number
+          occupancy_rate: number
+          revenue: number
+          revpar: number
+        }[]
+      }
       get_or_create_support_thread: {
         Args: { p_user_id: string }
         Returns: string
