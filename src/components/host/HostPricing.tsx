@@ -204,7 +204,7 @@ export function HostPricing() {
           const pricingRows: WeeklyPricing[] = [];
 
           for (const row of rows) {
-            const dateRaw = row["Semaine du (lundi)"];
+            const dateRaw = row["Semaine du (samedi)"] || row["Semaine du (lundi)"];
             if (!dateRaw) continue;
 
             // Parse dd/MM/yyyy or Excel serial
