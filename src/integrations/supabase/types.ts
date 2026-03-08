@@ -1583,6 +1583,11 @@ export type Database = {
           id: string
           listing_id: string
           rating: number
+          rating_cleanliness: number | null
+          rating_communication: number | null
+          rating_location: number | null
+          rating_maintenance: number | null
+          rating_value: number | null
           status: Database["public"]["Enums"]["review_status"]
           text: string | null
           updated_at: string
@@ -1596,6 +1601,11 @@ export type Database = {
           id?: string
           listing_id: string
           rating: number
+          rating_cleanliness?: number | null
+          rating_communication?: number | null
+          rating_location?: number | null
+          rating_maintenance?: number | null
+          rating_value?: number | null
           status?: Database["public"]["Enums"]["review_status"]
           text?: string | null
           updated_at?: string
@@ -1609,6 +1619,11 @@ export type Database = {
           id?: string
           listing_id?: string
           rating?: number
+          rating_cleanliness?: number | null
+          rating_communication?: number | null
+          rating_location?: number | null
+          rating_maintenance?: number | null
+          rating_value?: number | null
           status?: Database["public"]["Enums"]["review_status"]
           text?: string | null
           updated_at?: string
