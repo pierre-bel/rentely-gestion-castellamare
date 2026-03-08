@@ -1,4 +1,4 @@
-import { useState, ReactNode } from "react";
+import { useState, ReactNode, ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Sparkles, LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
