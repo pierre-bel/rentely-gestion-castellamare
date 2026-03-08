@@ -207,7 +207,7 @@ const HostEarningsReport = () => {
             onClick={() => setFiltersOpen(true)}
           >
             <Filter className="h-4 w-4 mr-2" />
-            Filters
+            Filtres
             {activeFilterCount > 0 && (
               <Badge variant="destructive" className="ml-2 px-1.5 min-w-5 h-5">
                 {activeFilterCount}
