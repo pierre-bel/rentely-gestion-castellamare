@@ -12,6 +12,14 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { HostReviewResponseDialog } from "./HostReviewResponseDialog";
 
+const CRITERIA_LABELS: Record<string, string> = {
+  rating_cleanliness: "Propreté",
+  rating_location: "Emplacement",
+  rating_communication: "Communication",
+  rating_value: "Qualité/prix",
+  rating_maintenance: "État",
+};
+
 interface HostReview {
   id: string;
   rating: number;
@@ -27,6 +35,11 @@ interface HostReview {
   guest_first_name: string | null;
   guest_last_name: string | null;
   guest_avatar_url: string | null;
+  rating_cleanliness: number | null;
+  rating_location: number | null;
+  rating_communication: number | null;
+  rating_value: number | null;
+  rating_maintenance: number | null;
 }
 
 const HostReviews = () => {
