@@ -365,7 +365,7 @@ const ListingsManagement = () => {
               formData={{
                 availability_rules: selectedListing.availability_rules || [],
                 base_price: selectedListing.base_price,
-                currency: 'USD',
+                currency: 'EUR',
                 title: selectedListing.title
               }}
               updateFormData={(data) => {
