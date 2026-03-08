@@ -29,6 +29,7 @@ import EmbedAllAvailability from "./pages/EmbedAllAvailability";
 import HostPayouts from "./pages/host/Payouts";
 import EarningsReport from "./pages/host/EarningsReport";
 import HostStatistics from "./pages/host/Statistics";
+import HostContracts from "./pages/host/Contracts";
 import HostPricingPage from "./pages/host/Pricing";
 import HostCleaningPage from "./pages/host/Cleaning";
 import EmailAutomations from "./pages/host/EmailAutomations";
