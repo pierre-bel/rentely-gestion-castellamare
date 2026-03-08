@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isAfter, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   CalendarDays, Users, Home, Euro, MapPin, Clock,
@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { StatusBadge, type StatusValue } from "@/components/ui/status-badge";
 import { Badge } from "@/components/ui/badge";
+import PortalReviewForm from "@/components/portal/PortalReviewForm";
 
 const formatPrice = (price: number, currency = "EUR") =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(price);
@@ -118,6 +119,8 @@ export default function BookingPortal() {
   const [payments, setPayments] = useState<PaymentItem[]>([]);
   const [settings, setSettings] = useState<PortalSettings>(DEFAULT_SETTINGS);
   const [customSections, setCustomSections] = useState<CustomSectionData[]>([]);
+  const [existingReview, setExistingReview] = useState<any>(null);
+  const [reviewChecked, setReviewChecked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -171,6 +174,15 @@ export default function BookingPortal() {
         });
       }
       if (customRes.data) setCustomSections(customRes.data as CustomSectionData[]);
+
+      // Check for existing review
+      const { data: reviewData } = await supabase
+        .from("reviews")
+        .select("id, rating, text, rating_cleanliness, rating_location, rating_communication, rating_value, rating_maintenance")
+        .eq("booking_id", bookingId)
+        .maybeSingle();
+      if (reviewData) setExistingReview(reviewData);
+      setReviewChecked(true);
 
       setLoading(false);
     })();
@@ -542,6 +554,31 @@ export default function BookingPortal() {
     );
   };
 
+  // Review is available during + after stay (from checkin date)
+  const canReview = isAfter(startOfDay(new Date()), startOfDay(checkin));
+
+  const renderReview = () => {
+    if (!canReview || !reviewChecked) return null;
+    return (
+      <PortalReviewForm
+        key="review"
+        bookingId={data.booking_id}
+        listingId="" // will be fetched from booking
+        guestUserId={""} // anonymous portal, will be resolved server-side
+        existingReview={existingReview}
+        onReviewSubmitted={() => {
+          // Refresh review
+          supabase
+            .from("reviews")
+            .select("id, rating, text, rating_cleanliness, rating_location, rating_communication, rating_value, rating_maintenance")
+            .eq("booking_id", data.booking_id)
+            .maybeSingle()
+            .then(({ data: r }) => { if (r) setExistingReview(r); });
+        }}
+      />
+    );
+  };
+
   const sectionRenderers: Record<string, () => React.ReactNode> = {
     dates: renderDates,
     access_code: renderAccessCode,
@@ -551,9 +588,12 @@ export default function BookingPortal() {
     payment_schedule: renderPaymentSchedule,
     house_rules: renderHouseRules,
     contact: renderContact,
+    review: renderReview,
   };
 
   const sectionOrder = settings.section_order.length > 0 ? settings.section_order : DEFAULT_SETTINGS.section_order;
+  // Always add review at the end if not in section order
+  const finalSectionOrder = sectionOrder.includes("review") ? sectionOrder : [...sectionOrder, "review"];
 
   return (
     <div className="min-h-screen bg-background">
@@ -592,7 +632,7 @@ export default function BookingPortal() {
         </div>
 
         {/* Sections in configured order */}
-        {sectionOrder.map((key) => {
+        {finalSectionOrder.map((key) => {
           if (key.startsWith("custom_")) {
             return renderCustomSection(key);
           }

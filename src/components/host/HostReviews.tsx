@@ -12,6 +12,14 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { HostReviewResponseDialog } from "./HostReviewResponseDialog";
 
+const CRITERIA_LABELS: Record<string, string> = {
+  rating_cleanliness: "Propreté",
+  rating_location: "Emplacement",
+  rating_communication: "Communication",
+  rating_value: "Qualité/prix",
+  rating_maintenance: "État",
+};
+
 interface HostReview {
   id: string;
   rating: number;
@@ -27,6 +35,11 @@ interface HostReview {
   guest_first_name: string | null;
   guest_last_name: string | null;
   guest_avatar_url: string | null;
+  rating_cleanliness: number | null;
+  rating_location: number | null;
+  rating_communication: number | null;
+  rating_value: number | null;
+  rating_maintenance: number | null;
 }
 
 const HostReviews = () => {
@@ -223,6 +236,23 @@ const HostReviews = () => {
 
                   {review.text && (
                     <p className="text-foreground leading-relaxed">{review.text}</p>
+                  )}
+
+                  {/* Criteria breakdown */}
+                  {review.rating_cleanliness != null && (
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      {(Object.keys(CRITERIA_LABELS) as (keyof typeof CRITERIA_LABELS)[]).map((key) => {
+                        const val = review[key as keyof HostReview] as number | null;
+                        if (val == null) return null;
+                        return (
+                          <div key={key} className="flex items-center gap-1.5 text-xs bg-muted/50 rounded-md px-2 py-1.5">
+                            <Star className="h-3 w-3 fill-primary text-primary flex-shrink-0" />
+                            <span className="font-medium">{val}</span>
+                            <span className="text-muted-foreground truncate">{CRITERIA_LABELS[key]}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
 
                   {/* Host response */}
