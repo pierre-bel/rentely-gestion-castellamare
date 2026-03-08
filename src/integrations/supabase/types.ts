@@ -947,10 +947,10 @@ export type Database = {
           host_user_id: string
           id: string
           listing_id: string
-          nightly_rate: number
           updated_at: string
           week_start_date: string
-          weekend_nightly_rate: number
+          weekend_rate: number
+          weekly_rate: number
         }
         Insert: {
           created_at?: string
@@ -958,10 +958,10 @@ export type Database = {
           host_user_id: string
           id?: string
           listing_id: string
-          nightly_rate?: number
           updated_at?: string
           week_start_date: string
-          weekend_nightly_rate?: number
+          weekend_rate?: number
+          weekly_rate?: number
         }
         Update: {
           created_at?: string
@@ -969,10 +969,10 @@ export type Database = {
           host_user_id?: string
           id?: string
           listing_id?: string
-          nightly_rate?: number
           updated_at?: string
           week_start_date?: string
-          weekend_nightly_rate?: number
+          weekend_rate?: number
+          weekly_rate?: number
         }
         Relationships: [
           {
