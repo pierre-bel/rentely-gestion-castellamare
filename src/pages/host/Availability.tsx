@@ -5,7 +5,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, ChevronRight, LayoutGrid, GanttChart } from "lucide-react";
+import { ChevronLeft, ChevronRight, LayoutGrid, GanttChart, Share2, Code2, Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useToast } from "@/hooks/use-toast";
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import AvailabilityCalendar from "@/components/host/AvailabilityCalendar";
@@ -14,6 +16,68 @@ import { BookingDetailDialog, type BookingDetailData } from "@/components/host/B
 import { EditManualBookingDialog } from "@/components/host/EditManualBookingDialog";
 
 type ViewMode = "grid" | "timeline";
+
+function ShareEmbedButton({ userId }: { userId?: string }) {
+  const { toast } = useToast();
+  const [copied, setCopied] = useState<string | null>(null);
+
+  if (!userId) return null;
+
+  const embedUrl = `${window.location.origin}/embed/availability/all/${userId}`;
+  const iframeCode = `<iframe src="${embedUrl}" width="100%" height="800" frameborder="0" style="border:0; border-radius:12px;"></iframe>`;
+
+  const copy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(key);
+    toast({ title: "Copié !" });
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
+          <Share2 className="h-3.5 w-3.5" />
+          Partager
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80" align="end">
+        <div className="space-y-3">
+          <div>
+            <p className="text-sm font-medium mb-1">Lien public</p>
+            <p className="text-xs text-muted-foreground mb-2">
+              Vue de tous vos appartements, sans informations personnelles.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-1.5 text-xs"
+              onClick={() => copy(embedUrl, "link")}
+            >
+              {copied === "link" ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
+              {copied === "link" ? "Copié" : "Copier le lien"}
+            </Button>
+          </div>
+          <div>
+            <p className="text-sm font-medium mb-1">Code d'intégration (iframe)</p>
+            <pre className="text-[10px] bg-muted p-2 rounded-md overflow-x-auto whitespace-pre-wrap break-all">
+              {iframeCode}
+            </pre>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-1.5 text-xs mt-2"
+              onClick={() => copy(iframeCode, "iframe")}
+            >
+              {copied === "iframe" ? <Check className="h-3.5 w-3.5" /> : <Code2 className="h-3.5 w-3.5" />}
+              {copied === "iframe" ? "Copié" : "Copier le code iframe"}
+            </Button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export default function Availability() {
   const { user } = useAuth();
@@ -230,6 +294,9 @@ export default function Availability() {
               Vue d'ensemble
             </Button>
           </div>
+
+          {/* Share embed button */}
+          <ShareEmbedButton userId={user?.id} />
 
           {/* Listing filter */}
           {listings && listings.length > 1 && (

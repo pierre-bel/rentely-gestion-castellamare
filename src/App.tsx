@@ -24,6 +24,7 @@ import HostTenants from "./pages/host/Tenants";
 import HostAvailability from "./pages/host/Availability";
 import PublicAvailability from "./pages/PublicAvailability";
 import EmbedAvailability from "./pages/EmbedAvailability";
+import EmbedAllAvailability from "./pages/EmbedAllAvailability";
 import HostPayouts from "./pages/host/Payouts";
 import EarningsReport from "./pages/host/EarningsReport";
 import EmailAutomations from "./pages/host/EmailAutomations";
@@ -76,6 +77,7 @@ const App = () => (
             <Route path="/forgot-password" element={<><Navbar /><ForgotPassword /></>} />
             <Route path="/become-host" element={<><Navbar /><BecomeHost /></>} />
             <Route path="/disponibilites" element={<PublicAvailability />} />
+            <Route path="/embed/availability/all/:hostId" element={<EmbedAllAvailability />} />
             <Route path="/embed/availability/:listingId" element={<EmbedAvailability />} />
             <Route path="/portal/:token" element={<BookingPortal />} />
             <Route path="/host" element={<HostLayout />}>
