@@ -14,7 +14,7 @@ import {
 import {
   format, startOfMonth, endOfMonth, addMonths, subMonths, parseISO,
   differenceInCalendarDays, isBefore, startOfDay, isSameDay,
-  eachDayOfInterval, getDay, isSameMonth,
+  eachDayOfInterval, isSameMonth, startOfWeek, endOfWeek,
 } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -365,10 +365,13 @@ function ListingCalendar({
   onSelectBooking: (b: PortalBooking) => void;
   selectedBookingId?: string;
 }) {
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const firstDayOfWeek = (getDay(monthStart) + 6) % 7; // Monday = 0
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
-  const bookingForDay = (day: Date): { booking: PortalBooking; isCheckin: boolean; isCheckout: boolean; isMid: boolean } | null => {
+  type DayInfo = { booking: PortalBooking; isCheckin: boolean; isCheckout: boolean; isMid: boolean } | null;
+
+  const getDayInfo = (day: Date): DayInfo => {
     for (const b of listing.bookings) {
       const checkin = parseISO(b.checkin_date);
       const checkout = parseISO(b.checkout_date);
@@ -379,10 +382,22 @@ function ListingCalendar({
     return null;
   };
 
-  const weekDays = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+  // Check if a day is both checkout of one booking AND checkin of another (turnaround)
+  const getTurnaround = (day: Date): { outgoing: PortalBooking; incoming: PortalBooking } | null => {
+    let outgoing: PortalBooking | null = null;
+    let incoming: PortalBooking | null = null;
+    for (const b of listing.bookings) {
+      if (isSameDay(day, parseISO(b.checkout_date))) outgoing = b;
+      if (isSameDay(day, parseISO(b.checkin_date))) incoming = b;
+    }
+    if (outgoing && incoming && outgoing.id !== incoming.id) return { outgoing, incoming };
+    return null;
+  };
+
+  const weekDays = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"];
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">{listing.title}</CardTitle>
         {listing.checkin_from && (
@@ -391,79 +406,119 @@ function ListingCalendar({
           </p>
         )}
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-7 gap-px">
-          {/* Header */}
+      <CardContent className="px-4 pb-4">
+        <div className="grid grid-cols-7 mb-2">
           {weekDays.map(d => (
-            <div key={d} className="text-center text-xs font-medium text-muted-foreground py-1">{d}</div>
+            <div key={d} className="text-center text-[0.7rem] font-medium text-muted-foreground uppercase py-1.5">
+              {d}
+            </div>
           ))}
-          {/* Empty cells */}
-          {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-            <div key={`empty-${i}`} className="h-10 sm:h-12" />
-          ))}
-          {/* Days */}
-          {days.map(day => {
-            const info = bookingForDay(day);
-            const isPast = isBefore(day, today) && !isSameDay(day, today);
+        </div>
+
+        <div className="grid grid-cols-7 gap-y-1">
+          {calendarDays.map(day => {
+            const inMonth = isSameMonth(day, currentMonth);
             const isToday = isSameDay(day, today);
-            const isSelected = info?.booking.id === selectedBookingId;
+            const turnaround = getTurnaround(day);
+            const info = getDayInfo(day);
+            const isPast = isBefore(day, today) && !isSameDay(day, today);
 
-            let bgClass = "bg-card hover:bg-accent/50";
-            let textClass = "text-foreground";
-
-            if (info) {
-              if (info.isCheckout) {
-                // Checkout day = cleaning day!
-                bgClass = "bg-destructive/15 hover:bg-destructive/25 cursor-pointer";
-                textClass = "text-destructive font-bold";
-              } else if (info.isCheckin) {
-                bgClass = "bg-primary/15 hover:bg-primary/25 cursor-pointer";
-                textClass = "text-primary font-semibold";
-              } else if (info.isMid) {
-                bgClass = "bg-muted cursor-pointer";
-                textClass = "text-muted-foreground";
-              }
+            // Determine status
+            let status: "available" | "booked" | "checkin" | "checkout" | "turnaround" = "available";
+            if (turnaround) {
+              status = "turnaround";
+            } else if (info?.isMid) {
+              status = "booked";
+            } else if (info?.isCheckin) {
+              status = "checkin";
+            } else if (info?.isCheckout) {
+              status = "checkout";
             }
 
-            if (isSelected) {
-              bgClass += " ring-2 ring-primary ring-offset-1";
+            const isHalf = status === "checkin" || status === "checkout" || status === "turnaround";
+            const isSelected = info?.booking.id === selectedBookingId || turnaround?.outgoing.id === selectedBookingId || turnaround?.incoming.id === selectedBookingId;
+
+            const handleClick = () => {
+              if (turnaround) onSelectBooking(turnaround.incoming);
+              else if (info) onSelectBooking(info.booking);
+            };
+
+            if (!inMonth) {
+              return (
+                <div key={day.toISOString()} className="flex items-center justify-center">
+                  <div className="h-10 w-10 flex items-center justify-center rounded-full text-sm opacity-20 text-muted-foreground">
+                    {format(day, "d")}
+                  </div>
+                </div>
+              );
             }
 
-            if (isPast) {
-              textClass += " opacity-40";
+            if (isHalf) {
+              return (
+                <div key={day.toISOString()} className="flex items-center justify-center" onClick={handleClick}>
+                  <div className={`relative flex items-center justify-center h-10 w-10 rounded-full text-sm font-medium cursor-pointer select-none mx-auto overflow-hidden ${isToday ? "ring-2 ring-primary" : ""} ${isSelected ? "ring-2 ring-primary ring-offset-1" : ""} ${isPast ? "opacity-40" : ""}`}>
+                    {/* Left half */}
+                    <div className={`absolute inset-0 w-1/2 rounded-l-full ${
+                      status === "checkout" || status === "turnaround"
+                        ? "bg-primary/70"
+                        : "bg-[hsl(var(--calendar-available,142_71%_45%)/0.25)]"
+                    }`} />
+                    {/* Right half */}
+                    <div className={`absolute right-0 inset-y-0 w-1/2 rounded-r-full ${
+                      status === "checkin" || status === "turnaround"
+                        ? "bg-primary/70"
+                        : "bg-[hsl(var(--calendar-available,142_71%_45%)/0.25)]"
+                    }`} />
+                    <span className="relative z-10 text-foreground">{format(day, "d")}</span>
+                  </div>
+                </div>
+              );
             }
+
+            const base = "h-10 w-10 flex items-center justify-center rounded-full text-sm transition-all cursor-default select-none mx-auto";
+            let cls = base;
+            if (status === "booked") {
+              cls = `${base} bg-primary text-primary-foreground font-semibold cursor-pointer`;
+            } else {
+              cls = `${base} bg-[hsl(var(--calendar-available,142_71%_45%)/0.25)] text-foreground hover:bg-[hsl(var(--calendar-available,142_71%_45%)/0.4)]`;
+            }
+            if (isToday) cls += " ring-2 ring-primary font-bold";
+            if (isSelected) cls += " ring-2 ring-primary ring-offset-1";
+            if (isPast) cls += " opacity-40";
 
             return (
-              <div
-                key={day.toISOString()}
-                className={`h-10 sm:h-12 flex flex-col items-center justify-center rounded-md text-sm transition-colors relative ${bgClass} ${isToday ? "ring-1 ring-primary/50" : ""}`}
-                onClick={() => info && onSelectBooking(info.booking)}
-              >
-                <span className={textClass}>{format(day, "d")}</span>
-                {info?.isCheckout && (
-                  <SprayCan className="h-3 w-3 text-destructive absolute bottom-0.5" />
-                )}
-                {info?.isCheckin && (
-                  <span className="text-[9px] text-primary absolute bottom-0.5">▶</span>
-                )}
+              <div key={day.toISOString()} className="flex items-center justify-center" onClick={handleClick}>
+                <div className={cls}>
+                  {format(day, "d")}
+                </div>
               </div>
             );
           })}
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap gap-4 mt-3 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-muted border" />
-            <span>Occupé</span>
+        <div className="flex items-center gap-4 mt-4 flex-wrap">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="w-3 h-3 rounded-full bg-[hsl(var(--calendar-available,142_71%_45%)/0.3)]" />
+            Disponible
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-primary/15 border border-primary/30" />
-            <span>Arrivée</span>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="w-3 h-3 rounded-full bg-primary" />
+            Occupé
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-destructive/15 border border-destructive/30" />
-            <span>Départ / Ménage</span>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="w-3 h-3 rounded-full overflow-hidden flex">
+              <div className="w-1/2 bg-[hsl(var(--calendar-available,142_71%_45%)/0.3)]" />
+              <div className="w-1/2 bg-primary/70" />
+            </div>
+            Arrivée
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="w-3 h-3 rounded-full overflow-hidden flex">
+              <div className="w-1/2 bg-primary/70" />
+              <div className="w-1/2 bg-[hsl(var(--calendar-available,142_71%_45%)/0.3)]" />
+            </div>
+            Départ / Ménage
           </div>
         </div>
       </CardContent>
