@@ -558,18 +558,24 @@ export default function PortalSettings() {
           <DialogHeader>
             <DialogTitle>Choisir une réservation pour l'aperçu</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2 max-h-[300px] overflow-y-auto">
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
             {previewBookings.map((b) => (
               <button
                 key={b.id}
-                className="w-full text-left px-3 py-2.5 rounded-lg border border-border hover:bg-accent/50 transition-colors"
+                className="w-full text-left px-3 py-3 rounded-lg border border-border hover:bg-accent/50 transition-colors"
                 onClick={() => {
                   window.open(`/portal/${b.token}`, "_blank");
                   setPreviewDialogOpen(false);
                 }}
               >
                 <p className="text-sm font-medium">{b.title}</p>
-                <p className="text-xs text-muted-foreground font-mono">{b.id.slice(0, 8)}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-muted-foreground">{b.guestName}</span>
+                  <span className="text-xs text-muted-foreground">•</span>
+                  <span className="text-xs text-muted-foreground">
+                    {format(new Date(b.checkin), "dd MMM", { locale: fr })} → {format(new Date(b.checkout), "dd MMM yyyy", { locale: fr })}
+                  </span>
+                </div>
               </button>
             ))}
           </div>
