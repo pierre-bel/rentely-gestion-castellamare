@@ -306,7 +306,7 @@ export function HostCleaning() {
                     : isUrgent(slot)
                       ? "border-destructive/50 bg-destructive/5"
                       : isTight(slot)
-                        ? "border-orange-400/50 bg-orange-50/50 dark:bg-orange-950/10"
+                        ? "border-accent/80 bg-accent/10"
                         : ""
                 }`}
               >
