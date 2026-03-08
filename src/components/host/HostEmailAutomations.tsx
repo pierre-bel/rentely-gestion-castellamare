@@ -592,6 +592,18 @@ export default function HostEmailAutomations() {
 
             <DynamicVariablesPanel />
 
+            {showDays && (
+              <div className="flex items-center gap-2">
+                <Switch checked={formSendIfLate} onCheckedChange={setFormSendIfLate} />
+                <Label className="font-normal">Envoyer même en cas de retard</Label>
+              </div>
+            )}
+            {formSendIfLate && showDays && (
+              <p className="text-xs text-muted-foreground -mt-2 ml-10">
+                Si la date d'envoi prévue est déjà passée (ex : réservation tardive), l'e-mail sera envoyé immédiatement.
+              </p>
+            )}
+
             <div className="flex items-center gap-2">
               <Switch checked={formEnabled} onCheckedChange={setFormEnabled} />
               <Label>Actif</Label>

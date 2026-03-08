@@ -100,19 +100,24 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
           if (sentAutomationIds.has(auto.id)) continue;
 
           let scheduledDate: Date | null = null;
-          if (auto.trigger_type === "booking_confirmation") {
+          if (auto.trigger_type === "booking_confirmed") {
             continue; // Already sent or instant
-          } else if (auto.trigger_type === "before_checkin") {
+          } else if (auto.trigger_type === "days_before_checkin") {
             scheduledDate = addDays(checkin, -auto.trigger_days);
-          } else if (auto.trigger_type === "after_checkin") {
+          } else if (auto.trigger_type === "day_of_checkin") {
+            scheduledDate = checkin;
+          } else if (auto.trigger_type === "days_after_checkin") {
             scheduledDate = addDays(checkin, auto.trigger_days);
-          } else if (auto.trigger_type === "before_checkout") {
+          } else if (auto.trigger_type === "days_before_checkout") {
             scheduledDate = addDays(checkout, -auto.trigger_days);
-          } else if (auto.trigger_type === "after_checkout") {
+          } else if (auto.trigger_type === "day_of_checkout") {
+            scheduledDate = checkout;
+          } else if (auto.trigger_type === "days_after_checkout") {
             scheduledDate = addDays(checkout, auto.trigger_days);
           }
 
-          if (scheduledDate && isAfter(scheduledDate, now)) {
+          const sendIfLate = (auto as any).send_if_late === true;
+          if (scheduledDate && (isAfter(scheduledDate, now) || sendIfLate)) {
             scheduled.push({
               id: auto.id,
               name: auto.name,
