@@ -55,26 +55,8 @@ const CATEGORIES = [
       "Rappels automatiques de paiement",
     ],
     mockup: (
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="font-semibold text-foreground">Échéancier</span>
-          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">2 / 3 payés</span>
-        </div>
-        {[
-          { label: "Acompte (30%)", amount: "360 €", paid: true },
-          { label: "2e versement (40%)", amount: "480 €", paid: true },
-          { label: "Solde (30%)", amount: "360 €", paid: false },
-        ].map((item, i) => (
-          <div key={i} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className={`h-4 w-4 ${item.paid ? "text-primary" : "text-muted-foreground/40"}`} />
-              <span className="text-sm text-foreground">{item.label}</span>
-            </div>
-            <span className={`text-sm font-medium ${item.paid ? "text-primary" : "text-muted-foreground"}`}>
-              {item.amount}
-            </span>
-          </div>
-        ))}
+      <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
+        <img src={mockupPayments} alt="Échéancier de paiements" className="w-full h-auto" loading="lazy" />
       </div>
     ),
   },
