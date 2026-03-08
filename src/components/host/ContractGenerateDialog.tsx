@@ -59,6 +59,30 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
     const listing = booking.listings as any;
     const guest = booking.profiles as any;
 
+    // Fetch tenant info from pricing_breakdown.tenant_id
+    let tenantGender: string | null = null;
+    const pricingBreakdown = booking.pricing_breakdown as any;
+    const tenantId = pricingBreakdown?.tenant_id;
+    if (tenantId) {
+      const { data: tenantData } = await supabase
+        .from("tenants" as any)
+        .select("gender, first_name, last_name")
+        .eq("id", tenantId)
+        .maybeSingle();
+      if (tenantData) {
+        tenantGender = (tenantData as any).gender;
+      }
+    }
+
+    // Resolve civility from tenant gender
+    const getCivility = (gender: string | null): string => {
+      if (!gender) return "Madame, Monsieur";
+      const g = gender.toLowerCase().trim();
+      if (["f", "female", "femme"].includes(g)) return "Madame";
+      if (["h", "m", "male", "homme"].includes(g)) return "Monsieur";
+      return "Madame, Monsieur";
+    };
+
     // Fetch payment items for this booking
     const { data: paymentItems } = await supabase
       .from("booking_payment_items")
