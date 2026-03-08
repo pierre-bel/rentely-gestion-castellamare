@@ -21,6 +21,7 @@ import EditListing from "./pages/host/EditListing";
 import ListingsManagement from "./pages/host/ListingsManagement";
 import HostBookings from "./pages/host/Bookings";
 import HostTenants from "./pages/host/Tenants";
+import HostReviews from "./pages/host/Reviews";
 import HostAvailability from "./pages/host/Availability";
 import PublicAvailability from "./pages/PublicAvailability";
 import EmbedAvailability from "./pages/EmbedAvailability";
