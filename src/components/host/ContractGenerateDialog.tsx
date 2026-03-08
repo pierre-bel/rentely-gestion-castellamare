@@ -77,6 +77,16 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       html = html.split(key).join(value);
     });
 
+    // Handle beach_cabin: if true, remove only the tag (keep surrounding text), if false, remove the entire element containing it
+    if (booking.beach_cabin) {
+      html = html.split("{{beach_cabin}}").join("Cabine de plage");
+    } else {
+      // Remove any HTML element (p, li, tr, div, span) that contains {{beach_cabin}}
+      html = html.replace(/<(p|li|tr|div|span)[^>]*>(?:[^<]*|\s)*\{\{beach_cabin\}\}(?:[^<]*|\s)*<\/\1>/gi, "");
+      // Fallback: remove raw text line
+      html = html.split("{{beach_cabin}}").join("");
+    }
+
     const { error } = await supabase.from("booking_contracts").insert({
       booking_id: booking.id,
       template_id: template.id,
