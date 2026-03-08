@@ -632,7 +632,7 @@ export default function BookingPortal() {
         </div>
 
         {/* Sections in configured order */}
-        {sectionOrder.map((key) => {
+        {finalSectionOrder.map((key) => {
           if (key.startsWith("custom_")) {
             return renderCustomSection(key);
           }
