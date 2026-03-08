@@ -24,6 +24,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { Tenant } from "./HostTenants";
 import { CreateEditTenantDialog } from "./CreateEditTenantDialog";
 import { Separator } from "@/components/ui/separator";
+import { calculatePricingFromWeeklyRates } from "@/lib/pricingUtils";
+import { Badge } from "@/components/ui/badge";
 
 interface Listing {
   id: string;
@@ -94,6 +96,22 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     enabled: !!user?.id && open,
   });
 
+  // Fetch weekly pricing for selected listing
+  const { data: weeklyPricing = [] } = useQuery({
+    queryKey: ["listing-weekly-pricing-booking", selectedListingId],
+    queryFn: async () => {
+      if (!selectedListingId) return [];
+      const { data, error } = await supabase
+        .from("listing_weekly_pricing")
+        .select("week_start_date, nightly_rate, weekend_nightly_rate, extra_night_weekend_rate")
+        .eq("listing_id", selectedListingId)
+        .order("week_start_date");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedListingId && open,
+  });
+
   // Fetch default payment schedules
   const { data: defaultSchedules = [] } = useQuery({
     queryKey: ["host-payment-schedules", user?.id],
@@ -114,18 +132,33 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     ? differenceInCalendarDays(checkoutDate, checkinDate)
     : 0;
 
+  const [pricingSuggested, setPricingSuggested] = useState(false);
+
   // Auto-fill prices when listing or dates change
   useEffect(() => {
     const listing = listings.find((l) => l.id === selectedListingId);
-    if (listing) {
-      if (nights > 0) {
-        const nightsTotal = listing.base_price * nights;
-        setRentalPrice(nightsTotal.toFixed(2));
+    if (listing && nights > 0 && checkinDate && checkoutDate) {
+      if (weeklyPricing.length > 0) {
+        // Use weekly pricing rules
+        const result = calculatePricingFromWeeklyRates(
+          checkinDate,
+          checkoutDate,
+          weeklyPricing,
+          listing.base_price
+        );
+        setRentalPrice(result.total.toFixed(2));
+        setPricingSuggested(true);
+      } else {
+        // Fallback to base_price * nights
+        setRentalPrice((listing.base_price * nights).toFixed(2));
+        setPricingSuggested(false);
       }
-      // Always suggest the listing's default cleaning fee when listing changes
       setCleaningFee((listing.cleaning_fee || 0).toFixed(2));
+    } else if (listing) {
+      setCleaningFee((listing.cleaning_fee || 0).toFixed(2));
+      setPricingSuggested(false);
     }
-  }, [selectedListingId, nights, listings]);
+  }, [selectedListingId, nights, listings, weeklyPricing, checkinDate, checkoutDate]);
 
   const rentalNum = parseFloat(rentalPrice) || 0;
   const cleaningNum = parseFloat(cleaningFee) || 0;
@@ -377,7 +410,12 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
 
             {/* Pricing section */}
             <Separator />
-            <p className="text-sm font-medium">Tarification</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium">Tarification</p>
+              {pricingSuggested && nights > 0 && (
+                <Badge variant="secondary" className="text-xs">Calculé via tarifs hebdo</Badge>
+              )}
+            </div>
 
             <div>
               <Label>Prix de location (€)</Label>
