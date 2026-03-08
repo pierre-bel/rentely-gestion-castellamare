@@ -300,8 +300,8 @@ const ListingsManagement = () => {
               <div className="bg-card rounded-lg border p-8 text-center">
                 <p className="text-muted-foreground">
                   {searchQuery || statusFilter !== "all" || minPrice || maxPrice
-                    ? "No listings found matching your filters. Try adjusting your search or filters."
-                    : "No listings found. Create your first listing to get started."
+                    ? "Aucune annonce trouvée. Essayez de modifier vos filtres."
+                    : "Aucune annonce. Créez votre première annonce pour commencer."
                   }
                 </p>
               </div>
