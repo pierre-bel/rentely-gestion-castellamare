@@ -553,12 +553,13 @@ export default function PortalSettings() {
             <div>
               <Label>Contenu</Label>
               <Textarea
-                placeholder="Écrivez le contenu qui sera affiché sur le portail..."
+                placeholder={"Écrivez le contenu qui sera affiché sur le portail...\n\nCollez un lien YouTube ou Vimeo sur une ligne seule pour intégrer une vidéo."}
                 value={newBody}
                 onChange={(e) => setNewBody(e.target.value)}
                 rows={6}
                 className="mt-1.5"
               />
+              <p className="text-xs text-muted-foreground mt-1.5">💡 Les liens YouTube et Vimeo collés seuls sur une ligne seront automatiquement intégrés en vidéo.</p>
             </div>
           </div>
           <DialogFooter>
