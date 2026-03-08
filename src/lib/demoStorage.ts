@@ -2122,12 +2122,9 @@ export const demoStorage = {
       });
     }
     
-    // Fetch all users from user_admin_view
+    // Fetch all users from get_admin_users function
     const { data: dbUsers, error: usersError } = await supabaseClient
-      .from('user_admin_view')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(100);
+      .rpc('get_admin_users');
 
     if (usersError) {
       console.error('Error loading users:', usersError);

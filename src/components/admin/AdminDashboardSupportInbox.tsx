@@ -31,7 +31,6 @@ const AdminDashboardSupportInbox = () => {
       } else {
         // Real mode: Fetch from Supabase
         const { data, error } = await supabase.rpc("admin_get_support_conversations", {
-          p_admin_user_id: SUPPORT_USER_ID,
           p_search_query: null,
           p_sort_by: "last_message_time",
         });

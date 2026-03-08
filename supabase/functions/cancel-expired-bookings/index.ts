@@ -6,15 +6,22 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
+  }
+
+  // Verify cron secret
+  const cronSecret = req.headers.get('x-cron-secret')
+  if (cronSecret !== Deno.env.get('CRON_SECRET')) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 401,
+    })
   }
 
   try {
     console.log('Starting automatic expired booking cancellation check...')
     
-    // Create Supabase client with service role key for elevated permissions
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -26,7 +33,6 @@ Deno.serve(async (req) => {
       }
     )
 
-    // Call the database function to cancel expired bookings
     const { data, error } = await supabaseClient.rpc('cancel_expired_bookings')
 
     if (error) {
@@ -52,7 +58,7 @@ Deno.serve(async (req) => {
     
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        error: 'Internal server error',
         timestamp: new Date().toISOString()
       }),
       { 

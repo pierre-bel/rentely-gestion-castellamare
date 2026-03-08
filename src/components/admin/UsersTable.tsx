@@ -116,11 +116,8 @@ export function UsersTable({ users, loading, hasActiveFilters }: UsersTableProps
       return;
     }
     
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
-    
     const { data, error } = await supabase.rpc('admin_suspend_user', {
-      p_user_id: selectedUser.id,
-      p_admin_user_id: currentUser?.id
+      p_user_id: selectedUser.id
     });
     
     if (error) {
@@ -167,11 +164,8 @@ export function UsersTable({ users, loading, hasActiveFilters }: UsersTableProps
       return;
     }
     
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
-    
     const { data, error } = await supabase.rpc('admin_unsuspend_user', {
-      p_user_id: selectedUser.id,
-      p_admin_user_id: currentUser?.id
+      p_user_id: selectedUser.id
     });
     
     if (error) {
@@ -218,11 +212,8 @@ export function UsersTable({ users, loading, hasActiveFilters }: UsersTableProps
       return;
     }
     
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
-    
     const { data, error } = await supabase.rpc('admin_delete_user_soft', {
-      p_user_id: selectedUser.id,
-      p_admin_user_id: currentUser?.id
+      p_user_id: selectedUser.id
     });
     
     if (error) {
