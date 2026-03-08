@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { User, Phone, Mail } from "lucide-react";
+import { Phone, Mail } from "lucide-react";
 import {
   format,
   startOfMonth,
