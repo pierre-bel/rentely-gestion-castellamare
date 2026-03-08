@@ -325,7 +325,7 @@ export function HostCleaning() {
                         <Badge variant="destructive" className="mt-1 text-xs">⚠️ Enchaînement immédiat</Badge>
                       )}
                       {isTight(slot) && (
-                        <Badge variant="outline" className="mt-1 text-xs border-orange-400 text-orange-600">⏰ Enchaînement serré</Badge>
+                        <Badge variant="outline" className="mt-1 text-xs">⏰ Enchaînement serré</Badge>
                       )}
                     </div>
 
