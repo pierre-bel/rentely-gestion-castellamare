@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Eye, Search } from "lucide-react";
 import { format } from "date-fns";
 import { BookingPaymentDetailDialog } from "./BookingPaymentDetailDialog";
+import { OverduePaymentsList } from "./OverduePaymentsList";
 
 interface BookingWithPayments {
   id: string;
