@@ -24,7 +24,7 @@ const HostDashboard = () => {
             Indicateurs de performance sur toute la période
           </p>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-3 sm:p-6">
           {user ? (
             <DashboardEarningsSummary userId={user.id} />
           ) : (
