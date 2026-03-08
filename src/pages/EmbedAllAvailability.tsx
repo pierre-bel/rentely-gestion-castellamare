@@ -55,20 +55,9 @@ export default function EmbedAllAvailability() {
 
   // We need to filter listings by host. public_listings view doesn't expose host_user_id.
   // Use embed_listing_info or a direct query. Let's use a separate query to get listing IDs for this host.
-  const { data: hostListingIds } = useQuery({
-    queryKey: ["embed-host-listing-ids", hostId],
-    queryFn: async () => {
-      if (!hostId) return [];
-      const { data, error } = await supabase
-        .from("listings")
-        .select("id")
-        .eq("host_user_id", hostId)
-        .in("status", ["approved", "pending"]);
-      if (error) throw error;
-      return (data || []).map((l) => l.id);
-    },
-    enabled: !!hostId,
-  });
+  const hostListingIds = useMemo(() => {
+    return (listings || []).map((l) => l.id);
+  }, [listings]);
 
   const filteredByHost = useMemo(() => {
     return listings || [];
