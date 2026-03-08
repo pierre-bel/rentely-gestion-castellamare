@@ -92,6 +92,63 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
   };
 }
 
+function buildReminderHtml(variables: Record<string, string>, paymentLabel: string, paymentAmount: number, dueDate: string): string {
+  const formattedDate = new Date(dueDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const guestName = variables.guest_full_name || 'Locataire';
+  const civility = variables.guest_civility;
+  const greeting = civility ? `${civility} ${variables.guest_last_name || guestName}` : guestName;
+
+  return `
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; background: #ffffff; margin: 0; padding: 0;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 32px 24px;">
+    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+      <h2 style="color: #dc2626; margin: 0 0 8px;">⚠️ Rappel de paiement</h2>
+      <p style="color: #991b1b; margin: 0;">Un paiement est en retard pour votre réservation.</p>
+    </div>
+    
+    <p style="color: #374151; font-size: 16px;">Bonjour ${greeting},</p>
+    
+    <p style="color: #374151; font-size: 15px;">
+      Nous vous rappelons que le paiement suivant pour votre séjour à <strong>${variables.listing_title}</strong> est en retard :
+    </p>
+    
+    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 6px 0; color: #6b7280; font-size: 14px;">Échéance</td>
+          <td style="padding: 6px 0; text-align: right; font-weight: 600; color: #111827;">${paymentLabel}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #6b7280; font-size: 14px;">Montant</td>
+          <td style="padding: 6px 0; text-align: right; font-weight: 700; color: #dc2626; font-size: 18px;">${paymentAmount.toFixed(2)} €</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #6b7280; font-size: 14px;">Date d'échéance</td>
+          <td style="padding: 6px 0; text-align: right; font-weight: 600; color: #dc2626;">${formattedDate}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #6b7280; font-size: 14px;">Séjour</td>
+          <td style="padding: 6px 0; text-align: right; color: #111827;">${variables.checkin_date} → ${variables.checkout_date}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <p style="color: #374151; font-size: 15px;">
+      Merci de procéder au règlement dans les meilleurs délais. Si le paiement a déjà été effectué, veuillez ne pas tenir compte de ce rappel.
+    </p>
+    
+    <p style="color: #6b7280; font-size: 14px; margin-top: 32px;">
+      Cordialement,<br>
+      L'équipe de gestion
+    </p>
+  </div>
+</body>
+</html>`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -127,7 +184,6 @@ Deno.serve(async (req) => {
     if (action === 'test') {
       const { subject, body_html, test_email, variables, reply_to_email, booking_id } = body;
 
-      // Build variables from real booking or use provided sample
       let finalVariables: Record<string, string>;
       if (booking_id) {
         finalVariables = await buildVariablesFromBooking(supabase, booking_id);
@@ -182,14 +238,12 @@ Deno.serve(async (req) => {
 
       const variables = await buildVariablesFromBooking(supabase, booking_id);
 
-      // Determine recipient
       let recipientEmail: string;
       if (automation.recipient_type === 'fixed' && automation.recipient_email) {
         recipientEmail = automation.recipient_email;
       } else if (automation.recipient_type === 'host' && automation.recipient_email) {
         recipientEmail = automation.recipient_email;
       } else if (automation.recipient_type === 'host') {
-        // Fallback: fetch host email from profile
         const { data: hostProfile } = await supabase
           .from('profiles')
           .select('email')
@@ -246,6 +300,78 @@ Deno.serve(async (req) => {
       }
 
       return new Response(JSON.stringify({ success: true, resend_id: resendData.id }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+
+    } else if (action === 'send_reminder') {
+      const { booking_id, payment_label, payment_amount, due_date } = body;
+
+      // Verify the host owns this booking
+      const { data: bookingCheck, error: bookingErr } = await supabase
+        .from('bookings')
+        .select('id, listing_id, listings!inner(host_user_id)')
+        .eq('id', booking_id)
+        .single();
+
+      if (bookingErr || !bookingCheck) {
+        throw new Error('Booking not found or access denied');
+      }
+
+      const variables = await buildVariablesFromBooking(supabase, booking_id);
+      const recipientEmail = variables.guest_email;
+      if (!recipientEmail) throw new Error('Recipient email not found');
+
+      const reminderSubject = `Rappel de paiement – ${payment_label} – ${variables.listing_title}`;
+      const reminderHtml = buildReminderHtml(variables, payment_label, payment_amount, due_date);
+
+      // Get host reply-to email
+      const { data: hostProfile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', userId)
+        .single();
+
+      const emailPayload: Record<string, unknown> = {
+        from: 'Rentely <onboarding@resend.dev>',
+        to: [recipientEmail],
+        subject: reminderSubject,
+        html: reminderHtml,
+      };
+      if (hostProfile?.email) {
+        emailPayload.reply_to = hostProfile.email;
+      }
+
+      const resendRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(emailPayload),
+      });
+
+      const resendData = await resendRes.json();
+
+      // Log the reminder email
+      const serviceClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      );
+
+      await serviceClient.from('email_send_log').insert({
+        booking_id: booking_id,
+        recipient_email: recipientEmail,
+        subject: reminderSubject,
+        status: resendRes.ok ? 'sent' : 'failed',
+        resend_id: resendData.id || null,
+        error_message: resendRes.ok ? null : JSON.stringify(resendData),
+      });
+
+      if (!resendRes.ok) {
+        throw new Error(`Resend API error [${resendRes.status}]: ${JSON.stringify(resendData)}`);
+      }
+
+      return new Response(JSON.stringify({ success: true, resend_id: resendData.id, sent_to: recipientEmail }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
