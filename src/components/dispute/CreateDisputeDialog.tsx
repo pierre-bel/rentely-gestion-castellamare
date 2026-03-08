@@ -101,11 +101,8 @@ export const CreateDisputeDialog = ({
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from("dispute-attachments")
-          .getPublicUrl(fileName);
-
-        uploadedUrls.push(publicUrl);
+        // Store the file path rather than a public URL since the bucket is private
+        uploadedUrls.push(fileName);
       }
     } finally {
       setUploadingFiles(false);
