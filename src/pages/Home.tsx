@@ -6,6 +6,7 @@ import {
   ShieldCheck,
   CheckCircle2,
 } from "lucide-react";
+import mockupHero from "@/assets/mockup-hero-dashboard.webp";
 import { Button } from "@/components/ui/button";
 import { AuthDialog } from "@/components/AuthDialog";
 import Footer from "@/components/Footer";
