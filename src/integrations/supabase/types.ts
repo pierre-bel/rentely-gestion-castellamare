@@ -2859,6 +2859,11 @@ export type Database = {
           listing_id: string
           listing_title: string
           rating: number
+          rating_cleanliness: number
+          rating_communication: number
+          rating_location: number
+          rating_maintenance: number
+          rating_value: number
           status: string
           text: string
         }[]
