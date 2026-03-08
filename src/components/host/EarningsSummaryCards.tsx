@@ -18,15 +18,15 @@ const EarningsSummaryCards = ({
   isLoading,
 }: EarningsSummaryCardsProps) => {
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("fr-FR", {
       style: "currency",
-      currency: "USD",
+      currency: "EUR",
     }).format(value);
   };
 
   const cards = [
     {
-      label: "Occupancy Rate",
+      label: "Taux d'occupation",
       value: occupancyRate,
       format: "percentage",
       icon: TrendingUp,
@@ -34,7 +34,7 @@ const EarningsSummaryCards = ({
       iconColor: "text-blue-600",
     },
     {
-      label: "Average Rate",
+      label: "Tarif moyen",
       value: averageRate,
       format: "currency",
       icon: DollarSign,
@@ -42,7 +42,7 @@ const EarningsSummaryCards = ({
       iconColor: "text-green-600",
     },
     {
-      label: "Total Gross Revenue",
+      label: "Revenus bruts",
       value: totalGrossRevenue,
       format: "currency",
       icon: ArrowUpCircle,
@@ -50,7 +50,7 @@ const EarningsSummaryCards = ({
       iconColor: "text-purple-600",
     },
     {
-      label: "Actual Net Revenue",
+      label: "Revenus nets",
       value: actualNetRevenue,
       format: "currency",
       icon: Wallet,

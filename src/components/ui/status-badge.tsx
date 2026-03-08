@@ -8,7 +8,6 @@ export type StatusValue =
   | "cancelled" | "cancelled_guest" | "cancelled_host" | "expired"
   // Listing statuses
   | "approved" | "draft" | "pending" | "blocked" | "rejected"
-  // Review statuses (pending, approved, rejected, blocked overlap with above)
   // User statuses
   | "active" | "inactive" | "suspended"
   // Transaction/Payout statuses
@@ -25,46 +24,46 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-const STATUS_CONFIG: Record<StatusValue, { variant: StatusVariant; label?: string }> = {
+const STATUS_CONFIG: Record<StatusValue, { variant: StatusVariant; label: string }> = {
   // Success states
-  approved: { variant: "success" },
-  completed: { variant: "success" },
-  active: { variant: "success" },
-  succeeded: { variant: "success" },
-  resolved: { variant: "success" },
-  resolved_approved: { variant: "success", label: "Approved" },
+  approved: { variant: "success", label: "Approuvée" },
+  completed: { variant: "success", label: "Terminée" },
+  active: { variant: "success", label: "Actif" },
+  succeeded: { variant: "success", label: "Réussi" },
+  resolved: { variant: "success", label: "Résolu" },
+  resolved_approved: { variant: "success", label: "Approuvé" },
   
   // Primary/Info states
-  confirmed: { variant: "primary" },
-  processing: { variant: "primary" },
-  in_progress: { variant: "primary", label: "In Review" },
-  on_hold: { variant: "primary", label: "On Hold" },
+  confirmed: { variant: "primary", label: "Confirmée" },
+  processing: { variant: "primary", label: "En cours" },
+  in_progress: { variant: "primary", label: "En examen" },
+  on_hold: { variant: "primary", label: "En attente" },
   
   // Warning states
-  pending: { variant: "warning" },
-  pending_payment: { variant: "warning", label: "Pending Payment" },
-  inactive: { variant: "warning" },
-  open: { variant: "warning", label: "For Review" },
-  escalated: { variant: "warning" },
+  pending: { variant: "warning", label: "En attente" },
+  pending_payment: { variant: "warning", label: "Paiement en attente" },
+  inactive: { variant: "warning", label: "Inactif" },
+  open: { variant: "warning", label: "À examiner" },
+  escalated: { variant: "warning", label: "Escaladé" },
   
   // Destructive states
-  cancelled: { variant: "destructive" },
-  cancelled_guest: { variant: "destructive", label: "Cancelled" },
-  cancelled_host: { variant: "destructive", label: "Cancelled" },
-  expired: { variant: "destructive" },
-  failed: { variant: "destructive" },
-  rejected: { variant: "destructive" },
-  resolved_declined: { variant: "destructive", label: "Declined" },
-  blocked: { variant: "destructive" },
-  suspended: { variant: "destructive" },
+  cancelled: { variant: "destructive", label: "Annulée" },
+  cancelled_guest: { variant: "destructive", label: "Annulée (locataire)" },
+  cancelled_host: { variant: "destructive", label: "Annulée (hôte)" },
+  expired: { variant: "destructive", label: "Expirée" },
+  failed: { variant: "destructive", label: "Échoué" },
+  rejected: { variant: "destructive", label: "Rejetée" },
+  resolved_declined: { variant: "destructive", label: "Refusé" },
+  blocked: { variant: "destructive", label: "Bloquée" },
+  suspended: { variant: "destructive", label: "Suspendu" },
   
   // Neutral states
-  draft: { variant: "muted" },
-  closed: { variant: "muted" },
+  draft: { variant: "muted", label: "Brouillon" },
+  closed: { variant: "muted", label: "Fermé" },
   
   // Types (for transactions)
-  capture: { variant: "outline" },
-  refund: { variant: "outline" },
+  capture: { variant: "outline", label: "Encaissement" },
+  refund: { variant: "outline", label: "Remboursement" },
 };
 
 const VARIANT_STYLES: Record<StatusVariant, string> = {
@@ -95,8 +94,6 @@ export const StatusBadge = ({ status, className }: StatusBadgeProps) => {
     );
   }
   
-  const label = config.label || status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, " ");
-  
   return (
     <Badge 
       className={cn(
@@ -105,7 +102,7 @@ export const StatusBadge = ({ status, className }: StatusBadgeProps) => {
         className
       )}
     >
-      {label}
+      {config.label}
     </Badge>
   );
 };

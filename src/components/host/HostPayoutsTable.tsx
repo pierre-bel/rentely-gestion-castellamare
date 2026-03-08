@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,12 +21,12 @@ type TransactionTypeBadgeProps = {
 
 function TransactionTypeBadge({ type }: TransactionTypeBadgeProps) {
   const badgeConfig = {
-    regular_earning: { label: "Earning", variant: "default" as const, className: "bg-green-100 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-700" },
-    booking_payout: { label: "Earning", variant: "default" as const, className: "bg-green-100 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-700" },
-    debt_collection: { label: "Debt Collection", variant: "secondary" as const, className: "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-700" },
-    refund_debt: { label: "Refund Debt", variant: "destructive" as const, className: "bg-red-100 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-700" },
-    refund: { label: "Refund", variant: "destructive" as const, className: "bg-red-100 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-700" },
-    cancelled: { label: "Cancellation Fee", variant: "outline" as const, className: "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 hover:text-amber-700" },
+    regular_earning: { label: "Revenu", variant: "default" as const, className: "bg-green-100 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-700" },
+    booking_payout: { label: "Revenu", variant: "default" as const, className: "bg-green-100 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-700" },
+    debt_collection: { label: "Recouvrement", variant: "secondary" as const, className: "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-700" },
+    refund_debt: { label: "Remboursement", variant: "destructive" as const, className: "bg-red-100 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-700" },
+    refund: { label: "Remboursement", variant: "destructive" as const, className: "bg-red-100 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-700" },
+    cancelled: { label: "Frais d'annulation", variant: "outline" as const, className: "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 hover:text-amber-700" },
   };
 
   const config = badgeConfig[type] || badgeConfig.booking_payout;
@@ -33,22 +34,15 @@ function TransactionTypeBadge({ type }: TransactionTypeBadgeProps) {
 }
 
 function mapPayoutStatus(status: string, transactionType: HostPayout['transaction_type'], guestDebtStatus: string | null): StatusValue {
-  // Handle debt-specific statuses
   if (status === 'settled') return 'succeeded';
   if (status === 'partially_settled') return 'processing';
   if (status === 'applied_to_debt') return 'cancelled';
   
-  // Special handling for debt collections
   if (transactionType === 'debt_collection') {
-    if (guestDebtStatus === 'outstanding') {
-      return 'pending';
-    }
-    if (status === 'pending') {
-      return 'processing';
-    }
+    if (guestDebtStatus === 'outstanding') return 'pending';
+    if (status === 'pending') return 'processing';
   }
 
-  // Regular status mapping
   switch (status) {
     case "completed": return 'succeeded';
     case "pending": return 'pending';
@@ -70,9 +64,7 @@ function getRowClassName(payout: HostPayout): string {
   switch (payout.transaction_type) {
     case 'regular_earning':
     case 'booking_payout':
-      if (payout.status === 'completed') {
-        return `${baseClass} bg-green-50/50`;
-      }
+      if (payout.status === 'completed') return `${baseClass} bg-green-50/50`;
       return baseClass;
     case 'debt_collection':
       return `${baseClass} bg-blue-50/50`;
@@ -85,6 +77,12 @@ function getRowClassName(payout: HostPayout): string {
       return baseClass;
   }
 }
+
+const formatPrice = (amount: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount);
+
+const formatDate = (date: string) => format(new Date(date), "d MMM yyyy", { locale: fr });
+const formatDateShort = (date: string) => format(new Date(date), "d MMM", { locale: fr });
 
 export function HostPayoutsTable({ payouts, isLoading }: HostPayoutsTableProps) {
   const [selectedPayout, setSelectedPayout] = useState<HostPayout | null>(null);
@@ -103,14 +101,14 @@ export function HostPayoutsTable({ payouts, isLoading }: HostPayoutsTableProps) 
         <Table>
           <TableHeader>
             <TableRow className="bg-background hover:bg-background">
-              <TableHead className="font-semibold">Booking ID</TableHead>
-              <TableHead className="font-semibold">Transaction Type</TableHead>
-              <TableHead className="font-semibold">Listing</TableHead>
-              <TableHead className="font-semibold">Guest</TableHead>
+              <TableHead className="font-semibold">ID réservation</TableHead>
+              <TableHead className="font-semibold">Type</TableHead>
+              <TableHead className="font-semibold">Annonce</TableHead>
+              <TableHead className="font-semibold">Locataire</TableHead>
               <TableHead className="font-semibold">Dates</TableHead>
-              <TableHead className="text-right font-semibold">Amount</TableHead>
-              <TableHead className="font-semibold">Status</TableHead>
-              <TableHead className="font-semibold">Pay Date</TableHead>
+              <TableHead className="text-right font-semibold">Montant</TableHead>
+              <TableHead className="font-semibold">Statut</TableHead>
+              <TableHead className="font-semibold">Date versement</TableHead>
               <TableHead className="font-semibold">Action</TableHead>
             </TableRow>
           </TableHeader>
@@ -137,7 +135,7 @@ export function HostPayoutsTable({ payouts, isLoading }: HostPayoutsTableProps) 
   if (payouts.length === 0) {
     return (
       <div className="rounded-lg border bg-card p-12 text-center">
-        <p className="text-muted-foreground">No payouts found</p>
+        <p className="text-muted-foreground">Aucun versement trouvé</p>
       </div>
     );
   }
@@ -147,14 +145,14 @@ export function HostPayoutsTable({ payouts, isLoading }: HostPayoutsTableProps) 
       <Table>
         <TableHeader>
           <TableRow className="bg-background hover:bg-background">
-            <TableHead className="font-semibold">Booking ID</TableHead>
-            <TableHead className="font-semibold">Transaction Type</TableHead>
-            <TableHead className="font-semibold">Listing</TableHead>
-            <TableHead className="font-semibold">Guest</TableHead>
+            <TableHead className="font-semibold">ID réservation</TableHead>
+            <TableHead className="font-semibold">Type</TableHead>
+            <TableHead className="font-semibold">Annonce</TableHead>
+            <TableHead className="font-semibold">Locataire</TableHead>
             <TableHead className="font-semibold">Dates</TableHead>
-              <TableHead className="text-right font-semibold">Amount</TableHead>
-              <TableHead className="font-semibold">Status</TableHead>
-              <TableHead className="font-semibold">Pay Date</TableHead>
+              <TableHead className="text-right font-semibold">Montant</TableHead>
+              <TableHead className="font-semibold">Statut</TableHead>
+              <TableHead className="font-semibold">Date versement</TableHead>
               <TableHead className="font-semibold">Action</TableHead>
             </TableRow>
           </TableHeader>
@@ -166,63 +164,40 @@ export function HostPayoutsTable({ payouts, isLoading }: HostPayoutsTableProps) 
 
             return (
               <TableRow key={`${payout.booking_id}-${payout.id || 'cancelled'}`} className={rowClassName}>
-                {/* Booking ID */}
-                <TableCell className="font-medium">
-                  {truncatedBookingId}
-                </TableCell>
-
-                {/* Transaction Type Badge */}
-                <TableCell>
-                  <TransactionTypeBadge type={payout.transaction_type} />
-                </TableCell>
-
-                {/* Listing */}
+                <TableCell className="font-medium">{truncatedBookingId}</TableCell>
+                <TableCell><TransactionTypeBadge type={payout.transaction_type} /></TableCell>
                 <TableCell className="max-w-[200px] truncate">{payout.listing_title}</TableCell>
-
-                {/* Guest */}
                 <TableCell>
                   <div>
                     <div className="font-medium">{payout.guest_name}</div>
                     <div className="text-xs text-muted-foreground">{payout.guest_email}</div>
                   </div>
                 </TableCell>
-
-                {/* Dates */}
                 <TableCell>
                   {payout.checkin_date && payout.checkout_date ? (
                     <div className="text-sm">
-                      <div>{format(new Date(payout.checkin_date), "MMM dd")}</div>
-                      <div className="text-muted-foreground">
-                        {format(new Date(payout.checkout_date), "MMM dd, yyyy")}
-                      </div>
+                      <div>{formatDateShort(payout.checkin_date)}</div>
+                      <div className="text-muted-foreground">{formatDate(payout.checkout_date)}</div>
                     </div>
                   ) : (
                     <span className="text-muted-foreground">N/A</span>
                   )}
                 </TableCell>
-
-                {/* Amount */}
                 <TableCell className="text-right">
                   <div className={`font-semibold ${isDebt ? "text-red-600" : "text-green-600"}`}>
-                    {payout.currency} {isDebt ? "-" : ""}${Math.abs(payout.amount).toFixed(2)}
+                    {isDebt ? "-" : ""}{formatPrice(Math.abs(payout.amount))}
                   </div>
                 </TableCell>
-
-                {/* Status */}
                 <TableCell>
                   <StatusBadge status={mapPayoutStatus(payout.status, payout.transaction_type, payout.guest_debt_status)} />
                 </TableCell>
-
-                {/* Pay Date */}
                 <TableCell>
                   {payout.payout_date ? (
-                    format(new Date(payout.payout_date), "MMM dd, yyyy")
+                    formatDate(payout.payout_date)
                   ) : (
-                    <span className="text-muted-foreground">Pending</span>
+                    <span className="text-muted-foreground">En attente</span>
                   )}
                 </TableCell>
-
-                {/* Action */}
                 <TableCell>
                   <Button
                     variant="ghost"

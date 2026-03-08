@@ -26,9 +26,9 @@ interface ListingsTableProps {
 }
 
 const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("fr-FR", {
     style: "currency",
-    currency: "USD",
+    currency: "EUR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price);
@@ -41,6 +41,18 @@ const formatLocation = (city: string, state: string | null, country: string) => 
   return `${city}, ${country}`;
 };
 
+const PROPERTY_TYPE_LABELS: Record<string, string> = {
+  apartment: "Appartement",
+  house: "Maison",
+  villa: "Villa",
+  studio: "Studio",
+  loft: "Loft",
+  condo: "Condo",
+  cabin: "Chalet",
+  cottage: "Gîte",
+  room: "Chambre",
+};
+
 export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityClick }: ListingsTableProps) => {
   if (loading) {
     return (
@@ -48,12 +60,12 @@ export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityCl
         <Table>
           <TableHeader>
             <TableRow className="bg-background hover:bg-background">
-              <TableHead className="font-semibold">Status</TableHead>
-              <TableHead className="font-semibold">Title</TableHead>
-              <TableHead className="font-semibold">Location</TableHead>
+              <TableHead className="font-semibold">Statut</TableHead>
+              <TableHead className="font-semibold">Titre</TableHead>
+              <TableHead className="font-semibold">Localisation</TableHead>
               <TableHead className="font-semibold">Type</TableHead>
-              <TableHead className="font-semibold">Base Price</TableHead>
-              <TableHead className="font-semibold">Rating</TableHead>
+              <TableHead className="font-semibold">Prix de base</TableHead>
+              <TableHead className="font-semibold">Note</TableHead>
               <TableHead className="font-semibold text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -78,9 +90,9 @@ export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityCl
   if (listings.length === 0) {
     return (
       <div className="rounded-lg border bg-card p-12 text-center">
-        <p className="text-muted-foreground text-lg">No listings found</p>
+        <p className="text-muted-foreground text-lg">Aucune annonce trouvée</p>
         <p className="text-muted-foreground text-sm mt-2">
-          Try adjusting your filters or search criteria
+          Essayez de modifier vos filtres ou critères de recherche
         </p>
       </div>
     );
@@ -91,12 +103,12 @@ export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityCl
       <Table>
         <TableHeader>
           <TableRow className="bg-background hover:bg-background">
-            <TableHead className="font-semibold">Status</TableHead>
-            <TableHead className="font-semibold">Title</TableHead>
-            <TableHead className="font-semibold">Location</TableHead>
+            <TableHead className="font-semibold">Statut</TableHead>
+            <TableHead className="font-semibold">Titre</TableHead>
+            <TableHead className="font-semibold">Localisation</TableHead>
             <TableHead className="font-semibold">Type</TableHead>
-            <TableHead className="font-semibold">Base Price</TableHead>
-            <TableHead className="font-semibold">Rating</TableHead>
+            <TableHead className="font-semibold">Prix de base</TableHead>
+            <TableHead className="font-semibold">Note</TableHead>
             <TableHead className="font-semibold text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -111,7 +123,7 @@ export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityCl
               </TableCell>
               <TableCell className="font-medium">{listing.title}</TableCell>
               <TableCell>{formatLocation(listing.city, listing.state, listing.country)}</TableCell>
-              <TableCell className="capitalize">{listing.type}</TableCell>
+              <TableCell className="capitalize">{PROPERTY_TYPE_LABELS[listing.type] || listing.type}</TableCell>
               <TableCell>{formatPrice(listing.base_price)}</TableCell>
               <TableCell>
                 {listing.rating_count > 0 ? (
@@ -121,7 +133,7 @@ export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityCl
                     <span className="text-muted-foreground text-sm">({listing.rating_count})</span>
                   </div>
                 ) : (
-                  <span className="text-muted-foreground text-sm">No reviews</span>
+                  <span className="text-muted-foreground text-sm">Aucun avis</span>
                 )}
               </TableCell>
               <TableCell className="text-right">
@@ -132,7 +144,7 @@ export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityCl
                     onClick={() => onEditClick(listing.id)}
                   >
                     <Edit className="h-4 w-4 mr-1" />
-                    Edit
+                    Modifier
                   </Button>
                   <Button
                     variant="outline"
@@ -140,7 +152,7 @@ export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityCl
                     onClick={() => onAvailabilityClick(listing)}
                   >
                     <Calendar className="h-4 w-4 mr-1" />
-                    Availability
+                    Disponibilités
                   </Button>
                 </div>
               </TableCell>
