@@ -423,6 +423,63 @@ export default function BookingPortal() {
     );
   };
 
+  const renderContact = () => {
+    if (!settings.show_contact) return null;
+    const { contact_email, contact_phone, contact_whatsapp, contact_facebook_url } = settings;
+    if (!contact_email && !contact_phone && !contact_whatsapp && !contact_facebook_url) return null;
+
+    const whatsappNumber = contact_whatsapp?.replace(/[^0-9+]/g, "") || "";
+
+    return (
+      <Card key="contact">
+        <CardContent className="pt-5 space-y-3">
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Nous contacter</p>
+          <div className="flex flex-wrap gap-2">
+            {contact_email && (
+              <a
+                href={`mailto:${contact_email}`}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors text-sm font-medium"
+              >
+                <Mail className="h-4 w-4 text-primary" />
+                E-mail
+              </a>
+            )}
+            {contact_phone && (
+              <a
+                href={`tel:${contact_phone}`}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors text-sm font-medium"
+              >
+                <Phone className="h-4 w-4 text-primary" />
+                Appeler
+              </a>
+            )}
+            {contact_whatsapp && (
+              <a
+                href={`https://wa.me/${whatsappNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors text-sm font-medium"
+              >
+                <MessageCircle className="h-4 w-4 text-[hsl(var(--success))]" />
+                WhatsApp
+              </a>
+            )}
+            {contact_facebook_url && (
+              <a
+                href={contact_facebook_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors text-sm font-medium"
+              >
+                <Facebook className="h-4 w-4 text-[#1877F2]" />
+                Facebook
+              </a>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   const extractVideoEmbeds = (text: string) => {
     const lines = text.split("\n");
@@ -493,7 +550,7 @@ export default function BookingPortal() {
     pricing: renderPricing,
     payment_schedule: renderPaymentSchedule,
     house_rules: renderHouseRules,
-    
+    contact: renderContact,
   };
 
   const sectionOrder = settings.section_order.length > 0 ? settings.section_order : DEFAULT_SETTINGS.section_order;
