@@ -1,16 +1,27 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Copy, SprayCan, Calendar, Moon, Phone, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Copy, SprayCan, Calendar, Moon, Phone, User, ChevronLeft, ChevronRight,
+  Plus, Trash2, Settings2, UserCheck,
+} from "lucide-react";
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, differenceInCalendarDays, isWithinInterval, isBefore, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+
+// ── Types ────────────────────────────────────────────
 
 interface Booking {
   id: string;
@@ -23,17 +34,10 @@ interface Booking {
   status: string;
 }
 
-interface Listing {
-  id: string;
-  title: string;
-}
-
-interface Tenant {
-  id: string;
-  first_name: string;
-  last_name: string | null;
-  phone: string | null;
-}
+interface Listing { id: string; title: string; }
+interface Tenant { id: string; first_name: string; last_name: string | null; phone: string | null; }
+interface CleaningStaff { id: string; name: string; phone: string | null; }
+interface StaffAssignment { id: string; cleaning_staff_id: string; listing_id: string; }
 
 interface CleaningSlot {
   cleaningDate: Date;
@@ -41,33 +45,35 @@ interface CleaningSlot {
   nextCheckinBooking: Booking | null;
   tenant: Tenant | null;
   nextTenant: Tenant | null;
+  listingId: string;
   listingTitle: string;
-  hoursAvailable: number | null; // hours between checkout and next checkin (null = no next booking)
+  hoursAvailable: number | null;
+  staffMember: CleaningStaff | null;
 }
+
+// ── Component ────────────────────────────────────────
 
 export function HostCleaning() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedListingId, setSelectedListingId] = useState("all");
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [staffDialogOpen, setStaffDialogOpen] = useState(false);
 
-  // Fetch listings
+  // ── Data fetching ──────────────────────────────────
+
   const { data: listings = [] } = useQuery({
     queryKey: ["host-listings-cleaning", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from("listings")
-        .select("id, title")
-        .eq("host_user_id", user.id)
-        .order("title");
+      const { data, error } = await supabase.from("listings").select("id, title").eq("host_user_id", user.id).order("title");
       if (error) throw error;
       return data as Listing[];
     },
     enabled: !!user?.id,
   });
 
-  // Fetch bookings for a wide range around currentMonth
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
 
@@ -75,7 +81,6 @@ export function HostCleaning() {
     queryKey: ["host-cleaning-bookings", user?.id, format(monthStart, "yyyy-MM-dd")],
     queryFn: async () => {
       if (!user?.id) return [];
-      // Fetch bookings that overlap the month (checkout in this month means cleaning needed)
       const rangeStart = format(subMonths(monthStart, 1), "yyyy-MM-dd");
       const rangeEnd = format(addMonths(monthEnd, 1), "yyyy-MM-dd");
       const { data, error } = await supabase
@@ -91,20 +96,40 @@ export function HostCleaning() {
     enabled: !!user?.id,
   });
 
-  // Fetch tenants
   const { data: tenants = [] } = useQuery({
     queryKey: ["host-tenants-cleaning", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from("tenants")
-        .select("id, first_name, last_name, phone")
-        .eq("host_user_id", user.id);
+      const { data, error } = await supabase.from("tenants").select("id, first_name, last_name, phone").eq("host_user_id", user.id);
       if (error) throw error;
       return data as Tenant[];
     },
     enabled: !!user?.id,
   });
+
+  const { data: cleaningStaff = [] } = useQuery({
+    queryKey: ["cleaning-staff", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase.from("cleaning_staff").select("id, name, phone").eq("host_user_id", user.id).order("name");
+      if (error) throw error;
+      return data as CleaningStaff[];
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: staffAssignments = [] } = useQuery({
+    queryKey: ["cleaning-staff-listings", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase.from("cleaning_staff_listings").select("id, cleaning_staff_id, listing_id").eq("host_user_id", user.id);
+      if (error) throw error;
+      return data as StaffAssignment[];
+    },
+    enabled: !!user?.id,
+  });
+
+  // ── Lookups ────────────────────────────────────────
 
   const tenantMap = useMemo(() => {
     const map = new Map<string, Tenant>();
@@ -112,19 +137,28 @@ export function HostCleaning() {
     return map;
   }, [tenants]);
 
+  const staffByListing = useMemo(() => {
+    const map = new Map<string, CleaningStaff>();
+    for (const a of staffAssignments) {
+      const staff = cleaningStaff.find(s => s.id === a.cleaning_staff_id);
+      if (staff) map.set(a.listing_id, staff);
+    }
+    return map;
+  }, [staffAssignments, cleaningStaff]);
+
   const getTenant = (booking: Booking): Tenant | null => {
     const pb = booking.pricing_breakdown as any;
     if (pb?.tenant_id) return tenantMap.get(pb.tenant_id) || null;
     return null;
   };
 
-  // Build cleaning slots: each checkout that falls in the selected month = one cleaning
+  // ── Cleaning slots ────────────────────────────────
+
   const cleaningSlots = useMemo(() => {
     const filteredBookings = selectedListingId === "all"
       ? bookings
       : bookings.filter(b => b.listing_id === selectedListingId);
 
-    // Group by listing
     const byListing = new Map<string, Booking[]>();
     for (const b of filteredBookings) {
       const arr = byListing.get(b.listing_id) || [];
@@ -141,8 +175,6 @@ export function HostCleaning() {
       for (let i = 0; i < sorted.length; i++) {
         const booking = sorted[i];
         const checkoutDate = parseISO(booking.checkout_date);
-
-        // Only show cleanings where checkout is in the selected month
         if (!isWithinInterval(checkoutDate, { start: monthStart, end: monthEnd })) continue;
 
         const nextBooking = sorted[i + 1] || null;
@@ -156,86 +188,103 @@ export function HostCleaning() {
           nextCheckinBooking: nextBooking,
           tenant: getTenant(booking),
           nextTenant: nextBooking ? getTenant(nextBooking) : null,
+          listingId,
           listingTitle: listing?.title || "Bien inconnu",
           hoursAvailable,
+          staffMember: staffByListing.get(listingId) || null,
         });
       }
     }
 
     return slots.sort((a, b) => a.cleaningDate.getTime() - b.cleaningDate.getTime());
-  }, [bookings, selectedListingId, listings, monthStart, monthEnd, tenantMap]);
+  }, [bookings, selectedListingId, listings, monthStart, monthEnd, tenantMap, staffByListing]);
 
-  // Generate copyable message
-  const generateMessage = () => {
-    if (cleaningSlots.length === 0) return "";
+  // ── Message generation ─────────────────────────────
 
-    const monthLabel = format(currentMonth, "MMMM yyyy", { locale: fr });
-    let msg = `🧹 PLANNING MÉNAGE — ${monthLabel.toUpperCase()}\n`;
-    msg += "═".repeat(40) + "\n\n";
+  const buildSlotText = (slot: CleaningSlot) => {
+    const checkoutDay = format(slot.cleaningDate, "EEEE dd MMMM", { locale: fr });
+    const urgencyLabel = slot.hoursAvailable !== null && slot.hoursAvailable <= 24
+      ? " ⚠️ URGENT" : slot.hoursAvailable !== null && slot.hoursAvailable <= 48 ? " ⏰" : "";
 
-    for (const slot of cleaningSlots) {
-      const checkoutDay = format(slot.cleaningDate, "EEEE dd MMMM", { locale: fr });
-      const urgencyLabel = slot.hoursAvailable !== null && slot.hoursAvailable <= 24
-        ? " ⚠️ URGENT"
-        : slot.hoursAvailable !== null && slot.hoursAvailable <= 48
-          ? " ⏰"
-          : "";
+    let msg = `🏠 ${slot.listingTitle}\n`;
+    msg += `📅 Ménage le : ${checkoutDay}${urgencyLabel}\n`;
 
-      msg += `🏠 ${slot.listingTitle}\n`;
-      msg += `📅 Ménage le : ${checkoutDay}${urgencyLabel}\n`;
+    const tenantName = slot.tenant
+      ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
+      : extractTenantFromNotes(slot.checkoutBooking.notes);
+    msg += `👤 Départ : ${tenantName || "Non renseigné"}`;
+    if (slot.tenant?.phone) msg += ` — 📞 ${slot.tenant.phone}`;
+    msg += "\n";
+    msg += `   Séjour : ${format(parseISO(slot.checkoutBooking.checkin_date), "dd/MM")} → ${format(parseISO(slot.checkoutBooking.checkout_date), "dd/MM")} (${slot.checkoutBooking.nights} nuit${slot.checkoutBooking.nights > 1 ? "s" : ""})\n`;
 
-      // Outgoing tenant
-      const tenantName = slot.tenant
-        ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
-        : extractTenantFromNotes(slot.checkoutBooking.notes);
-      msg += `👤 Départ : ${tenantName || "Non renseigné"}`;
-      if (slot.tenant?.phone) msg += ` — 📞 ${slot.tenant.phone}`;
+    if (slot.nextCheckinBooking) {
+      const nextName = slot.nextTenant
+        ? `${slot.nextTenant.first_name} ${slot.nextTenant.last_name || ""}`.trim()
+        : extractTenantFromNotes(slot.nextCheckinBooking.notes);
+      const nextCheckin = format(parseISO(slot.nextCheckinBooking.checkin_date), "EEEE dd MMMM", { locale: fr });
+      msg += `👤 Arrivée suivante : ${nextName || "Non renseigné"} — ${nextCheckin}`;
+      if (slot.nextTenant?.phone) msg += ` — 📞 ${slot.nextTenant.phone}`;
       msg += "\n";
-
-      msg += `   Séjour : ${format(parseISO(slot.checkoutBooking.checkin_date), "dd/MM")} → ${format(parseISO(slot.checkoutBooking.checkout_date), "dd/MM")} (${slot.checkoutBooking.nights} nuit${slot.checkoutBooking.nights > 1 ? "s" : ""})\n`;
-
-      // Next tenant
-      if (slot.nextCheckinBooking) {
-        const nextName = slot.nextTenant
-          ? `${slot.nextTenant.first_name} ${slot.nextTenant.last_name || ""}`.trim()
-          : extractTenantFromNotes(slot.nextCheckinBooking.notes);
-        const nextCheckin = format(parseISO(slot.nextCheckinBooking.checkin_date), "EEEE dd MMMM", { locale: fr });
-        msg += `👤 Arrivée suivante : ${nextName || "Non renseigné"} — ${nextCheckin}`;
-        if (slot.nextTenant?.phone) msg += ` — 📞 ${slot.nextTenant.phone}`;
-        msg += "\n";
-
-        if (slot.hoursAvailable !== null) {
-          const days = Math.floor(slot.hoursAvailable / 24);
-          msg += `⏱️ Temps disponible : ${days} jour${days > 1 ? "s" : ""}\n`;
-        }
-      } else {
-        msg += `👤 Pas de réservation suivante\n`;
+      if (slot.hoursAvailable !== null) {
+        const days = Math.floor(slot.hoursAvailable / 24);
+        msg += `⏱️ Temps disponible : ${days} jour${days > 1 ? "s" : ""}\n`;
       }
-
-      msg += "\n";
+    } else {
+      msg += `👤 Pas de réservation suivante\n`;
     }
+    return msg;
+  };
 
+  const generateFullMessage = () => {
+    if (cleaningSlots.length === 0) return "";
+    const monthLabel = format(currentMonth, "MMMM yyyy", { locale: fr });
+    let msg = `🧹 PLANNING MÉNAGE — ${monthLabel.toUpperCase()}\n` + "═".repeat(40) + "\n\n";
+    for (const slot of cleaningSlots) msg += buildSlotText(slot) + "\n";
     return msg.trim();
   };
 
-  const handleCopy = () => {
-    const msg = generateMessage();
-    if (!msg) {
-      toast({ title: "Aucun ménage", description: "Aucun ménage prévu pour ce mois." });
-      return;
-    }
+  const generatePerStaffMessage = (staff: CleaningStaff) => {
+    const staffSlots = cleaningSlots.filter(s => s.staffMember?.id === staff.id);
+    if (staffSlots.length === 0) return "";
+    const monthLabel = format(currentMonth, "MMMM yyyy", { locale: fr });
+    let msg = `🧹 PLANNING MÉNAGE — ${staff.name.toUpperCase()}\n`;
+    msg += `📆 ${monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}\n`;
+    msg += "═".repeat(40) + "\n\n";
+    for (const slot of staffSlots) msg += buildSlotText(slot) + "\n";
+    return msg.trim();
+  };
+
+  const handleCopyAll = () => {
+    const msg = generateFullMessage();
+    if (!msg) { toast({ title: "Aucun ménage", description: "Aucun ménage prévu pour ce mois." }); return; }
     navigator.clipboard.writeText(msg);
-    toast({ title: "Copié !", description: "Le planning a été copié dans le presse-papiers." });
+    toast({ title: "Copié !", description: "Le planning complet a été copié." });
+  };
+
+  const handleCopyForStaff = (staff: CleaningStaff) => {
+    const msg = generatePerStaffMessage(staff);
+    if (!msg) { toast({ title: "Aucun ménage", description: `Aucun ménage prévu pour ${staff.name} ce mois.` }); return; }
+    navigator.clipboard.writeText(msg);
+    toast({ title: "Copié !", description: `Planning de ${staff.name} copié.` });
   };
 
   const isUrgent = (slot: CleaningSlot) => slot.hoursAvailable !== null && slot.hoursAvailable <= 24;
   const isTight = (slot: CleaningSlot) => slot.hoursAvailable !== null && slot.hoursAvailable <= 48 && !isUrgent(slot);
   const isPast = (slot: CleaningSlot) => isBefore(slot.cleaningDate, new Date()) && format(slot.cleaningDate, "yyyy-MM-dd") !== format(new Date(), "yyyy-MM-dd");
 
+  // Count per staff
+  const staffCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const s of cleaningSlots) {
+      if (s.staffMember) counts.set(s.staffMember.id, (counts.get(s.staffMember.id) || 0) + 1);
+    }
+    return counts;
+  }, [cleaningSlots]);
+
   return (
     <div className="container mx-auto px-4 py-6 lg:px-8 space-y-6">
       {/* Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-wrap">
         <Select value={selectedListingId} onValueChange={setSelectedListingId}>
           <SelectTrigger className="w-[260px]">
             <SelectValue placeholder="Tous les biens" />
@@ -260,11 +309,39 @@ export function HostCleaning() {
           </Button>
         </div>
 
-        <Button onClick={handleCopy} className="ml-auto" variant="outline">
-          <Copy className="h-4 w-4 mr-2" />
-          Copier le planning
-        </Button>
+        <div className="flex items-center gap-2 ml-auto">
+          <Button onClick={() => setStaffDialogOpen(true)} variant="outline" size="sm">
+            <Settings2 className="h-4 w-4 mr-2" />
+            Équipe ménage
+          </Button>
+          <Button onClick={handleCopyAll} variant="outline" size="sm">
+            <Copy className="h-4 w-4 mr-2" />
+            Copier tout
+          </Button>
+        </div>
       </div>
+
+      {/* Staff copy buttons */}
+      {cleaningStaff.length > 0 && (
+        <div className="flex gap-2 flex-wrap">
+          {cleaningStaff.map(staff => {
+            const count = staffCounts.get(staff.id) || 0;
+            return (
+              <Button
+                key={staff.id}
+                variant="secondary"
+                size="sm"
+                onClick={() => handleCopyForStaff(staff)}
+                className="gap-2"
+              >
+                <Copy className="h-3.5 w-3.5" />
+                {staff.name}
+                {count > 0 && <Badge variant="outline" className="ml-1 text-xs px-1.5">{count}</Badge>}
+              </Button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Summary */}
       <div className="flex gap-3 flex-wrap">
@@ -321,6 +398,12 @@ export function HostCleaning() {
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground">{slot.listingTitle}</p>
+                      {slot.staffMember && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <UserCheck className="h-3.5 w-3.5 text-primary" />
+                          <span className="text-xs font-medium">{slot.staffMember.name}</span>
+                        </div>
+                      )}
                       {isUrgent(slot) && (
                         <Badge variant="destructive" className="mt-1 text-xs">⚠️ Enchaînement immédiat</Badge>
                       )}
@@ -390,7 +473,157 @@ export function HostCleaning() {
           })}
         </div>
       )}
+
+      {/* Staff management dialog */}
+      <CleaningStaffDialog
+        open={staffDialogOpen}
+        onOpenChange={setStaffDialogOpen}
+        staff={cleaningStaff}
+        assignments={staffAssignments}
+        listings={listings}
+      />
     </div>
+  );
+}
+
+// ── Staff management dialog ──────────────────────────
+
+function CleaningStaffDialog({
+  open, onOpenChange, staff, assignments, listings,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  staff: CleaningStaff[];
+  assignments: StaffAssignment[];
+  listings: Listing[];
+}) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [newName, setNewName] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["cleaning-staff"] });
+    queryClient.invalidateQueries({ queryKey: ["cleaning-staff-listings"] });
+  };
+
+  const handleAddStaff = async () => {
+    if (!user?.id || !newName.trim()) return;
+    setSaving(true);
+    const { error } = await supabase.from("cleaning_staff").insert({
+      host_user_id: user.id,
+      name: newName.trim(),
+      phone: newPhone.trim() || null,
+    });
+    setSaving(false);
+    if (error) { toast({ title: "Erreur", description: error.message, variant: "destructive" }); return; }
+    setNewName("");
+    setNewPhone("");
+    invalidate();
+  };
+
+  const handleDeleteStaff = async (id: string) => {
+    const { error } = await supabase.from("cleaning_staff").delete().eq("id", id);
+    if (error) { toast({ title: "Erreur", description: error.message, variant: "destructive" }); return; }
+    invalidate();
+  };
+
+  const handleToggleAssignment = async (staffId: string, listingId: string) => {
+    if (!user?.id) return;
+    const existing = assignments.find(a => a.cleaning_staff_id === staffId && a.listing_id === listingId);
+    if (existing) {
+      // Also remove any other staff assigned to this listing
+      await supabase.from("cleaning_staff_listings").delete().eq("id", existing.id);
+    } else {
+      // Remove existing assignment for this listing (one cleaner per listing)
+      const otherAssignment = assignments.find(a => a.listing_id === listingId);
+      if (otherAssignment) {
+        await supabase.from("cleaning_staff_listings").delete().eq("id", otherAssignment.id);
+      }
+      await supabase.from("cleaning_staff_listings").insert({
+        cleaning_staff_id: staffId,
+        listing_id: listingId,
+        host_user_id: user.id,
+      });
+    }
+    invalidate();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Équipe de ménage</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Add new staff */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Ajouter une personne</Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Nom"
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                className="flex-1"
+              />
+              <Input
+                placeholder="Téléphone"
+                value={newPhone}
+                onChange={e => setNewPhone(e.target.value)}
+                className="w-[140px]"
+              />
+              <Button onClick={handleAddStaff} disabled={!newName.trim() || saving} size="icon">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Staff list with listing assignments */}
+          {staff.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Aucune personne ajoutée.</p>
+          ) : (
+            <div className="space-y-5">
+              {staff.map(s => (
+                <div key={s.id} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-medium text-sm">{s.name}</span>
+                      {s.phone && <span className="text-xs text-muted-foreground ml-2">{s.phone}</span>}
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteStaff(s.id)}>
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                  <div className="pl-2 space-y-1.5">
+                    {listings.map(l => {
+                      const isAssigned = assignments.some(a => a.cleaning_staff_id === s.id && a.listing_id === l.id);
+                      return (
+                        <label key={l.id} className="flex items-center gap-2 cursor-pointer text-sm">
+                          <Checkbox
+                            checked={isAssigned}
+                            onCheckedChange={() => handleToggleAssignment(s.id, l.id)}
+                          />
+                          {l.title}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
