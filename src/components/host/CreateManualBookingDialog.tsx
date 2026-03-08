@@ -508,6 +508,25 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
               );
             })}
 
+            {/* Beach Cabin */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="beach-cabin"
+                checked={beachCabin}
+                onCheckedChange={(checked) => setBeachCabin(checked === true)}
+              />
+              <Label htmlFor="beach-cabin" className="text-sm font-normal cursor-pointer">
+                Cabine de plage incluse
+              </Label>
+              {checkinDate && checkoutDate && portalSettings && isBeachCabinPeriod(
+                checkinDate, checkoutDate,
+                portalSettings.beach_cabin_start_month, portalSettings.beach_cabin_start_day,
+                portalSettings.beach_cabin_end_month, portalSettings.beach_cabin_end_day
+              ) && (
+                <Badge variant="secondary" className="text-xs">Période cabine</Badge>
+              )}
+            </div>
+
             {/* Igloohome Code */}
             <div>
               <Label>Code clé Igloohome</Label>
