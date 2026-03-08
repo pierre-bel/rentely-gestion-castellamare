@@ -14,7 +14,7 @@ import {
 import {
   format, startOfMonth, endOfMonth, addMonths, subMonths, parseISO,
   differenceInCalendarDays, isBefore, startOfDay, isSameDay,
-  eachDayOfInterval, getDay, isSameMonth,
+  eachDayOfInterval, isSameMonth, startOfWeek, endOfWeek,
 } from "date-fns";
 import { fr } from "date-fns/locale";
 
