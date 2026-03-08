@@ -245,7 +245,39 @@ export function HostPaymentsBookingsList() {
         />
       </div>
 
-      <Card>
+      {/* Mobile: card layout */}
+      <div className="space-y-3 md:hidden">
+        {filteredAndSorted.map(booking => {
+          const status = getPaymentStatus(booking.payment_items);
+          return (
+            <div
+              key={booking.id}
+              className={`p-3 border rounded-lg cursor-pointer transition-colors ${status === "overdue" ? "border-destructive/30 bg-destructive/5" : "border-border"} hover:bg-muted/50`}
+              onClick={() => handleView(booking)}
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="font-medium text-sm truncate">{booking.listing_title}</p>
+                <PaymentStatusBadge status={status} />
+              </div>
+              <p className="text-xs text-muted-foreground">{booking.tenant_name}</p>
+              <div className="flex items-center justify-between mt-1.5">
+                <span className="text-xs text-muted-foreground">
+                  {format(new Date(booking.checkin_date), "dd/MM/yyyy")} - {format(new Date(booking.checkout_date), "dd/MM/yyyy")}
+                </span>
+                <span className="text-sm font-semibold">{booking.total_price.toFixed(2)} €</span>
+              </div>
+            </div>
+          );
+        })}
+        {filteredAndSorted.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground text-sm">
+            Aucun résultat pour « {search} »
+          </div>
+        )}
+      </div>
+
+      {/* Desktop: table layout */}
+      <Card className="hidden md:block">
         <CardContent className="p-0">
           <div className="rounded-lg border overflow-hidden">
             <Table>
