@@ -64,24 +64,52 @@ const getInitials = (name: string | null) => {
 
 const headers = ["ID", "Bien", "Locataire", "Dates", "Montant", "Statut", "Action"];
 
+const BookingActions = ({ booking, onCancelBooking, onContactSupport, onContactGuest, onEditBooking, onViewDetails }: {
+  booking: Booking;
+  onCancelBooking: (b: Booking) => void;
+  onContactSupport: (b: Booking) => void;
+  onContactGuest: (b: Booking) => void;
+  onEditBooking?: (b: Booking) => void;
+  onViewDetails?: (b: Booking) => void;
+}) => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="ghost" size="icon">
+        <MoreVertical className="h-4 w-4" />
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end">
+      {(booking.status === 'confirmed' || booking.status === 'pending_payment') && onEditBooking && (
+        <DropdownMenuItem onClick={() => onEditBooking(booking)}>
+          Modifier la réservation
+        </DropdownMenuItem>
+      )}
+      {booking.status === 'confirmed' && (
+        <DropdownMenuItem
+          onClick={() => onCancelBooking(booking)}
+          className="text-destructive focus:text-destructive"
+        >
+          Annuler la réservation
+        </DropdownMenuItem>
+      )}
+      <DropdownMenuItem onClick={() => onViewDetails?.(booking)}>Voir les détails</DropdownMenuItem>
+      <DropdownMenuItem onClick={() => onContactGuest(booking)}>
+        Contacter le locataire
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={() => onContactSupport(booking)}>
+        Contacter le support
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+);
+
 export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSupport, onContactGuest, onEditBooking, onViewDetails }: BookingsTableProps) => {
   if (loading) {
     return (
-      <div className="rounded-lg border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-background hover:bg-background">
-              {headers.map((h) => <TableHead key={h} className="font-semibold">{h}</TableHead>)}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {[...Array(5)].map((_, i) => (
-              <TableRow key={i} className={i % 2 === 0 ? "bg-muted/30" : ""}>
-                {headers.map((h) => <TableCell key={h}><Skeleton className="h-4 w-20" /></TableCell>)}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="space-y-3">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-20 w-full rounded-lg" />
+        ))}
       </div>
     );
   }
@@ -98,80 +126,100 @@ export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSup
   }
 
   return (
-    <div className="rounded-lg border overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-background hover:bg-background">
-            {headers.map((h, i) => (
-              <TableHead key={h} className={`font-semibold ${i === headers.length - 1 ? "text-right" : ""}`}>{h}</TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {bookings.map((booking, index) => (
-            <TableRow
-              key={booking.id}
-              className={index % 2 === 0 ? "bg-muted/30 hover:bg-muted/50" : "hover:bg-muted/50"}
-            >
-              <TableCell className="font-mono text-sm">
-                {booking.id.slice(0, 8)}
-              </TableCell>
-              <TableCell className="font-medium">
-                {booking.listing_title}
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={booking.guest_avatar || ""} alt={booking.guest_name || "Locataire"} />
-                    <AvatarFallback>{getInitials(booking.guest_name)}</AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium">{booking.guest_name || "Locataire inconnu"}</span>
+    <>
+      {/* Mobile: card layout */}
+      <div className="space-y-3 md:hidden">
+        {bookings.map((booking) => (
+          <div key={booking.id} className="p-3 border border-border rounded-lg bg-card">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <Avatar className="h-8 w-8 shrink-0">
+                  <AvatarImage src={booking.guest_avatar || ""} />
+                  <AvatarFallback>{getInitials(booking.guest_name)}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="font-medium text-sm truncate">{booking.guest_name || "Locataire inconnu"}</p>
+                  <p className="text-xs text-muted-foreground truncate">{booking.listing_title}</p>
                 </div>
-              </TableCell>
-              <TableCell>
+              </div>
+              <BookingActions
+                booking={booking}
+                onCancelBooking={onCancelBooking}
+                onContactSupport={onContactSupport}
+                onContactGuest={onContactGuest}
+                onEditBooking={onEditBooking}
+                onViewDetails={onViewDetails}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
                 {formatBookingDates(booking.checkin_date, booking.checkout_date)}
-              </TableCell>
-              <TableCell className="font-semibold">
-                {formatPrice(booking.host_payout_gross)}
-              </TableCell>
-              <TableCell>
-                <StatusBadge status={booking.status} />
-              </TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {(booking.status === 'confirmed' || booking.status === 'pending_payment') && onEditBooking && (
-                      <DropdownMenuItem onClick={() => onEditBooking(booking)}>
-                        Modifier la réservation
-                      </DropdownMenuItem>
-                    )}
-                    {booking.status === 'confirmed' && (
-                      <DropdownMenuItem 
-                        onClick={() => onCancelBooking(booking)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        Annuler la réservation
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={() => onViewDetails?.(booking)}>Voir les détails</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onContactGuest(booking)}>
-                      Contacter le locataire
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onContactSupport(booking)}>
-                      Contacter le support
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
+              </span>
+              <StatusBadge status={booking.status} />
+            </div>
+            <div className="flex items-center justify-between mt-1.5">
+              <span className="text-xs text-muted-foreground font-mono">{booking.id.slice(0, 8)}</span>
+              <span className="text-sm font-semibold">{formatPrice(booking.host_payout_gross)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop: table layout */}
+      <div className="hidden md:block rounded-lg border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-background hover:bg-background">
+              {headers.map((h, i) => (
+                <TableHead key={h} className={`font-semibold ${i === headers.length - 1 ? "text-right" : ""}`}>{h}</TableHead>
+              ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {bookings.map((booking, index) => (
+              <TableRow
+                key={booking.id}
+                className={index % 2 === 0 ? "bg-muted/30 hover:bg-muted/50" : "hover:bg-muted/50"}
+              >
+                <TableCell className="font-mono text-sm">
+                  {booking.id.slice(0, 8)}
+                </TableCell>
+                <TableCell className="font-medium">
+                  {booking.listing_title}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={booking.guest_avatar || ""} alt={booking.guest_name || "Locataire"} />
+                      <AvatarFallback>{getInitials(booking.guest_name)}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium">{booking.guest_name || "Locataire inconnu"}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {formatBookingDates(booking.checkin_date, booking.checkout_date)}
+                </TableCell>
+                <TableCell className="font-semibold">
+                  {formatPrice(booking.host_payout_gross)}
+                </TableCell>
+                <TableCell>
+                  <StatusBadge status={booking.status} />
+                </TableCell>
+                <TableCell className="text-right">
+                  <BookingActions
+                    booking={booking}
+                    onCancelBooking={onCancelBooking}
+                    onContactSupport={onContactSupport}
+                    onContactGuest={onContactGuest}
+                    onEditBooking={onEditBooking}
+                    onViewDetails={onViewDetails}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 };

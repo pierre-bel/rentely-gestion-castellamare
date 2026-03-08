@@ -99,7 +99,7 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
         {[...Array(6)].map((_, i) => (
           <Card key={i} className="bg-muted/5">
             <CardContent className="p-6">
@@ -176,7 +176,7 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
       {metrics.map((metric, index) => {
         const Icon = metric.icon;
         return (
@@ -185,12 +185,12 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
             className="bg-card hover:shadow-md transition-shadow cursor-pointer"
             onClick={() => navigate(metric.href)}
           >
-            <CardContent className="p-6">
-              <div className={`inline-flex p-3 rounded-lg ${metric.bgColor} mb-4`}>
-                <Icon className={`h-5 w-5 ${metric.iconColor}`} />
+            <CardContent className="p-3 md:p-6">
+              <div className={`inline-flex p-2 md:p-3 rounded-lg ${metric.bgColor} mb-2 md:mb-4`}>
+                <Icon className={`h-4 w-4 md:h-5 md:w-5 ${metric.iconColor}`} />
               </div>
-              <p className="text-sm text-muted-foreground mb-1">{metric.label}</p>
-              <p className="text-2xl font-bold text-foreground">{metric.value}</p>
+              <p className="text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">{metric.label}</p>
+              <p className="text-lg md:text-2xl font-bold text-foreground">{metric.value}</p>
             </CardContent>
           </Card>
         );

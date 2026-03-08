@@ -374,8 +374,8 @@ export default function HostBookings() {
     <Card className="bg-card">
       <CardContent className="p-6">
         {/* Controls Row */}
-        <div className="flex items-center justify-between gap-4 mb-6">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
@@ -386,14 +386,15 @@ export default function HostBookings() {
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button onClick={() => setManualBookingOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nouvelle réservation
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button onClick={() => setManualBookingOpen(true)} size="sm">
+              <Plus className="h-4 w-4 mr-1.5" />
+              <span className="hidden sm:inline">Nouvelle réservation</span>
+              <span className="sm:hidden">Nouveau</span>
             </Button>
-            <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
-              <Upload className="h-4 w-4 mr-2" />
-              Importer
+            <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
+              <Upload className="h-4 w-4 sm:mr-1.5" />
+              <span className="hidden sm:inline">Importer</span>
             </Button>
             <BookingsFiltersSheet
               statusFilter={statusFilter}
@@ -407,16 +408,16 @@ export default function HostBookings() {
               onClearFilters={handleClearFilters}
             />
             <Select value={sortValue} onValueChange={setSortValue}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[160px] sm:w-[200px]">
                 <SelectValue placeholder="Trier par" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="created_at-desc">Date : Plus récent</SelectItem>
-                <SelectItem value="created_at-asc">Date : Plus ancien</SelectItem>
-                <SelectItem value="host_payout_gross-desc">Montant : Décroissant</SelectItem>
-                <SelectItem value="host_payout_gross-asc">Montant : Croissant</SelectItem>
-                <SelectItem value="checkin_date-desc">Arrivée : Plus récent</SelectItem>
-                <SelectItem value="checkin_date-asc">Arrivée : Plus ancien</SelectItem>
+                <SelectItem value="created_at-desc">Plus récent</SelectItem>
+                <SelectItem value="created_at-asc">Plus ancien</SelectItem>
+                <SelectItem value="host_payout_gross-desc">Montant ↓</SelectItem>
+                <SelectItem value="host_payout_gross-asc">Montant ↑</SelectItem>
+                <SelectItem value="checkin_date-desc">Arrivée ↓</SelectItem>
+                <SelectItem value="checkin_date-asc">Arrivée ↑</SelectItem>
               </SelectContent>
             </Select>
           </div>

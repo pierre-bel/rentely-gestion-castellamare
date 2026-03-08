@@ -15,16 +15,16 @@ const HostDashboard = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="container mx-auto px-4 pb-8 lg:px-8">
+    <div className="container mx-auto px-3 pb-8 sm:px-4 lg:px-8">
       {/* Aperçu des revenus */}
       <Card className="bg-card">
         <CardHeader className="border-b pb-4">
-          <CardTitle className="text-2xl font-bold">Aperçu des revenus</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl font-bold">Aperçu des revenus</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
             Indicateurs de performance sur toute la période
           </p>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-3 sm:p-6">
           {user ? (
             <DashboardEarningsSummary userId={user.id} />
           ) : (

@@ -205,29 +205,29 @@ export function HostPaymentsBookingsList() {
   return (
     <>
       {/* Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
         <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Total attendu</p>
-            <p className="text-2xl font-bold">{totalRevenue.toFixed(2)} €</p>
+          <CardContent className="p-3 md:p-4">
+            <p className="text-xs md:text-sm text-muted-foreground">Total attendu</p>
+            <p className="text-lg md:text-2xl font-bold">{totalRevenue.toFixed(2)} €</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Encaissé</p>
-            <p className="text-2xl font-bold text-green-600">{paidTotal.toFixed(2)} €</p>
+          <CardContent className="p-3 md:p-4">
+            <p className="text-xs md:text-sm text-muted-foreground">Encaissé</p>
+            <p className="text-lg md:text-2xl font-bold text-green-600">{paidTotal.toFixed(2)} €</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">En attente</p>
-            <p className="text-2xl font-bold text-amber-600">{pendingTotal.toFixed(2)} €</p>
+          <CardContent className="p-3 md:p-4">
+            <p className="text-xs md:text-sm text-muted-foreground">En attente</p>
+            <p className="text-lg md:text-2xl font-bold text-amber-600">{pendingTotal.toFixed(2)} €</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">En retard</p>
-            <p className={`text-2xl font-bold ${overdueTotal > 0 ? "text-destructive animate-pulse" : "text-muted-foreground"}`}>
+          <CardContent className="p-3 md:p-4">
+            <p className="text-xs md:text-sm text-muted-foreground">En retard</p>
+            <p className={`text-lg md:text-2xl font-bold ${overdueTotal > 0 ? "text-destructive animate-pulse" : "text-muted-foreground"}`}>
               {overdueTotal.toFixed(2)} €
             </p>
           </CardContent>
@@ -245,7 +245,39 @@ export function HostPaymentsBookingsList() {
         />
       </div>
 
-      <Card>
+      {/* Mobile: card layout */}
+      <div className="space-y-3 md:hidden">
+        {filteredAndSorted.map(booking => {
+          const status = getPaymentStatus(booking.payment_items);
+          return (
+            <div
+              key={booking.id}
+              className={`p-3 border rounded-lg cursor-pointer transition-colors ${status === "overdue" ? "border-destructive/30 bg-destructive/5" : "border-border"} hover:bg-muted/50`}
+              onClick={() => handleView(booking)}
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="font-medium text-sm truncate">{booking.listing_title}</p>
+                <PaymentStatusBadge status={status} />
+              </div>
+              <p className="text-xs text-muted-foreground">{booking.tenant_name}</p>
+              <div className="flex items-center justify-between mt-1.5">
+                <span className="text-xs text-muted-foreground">
+                  {format(new Date(booking.checkin_date), "dd/MM/yyyy")} - {format(new Date(booking.checkout_date), "dd/MM/yyyy")}
+                </span>
+                <span className="text-sm font-semibold">{booking.total_price.toFixed(2)} €</span>
+              </div>
+            </div>
+          );
+        })}
+        {filteredAndSorted.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground text-sm">
+            Aucun résultat pour « {search} »
+          </div>
+        )}
+      </div>
+
+      {/* Desktop: table layout */}
+      <Card className="hidden md:block">
         <CardContent className="p-0">
           <div className="rounded-lg border overflow-hidden">
             <Table>

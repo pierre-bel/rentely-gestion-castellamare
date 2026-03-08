@@ -130,31 +130,10 @@ export default function DashboardUpcomingBookings({ userId }: DashboardUpcomingB
 
   if (isLoading) {
     return (
-      <div className="border border-border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-background hover:bg-background">
-              <TableHead className="font-semibold">Locataire</TableHead>
-              <TableHead className="font-semibold">Bien</TableHead>
-              <TableHead className="font-semibold">Dates</TableHead>
-              <TableHead className="font-semibold">Arrivée</TableHead>
-              <TableHead className="font-semibold">Statut</TableHead>
-              <TableHead className="font-semibold text-right">Montant</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {[...Array(5)].map((_, i) => (
-              <TableRow key={i} className={i % 2 === 0 ? "bg-muted/30" : ""}>
-                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                <TableCell><Skeleton className="h-6 w-24" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-20 ml-auto" /></TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} className="h-20 w-full rounded-lg" />
+        ))}
       </div>
     );
   }
@@ -170,7 +149,44 @@ export default function DashboardUpcomingBookings({ userId }: DashboardUpcomingB
 
   return (
     <>
-      <div className="border border-border rounded-lg overflow-hidden">
+      {/* Mobile: card layout */}
+      <div className="space-y-3 md:hidden">
+        {bookings.map((booking) => {
+          const daysInfo = getDaysUntilLabel(booking.checkin_date);
+          return (
+            <div
+              key={booking.id}
+              className="p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => handleRowClick(booking)}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarImage src={booking.guest_avatar || ""} />
+                    <AvatarFallback>{getInitials(booking.guest_name)}</AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium truncate text-sm">
+                    {booking.guest_name || booking.guest_email}
+                  </span>
+                </div>
+                <Badge variant="outline" className={`shrink-0 text-xs ${daysInfo.className}`}>
+                  {daysInfo.label}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground truncate">{booking.listing_title}</p>
+              <div className="flex items-center justify-between mt-1.5">
+                <span className="text-xs text-muted-foreground">
+                  {formatBookingDates(booking.checkin_date, booking.checkout_date)}
+                </span>
+                <span className="text-sm font-semibold">{formatPrice(booking.host_payout_gross)}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop: table layout */}
+      <div className="hidden md:block border border-border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-background hover:bg-background">
