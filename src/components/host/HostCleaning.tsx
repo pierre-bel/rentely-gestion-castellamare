@@ -541,6 +541,10 @@ export function HostCleaning() {
               </Card>
             );
           })}
+                </div>
+              </div>
+            ));
+          })()}
         </div>
       )}
 
