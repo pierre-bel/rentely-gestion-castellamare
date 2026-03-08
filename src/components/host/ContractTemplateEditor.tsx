@@ -8,7 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { TextStyle } from "@tiptap/extension-text-style";
+import Color from "@tiptap/extension-color";
+import Highlight from "@tiptap/extension-highlight";
+import TextAlign from "@tiptap/extension-text-align";
+import Underline from "@tiptap/extension-underline";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableCell } from "@tiptap/extension-table-cell";
+import { TableHeader } from "@tiptap/extension-table-header";
+import ContractToolbar from "./ContractToolbar";
 
 const DYNAMIC_VARIABLES = [
   { key: "{{guest_name}}", label: "Nom du locataire" },
@@ -33,15 +44,33 @@ export const ContractTemplateEditor = ({ template, onSave, onCancel }: ContractT
   const { user } = useAuth();
   const { toast } = useToast();
   const [name, setName] = useState(template?.name || "");
-  const [bodyHtml, setBodyHtml] = useState(template?.body_html || "");
   const [saving, setSaving] = useState(false);
 
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      TextStyle,
+      Color,
+      Highlight.configure({ multicolor: true }),
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      Underline,
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableCell,
+      TableHeader,
+    ],
+    content: template?.body_html || "<p></p>",
+  });
+
   const insertVariable = (variable: string) => {
-    setBodyHtml((prev) => prev + variable);
+    if (editor) {
+      editor.chain().focus().insertContent(variable).run();
+    }
   };
 
   const handleSave = async () => {
-    if (!user || !name.trim()) return;
+    if (!user || !name.trim() || !editor) return;
+    const bodyHtml = editor.getHTML();
     setSaving(true);
 
     if (template) {
@@ -88,13 +117,16 @@ export const ContractTemplateEditor = ({ template, onSave, onCancel }: ContractT
           </div>
           <div>
             <Label>Contenu du contrat</Label>
-            <Textarea
-              value={bodyHtml}
-              onChange={(e) => setBodyHtml(e.target.value)}
-              placeholder="Rédigez votre contrat ici. Utilisez les variables dynamiques pour personnaliser automatiquement le contenu."
-              rows={20}
-              className="font-mono text-sm"
-            />
+            <div className="border rounded-lg overflow-hidden mt-1.5">
+              <ContractToolbar editor={editor} />
+              <EditorContent
+                editor={editor}
+                className="prose prose-sm max-w-none p-4 min-h-[400px] focus-within:outline-none [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[380px] [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_table]:w-full [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-border [&_.ProseMirror_td]:p-2 [&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-border [&_.ProseMirror_th]:p-2 [&_.ProseMirror_th]:bg-muted/50 [&_.ProseMirror_th]:font-semibold"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Utilisez la barre d'outils pour mettre en forme. Les variables {"{{...}}"} seront remplacées automatiquement lors de la génération.
+            </p>
           </div>
           <div className="flex gap-3">
             <Button onClick={handleSave} disabled={saving || !name.trim()}>
@@ -111,7 +143,7 @@ export const ContractTemplateEditor = ({ template, onSave, onCancel }: ContractT
           </CardHeader>
           <CardContent className="space-y-2">
             <p className="text-xs text-muted-foreground mb-3">
-              Cliquez pour insérer une variable dans le contrat. Elle sera remplacée automatiquement lors de la génération.
+              Cliquez pour insérer une variable à la position du curseur. Elle sera remplacée automatiquement lors de la génération.
             </p>
             <div className="flex flex-wrap gap-2">
               {DYNAMIC_VARIABLES.map((v) => (
