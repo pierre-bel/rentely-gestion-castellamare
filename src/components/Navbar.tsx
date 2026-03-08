@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, User, LogOut } from "lucide-react";
+import { Home, User, LogOut, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { AuthDialog } from "@/components/AuthDialog";
@@ -32,6 +32,26 @@ const Navbar = () => {
             <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
               Accueil
             </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors outline-none">
+                Fonctionnalités
+                <ChevronDown className="h-3.5 w-3.5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link to="/features/calendar">Calendrier & Disponibilités</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/features/bookings">Réservations & Paiements</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/features/automation">Communication & Automatisation</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/features/tools">Outils avancés</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {user && (
               <Link to="/host/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
                 Tableau de bord
@@ -49,6 +69,26 @@ const Navbar = () => {
             <Link to="/" className="text-[10px] sm:text-xs font-medium hover:text-primary transition-colors px-1">
               Accueil
             </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-0.5 text-[10px] sm:text-xs font-medium hover:text-primary transition-colors px-1 outline-none">
+                Fonctionnalités
+                <ChevronDown className="h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link to="/features/calendar">Calendrier</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/features/bookings">Réservations</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/features/automation">Automatisation</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/features/tools">Outils</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {user && (
               <Link to="/host/dashboard" className="text-[10px] sm:text-xs font-medium hover:text-primary transition-colors px-1">
                 Tableau de bord
@@ -71,7 +111,6 @@ const Navbar = () => {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {/* Espace voyageur masqué — conservé pour usage futur */}
                   {isHost && (
                     <DropdownMenuItem asChild>
                       <Link to="/host/dashboard">Gestion des biens</Link>
