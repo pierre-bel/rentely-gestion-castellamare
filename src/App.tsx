@@ -28,6 +28,7 @@ import EmbedAllAvailability from "./pages/EmbedAllAvailability";
 import HostPayouts from "./pages/host/Payouts";
 import EarningsReport from "./pages/host/EarningsReport";
 import HostPricingPage from "./pages/host/Pricing";
+import HostCleaningPage from "./pages/host/Cleaning";
 import EmailAutomations from "./pages/host/EmailAutomations";
 import PortalSettings from "./pages/host/PortalSettings";
 import ListingDetail from "./pages/ListingDetail";
@@ -88,6 +89,7 @@ const App = () => (
               <Route path="bookings" element={<HostBookings />} />
               <Route path="tenants" element={<HostTenants />} />
               <Route path="pricing" element={<HostPricingPage />} />
+              <Route path="cleaning" element={<HostCleaningPage />} />
               <Route path="payouts" element={<HostPayouts />} />
               <Route path="earnings-report" element={<EarningsReport />} />
               <Route path="inbox" element={<HostInbox />} />
