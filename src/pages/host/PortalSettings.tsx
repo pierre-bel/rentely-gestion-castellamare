@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, Eye, Globe, GripVertical, Plus, Trash2, Pencil, ExternalLink } from "lucide-react";
+import { Loader2, Save, Eye, Globe, GripVertical, Plus, Trash2, Pencil, ExternalLink, Mail, Phone, MessageCircle, Facebook } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
