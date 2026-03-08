@@ -220,8 +220,8 @@ export function HostPricing() {
               }
             }
 
-            // Align to Monday
-            weekStart = startOfWeek(weekStart, { weekStartsOn: 1 });
+            // Align to Saturday
+            weekStart = startOfWeek(weekStart, { weekStartsOn: 6 });
 
             const nightly = parseFloat(row["Tarif nuit (semaine) €"]) || 0;
             const weekend = parseFloat(row["Tarif nuit (week-end) €"]) || 0;
