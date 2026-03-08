@@ -28,6 +28,7 @@ const DYNAMIC_VARIABLES_GROUPS = [
       { key: "{{guest_name}}", label: "Nom complet" },
       { key: "{{guest_first_name}}", label: "Prénom" },
       { key: "{{guest_last_name}}", label: "Nom" },
+      { key: "{{guest_civility}}", label: "Civilité (Monsieur/Madame)" },
       { key: "{{guest_email}}", label: "E-mail" },
       { key: "{{guest_phone}}", label: "Téléphone" },
     ],

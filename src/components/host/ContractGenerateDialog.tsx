@@ -122,6 +122,7 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       "{{guest_last_name}}": guest?.last_name || "N/A",
       "{{guest_email}}": guest?.email || "N/A",
       "{{guest_phone}}": guest?.phone || "N/A",
+      "{{guest_civility}}": getCivility(tenantGender),
       // Booking
       "{{booking_id}}": booking.id,
       "{{checkin_date}}": formatDate(booking.checkin_date),
