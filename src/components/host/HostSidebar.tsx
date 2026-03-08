@@ -18,6 +18,7 @@ const defaultNavigation: NavigationItem[] = [
   { name: "Calendrier", href: "/host/availability", icon: Calendar },
   { name: "Messages", href: "/host/inbox", icon: Inbox },
   { name: "Réservations", href: "/host/bookings", icon: Calendar },
+  { name: "Tarifs", href: "/host/pricing", icon: Euro },
   { name: "Locataires", href: "/host/tenants", icon: Users },
   { name: "Paiements", href: "/host/payouts", icon: DollarSign },
   { name: "E-mails auto", href: "/host/email-automations", icon: Mail },

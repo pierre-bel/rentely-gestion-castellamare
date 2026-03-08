@@ -87,6 +87,7 @@ const App = () => (
               <Route path="availability" element={<HostAvailability />} />
               <Route path="bookings" element={<HostBookings />} />
               <Route path="tenants" element={<HostTenants />} />
+              <Route path="pricing" element={<HostPricingPage />} />
               <Route path="payouts" element={<HostPayouts />} />
               <Route path="earnings-report" element={<EarningsReport />} />
               <Route path="inbox" element={<HostInbox />} />
