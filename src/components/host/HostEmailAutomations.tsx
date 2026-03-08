@@ -46,6 +46,7 @@ interface EmailAutomation {
   reply_to_email: string | null;
   recipient_type: string;
   recipient_email: string | null;
+  send_if_late: boolean;
   created_at: string;
 }
 
@@ -83,6 +84,7 @@ export default function HostEmailAutomations() {
   const [formListingIds, setFormListingIds] = useState<string[]>([]);
   const [formRecipientType, setFormRecipientType] = useState("tenant");
   const [formRecipientEmail, setFormRecipientEmail] = useState("");
+  const [formSendIfLate, setFormSendIfLate] = useState(false);
 
   const { data: automations = [], isLoading } = useQuery({
     queryKey: ["email-automations", user?.id],
@@ -188,6 +190,7 @@ export default function HostEmailAutomations() {
     setFormListingIds([]);
     setFormRecipientType("tenant");
     setFormRecipientEmail("");
+    setFormSendIfLate(false);
     setDialogOpen(true);
   };
 
@@ -203,6 +206,7 @@ export default function HostEmailAutomations() {
     setFormListingIds(auto.listing_ids || []);
     setFormRecipientType(auto.recipient_type || "tenant");
     setFormRecipientEmail(auto.recipient_email || "");
+    setFormSendIfLate((auto as any).send_if_late || false);
     setDialogOpen(true);
   };
 
@@ -226,6 +230,7 @@ export default function HostEmailAutomations() {
       listing_ids: formListingIds.length > 0 ? formListingIds : [],
       recipient_type: formRecipientType,
       recipient_email: formRecipientType === "fixed" ? formRecipientEmail : formRecipientType === "host" ? user?.email || null : null,
+      send_if_late: formSendIfLate,
     });
   };
 
@@ -587,6 +592,18 @@ export default function HostEmailAutomations() {
             <EmailBodyEditor value={formBody} onChange={setFormBody} />
 
             <DynamicVariablesPanel />
+
+            {showDays && (
+              <div className="flex items-center gap-2">
+                <Switch checked={formSendIfLate} onCheckedChange={setFormSendIfLate} />
+                <Label className="font-normal">Envoyer même en cas de retard</Label>
+              </div>
+            )}
+            {formSendIfLate && showDays && (
+              <p className="text-xs text-muted-foreground -mt-2 ml-10">
+                Si la date d'envoi prévue est déjà passée (ex : réservation tardive), l'e-mail sera envoyé immédiatement.
+              </p>
+            )}
 
             <div className="flex items-center gap-2">
               <Switch checked={formEnabled} onCheckedChange={setFormEnabled} />

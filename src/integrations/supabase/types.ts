@@ -448,6 +448,7 @@ export type Database = {
           recipient_email: string | null
           recipient_type: string
           reply_to_email: string | null
+          send_if_late: boolean
           subject: string
           trigger_days: number
           trigger_type: Database["public"]["Enums"]["email_trigger_type"]
@@ -464,6 +465,7 @@ export type Database = {
           recipient_email?: string | null
           recipient_type?: string
           reply_to_email?: string | null
+          send_if_late?: boolean
           subject: string
           trigger_days?: number
           trigger_type: Database["public"]["Enums"]["email_trigger_type"]
@@ -480,6 +482,7 @@ export type Database = {
           recipient_email?: string | null
           recipient_type?: string
           reply_to_email?: string | null
+          send_if_late?: boolean
           subject?: string
           trigger_days?: number
           trigger_type?: Database["public"]["Enums"]["email_trigger_type"]

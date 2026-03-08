@@ -25,6 +25,7 @@ interface ScheduledEmail {
   recipient_type: string;
   recipient_email: string | null;
   scheduled_date: string | null;
+  is_late: boolean;
 }
 
 interface Props {
@@ -35,11 +36,13 @@ interface Props {
 }
 
 const TRIGGER_LABELS: Record<string, string> = {
-  booking_confirmation: "Confirmation de réservation",
-  before_checkin: "Avant le check-in",
-  after_checkin: "Après le check-in",
-  before_checkout: "Avant le check-out",
-  after_checkout: "Après le check-out",
+  booking_confirmed: "Confirmation de réservation",
+  days_before_checkin: "Avant l'arrivée",
+  day_of_checkin: "Jour de l'arrivée",
+  days_after_checkin: "Après l'arrivée",
+  days_before_checkout: "Avant le départ",
+  day_of_checkout: "Jour du départ",
+  days_after_checkout: "Après le départ",
 };
 
 export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate, listingId }: Props) {
@@ -69,7 +72,7 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
       // Fetch automations that target this listing to compute scheduled emails
       const { data: automations } = await supabase
         .from("email_automations")
-        .select("id, name, subject, trigger_type, trigger_days, is_enabled, listing_ids, recipient_type, recipient_email")
+        .select("id, name, subject, trigger_type, trigger_days, is_enabled, listing_ids, recipient_type, recipient_email, send_if_late")
         .eq("is_enabled", true);
 
       if (logs) {
@@ -98,19 +101,25 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
           if (sentAutomationIds.has(auto.id)) continue;
 
           let scheduledDate: Date | null = null;
-          if (auto.trigger_type === "booking_confirmation") {
+          if (auto.trigger_type === "booking_confirmed") {
             continue; // Already sent or instant
-          } else if (auto.trigger_type === "before_checkin") {
+          } else if (auto.trigger_type === "days_before_checkin") {
             scheduledDate = addDays(checkin, -auto.trigger_days);
-          } else if (auto.trigger_type === "after_checkin") {
+          } else if (auto.trigger_type === "day_of_checkin") {
+            scheduledDate = checkin;
+          } else if (auto.trigger_type === "days_after_checkin") {
             scheduledDate = addDays(checkin, auto.trigger_days);
-          } else if (auto.trigger_type === "before_checkout") {
+          } else if (auto.trigger_type === "days_before_checkout") {
             scheduledDate = addDays(checkout, -auto.trigger_days);
-          } else if (auto.trigger_type === "after_checkout") {
+          } else if (auto.trigger_type === "day_of_checkout") {
+            scheduledDate = checkout;
+          } else if (auto.trigger_type === "days_after_checkout") {
             scheduledDate = addDays(checkout, auto.trigger_days);
           }
 
-          if (scheduledDate && isAfter(scheduledDate, now)) {
+          const sendIfLate = (auto as any).send_if_late === true;
+          const isLate = scheduledDate ? isBefore(scheduledDate, now) : false;
+          if (scheduledDate && (isAfter(scheduledDate, now) || sendIfLate)) {
             scheduled.push({
               id: auto.id,
               name: auto.name,
@@ -120,6 +129,7 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
               recipient_type: auto.recipient_type,
               recipient_email: auto.recipient_email,
               scheduled_date: scheduledDate.toISOString(),
+              is_late: isLate,
             });
           }
         }
@@ -222,7 +232,11 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <span className="text-xs text-amber-600 font-medium">Planifié</span>
+                    {email.is_late ? (
+                      <span className="text-xs text-orange-600 font-medium">En retard — à envoyer</span>
+                    ) : (
+                      <span className="text-xs text-amber-600 font-medium">Planifié</span>
+                    )}
                     {email.scheduled_date && (
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {format(parseISO(email.scheduled_date), "d MMM yyyy", { locale: fr })}
