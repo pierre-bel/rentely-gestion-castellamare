@@ -243,6 +243,7 @@ export default function PortalSettings() {
           show_map_link: settings.show_map_link,
           custom_footer_text: settings.custom_footer_text,
           section_order: settings.section_order as any,
+          require_full_payment_for_access_code: settings.require_full_payment_for_access_code,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "host_user_id" }
