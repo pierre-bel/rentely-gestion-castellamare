@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,6 +50,7 @@ export default function CleaningPortal() {
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
 
+  // For the calendar view, fetch current month data
   const { data: portalData, isLoading, error } = useQuery({
     queryKey: ["cleaning-portal", token, format(monthStart, "yyyy-MM-dd")],
     queryFn: async () => {
@@ -65,9 +66,27 @@ export default function CleaningPortal() {
     enabled: !!token,
   });
 
-  // Build cleaning slots (checkouts in this month across all listings)
+  // For the rotation summary, fetch current month + next month
+  const nextMonthEnd = endOfMonth(addMonths(currentMonth, 1));
+  const { data: summaryData } = useQuery({
+    queryKey: ["cleaning-portal-summary", token, format(monthStart, "yyyy-MM-dd"), format(nextMonthEnd, "yyyy-MM-dd")],
+    queryFn: async () => {
+      if (!token) return null;
+      const { data, error } = await supabase.rpc("get_cleaning_portal_data", {
+        p_token: token,
+        p_month_start: format(monthStart, "yyyy-MM-dd"),
+        p_month_end: format(nextMonthEnd, "yyyy-MM-dd"),
+      });
+      if (error) throw error;
+      return data as unknown as PortalData;
+    },
+    enabled: !!token,
+  });
+
+  // Build cleaning slots from summary data (2 months)
   const cleaningSlots = useMemo(() => {
-    if (!portalData) return [];
+    const source = summaryData || portalData;
+    if (!source) return [];
     const slots: {
       date: Date;
       listing: PortalListing;
@@ -76,12 +95,12 @@ export default function CleaningPortal() {
       hoursAvailable: number | null;
     }[] = [];
 
-    for (const listing of portalData.listings) {
+    for (const listing of source.listings) {
       const sorted = [...listing.bookings].sort((a, b) => a.checkin_date.localeCompare(b.checkin_date));
       for (let i = 0; i < sorted.length; i++) {
         const b = sorted[i];
         const checkoutDate = parseISO(b.checkout_date);
-        if (isBefore(checkoutDate, monthStart) || isBefore(monthEnd, checkoutDate)) continue;
+        if (isBefore(checkoutDate, monthStart) || isBefore(nextMonthEnd, checkoutDate)) continue;
         const next = sorted[i + 1] || null;
         const hoursAvailable = next
           ? differenceInCalendarDays(parseISO(next.checkin_date), checkoutDate) * 24
@@ -90,7 +109,7 @@ export default function CleaningPortal() {
       }
     }
     return slots.sort((a, b) => a.date.getTime() - b.date.getTime());
-  }, [portalData, monthStart, monthEnd]);
+  }, [summaryData, portalData, monthStart, nextMonthEnd]);
 
   if (isLoading) {
     return (
@@ -216,7 +235,7 @@ export default function CleaningPortal() {
         <div>
           <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
             <ArrowRightLeft className="h-5 w-5 text-primary" />
-            Récapitulatif des rotations — {format(currentMonth, "MMMM yyyy", { locale: fr })}
+            Récapitulatif des rotations — {format(currentMonth, "MMMM", { locale: fr })} & {format(addMonths(currentMonth, 1), "MMMM yyyy", { locale: fr })}
           </h2>
 
           {cleaningSlots.length === 0 ? (
