@@ -527,7 +527,67 @@ export default function PortalSettings() {
           </CardContent>
         </Card>
 
-        {/* Custom footer */}
+        {/* Contact info */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Phone className="h-4 w-4 text-primary" />
+              Coordonnées de contact
+            </CardTitle>
+            <CardDescription>Informations affichées dans la section "Contact" du portail</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm flex items-center gap-1.5 mb-1.5">
+                  <Mail className="h-3.5 w-3.5" /> E-mail
+                </Label>
+                <Input
+                  type="email"
+                  placeholder="contact@exemple.com"
+                  value={settings.contact_email || ""}
+                  onChange={(e) => setSettings((s) => ({ ...s, contact_email: e.target.value || null }))}
+                />
+              </div>
+              <div>
+                <Label className="text-sm flex items-center gap-1.5 mb-1.5">
+                  <Phone className="h-3.5 w-3.5" /> Téléphone
+                </Label>
+                <Input
+                  type="tel"
+                  placeholder="+33 6 12 34 56 78"
+                  value={settings.contact_phone || ""}
+                  onChange={(e) => setSettings((s) => ({ ...s, contact_phone: e.target.value || null }))}
+                />
+              </div>
+              <div>
+                <Label className="text-sm flex items-center gap-1.5 mb-1.5">
+                  <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                </Label>
+                <Input
+                  type="tel"
+                  placeholder="+33612345678"
+                  value={settings.contact_whatsapp || ""}
+                  onChange={(e) => setSettings((s) => ({ ...s, contact_whatsapp: e.target.value || null }))}
+                />
+                <p className="text-xs text-muted-foreground mt-1">Numéro au format international (ex: +33612345678)</p>
+              </div>
+              <div>
+                <Label className="text-sm flex items-center gap-1.5 mb-1.5">
+                  <Facebook className="h-3.5 w-3.5" /> Facebook
+                </Label>
+                <Input
+                  type="url"
+                  placeholder="https://facebook.com/votrepage"
+                  value={settings.contact_facebook_url || ""}
+                  onChange={(e) => setSettings((s) => ({ ...s, contact_facebook_url: e.target.value || null }))}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Pied de page personnalisé</CardTitle>
