@@ -6,7 +6,7 @@ import {
   ShieldCheck,
   CheckCircle2,
 } from "lucide-react";
-import mockupHero from "@/assets/mockup-hero-dashboard.webp";
+import DashboardMockup from "@/components/home/mockups/DashboardMockup";
 import { Button } from "@/components/ui/button";
 import { AuthDialog } from "@/components/AuthDialog";
 import Footer from "@/components/Footer";
@@ -92,14 +92,7 @@ const Home = () => {
 
           {/* Dashboard mockup */}
           <div className="mt-16 max-w-5xl mx-auto">
-            <div className="rounded-2xl border border-border/60 shadow-2xl shadow-primary/10 overflow-hidden bg-card">
-              <img
-                src={mockupHero}
-                alt="Aperçu du tableau de bord Rentely"
-                className="w-full h-auto"
-                loading="eager"
-              />
-            </div>
+            <DashboardMockup />
           </div>
         </div>
       </section>

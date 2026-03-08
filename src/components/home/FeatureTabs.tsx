@@ -1,21 +1,15 @@
 import {
   CalendarDays,
   CreditCard,
-  FileText,
   Mail,
   BarChart3,
-  Users,
-  Brush,
-  ClipboardList,
   CheckCircle2,
-  Globe,
-  Lock,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import mockupCalendar from "@/assets/mockup-calendar.webp";
-import mockupPayments from "@/assets/mockup-payments.webp";
-import mockupEmails from "@/assets/mockup-emails.webp";
-import mockupStats from "@/assets/mockup-stats.webp";
+import CalendarMockup from "./mockups/CalendarMockup";
+import BookingsMockup from "./mockups/BookingsMockup";
+import EmailsMockup from "./mockups/EmailsMockup";
+import StatsMockup from "./mockups/StatsMockup";
 
 const CATEGORIES = [
   {
@@ -33,11 +27,7 @@ const CATEGORIES = [
       "Import de réservations depuis Excel",
       "Tarification semaine / week-end par période",
     ],
-    mockup: (
-      <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
-        <img src={mockupCalendar} alt="Calendrier multi-logements" className="w-full h-auto" loading="lazy" />
-      </div>
-    ),
+    mockup: <CalendarMockup />,
   },
   {
     value: "payments",
@@ -54,11 +44,7 @@ const CATEGORIES = [
       "Historique complet des transactions",
       "Rappels automatiques de paiement",
     ],
-    mockup: (
-      <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
-        <img src={mockupPayments} alt="Échéancier de paiements" className="w-full h-auto" loading="lazy" />
-      </div>
-    ),
+    mockup: <BookingsMockup />,
   },
   {
     value: "communication",
@@ -75,11 +61,7 @@ const CATEGORIES = [
       "Modèles d'e-mails personnalisables",
       "Historique d'envoi complet",
     ],
-    mockup: (
-      <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
-        <img src={mockupEmails} alt="Automatisations e-mails" className="w-full h-auto" loading="lazy" />
-      </div>
-    ),
+    mockup: <EmailsMockup />,
   },
   {
     value: "tools",
@@ -96,11 +78,7 @@ const CATEGORIES = [
       "Gestion multi-logements",
       "Tarification par période personnalisable",
     ],
-    mockup: (
-      <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
-        <img src={mockupStats} alt="Statistiques et rapports" className="w-full h-auto" loading="lazy" />
-      </div>
-    ),
+    mockup: <StatsMockup />,
   },
 ];
 
