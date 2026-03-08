@@ -85,7 +85,7 @@ const SidebarContent = ({
       </Link>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1">
+      <nav className="flex-1 space-y-1 overflow-y-auto min-h-0">
         {navigationItems.map((item) => {
           const activeNavPath = getActiveNavItem(location.pathname, location.state);
           
