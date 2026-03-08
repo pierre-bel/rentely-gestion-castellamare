@@ -1476,6 +1476,8 @@ export type Database = {
           author_user_id: string
           booking_id: string
           created_at: string
+          host_response: string | null
+          host_response_at: string | null
           id: string
           listing_id: string
           rating: number
@@ -1487,6 +1489,8 @@ export type Database = {
           author_user_id: string
           booking_id: string
           created_at?: string
+          host_response?: string | null
+          host_response_at?: string | null
           id?: string
           listing_id: string
           rating: number
@@ -1498,6 +1502,8 @@ export type Database = {
           author_user_id?: string
           booking_id?: string
           created_at?: string
+          host_response?: string | null
+          host_response_at?: string | null
           id?: string
           listing_id?: string
           rating?: number
@@ -2704,6 +2710,25 @@ export type Database = {
           nights_booked: number
           occupancy_percentage: number
           platform_fees: number
+        }[]
+      }
+      get_host_reviews: {
+        Args: { _host_user_id: string }
+        Returns: {
+          author_user_id: string
+          booking_id: string
+          created_at: string
+          guest_avatar_url: string
+          guest_first_name: string
+          guest_last_name: string
+          host_response: string
+          host_response_at: string
+          id: string
+          listing_id: string
+          listing_title: string
+          rating: number
+          status: string
+          text: string
         }[]
       }
       get_or_create_support_thread: {
