@@ -1294,6 +1294,7 @@ export type Database = {
           custom_footer_text: string | null
           host_user_id: string
           id: string
+          require_full_payment_for_access_code: boolean
           section_order: Json | null
           show_access_code: boolean
           show_address: boolean
@@ -1310,6 +1311,7 @@ export type Database = {
           custom_footer_text?: string | null
           host_user_id: string
           id?: string
+          require_full_payment_for_access_code?: boolean
           section_order?: Json | null
           show_access_code?: boolean
           show_address?: boolean
@@ -1326,6 +1328,7 @@ export type Database = {
           custom_footer_text?: string | null
           host_user_id?: string
           id?: string
+          require_full_payment_for_access_code?: boolean
           section_order?: Json | null
           show_access_code?: boolean
           show_address?: boolean
