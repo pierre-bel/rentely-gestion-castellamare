@@ -163,6 +163,11 @@ export default function BookingPortal() {
           ...s,
           section_order: s.section_order || DEFAULT_SETTINGS.section_order,
           require_full_payment_for_access_code: s.require_full_payment_for_access_code ?? true,
+          contact_email: s.contact_email || null,
+          contact_phone: s.contact_phone || null,
+          contact_whatsapp: s.contact_whatsapp || null,
+          contact_facebook_url: s.contact_facebook_url || null,
+          show_contact: s.show_contact ?? true,
         });
       }
       if (customRes.data) setCustomSections(customRes.data as CustomSectionData[]);
