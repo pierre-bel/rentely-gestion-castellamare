@@ -393,20 +393,6 @@ export default function BookingPortal() {
     );
   };
 
-  const renderNotes = () => {
-    if (!data.notes) return null;
-    return (
-      <Card key="notes">
-        <CardContent className="pt-5 space-y-2">
-          <div className="flex items-center gap-2 mb-2">
-            <FileText className="h-5 w-5 text-primary flex-shrink-0" />
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Notes</p>
-          </div>
-          <p className="text-sm whitespace-pre-line text-foreground/90">{data.notes}</p>
-        </CardContent>
-      </Card>
-    );
-  };
 
   const renderCustomSection = (key: string) => {
     const sectionKey = key.replace("custom_", "");
