@@ -35,11 +35,13 @@ interface Props {
 }
 
 const TRIGGER_LABELS: Record<string, string> = {
-  booking_confirmation: "Confirmation de réservation",
-  before_checkin: "Avant le check-in",
-  after_checkin: "Après le check-in",
-  before_checkout: "Avant le check-out",
-  after_checkout: "Après le check-out",
+  booking_confirmed: "Confirmation de réservation",
+  days_before_checkin: "Avant l'arrivée",
+  day_of_checkin: "Jour de l'arrivée",
+  days_after_checkin: "Après l'arrivée",
+  days_before_checkout: "Avant le départ",
+  day_of_checkout: "Jour du départ",
+  days_after_checkout: "Après le départ",
 };
 
 export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate, listingId }: Props) {
