@@ -24,6 +24,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { Tenant } from "./HostTenants";
 import { CreateEditTenantDialog } from "./CreateEditTenantDialog";
 import { Separator } from "@/components/ui/separator";
+import { calculatePricingFromWeeklyRates } from "@/lib/pricingUtils";
+import { Badge } from "@/components/ui/badge";
 
 interface Listing {
   id: string;
