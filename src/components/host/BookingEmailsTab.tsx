@@ -71,7 +71,7 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
       // Fetch automations that target this listing to compute scheduled emails
       const { data: automations } = await supabase
         .from("email_automations")
-        .select("id, name, subject, trigger_type, trigger_days, is_enabled, listing_ids, recipient_type, recipient_email")
+        .select("id, name, subject, trigger_type, trigger_days, is_enabled, listing_ids, recipient_type, recipient_email, send_if_late")
         .eq("is_enabled", true);
 
       if (logs) {
