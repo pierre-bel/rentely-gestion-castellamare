@@ -5,16 +5,6 @@ import { AuthDialog } from "./AuthDialog";
 
 const Footer = () => {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
-  
-  const navigationLinks = [
-    { label: "Book Now", to: "/search" },
-    { label: "FAQ", to: "/faq" },
-  ];
-
-  const supportLinks = [
-    { label: "Help Center", to: "/help-center" },
-    { label: "Support", to: "/support" },
-  ];
 
   return (
     <>
@@ -33,72 +23,69 @@ const Footer = () => {
 
               {/* Link Columns */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-12">
-                {/* Navigation Column */}
+                {/* Platform */}
                 <div>
-                  <h3 className="font-bold text-base mb-2">Navigation</h3>
-                  <div className="w-12 h-1 bg-primary mb-4"></div>
-                  <ul className="space-y-2">
-                    {navigationLinks.map((link) => (
-                      <li key={link.label}>
-                        <Link
-                          to={link.to}
-                          className="text-foreground hover:text-primary transition-colors"
-                        >
-                          {link.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Hosts Column */}
-                <div>
-                  <h3 className="font-bold text-base mb-2">Hosts</h3>
+                  <h3 className="font-bold text-base mb-2">Plateforme</h3>
                   <div className="w-12 h-1 bg-primary mb-4"></div>
                   <ul className="space-y-2">
                     <li>
-                      <Link
-                        to="/become-host"
-                        className="text-foreground hover:text-primary transition-colors"
-                      >
-                        Become a Host
+                      <Link to="/" className="text-foreground hover:text-primary transition-colors">
+                        Fonctionnalités
                       </Link>
                     </li>
+                    <li>
+                      <Link to="/faq" className="text-foreground hover:text-primary transition-colors">
+                        FAQ
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Account */}
+                <div>
+                  <h3 className="font-bold text-base mb-2">Compte</h3>
+                  <div className="w-12 h-1 bg-primary mb-4"></div>
+                  <ul className="space-y-2">
                     <li>
                       <button
                         onClick={() => setAuthDialogOpen(true)}
                         className="text-foreground hover:text-primary transition-colors"
                       >
-                        Log In
+                        Connexion
                       </button>
+                    </li>
+                    <li>
+                      <Link to="/host/dashboard" className="text-foreground hover:text-primary transition-colors">
+                        Tableau de bord
+                      </Link>
                     </li>
                   </ul>
                 </div>
 
-                {/* Support Column */}
+                {/* Support */}
                 <div>
                   <h3 className="font-bold text-base mb-2">Support</h3>
                   <div className="w-12 h-1 bg-primary mb-4"></div>
                   <ul className="space-y-2">
-                    {supportLinks.map((link) => (
-                      <li key={link.label}>
-                        <Link
-                          to={link.to}
-                          className="text-foreground hover:text-primary transition-colors"
-                        >
-                          {link.label}
-                        </Link>
-                      </li>
-                    ))}
+                    <li>
+                      <Link to="/help-center" className="text-foreground hover:text-primary transition-colors">
+                        Centre d'aide
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/support" className="text-foreground hover:text-primary transition-colors">
+                        Contact
+                      </Link>
+                    </li>
                   </ul>
                 </div>
               </div>
             </div>
 
-            {/* Bottom Section - Copyright */}
+            {/* Bottom */}
             <div className="text-center pt-8 border-t border-card-border">
               <p className="text-text-secondary">
-                © {new Date().getFullYear()} Rentely. All rights reserved.
+                © {new Date().getFullYear()} Rentely. Tous droits réservés.
               </p>
             </div>
           </div>
