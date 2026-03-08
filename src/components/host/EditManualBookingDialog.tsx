@@ -130,6 +130,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
       const rawNotes = booking.notes || "";
       const parts = rawNotes.split(" | ").filter((p: string) => !p.startsWith("Locataire:") && !p.startsWith("Acompte:"));
       setNotes(parts.join(" | "));
+      setBeachCabin(booking.beach_cabin || false);
     }
   }, [booking, open, tenants]);
 
