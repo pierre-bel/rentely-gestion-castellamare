@@ -31,9 +31,10 @@ export const ContractPreviewDialog = ({ open, onOpenChange, contract }: Contract
             )}
           </div>
         </DialogHeader>
-        <div className="prose prose-sm max-w-none whitespace-pre-wrap text-foreground border rounded-lg p-6 bg-card">
-          {contract.generated_html}
-        </div>
+        <div
+          className="prose prose-sm max-w-none text-foreground border rounded-lg p-6 bg-card [&_table]:border-collapse [&_table]:w-full [&_td]:border [&_td]:border-border [&_td]:p-2 [&_th]:border [&_th]:border-border [&_th]:p-2 [&_th]:bg-muted/50 [&_th]:font-semibold"
+          dangerouslySetInnerHTML={{ __html: contract.generated_html }}
+        />
         {contract.signature_data && (
           <div className="border-t pt-4">
             <p className="text-sm text-muted-foreground mb-2">Signature :</p>
