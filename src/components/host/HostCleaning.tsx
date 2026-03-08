@@ -401,7 +401,7 @@ export function HostCleaning() {
         )}
       </div>
 
-      {/* Cleaning cards */}
+      {/* Cleaning cards grouped by date */}
       {cleaningSlots.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
@@ -410,8 +410,33 @@ export function HostCleaning() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {cleaningSlots.map((slot, idx) => {
+        <div className="space-y-6">
+          {(() => {
+            const grouped: { dateKey: string; date: Date; slots: typeof cleaningSlots }[] = [];
+            let current: typeof grouped[0] | null = null;
+            for (const slot of cleaningSlots) {
+              const dk = format(slot.cleaningDate, "yyyy-MM-dd");
+              if (!current || current.dateKey !== dk) {
+                current = { dateKey: dk, date: slot.cleaningDate, slots: [] };
+                grouped.push(current);
+              }
+              current.slots.push(slot);
+            }
+            return grouped.map(group => (
+              <div key={group.dateKey}>
+                <div className={`flex items-center gap-3 mb-3 ${
+                  isBefore(group.date, new Date()) && format(group.date, "yyyy-MM-dd") !== format(new Date(), "yyyy-MM-dd")
+                    ? "opacity-50" : ""
+                }`}>
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-sm font-bold uppercase tracking-wider text-primary capitalize">
+                    {format(group.date, "EEEE dd MMMM", { locale: fr })}
+                  </span>
+                  <Badge variant="outline" className="text-xs">{group.slots.length} ménage{group.slots.length > 1 ? "s" : ""}</Badge>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+                <div className="space-y-2">
+          {group.slots.map((slot, idx) => {
             const tenantName = slot.tenant
               ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
               : extractTenantFromNotes(slot.checkoutBooking.notes);
