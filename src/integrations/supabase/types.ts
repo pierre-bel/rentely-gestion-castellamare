@@ -272,6 +272,7 @@ export type Database = {
       }
       cleaning_staff: {
         Row: {
+          access_token: string
           created_at: string
           host_user_id: string
           id: string
@@ -280,6 +281,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_token?: string
           created_at?: string
           host_user_id: string
           id?: string
@@ -288,6 +290,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_token?: string
           created_at?: string
           host_user_id?: string
           id?: string
@@ -2726,6 +2729,10 @@ export type Database = {
           pending_listings: number
           total_revenue: number
         }[]
+      }
+      get_cleaning_portal_data: {
+        Args: { p_month_end: string; p_month_start: string; p_token: string }
+        Returns: Json
       }
       get_demo_credentials: {
         Args: never
