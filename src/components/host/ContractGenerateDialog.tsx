@@ -71,12 +71,21 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       "{{listing_title}}": listing?.title || "N/A",
       "{{listing_address}}": listing?.address || "N/A",
       "{{booking_id}}": booking.id,
-      "{{beach_cabin}}": booking.beach_cabin ? "Oui" : "Non",
     };
 
     Object.entries(replacements).forEach(([key, value]) => {
       html = html.split(key).join(value);
     });
+
+    // Handle beach_cabin: if true, remove only the tag (keep surrounding text), if false, remove the entire element containing it
+    if (booking.beach_cabin) {
+      html = html.split("{{beach_cabin}}").join("Cabine de plage");
+    } else {
+      // Remove any HTML element (p, li, tr, div, span) that contains {{beach_cabin}}
+      html = html.replace(/<(p|li|tr|div|span)[^>]*>(?:[^<]*|\s)*\{\{beach_cabin\}\}(?:[^<]*|\s)*<\/\1>/gi, "");
+      // Fallback: remove raw text line
+      html = html.split("{{beach_cabin}}").join("");
+    }
 
     const { error } = await supabase.from("booking_contracts").insert({
       booking_id: booking.id,

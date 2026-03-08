@@ -32,7 +32,7 @@ const DYNAMIC_VARIABLES = [
   { key: "{{listing_title}}", label: "Nom du bien" },
   { key: "{{listing_address}}", label: "Adresse" },
   { key: "{{booking_id}}", label: "ID réservation" },
-  { key: "{{beach_cabin}}", label: "Cabine de plage" },
+  { key: "{{beach_cabin}}", label: "Cabine de plage (ligne masquée si non)" },
 ];
 
 interface ContractTemplateEditorProps {
