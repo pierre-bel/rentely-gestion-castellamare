@@ -72,14 +72,12 @@ export default function HostPayouts() {
   return (
     <Card className="bg-card">
       <CardContent className="p-6">
-        {/* Financial Summary Cards */}
         <HostPayoutsSummary payouts={payouts} />
 
-        {/* Controls Row */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
           <div className="w-full sm:w-auto sm:flex-1 max-w-sm">
             <Input
-              placeholder="Search by listing or guest..."
+              placeholder="Rechercher par annonce ou locataire..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full"
@@ -93,7 +91,7 @@ export default function HostPayouts() {
               className="relative"
             >
               <Filter className="h-4 w-4 mr-2" />
-              Filters
+              Filtres
               {activeFilterCount > 0 && (
                 <Badge variant="destructive" className="ml-2 px-1.5 min-w-5 h-5">
                   {activeFilterCount}
@@ -103,21 +101,20 @@ export default function HostPayouts() {
 
             <Select value={sortValue} onValueChange={setSortValue}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Sort by" />
+                <SelectValue placeholder="Trier par" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="created_at-desc">Newest First</SelectItem>
-                <SelectItem value="created_at-asc">Oldest First</SelectItem>
-                <SelectItem value="amount-desc">Highest Amount</SelectItem>
-                <SelectItem value="amount-asc">Lowest Amount</SelectItem>
-                <SelectItem value="payout_date-desc">Pay Date Latest</SelectItem>
-                <SelectItem value="payout_date-asc">Pay Date Earliest</SelectItem>
+                <SelectItem value="created_at-desc">Plus récent</SelectItem>
+                <SelectItem value="created_at-asc">Plus ancien</SelectItem>
+                <SelectItem value="amount-desc">Montant décroissant</SelectItem>
+                <SelectItem value="amount-asc">Montant croissant</SelectItem>
+                <SelectItem value="payout_date-desc">Date versement (récent)</SelectItem>
+                <SelectItem value="payout_date-asc">Date versement (ancien)</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        {/* Table */}
         <HostPayoutsTable payouts={payouts} isLoading={isLoading} />
       </CardContent>
 

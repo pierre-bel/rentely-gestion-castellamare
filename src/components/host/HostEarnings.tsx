@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, TrendingUp, Calendar, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface EarningsData {
   totalEarnings: number;
@@ -19,6 +20,9 @@ interface BookingEarning {
   listing_id: string;
   listing_title: string;
 }
+
+const formatPrice = (amount: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount);
 
 export default function HostEarnings() {
   const { user } = useAuth();
@@ -38,7 +42,6 @@ export default function HostEarnings() {
   const fetchEarnings = async () => {
     if (!user) return;
 
-    // Get host's listings
     const { data: listings } = await supabase
       .from("listings")
       .select("id, title")
@@ -51,7 +54,6 @@ export default function HostEarnings() {
 
     const listingIds = listings.map(l => l.id);
 
-    // Get all completed bookings
     const { data: bookings } = await supabase
       .from("bookings")
       .select("*")
@@ -76,20 +78,14 @@ export default function HostEarnings() {
 
       const avgPerBooking = bookings.length > 0 ? totalEarnings / bookings.length : 0;
 
-      setEarnings({
-        totalEarnings,
-        thisMonth,
-        lastMonth,
-        averagePerBooking: avgPerBooking,
-      });
+      setEarnings({ totalEarnings, thisMonth, lastMonth, averagePerBooking: avgPerBooking });
 
-      // Recent earnings with listing titles
       const recent = bookings.slice(0, 10).map(b => ({
         id: b.id,
         total_price: Number(b.total_price || 0),
         checkin_date: b.checkin_date,
         listing_id: b.listing_id,
-        listing_title: listings.find(l => l.id === b.listing_id)?.title || "Unknown",
+        listing_title: listings.find(l => l.id === b.listing_id)?.title || "Inconnu",
       }));
 
       setRecentEarnings(recent);
@@ -111,7 +107,6 @@ export default function HostEarnings() {
 
   return (
     <div className="space-y-6">
-      {/* Earnings Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
@@ -120,8 +115,8 @@ export default function HostEarnings() {
                 <DollarSign className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Earnings</p>
-                <p className="text-2xl font-bold">${earnings.totalEarnings.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">Revenus totaux</p>
+                <p className="text-2xl font-bold">{formatPrice(earnings.totalEarnings)}</p>
               </div>
             </div>
           </CardContent>
@@ -134,8 +129,8 @@ export default function HostEarnings() {
                 <TrendingUp className="h-5 w-5 text-success" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">This Month</p>
-                <p className="text-2xl font-bold">${earnings.thisMonth.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">Ce mois-ci</p>
+                <p className="text-2xl font-bold">{formatPrice(earnings.thisMonth)}</p>
               </div>
             </div>
           </CardContent>
@@ -148,8 +143,8 @@ export default function HostEarnings() {
                 <Calendar className="h-5 w-5 text-info" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Last Month</p>
-                <p className="text-2xl font-bold">${earnings.lastMonth.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">Mois précédent</p>
+                <p className="text-2xl font-bold">{formatPrice(earnings.lastMonth)}</p>
               </div>
             </div>
           </CardContent>
@@ -162,25 +157,24 @@ export default function HostEarnings() {
                 <DollarSign className="h-5 w-5 text-warning" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Avg Per Booking</p>
-                <p className="text-2xl font-bold">${earnings.averagePerBooking.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">Moy. par réservation</p>
+                <p className="text-2xl font-bold">{formatPrice(earnings.averagePerBooking)}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent Earnings */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Earnings</CardTitle>
+          <CardTitle>Revenus récents</CardTitle>
         </CardHeader>
         <CardContent>
           {recentEarnings.length === 0 ? (
             <div className="text-center py-12">
               <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No earnings yet</h3>
-              <p className="text-muted-foreground">Your earnings will appear here once you receive bookings</p>
+              <h3 className="text-lg font-semibold mb-2">Aucun revenu</h3>
+              <p className="text-muted-foreground">Vos revenus apparaîtront ici une fois que vous aurez des réservations</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -189,11 +183,11 @@ export default function HostEarnings() {
                   <div>
                     <p className="font-medium">{earning.listing_title}</p>
                     <p className="text-sm text-muted-foreground">
-                      {format(new Date(earning.checkin_date), "MMM dd, yyyy")}
+                      {format(new Date(earning.checkin_date), "d MMM yyyy", { locale: fr })}
                     </p>
                   </div>
                   <p className="text-lg font-bold text-success">
-                    +${earning.total_price.toFixed(2)}
+                    +{formatPrice(earning.total_price)}
                   </p>
                 </div>
               ))}

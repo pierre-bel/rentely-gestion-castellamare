@@ -27,23 +27,18 @@ export const ListingsFiltersSheet = ({
   onClearFilters,
 }: ListingsFiltersSheetProps) => {
   const [open, setOpen] = useState(false);
-  
-  // Internal state for pending filter changes
   const [pendingStatusFilter, setPendingStatusFilter] = useState(statusFilter);
   const [pendingMinPrice, setPendingMinPrice] = useState(minPrice);
   const [pendingMaxPrice, setPendingMaxPrice] = useState(maxPrice);
 
-  // Update internal state when props change (after applying filters)
   useEffect(() => {
     setPendingStatusFilter(statusFilter);
     setPendingMinPrice(minPrice);
     setPendingMaxPrice(maxPrice);
   }, [statusFilter, minPrice, maxPrice]);
 
-  // Reset pending filters to current applied filters when sheet closes
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
-      // Reset to applied filters
       setPendingStatusFilter(statusFilter);
       setPendingMinPrice(minPrice);
       setPendingMaxPrice(maxPrice);
@@ -79,7 +74,7 @@ export const ListingsFiltersSheet = ({
       <SheetTrigger asChild>
         <Button variant="outline" className="relative">
           <Filter className="h-4 w-4 mr-2" />
-          Filters
+          Filtres
           {activeFiltersCount > 0 && (
             <Badge 
               variant="default" 
@@ -92,20 +87,19 @@ export const ListingsFiltersSheet = ({
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Filter Listings</SheetTitle>
+          <SheetTitle>Filtrer les annonces</SheetTitle>
           <SheetDescription>
-            Refine your listings view with filters
+            Affinez votre vue avec des filtres
           </SheetDescription>
         </SheetHeader>
 
         <div className="space-y-6 py-6">
-          {/* Status Filter */}
           <div className="space-y-3">
-            <Label className="text-base font-semibold">Status</Label>
+            <Label className="text-base font-semibold">Statut</Label>
             <RadioGroup value={pendingStatusFilter} onValueChange={setPendingStatusFilter}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="all" id="status-all" />
-                <Label htmlFor="status-all" className="font-normal cursor-pointer">All Statuses</Label>
+                <Label htmlFor="status-all" className="font-normal cursor-pointer">Tous les statuts</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="approved" id="status-approved" />
@@ -113,45 +107,44 @@ export const ListingsFiltersSheet = ({
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="pending" id="status-pending" />
-                <Label htmlFor="status-pending" className="font-normal cursor-pointer">Pending</Label>
+                <Label htmlFor="status-pending" className="font-normal cursor-pointer">En attente</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="draft" id="status-draft" />
-                <Label htmlFor="status-draft" className="font-normal cursor-pointer">Draft</Label>
+                <Label htmlFor="status-draft" className="font-normal cursor-pointer">Brouillon</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="rejected" id="status-rejected" />
-                <Label htmlFor="status-rejected" className="font-normal cursor-pointer">Rejected</Label>
+                <Label htmlFor="status-rejected" className="font-normal cursor-pointer">Rejetée</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="blocked" id="status-blocked" />
-                <Label htmlFor="status-blocked" className="font-normal cursor-pointer">Blocked</Label>
+                <Label htmlFor="status-blocked" className="font-normal cursor-pointer">Bloquée</Label>
               </div>
             </RadioGroup>
           </div>
 
-          {/* Price Range Filter */}
           <div className="space-y-3">
-            <Label className="text-base font-semibold">Price Range (per night)</Label>
+            <Label className="text-base font-semibold">Fourchette de prix (par nuit)</Label>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="min-price" className="text-sm text-muted-foreground">Min Price</Label>
+                <Label htmlFor="min-price" className="text-sm text-muted-foreground">Min</Label>
                 <Input
                   id="min-price"
                   type="number"
                   min="0"
-                  placeholder="$0"
+                  placeholder="0 €"
                   value={pendingMinPrice}
                   onChange={(e) => setPendingMinPrice(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="max-price" className="text-sm text-muted-foreground">Max Price</Label>
+                <Label htmlFor="max-price" className="text-sm text-muted-foreground">Max</Label>
                 <Input
                   id="max-price"
                   type="number"
                   min="0"
-                  placeholder="Any"
+                  placeholder="Illimité"
                   value={pendingMaxPrice}
                   onChange={(e) => setPendingMaxPrice(e.target.value)}
                 />
@@ -162,10 +155,10 @@ export const ListingsFiltersSheet = ({
 
         <SheetFooter className="gap-2">
           <Button variant="outline" onClick={handleClear} className="flex-1">
-            Clear All
+            Réinitialiser
           </Button>
           <Button onClick={handleApply} className="flex-1">
-            Apply Filters
+            Appliquer
           </Button>
         </SheetFooter>
       </SheetContent>

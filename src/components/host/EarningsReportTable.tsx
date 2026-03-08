@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { HostEarningsReport } from "./types/earnings";
@@ -15,20 +16,20 @@ const EarningsReportTable = ({ reports, isLoading }: EarningsReportTableProps) =
         <Table>
           <TableHeader>
             <TableRow className="bg-background hover:bg-background">
-              <TableHead className="font-semibold">Listing</TableHead>
-              <TableHead className="font-semibold">Month</TableHead>
-              <TableHead className="font-semibold text-right">Nights</TableHead>
-              <TableHead className="font-semibold text-right">Completed</TableHead>
-              <TableHead className="font-semibold text-right whitespace-nowrap">Cancel %</TableHead>
+              <TableHead className="font-semibold">Annonce</TableHead>
+              <TableHead className="font-semibold">Mois</TableHead>
+              <TableHead className="font-semibold text-right">Nuits</TableHead>
+              <TableHead className="font-semibold text-right">Terminées</TableHead>
+              <TableHead className="font-semibold text-right whitespace-nowrap">Annul. %</TableHead>
               <TableHead className="font-semibold text-right whitespace-nowrap">Occ. %</TableHead>
-              <TableHead className="font-semibold text-right">Avg. Rate</TableHead>
-              <TableHead className="font-semibold text-right">Gross</TableHead>
-              <TableHead className="font-semibold text-right">Fees</TableHead>
-              <TableHead className="font-semibold text-right whitespace-nowrap">Cancellation Income</TableHead>
-              <TableHead className="font-semibold text-right whitespace-nowrap">Dispute Income</TableHead>
-              <TableHead className="font-semibold text-right whitespace-nowrap">Dispute Refunds</TableHead>
-              <TableHead className="font-semibold text-right">Actual Net</TableHead>
-              <TableHead className="font-semibold">Last Payout</TableHead>
+              <TableHead className="font-semibold text-right">Tarif moy.</TableHead>
+              <TableHead className="font-semibold text-right">Brut</TableHead>
+              <TableHead className="font-semibold text-right">Frais</TableHead>
+              <TableHead className="font-semibold text-right whitespace-nowrap">Revenus annulation</TableHead>
+              <TableHead className="font-semibold text-right whitespace-nowrap">Revenus litiges</TableHead>
+              <TableHead className="font-semibold text-right whitespace-nowrap">Remb. litiges</TableHead>
+              <TableHead className="font-semibold text-right">Net réel</TableHead>
+              <TableHead className="font-semibold">Dernier versement</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -59,13 +60,13 @@ const EarningsReportTable = ({ reports, isLoading }: EarningsReportTableProps) =
   if (reports.length === 0) {
     return (
       <div className="text-center py-12 border rounded-lg bg-muted/30">
-        <p className="text-muted-foreground">No earnings data found for the selected period</p>
+        <p className="text-muted-foreground">Aucune donnée de revenus pour la période sélectionnée</p>
       </div>
     );
   }
 
   const formatCurrency = (amount: number) => {
-    return `$${Number(amount).toFixed(2)}`;
+    return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(amount));
   };
 
   return (
@@ -73,20 +74,20 @@ const EarningsReportTable = ({ reports, isLoading }: EarningsReportTableProps) =
       <Table>
         <TableHeader>
           <TableRow className="bg-background hover:bg-background">
-              <TableHead className="font-semibold">Listing</TableHead>
-              <TableHead className="font-semibold">Month</TableHead>
-              <TableHead className="font-semibold text-right">Nights</TableHead>
-              <TableHead className="font-semibold text-right">Completed</TableHead>
-              <TableHead className="font-semibold text-right whitespace-nowrap">Cancel %</TableHead>
+              <TableHead className="font-semibold">Annonce</TableHead>
+              <TableHead className="font-semibold">Mois</TableHead>
+              <TableHead className="font-semibold text-right">Nuits</TableHead>
+              <TableHead className="font-semibold text-right">Terminées</TableHead>
+              <TableHead className="font-semibold text-right whitespace-nowrap">Annul. %</TableHead>
               <TableHead className="font-semibold text-right whitespace-nowrap">Occ. %</TableHead>
-              <TableHead className="font-semibold text-right">Avg. Rate</TableHead>
-              <TableHead className="font-semibold text-right">Gross</TableHead>
-              <TableHead className="font-semibold text-right">Fees</TableHead>
-              <TableHead className="font-semibold text-right whitespace-nowrap">Cancellation Income</TableHead>
-              <TableHead className="font-semibold text-right whitespace-nowrap">Dispute Income</TableHead>
-              <TableHead className="font-semibold text-right whitespace-nowrap">Dispute Refunds</TableHead>
-              <TableHead className="font-semibold text-right">Actual Net</TableHead>
-              <TableHead className="font-semibold">Last Payout</TableHead>
+              <TableHead className="font-semibold text-right">Tarif moy.</TableHead>
+              <TableHead className="font-semibold text-right">Brut</TableHead>
+              <TableHead className="font-semibold text-right">Frais</TableHead>
+              <TableHead className="font-semibold text-right whitespace-nowrap">Revenus annulation</TableHead>
+              <TableHead className="font-semibold text-right whitespace-nowrap">Revenus litiges</TableHead>
+              <TableHead className="font-semibold text-right whitespace-nowrap">Remb. litiges</TableHead>
+              <TableHead className="font-semibold text-right">Net réel</TableHead>
+              <TableHead className="font-semibold">Dernier versement</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -130,7 +131,7 @@ const EarningsReportTable = ({ reports, isLoading }: EarningsReportTableProps) =
                     +{formatCurrency(report.cancellation_income)}
                   </span>
                 ) : (
-                  <span className="text-sm text-muted-foreground">$0.00</span>
+                  <span className="text-sm text-muted-foreground">0,00 €</span>
                 )}
               </TableCell>
               <TableCell className="text-right">
@@ -139,7 +140,7 @@ const EarningsReportTable = ({ reports, isLoading }: EarningsReportTableProps) =
                     +{formatCurrency(report.dispute_income)}
                   </span>
                 ) : (
-                  <span className="text-sm text-muted-foreground">$0.00</span>
+                  <span className="text-sm text-muted-foreground">0,00 €</span>
                 )}
               </TableCell>
               <TableCell className="text-right">
@@ -148,7 +149,7 @@ const EarningsReportTable = ({ reports, isLoading }: EarningsReportTableProps) =
                     -{formatCurrency(report.dispute_refunds)}
                   </span>
                 ) : (
-                  <span className="text-sm text-muted-foreground">$0.00</span>
+                  <span className="text-sm text-muted-foreground">0,00 €</span>
                 )}
               </TableCell>
               <TableCell className="text-right">
@@ -157,8 +158,8 @@ const EarningsReportTable = ({ reports, isLoading }: EarningsReportTableProps) =
               <TableCell>
                 <span className="text-sm text-muted-foreground">
                   {report.last_payout_date
-                    ? format(new Date(report.last_payout_date), "MMM dd, yyyy")
-                    : "Not paid"}
+                    ? format(new Date(report.last_payout_date), "d MMM yyyy", { locale: fr })
+                    : "Non versé"}
                 </span>
               </TableCell>
             </TableRow>

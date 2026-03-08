@@ -81,13 +81,12 @@ const EarningsReportFiltersSheet = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Filter Earnings Report</SheetTitle>
+          <SheetTitle>Filtrer le rapport de revenus</SheetTitle>
         </SheetHeader>
 
         <div className="space-y-6 py-6">
-          {/* Month Range - Top Position */}
           <div className="space-y-3">
-            <Label className="text-base font-semibold">Month Range</Label>
+            <Label className="text-base font-semibold">Période</Label>
             <MonthRangePicker
               startMonth={localStartMonth}
               endMonth={localEndMonth}
@@ -98,15 +97,14 @@ const EarningsReportFiltersSheet = ({
 
           <Separator />
 
-          {/* Gross Earnings Range */}
           <div className="space-y-3">
-            <Label>Gross Earnings Range</Label>
+            <Label>Fourchette revenus bruts</Label>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-sm text-muted-foreground">Min</Label>
                 <Input
                   type="number"
-                  placeholder="0.00"
+                  placeholder="0,00"
                   value={localMinGross}
                   onChange={(e) => setLocalMinGross(e.target.value)}
                 />
@@ -115,7 +113,7 @@ const EarningsReportFiltersSheet = ({
                 <Label className="text-sm text-muted-foreground">Max</Label>
                 <Input
                   type="number"
-                  placeholder="0.00"
+                  placeholder="0,00"
                   value={localMaxGross}
                   onChange={(e) => setLocalMaxGross(e.target.value)}
                 />
@@ -123,15 +121,14 @@ const EarningsReportFiltersSheet = ({
             </div>
           </div>
 
-          {/* Net Earnings Range */}
           <div className="space-y-3">
-            <Label>Net Earnings Range</Label>
+            <Label>Fourchette revenus nets</Label>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-sm text-muted-foreground">Min</Label>
                 <Input
                   type="number"
-                  placeholder="0.00"
+                  placeholder="0,00"
                   value={localMinNet}
                   onChange={(e) => setLocalMinNet(e.target.value)}
                 />
@@ -140,7 +137,7 @@ const EarningsReportFiltersSheet = ({
                 <Label className="text-sm text-muted-foreground">Max</Label>
                 <Input
                   type="number"
-                  placeholder="0.00"
+                  placeholder="0,00"
                   value={localMaxNet}
                   onChange={(e) => setLocalMaxNet(e.target.value)}
                 />
@@ -151,10 +148,10 @@ const EarningsReportFiltersSheet = ({
 
         <SheetFooter className="gap-2">
           <Button variant="outline" onClick={handleClear} className="flex-1">
-            Clear All
+            Réinitialiser
           </Button>
           <Button onClick={handleApply} className="flex-1">
-            Apply Filters
+            Appliquer
           </Button>
         </SheetFooter>
       </SheetContent>

@@ -182,8 +182,8 @@ const ListingsManagement = () => {
         } : null);
         
         toast({
-          title: "Success",
-          description: "Availability updated successfully",
+          title: "Succès",
+          description: "Disponibilités mises à jour",
         });
       } else {
         // REAL MODE: Update Supabase
@@ -218,15 +218,15 @@ const ListingsManagement = () => {
         } : null);
         
         toast({
-          title: "Success",
-          description: "Availability updated successfully",
+          title: "Succès",
+          description: "Disponibilités mises à jour",
         });
       }
     } catch (error) {
       console.error("Error saving availability:", error);
       toast({
-        title: "Error",
-        description: "Failed to save availability rules",
+        title: "Erreur",
+        description: "Impossible de sauvegarder les disponibilités",
         variant: "destructive",
       });
     } finally {
@@ -245,7 +245,7 @@ const ListingsManagement = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search by title, location, or type..."
+                placeholder="Rechercher par titre, ville ou type..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-background border-border"
@@ -264,17 +264,17 @@ const ListingsManagement = () => {
 
               <Select value={sortValue} onValueChange={setSortValue}>
                 <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Sort by" />
+                  <SelectValue placeholder="Trier par" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="created_at-desc">Date: Newest First</SelectItem>
-                  <SelectItem value="created_at-asc">Date: Oldest First</SelectItem>
-                  <SelectItem value="base_price-desc">Price: High to Low</SelectItem>
-                  <SelectItem value="base_price-asc">Price: Low to High</SelectItem>
-                  <SelectItem value="rating_avg-desc">Rating: High to Low</SelectItem>
-                  <SelectItem value="rating_avg-asc">Rating: Low to High</SelectItem>
-                  <SelectItem value="updated_at-desc">Recently Updated</SelectItem>
-                  <SelectItem value="updated_at-asc">Least Recently Updated</SelectItem>
+                  <SelectItem value="created_at-desc">Date : plus récent</SelectItem>
+                  <SelectItem value="created_at-asc">Date : plus ancien</SelectItem>
+                  <SelectItem value="base_price-desc">Prix : décroissant</SelectItem>
+                  <SelectItem value="base_price-asc">Prix : croissant</SelectItem>
+                  <SelectItem value="rating_avg-desc">Note : décroissante</SelectItem>
+                  <SelectItem value="rating_avg-asc">Note : croissante</SelectItem>
+                  <SelectItem value="updated_at-desc">Mis à jour récemment</SelectItem>
+                  <SelectItem value="updated_at-asc">Mis à jour anciennement</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -300,8 +300,8 @@ const ListingsManagement = () => {
               <div className="bg-card rounded-lg border p-8 text-center">
                 <p className="text-muted-foreground">
                   {searchQuery || statusFilter !== "all" || minPrice || maxPrice
-                    ? "No listings found matching your filters. Try adjusting your search or filters."
-                    : "No listings found. Create your first listing to get started."
+                    ? "Aucune annonce trouvée. Essayez de modifier vos filtres."
+                    : "Aucune annonce. Créez votre première annonce pour commencer."
                   }
                 </p>
               </div>
@@ -320,7 +320,7 @@ const ListingsManagement = () => {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold text-lg">${listing.base_price}/night</p>
+                      <p className="font-semibold text-lg">{new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 0 }).format(listing.base_price)}/nuit</p>
                       {listing.rating_count > 0 && (
                         <p className="text-sm text-muted-foreground">
                           ⭐ {listing.rating_avg.toFixed(1)} ({listing.rating_count})
@@ -336,7 +336,7 @@ const ListingsManagement = () => {
                       className="flex-1"
                       onClick={() => handleEditClick(listing.id)}
                     >
-                      Edit
+                      Modifier
                     </Button>
                     <Button
                       variant="outline"
@@ -344,7 +344,7 @@ const ListingsManagement = () => {
                       className="flex-1"
                       onClick={() => handleAvailabilityClick(listing)}
                     >
-                      Availability
+                      Disponibilités
                     </Button>
                   </div>
                 </div>
@@ -358,14 +358,14 @@ const ListingsManagement = () => {
       <Dialog open={isAvailabilityDialogOpen} onOpenChange={setIsAvailabilityDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Manage Availability - {selectedListing?.title}</DialogTitle>
+            <DialogTitle>Gérer les disponibilités - {selectedListing?.title}</DialogTitle>
           </DialogHeader>
           {selectedListing && (
             <StepAvailability
               formData={{
                 availability_rules: selectedListing.availability_rules || [],
                 base_price: selectedListing.base_price,
-                currency: 'USD',
+                currency: 'EUR',
                 title: selectedListing.title
               }}
               updateFormData={(data) => {

@@ -6,6 +6,9 @@ interface HostPayoutsSummaryProps {
   payouts: HostPayout[];
 }
 
+const formatPrice = (amount: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount);
+
 export function HostPayoutsSummary({ payouts }: HostPayoutsSummaryProps) {
   const grossRevenue = payouts
     .reduce((sum, p) => {
@@ -20,15 +23,12 @@ export function HostPayoutsSummary({ payouts }: HostPayoutsSummaryProps) {
 
   const pendingPayouts = payouts
     .filter(p => {
-      // For booking_payout and cancelled: only count if status is 'pending'
       if (['booking_payout', 'cancelled'].includes(p.transaction_type)) {
         return p.status === 'pending';
       }
-      // For debt_collection: only count if status is 'pending_guest_payment'
       if (p.transaction_type === 'debt_collection') {
         return p.status === 'pending_guest_payment';
       }
-      // All other transaction types are not counted
       return false;
     })
     .reduce((sum, p) => sum + p.amount, 0);
@@ -43,28 +43,28 @@ export function HostPayoutsSummary({ payouts }: HostPayoutsSummaryProps) {
 
   const summaryCards = [
     {
-      title: "Gross Revenue",
+      title: "Revenus bruts",
       value: grossRevenue,
       icon: ArrowUpCircle,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
     },
     {
-      title: "Pending Payouts",
+      title: "Versements en attente",
       value: pendingPayouts,
       icon: Clock,
       color: "text-orange-600",
       bgColor: "bg-orange-50",
     },
     {
-      title: "Outstanding Debts",
+      title: "Dettes en cours",
       value: outstandingDebts,
       icon: AlertCircle,
       color: "text-red-600",
       bgColor: "bg-red-50",
     },
     {
-      title: "Net Revenue",
+      title: "Revenus nets",
       value: netRevenue,
       icon: Wallet,
       color: netRevenue >= 0 ? "text-emerald-600" : "text-red-600",
@@ -85,7 +85,7 @@ export function HostPayoutsSummary({ payouts }: HostPayoutsSummaryProps) {
                     {card.title}
                   </p>
                   <p className="text-2xl font-bold">
-                    ${card.value.toFixed(2)}
+                    {formatPrice(card.value)}
                   </p>
                 </div>
                 <div className={`${card.bgColor} p-3 rounded-full`}>
