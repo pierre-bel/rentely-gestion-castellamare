@@ -1,11 +1,10 @@
 import { CalendarDays, Eye, Lock, Upload, Globe, Layers } from "lucide-react";
 import FeaturePageLayout from "@/components/features/FeaturePageLayout";
-import mockupCalendar from "@/assets/mockup-calendar.webp";
+import CalendarMockup from "@/components/home/mockups/CalendarMockup";
 
 const CalendarFeature = () => (
   <FeaturePageLayout
-    heroImage={mockupCalendar}
-    heroImageAlt="Calendrier multi-logements Rentely"
+    heroMockup={<CalendarMockup />}
     badge="Calendrier & Disponibilités"
     title="Un calendrier centralisé pour"
     titleHighlight="tous vos biens"
