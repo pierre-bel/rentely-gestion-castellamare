@@ -1,4 +1,4 @@
-import { Home, LayoutGrid, Inbox, Calendar, DollarSign, TrendingUp, LogOut, Building2, Menu, Users, Mail, Globe, Euro, SprayCan } from "lucide-react";
+import { Home, LayoutGrid, Inbox, Calendar, DollarSign, TrendingUp, LogOut, Building2, Menu, Users, Mail, Globe, Euro, SprayCan, Star } from "lucide-react";
 import { NavLink, useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
