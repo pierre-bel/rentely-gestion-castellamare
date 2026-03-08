@@ -153,6 +153,21 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
 
   const [pricingSuggested, setPricingSuggested] = useState(false);
 
+  // Auto-check beach cabin based on dates
+  useEffect(() => {
+    if (checkinDate && checkoutDate && portalSettings) {
+      const shouldCheck = isBeachCabinPeriod(
+        checkinDate,
+        checkoutDate,
+        portalSettings.beach_cabin_start_month,
+        portalSettings.beach_cabin_start_day,
+        portalSettings.beach_cabin_end_month,
+        portalSettings.beach_cabin_end_day
+      );
+      setBeachCabin(shouldCheck);
+    }
+  }, [checkinDate, checkoutDate, portalSettings]);
+
   // Auto-fill prices when listing or dates change
   useEffect(() => {
     const listing = listings.find((l) => l.id === selectedListingId);
