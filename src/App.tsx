@@ -21,12 +21,15 @@ import EditListing from "./pages/host/EditListing";
 import ListingsManagement from "./pages/host/ListingsManagement";
 import HostBookings from "./pages/host/Bookings";
 import HostTenants from "./pages/host/Tenants";
+import HostReviews from "./pages/host/Reviews";
 import HostAvailability from "./pages/host/Availability";
 import PublicAvailability from "./pages/PublicAvailability";
 import EmbedAvailability from "./pages/EmbedAvailability";
 import EmbedAllAvailability from "./pages/EmbedAllAvailability";
 import HostPayouts from "./pages/host/Payouts";
 import EarningsReport from "./pages/host/EarningsReport";
+import HostStatistics from "./pages/host/Statistics";
+import HostContracts from "./pages/host/Contracts";
 import HostPricingPage from "./pages/host/Pricing";
 import HostCleaningPage from "./pages/host/Cleaning";
 import EmailAutomations from "./pages/host/EmailAutomations";
@@ -90,10 +93,13 @@ const App = () => (
               <Route path="availability" element={<HostAvailability />} />
               <Route path="bookings" element={<HostBookings />} />
               <Route path="tenants" element={<HostTenants />} />
+              <Route path="reviews" element={<HostReviews />} />
               <Route path="pricing" element={<HostPricingPage />} />
               <Route path="cleaning" element={<HostCleaningPage />} />
               <Route path="payouts" element={<HostPayouts />} />
               <Route path="earnings-report" element={<EarningsReport />} />
+              <Route path="statistics" element={<HostStatistics />} />
+              <Route path="contracts" element={<HostContracts />} />
               <Route path="inbox" element={<HostInbox />} />
               <Route path="email-automations" element={<EmailAutomations />} />
               <Route path="portal-settings" element={<PortalSettings />} />

@@ -1,4 +1,4 @@
-import { Home, LayoutGrid, Inbox, Calendar, DollarSign, TrendingUp, LogOut, Building2, Menu, Users, Mail, Globe, Euro, SprayCan } from "lucide-react";
+import { Home, LayoutGrid, Inbox, Calendar, DollarSign, TrendingUp, LogOut, Building2, Menu, Users, Mail, Globe, Euro, SprayCan, Star, BarChart3, FileText } from "lucide-react";
 import { NavLink, useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,9 +21,12 @@ const defaultNavigation: NavigationItem[] = [
   { name: "Tarifs", href: "/host/pricing", icon: Euro },
   { name: "Ménage", href: "/host/cleaning", icon: SprayCan },
   { name: "Locataires", href: "/host/tenants", icon: Users },
+  { name: "Avis", href: "/host/reviews", icon: Star },
   { name: "Paiements", href: "/host/payouts", icon: DollarSign },
   { name: "E-mails auto", href: "/host/email-automations", icon: Mail },
   { name: "Revenus", href: "/host/earnings-report", icon: TrendingUp },
+  { name: "Statistiques", href: "/host/statistics", icon: BarChart3 },
+  { name: "Contrats", href: "/host/contracts", icon: FileText },
   { name: "Portail client", href: "/host/portal-settings", icon: Globe },
 ];
 

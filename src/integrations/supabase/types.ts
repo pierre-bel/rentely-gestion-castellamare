@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_contracts: {
+        Row: {
+          booking_id: string
+          created_at: string
+          generated_html: string
+          id: string
+          signature_data: string | null
+          signed_at: string | null
+          template_id: string | null
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          generated_html: string
+          id?: string
+          signature_data?: string | null
+          signed_at?: string | null
+          template_id?: string | null
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          generated_html?: string
+          id?: string
+          signature_data?: string | null
+          signed_at?: string | null
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_contracts_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_contracts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "contract_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_payment_items: {
         Row: {
           amount: number
@@ -345,6 +390,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      contract_templates: {
+        Row: {
+          body_html: string
+          created_at: string
+          host_user_id: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          body_html?: string
+          created_at?: string
+          host_user_id: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string
+          created_at?: string
+          host_user_id?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       countries: {
         Row: {
@@ -1476,6 +1548,8 @@ export type Database = {
           author_user_id: string
           booking_id: string
           created_at: string
+          host_response: string | null
+          host_response_at: string | null
           id: string
           listing_id: string
           rating: number
@@ -1487,6 +1561,8 @@ export type Database = {
           author_user_id: string
           booking_id: string
           created_at?: string
+          host_response?: string | null
+          host_response_at?: string | null
           id?: string
           listing_id: string
           rating: number
@@ -1498,6 +1574,8 @@ export type Database = {
           author_user_id?: string
           booking_id?: string
           created_at?: string
+          host_response?: string | null
+          host_response_at?: string | null
           id?: string
           listing_id?: string
           rating?: number
@@ -2704,6 +2782,39 @@ export type Database = {
           nights_booked: number
           occupancy_percentage: number
           platform_fees: number
+        }[]
+      }
+      get_host_reviews: {
+        Args: { _host_user_id: string }
+        Returns: {
+          author_user_id: string
+          booking_id: string
+          created_at: string
+          guest_avatar_url: string
+          guest_first_name: string
+          guest_last_name: string
+          host_response: string
+          host_response_at: string
+          id: string
+          listing_id: string
+          listing_title: string
+          rating: number
+          status: string
+          text: string
+        }[]
+      }
+      get_host_statistics: {
+        Args: { _host_user_id: string; _year: number }
+        Returns: {
+          adr: number
+          available_nights: number
+          booked_nights: number
+          listing_id: string
+          listing_title: string
+          month: number
+          occupancy_rate: number
+          revenue: number
+          revpar: number
         }[]
       }
       get_or_create_support_thread: {

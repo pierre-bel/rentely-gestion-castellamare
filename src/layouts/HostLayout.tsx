@@ -14,12 +14,15 @@ const getPageTitle = (pathname: string): string => {
   if (pathname === "/host/dashboard") return "Tableau de bord";
   if (pathname === "/host/listings") return "Mes biens";
   if (pathname === "/host/tenants") return "Locataires";
+  if (pathname === "/host/reviews") return "Avis";
   if (pathname === "/host/availability") return "Calendrier des disponibilités";
   if (pathname === "/host/bookings") return "Réservations";
   if (pathname === "/host/pricing") return "Tarifs";
   if (pathname === "/host/cleaning") return "Ménage";
   if (pathname === "/host/payouts") return "Paiements";
   if (pathname === "/host/earnings-report") return "Rapport de revenus";
+  if (pathname === "/host/statistics") return "Statistiques";
+  if (pathname === "/host/contracts") return "Contrats";
   if (pathname === "/host/email-automations") return "E-mails automatiques";
   if (pathname === "/host/inbox") return "Messages";
   if (pathname.startsWith("/host/edit-listing/")) return "Modifier le bien";

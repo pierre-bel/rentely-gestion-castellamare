@@ -9,6 +9,8 @@ interface ReviewCardProps {
     rating: number;
     text: string | null;
     created_at: string;
+    host_response?: string | null;
+    host_response_at?: string | null;
     profiles: {
       first_name: string | null;
       last_name: string | null;
@@ -84,6 +86,13 @@ export const ReviewCard = ({ review, truncated = true, onShowMore, highlightId }
               Show more
             </button>
           )}
+        </div>
+      )}
+
+      {review.host_response && (
+        <div className="mt-3 bg-muted/50 rounded-lg p-3 border border-border">
+          <p className="text-xs font-medium text-muted-foreground mb-1">Réponse de l'hôte</p>
+          <p className="text-sm text-foreground">{review.host_response}</p>
         </div>
       )}
     </div>
