@@ -39,11 +39,11 @@ export function calculatePricingFromWeeklyRates(
 
   for (const night of nights) {
     const dayOfWeek = getDay(night); // 0=Sun, 5=Fri, 6=Sat
-    const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
+    const isWeekend = dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0;
 
-    // Find the Monday of this night's week
-    const monday = startOfWeek(night, { weekStartsOn: 1 });
-    const mondayStr = format(monday, "yyyy-MM-dd");
+    // Find the Saturday of this night's week (week runs Sat→Sat)
+    const saturday = startOfWeek(night, { weekStartsOn: 6 });
+    const mondayStr = format(saturday, "yyyy-MM-dd");
     const pricing = pricingMap.get(mondayStr);
 
     let rate: number;

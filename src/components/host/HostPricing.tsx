@@ -95,12 +95,12 @@ export function HostPricing() {
     const basePrice = listing?.base_price || 0;
 
     const today = new Date();
-    const firstMonday = startOfWeek(today, { weekStartsOn: 1 });
+    const firstSaturday = startOfWeek(today, { weekStartsOn: 6 });
     const existingDates = new Set(pricingData.map((p) => p.week_start_date));
 
     const newRows: WeeklyPricing[] = [];
     for (let i = 0; i < weeksToGenerate; i++) {
-      const weekStart = addWeeks(firstMonday, i);
+      const weekStart = addWeeks(firstSaturday, i);
       const dateStr = format(weekStart, "yyyy-MM-dd");
       if (!existingDates.has(dateStr)) {
         newRows.push({
@@ -168,12 +168,12 @@ export function HostPricing() {
   const handleDownloadTemplate = () => {
     const listing = listings.find((l) => l.id === selectedListingId);
     const templateData = [];
-    const firstMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const firstSaturday = startOfWeek(new Date(), { weekStartsOn: 6 });
 
     for (let i = 0; i < 52; i++) {
-      const weekStart = addWeeks(firstMonday, i);
+      const weekStart = addWeeks(firstSaturday, i);
       templateData.push({
-        "Semaine du (lundi)": format(weekStart, "dd/MM/yyyy"),
+        "Semaine du (samedi)": format(weekStart, "dd/MM/yyyy"),
         "Tarif nuit (semaine) €": listing?.base_price || 0,
         "Tarif nuit (week-end) €": listing?.base_price || 0,
         "Nuit supp. week-end €": listing?.base_price || 0,
@@ -204,7 +204,7 @@ export function HostPricing() {
           const pricingRows: WeeklyPricing[] = [];
 
           for (const row of rows) {
-            const dateRaw = row["Semaine du (lundi)"];
+            const dateRaw = row["Semaine du (samedi)"] || row["Semaine du (lundi)"];
             if (!dateRaw) continue;
 
             // Parse dd/MM/yyyy or Excel serial
@@ -220,8 +220,8 @@ export function HostPricing() {
               }
             }
 
-            // Align to Monday
-            weekStart = startOfWeek(weekStart, { weekStartsOn: 1 });
+            // Align to Saturday
+            weekStart = startOfWeek(weekStart, { weekStartsOn: 6 });
 
             const nightly = parseFloat(row["Tarif nuit (semaine) €"]) || 0;
             const weekend = parseFloat(row["Tarif nuit (week-end) €"]) || 0;
