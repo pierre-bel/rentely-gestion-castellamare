@@ -58,12 +58,11 @@ export default function EmbedAllAvailability() {
     queryKey: ["embed-host-listing-ids", hostId],
     queryFn: async () => {
       if (!hostId) return [];
-      // Use the listings table - only approved ones are visible via RLS
       const { data, error } = await supabase
         .from("listings")
         .select("id")
         .eq("host_user_id", hostId)
-        .eq("status", "approved");
+        .in("status", ["approved", "pending"]);
       if (error) throw error;
       return (data || []).map((l) => l.id);
     },
