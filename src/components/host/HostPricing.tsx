@@ -168,12 +168,12 @@ export function HostPricing() {
   const handleDownloadTemplate = () => {
     const listing = listings.find((l) => l.id === selectedListingId);
     const templateData = [];
-    const firstMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const firstSaturday = startOfWeek(new Date(), { weekStartsOn: 6 });
 
     for (let i = 0; i < 52; i++) {
-      const weekStart = addWeeks(firstMonday, i);
+      const weekStart = addWeeks(firstSaturday, i);
       templateData.push({
-        "Semaine du (lundi)": format(weekStart, "dd/MM/yyyy"),
+        "Semaine du (samedi)": format(weekStart, "dd/MM/yyyy"),
         "Tarif nuit (semaine) €": listing?.base_price || 0,
         "Tarif nuit (week-end) €": listing?.base_price || 0,
         "Nuit supp. week-end €": listing?.base_price || 0,
