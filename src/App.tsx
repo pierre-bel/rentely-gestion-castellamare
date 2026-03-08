@@ -86,6 +86,10 @@ const App = () => (
             <Route path="/support" element={<><Navbar /><Support /></>} />
             <Route path="/forgot-password" element={<><Navbar /><ForgotPassword /></>} />
             <Route path="/become-host" element={<><Navbar /><BecomeHost /></>} />
+            <Route path="/features/calendar" element={<CalendarFeature />} />
+            <Route path="/features/bookings" element={<BookingsFeature />} />
+            <Route path="/features/automation" element={<AutomationFeature />} />
+            <Route path="/features/tools" element={<ToolsFeature />} />
             <Route path="/disponibilites" element={<PublicAvailability />} />
             <Route path="/embed/availability/all/:hostId" element={<EmbedAllAvailability />} />
             <Route path="/embed/availability/:listingId" element={<EmbedAvailability />} />
