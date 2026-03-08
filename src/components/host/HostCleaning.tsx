@@ -459,15 +459,12 @@ export function HostCleaning() {
               >
                 <CardContent className="py-4 px-5">
                   <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-                    {/* Date & listing */}
+                    {/* Listing & staff */}
                     <div className="flex-shrink-0 lg:w-[200px]">
                       <div className="flex items-center gap-2 mb-1">
                         <SprayCan className="h-4 w-4 text-primary" />
-                        <span className="font-semibold capitalize">
-                          {format(slot.cleaningDate, "EEEE dd MMM", { locale: fr })}
-                        </span>
+                        <span className="font-semibold">{slot.listingTitle}</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">{slot.listingTitle}</p>
                       {slot.staffMember && (
                         <div className="flex items-center gap-1.5 mt-1">
                           <UserCheck className="h-3.5 w-3.5 text-primary" />
