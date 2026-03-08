@@ -332,9 +332,6 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
                         )}
                       </div>
                     </div>
-                    <div className="text-right text-xs text-muted-foreground">
-                      {booking.guests} pers.
-                    </div>
                   </div>
                 ))}
             </div>

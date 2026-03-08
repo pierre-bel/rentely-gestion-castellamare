@@ -237,7 +237,7 @@ export default function TimelineOverview({ listings, bookings, blockedDates, cur
                               <p className="text-xs text-muted-foreground">
                                 {format(checkin, "d MMM", { locale: fr })} → {format(checkout, "d MMM", { locale: fr })}
                               </p>
-                              <p className="text-xs">{booking.guests} voyageur{booking.guests > 1 ? "s" : ""}</p>
+                              
                               <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground">
                                 {STATUS_LABELS[booking.status] || booking.status}
                               </span>
