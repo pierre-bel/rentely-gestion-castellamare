@@ -410,7 +410,12 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
 
             {/* Pricing section */}
             <Separator />
-            <p className="text-sm font-medium">Tarification</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium">Tarification</p>
+              {pricingSuggested && nights > 0 && (
+                <Badge variant="secondary" className="text-xs">Calculé via tarifs hebdo</Badge>
+              )}
+            </div>
 
             <div>
               <Label>Prix de location (€)</Label>
