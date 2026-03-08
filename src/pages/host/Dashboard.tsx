@@ -19,7 +19,7 @@ const HostDashboard = () => {
       {/* Aperçu des revenus */}
       <Card className="bg-card">
         <CardHeader className="border-b pb-4">
-          <CardTitle className="text-2xl font-bold">Aperçu des revenus</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl font-bold">Aperçu des revenus</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
             Indicateurs de performance sur toute la période
           </p>
