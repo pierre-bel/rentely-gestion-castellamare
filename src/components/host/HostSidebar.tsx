@@ -21,6 +21,7 @@ const defaultNavigation: NavigationItem[] = [
   { name: "Tarifs", href: "/host/pricing", icon: Euro },
   { name: "Ménage", href: "/host/cleaning", icon: SprayCan },
   { name: "Locataires", href: "/host/tenants", icon: Users },
+  { name: "Avis", href: "/host/reviews", icon: Star },
   { name: "Paiements", href: "/host/payouts", icon: DollarSign },
   { name: "E-mails auto", href: "/host/email-automations", icon: Mail },
   { name: "Revenus", href: "/host/earnings-report", icon: TrendingUp },

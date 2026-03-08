@@ -91,6 +91,7 @@ const App = () => (
               <Route path="availability" element={<HostAvailability />} />
               <Route path="bookings" element={<HostBookings />} />
               <Route path="tenants" element={<HostTenants />} />
+              <Route path="reviews" element={<HostReviews />} />
               <Route path="pricing" element={<HostPricingPage />} />
               <Route path="cleaning" element={<HostCleaningPage />} />
               <Route path="payouts" element={<HostPayouts />} />
