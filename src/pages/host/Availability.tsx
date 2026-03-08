@@ -233,6 +233,9 @@ export default function Availability() {
             </Button>
           </div>
 
+          {/* Share embed button */}
+          <ShareEmbedButton userId={user?.id} />
+
           {/* Listing filter */}
           {listings && listings.length > 1 && (
             <div className="flex items-center gap-2 flex-wrap">
