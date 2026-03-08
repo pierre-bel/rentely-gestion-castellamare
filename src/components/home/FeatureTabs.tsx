@@ -12,6 +12,10 @@ import {
   Lock,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import mockupCalendar from "@/assets/mockup-calendar.webp";
+import mockupPayments from "@/assets/mockup-payments.webp";
+import mockupEmails from "@/assets/mockup-emails.webp";
+import mockupStats from "@/assets/mockup-stats.webp";
 
 const CATEGORIES = [
   {
