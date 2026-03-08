@@ -30,7 +30,6 @@ export const useAdminSupportInbox = (adminUserId: string | undefined) => {
       }
       
       const { data, error } = await supabase.rpc('admin_get_support_conversations', {
-        p_admin_user_id: adminUserId,
         p_search_query: debouncedSearch || null,
         p_sort_by: sortBy
       });

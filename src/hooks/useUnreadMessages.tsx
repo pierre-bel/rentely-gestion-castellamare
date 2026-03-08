@@ -29,7 +29,7 @@ export const useUnreadMessages = (userId: string | undefined, isAdmin: boolean =
         // Real mode: Use RPC calls
         const rpcFunction = isAdmin ? 'admin_get_support_conversations' : 'search_inbox_conversations';
         const params = isAdmin 
-          ? { p_admin_user_id: userId, p_search_query: null, p_sort_by: 'recent' }
+          ? { p_search_query: null, p_sort_by: 'recent' }
           : { p_user_id: userId, p_search_query: null, p_sort_by: 'recent' };
 
         const { data, error } = await supabase.rpc(rpcFunction, params);

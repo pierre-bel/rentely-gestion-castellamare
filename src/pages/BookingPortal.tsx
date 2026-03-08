@@ -114,11 +114,10 @@ export default function BookingPortal() {
   useEffect(() => {
     if (!token) return;
     (async () => {
-      const { data: portal, error: err } = await supabase
-        .from("public_booking_portal")
-        .select("*")
-        .eq("access_token", token)
-        .maybeSingle();
+      const { data: portalRows, error: err } = await supabase
+        .rpc("get_booking_portal", { p_access_token: token });
+
+      const portal = portalRows && portalRows.length > 0 ? portalRows[0] : null;
 
       if (err || !portal) {
         setError(true);
