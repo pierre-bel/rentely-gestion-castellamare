@@ -206,6 +206,11 @@ export default function PortalSettings() {
           custom_footer_text: d.custom_footer_text,
           section_order: d.section_order || DEFAULT_SECTION_ORDER,
           require_full_payment_for_access_code: d.require_full_payment_for_access_code ?? true,
+          contact_email: d.contact_email || null,
+          contact_phone: d.contact_phone || null,
+          contact_whatsapp: d.contact_whatsapp || null,
+          contact_facebook_url: d.contact_facebook_url || null,
+          show_contact: d.show_contact ?? true,
         });
       }
 
