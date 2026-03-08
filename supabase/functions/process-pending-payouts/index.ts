@@ -16,20 +16,26 @@ interface PendingPayout {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Verify cron secret
+  const cronSecret = req.headers.get('x-cron-secret');
+  if (cronSecret !== Deno.env.get('CRON_SECRET')) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 401,
+    });
+  }
+
   try {
-    // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     console.log('Starting pending payout processing...');
 
-    // Fetch all pending payouts
     const { data: pendingPayouts, error: fetchError } = await supabase
       .from('payouts')
       .select('*')
@@ -61,19 +67,13 @@ Deno.serve(async (req) => {
     const processedPayouts: string[] = [];
     const failedPayouts: string[] = [];
 
-    // Process each payout
     for (const payout of pendingPayouts as PendingPayout[]) {
       try {
         console.log(`Processing payout ${payout.id} for host ${payout.host_user_id}: $${payout.amount}`);
 
-        // In a real implementation, this would integrate with payment provider (Stripe, PayPal, etc.)
-        // For now, we'll simulate successful processing
-        
-        // Simulate payment provider API call
-        const paymentSuccess = true; // In production: await processPaymentProvider(payout)
+        const paymentSuccess = true;
 
         if (paymentSuccess) {
-          // Update payout status to completed
           const { error: updateError } = await supabase
             .from('payouts')
             .update({
@@ -91,13 +91,12 @@ Deno.serve(async (req) => {
             processedPayouts.push(payout.id);
           }
         } else {
-          // Mark as failed
           const { error: failError } = await supabase
             .from('payouts')
             .update({
               status: 'failed',
               updated_at: new Date().toISOString(),
-              notes: payout.notes + ' | Payment processing failed',
+              notes: (payout.notes || '') + ' | Payment processing failed',
             })
             .eq('id', payout.id);
 
@@ -120,8 +119,6 @@ Deno.serve(async (req) => {
         message: 'Payout processing completed',
         processed_count: processedPayouts.length,
         failed_count: failedPayouts.length,
-        processed_ids: processedPayouts,
-        failed_ids: failedPayouts,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -133,7 +130,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Internal server error',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
