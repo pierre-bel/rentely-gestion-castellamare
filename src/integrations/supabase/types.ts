@@ -1450,6 +1450,10 @@ export type Database = {
           beach_cabin_end_month: number
           beach_cabin_start_day: number
           beach_cabin_start_month: number
+          contact_email: string | null
+          contact_facebook_url: string | null
+          contact_phone: string | null
+          contact_whatsapp: string | null
           created_at: string
           custom_footer_text: string | null
           host_user_id: string
@@ -1459,6 +1463,7 @@ export type Database = {
           show_access_code: boolean
           show_address: boolean
           show_amenities: boolean
+          show_contact: boolean
           show_house_rules: boolean
           show_map_link: boolean
           show_payment_schedule: boolean
@@ -1471,6 +1476,10 @@ export type Database = {
           beach_cabin_end_month?: number
           beach_cabin_start_day?: number
           beach_cabin_start_month?: number
+          contact_email?: string | null
+          contact_facebook_url?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
           created_at?: string
           custom_footer_text?: string | null
           host_user_id: string
@@ -1480,6 +1489,7 @@ export type Database = {
           show_access_code?: boolean
           show_address?: boolean
           show_amenities?: boolean
+          show_contact?: boolean
           show_house_rules?: boolean
           show_map_link?: boolean
           show_payment_schedule?: boolean
@@ -1492,6 +1502,10 @@ export type Database = {
           beach_cabin_end_month?: number
           beach_cabin_start_day?: number
           beach_cabin_start_month?: number
+          contact_email?: string | null
+          contact_facebook_url?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
           created_at?: string
           custom_footer_text?: string | null
           host_user_id?: string
@@ -1501,6 +1515,7 @@ export type Database = {
           show_access_code?: boolean
           show_address?: boolean
           show_amenities?: boolean
+          show_contact?: boolean
           show_house_rules?: boolean
           show_map_link?: boolean
           show_payment_schedule?: boolean
@@ -2029,6 +2044,10 @@ export type Database = {
       }
       public_portal_settings: {
         Row: {
+          contact_email: string | null
+          contact_facebook_url: string | null
+          contact_phone: string | null
+          contact_whatsapp: string | null
           custom_footer_text: string | null
           host_user_id: string | null
           require_full_payment_for_access_code: boolean | null
@@ -2036,6 +2055,7 @@ export type Database = {
           show_access_code: boolean | null
           show_address: boolean | null
           show_amenities: boolean | null
+          show_contact: boolean | null
           show_house_rules: boolean | null
           show_map_link: boolean | null
           show_payment_schedule: boolean | null
@@ -2043,6 +2063,10 @@ export type Database = {
           welcome_message: string | null
         }
         Insert: {
+          contact_email?: string | null
+          contact_facebook_url?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
           custom_footer_text?: string | null
           host_user_id?: string | null
           require_full_payment_for_access_code?: boolean | null
@@ -2050,6 +2074,7 @@ export type Database = {
           show_access_code?: boolean | null
           show_address?: boolean | null
           show_amenities?: boolean | null
+          show_contact?: boolean | null
           show_house_rules?: boolean | null
           show_map_link?: boolean | null
           show_payment_schedule?: boolean | null
@@ -2057,6 +2082,10 @@ export type Database = {
           welcome_message?: string | null
         }
         Update: {
+          contact_email?: string | null
+          contact_facebook_url?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
           custom_footer_text?: string | null
           host_user_id?: string | null
           require_full_payment_for_access_code?: boolean | null
@@ -2064,6 +2093,7 @@ export type Database = {
           show_access_code?: boolean | null
           show_address?: boolean | null
           show_amenities?: boolean | null
+          show_contact?: boolean | null
           show_house_rules?: boolean | null
           show_map_link?: boolean | null
           show_payment_schedule?: boolean | null
