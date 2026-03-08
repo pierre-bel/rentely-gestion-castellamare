@@ -12,6 +12,10 @@ import {
   Lock,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import mockupCalendar from "@/assets/mockup-calendar.webp";
+import mockupPayments from "@/assets/mockup-payments.webp";
+import mockupEmails from "@/assets/mockup-emails.webp";
+import mockupStats from "@/assets/mockup-stats.webp";
 
 const CATEGORIES = [
   {
@@ -30,34 +34,8 @@ const CATEGORIES = [
       "Tarification semaine / week-end par période",
     ],
     mockup: (
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-4">
-          <CalendarDays className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-foreground">Mars 2026</span>
-        </div>
-        <div className="grid grid-cols-7 gap-1 text-xs text-center">
-          {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
-            <span key={i} className="text-muted-foreground font-medium py-1">{d}</span>
-          ))}
-          {Array.from({ length: 31 }, (_, i) => {
-            const booked = i >= 6 && i <= 12;
-            const blocked = i >= 20 && i <= 23;
-            return (
-              <span
-                key={i}
-                className={`py-1.5 rounded-md text-xs font-medium ${
-                  booked
-                    ? "bg-primary/20 text-primary"
-                    : blocked
-                    ? "bg-destructive/15 text-destructive"
-                    : "text-foreground hover:bg-muted"
-                }`}
-              >
-                {i + 1}
-              </span>
-            );
-          })}
-        </div>
+      <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
+        <img src={mockupCalendar} alt="Calendrier multi-logements" className="w-full h-auto" loading="lazy" />
       </div>
     ),
   },
@@ -77,26 +55,8 @@ const CATEGORIES = [
       "Rappels automatiques de paiement",
     ],
     mockup: (
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="font-semibold text-foreground">Échéancier</span>
-          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">2 / 3 payés</span>
-        </div>
-        {[
-          { label: "Acompte (30%)", amount: "360 €", paid: true },
-          { label: "2e versement (40%)", amount: "480 €", paid: true },
-          { label: "Solde (30%)", amount: "360 €", paid: false },
-        ].map((item, i) => (
-          <div key={i} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className={`h-4 w-4 ${item.paid ? "text-primary" : "text-muted-foreground/40"}`} />
-              <span className="text-sm text-foreground">{item.label}</span>
-            </div>
-            <span className={`text-sm font-medium ${item.paid ? "text-primary" : "text-muted-foreground"}`}>
-              {item.amount}
-            </span>
-          </div>
-        ))}
+      <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
+        <img src={mockupPayments} alt="Échéancier de paiements" className="w-full h-auto" loading="lazy" />
       </div>
     ),
   },
@@ -116,24 +76,8 @@ const CATEGORIES = [
       "Historique d'envoi complet",
     ],
     mockup: (
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-3">
-        <div className="flex items-center gap-2 mb-2">
-          <Mail className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-foreground">Automatisations</span>
-        </div>
-        {[
-          { trigger: "3 jours avant arrivée", subject: "Bienvenue – infos pratiques", enabled: true },
-          { trigger: "Jour du départ", subject: "Merci pour votre séjour", enabled: true },
-          { trigger: "À la réservation", subject: "Confirmation de réservation", enabled: false },
-        ].map((item, i) => (
-          <div key={i} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-            <div>
-              <p className="text-sm font-medium text-foreground">{item.subject}</p>
-              <p className="text-xs text-muted-foreground">{item.trigger}</p>
-            </div>
-            <div className={`h-2.5 w-2.5 rounded-full ${item.enabled ? "bg-primary" : "bg-muted-foreground/30"}`} />
-          </div>
-        ))}
+      <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
+        <img src={mockupEmails} alt="Automatisations e-mails" className="w-full h-auto" loading="lazy" />
       </div>
     ),
   },
@@ -153,25 +97,8 @@ const CATEGORIES = [
       "Tarification par période personnalisable",
     ],
     mockup: (
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-4">
-          <BarChart3 className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-foreground">Aperçu</span>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: "Taux d'occupation", value: "78%", icon: CalendarDays },
-            { label: "Revenus du mois", value: "4 280 €", icon: CreditCard },
-            { label: "Locataires actifs", value: "12", icon: Users },
-            { label: "Réservations", value: "8", icon: ClipboardList },
-          ].map((item, i) => (
-            <div key={i} className="bg-muted/50 rounded-xl p-3">
-              <item.icon className="h-4 w-4 text-primary mb-1" />
-              <p className="text-lg font-bold text-foreground">{item.value}</p>
-              <p className="text-xs text-muted-foreground">{item.label}</p>
-            </div>
-          ))}
-        </div>
+      <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
+        <img src={mockupStats} alt="Statistiques et rapports" className="w-full h-auto" loading="lazy" />
       </div>
     ),
   },

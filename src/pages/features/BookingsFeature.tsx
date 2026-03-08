@@ -1,8 +1,11 @@
 import { ClipboardList, CreditCard, FileText, PenTool, Receipt, CalendarCheck } from "lucide-react";
 import FeaturePageLayout from "@/components/features/FeaturePageLayout";
+import mockupPayments from "@/assets/mockup-payments.webp";
 
 const BookingsFeature = () => (
   <FeaturePageLayout
+    heroImage={mockupPayments}
+    heroImageAlt="Gestion des paiements et échéanciers"
     badge="Réservations & Paiements"
     title="Maîtrisez chaque"
     titleHighlight="réservation"

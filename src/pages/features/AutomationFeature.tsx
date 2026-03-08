@@ -1,8 +1,11 @@
 import { Mail, MessageSquare, Variable, Clock, Send, Settings } from "lucide-react";
 import FeaturePageLayout from "@/components/features/FeaturePageLayout";
+import mockupEmails from "@/assets/mockup-emails.webp";
 
 const AutomationFeature = () => (
   <FeaturePageLayout
+    heroImage={mockupEmails}
+    heroImageAlt="Automatisations e-mails"
     badge="Communication & Automatisation"
     title="Communiquez"
     titleHighlight="sans effort"
