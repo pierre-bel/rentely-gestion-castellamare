@@ -24,6 +24,7 @@ import HostTenants from "./pages/host/Tenants";
 import HostAvailability from "./pages/host/Availability";
 import PublicAvailability from "./pages/PublicAvailability";
 import EmbedAvailability from "./pages/EmbedAvailability";
+import EmbedAllAvailability from "./pages/EmbedAllAvailability";
 import HostPayouts from "./pages/host/Payouts";
 import EarningsReport from "./pages/host/EarningsReport";
 import EmailAutomations from "./pages/host/EmailAutomations";
