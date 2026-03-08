@@ -358,7 +358,7 @@ const ListingsManagement = () => {
       <Dialog open={isAvailabilityDialogOpen} onOpenChange={setIsAvailabilityDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Manage Availability - {selectedListing?.title}</DialogTitle>
+            <DialogTitle>Gérer les disponibilités - {selectedListing?.title}</DialogTitle>
           </DialogHeader>
           {selectedListing && (
             <StepAvailability
