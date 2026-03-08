@@ -1,8 +1,11 @@
 import { Brush, Users, BarChart3, FileSpreadsheet, DollarSign, Shield } from "lucide-react";
 import FeaturePageLayout from "@/components/features/FeaturePageLayout";
+import mockupStats from "@/assets/mockup-stats.webp";
 
 const ToolsFeature = () => (
   <FeaturePageLayout
+    heroImage={mockupStats}
+    heroImageAlt="Statistiques et outils avancés"
     badge="Outils avancés"
     title="Professionnalisez votre"
     titleHighlight="activité"
