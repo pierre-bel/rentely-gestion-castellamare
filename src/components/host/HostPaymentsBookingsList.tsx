@@ -205,29 +205,29 @@ export function HostPaymentsBookingsList() {
   return (
     <>
       {/* Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
         <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Total attendu</p>
-            <p className="text-2xl font-bold">{totalRevenue.toFixed(2)} €</p>
+          <CardContent className="p-3 md:p-4">
+            <p className="text-xs md:text-sm text-muted-foreground">Total attendu</p>
+            <p className="text-lg md:text-2xl font-bold">{totalRevenue.toFixed(2)} €</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Encaissé</p>
-            <p className="text-2xl font-bold text-green-600">{paidTotal.toFixed(2)} €</p>
+          <CardContent className="p-3 md:p-4">
+            <p className="text-xs md:text-sm text-muted-foreground">Encaissé</p>
+            <p className="text-lg md:text-2xl font-bold text-green-600">{paidTotal.toFixed(2)} €</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">En attente</p>
-            <p className="text-2xl font-bold text-amber-600">{pendingTotal.toFixed(2)} €</p>
+          <CardContent className="p-3 md:p-4">
+            <p className="text-xs md:text-sm text-muted-foreground">En attente</p>
+            <p className="text-lg md:text-2xl font-bold text-amber-600">{pendingTotal.toFixed(2)} €</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">En retard</p>
-            <p className={`text-2xl font-bold ${overdueTotal > 0 ? "text-destructive animate-pulse" : "text-muted-foreground"}`}>
+          <CardContent className="p-3 md:p-4">
+            <p className="text-xs md:text-sm text-muted-foreground">En retard</p>
+            <p className={`text-lg md:text-2xl font-bold ${overdueTotal > 0 ? "text-destructive animate-pulse" : "text-muted-foreground"}`}>
               {overdueTotal.toFixed(2)} €
             </p>
           </CardContent>
