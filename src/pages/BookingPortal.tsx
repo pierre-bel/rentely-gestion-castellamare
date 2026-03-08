@@ -119,6 +119,8 @@ export default function BookingPortal() {
   const [payments, setPayments] = useState<PaymentItem[]>([]);
   const [settings, setSettings] = useState<PortalSettings>(DEFAULT_SETTINGS);
   const [customSections, setCustomSections] = useState<CustomSectionData[]>([]);
+  const [existingReview, setExistingReview] = useState<any>(null);
+  const [reviewChecked, setReviewChecked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
