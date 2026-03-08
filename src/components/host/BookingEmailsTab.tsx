@@ -232,7 +232,11 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <span className="text-xs text-amber-600 font-medium">Planifié</span>
+                    {email.is_late ? (
+                      <span className="text-xs text-orange-600 font-medium">En retard — à envoyer</span>
+                    ) : (
+                      <span className="text-xs text-amber-600 font-medium">Planifié</span>
+                    )}
                     {email.scheduled_date && (
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {format(parseISO(email.scheduled_date), "d MMM yyyy", { locale: fr })}
