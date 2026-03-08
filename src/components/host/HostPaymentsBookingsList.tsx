@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Eye, Search } from "lucide-react";
 import { format } from "date-fns";
 import { BookingPaymentDetailDialog } from "./BookingPaymentDetailDialog";
+import { OverduePaymentsList } from "./OverduePaymentsList";
 
 interface BookingWithPayments {
   id: string;
@@ -233,6 +234,9 @@ export function HostPaymentsBookingsList() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Overdue payments list */}
+      <OverduePaymentsList bookings={bookings} onViewBooking={handleView} />
 
       {/* Search */}
       <div className="relative mb-4">
