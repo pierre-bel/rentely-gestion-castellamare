@@ -153,6 +153,7 @@ export default function BookingPortal() {
         setSettings({
           ...s,
           section_order: s.section_order || DEFAULT_SETTINGS.section_order,
+          require_full_payment_for_access_code: s.require_full_payment_for_access_code ?? true,
         });
       }
       if (customRes.data) setCustomSections(customRes.data as CustomSectionData[]);
