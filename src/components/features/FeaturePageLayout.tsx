@@ -35,6 +35,7 @@ const FeaturePageLayout = ({
   highlights,
   heroImage,
   heroImageAlt,
+  heroMockup,
   nextPage,
   children,
 }: FeaturePageLayoutProps) => {
