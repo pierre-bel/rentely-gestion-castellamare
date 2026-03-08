@@ -179,7 +179,7 @@ const HostContracts = () => {
                         </p>
                       </div>
                       {c.signed_at ? (
-                        <Badge className="bg-green-100 text-green-800 border-0">Signé</Badge>
+                        <Badge className="bg-primary/10 text-primary border-0">Signé</Badge>
                       ) : (
                         <Badge variant="secondary">En attente</Badge>
                       )}

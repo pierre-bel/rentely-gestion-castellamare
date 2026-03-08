@@ -23,7 +23,7 @@ export const ContractPreviewDialog = ({ open, onOpenChange, contract }: Contract
           <div className="flex items-center gap-3">
             <DialogTitle>Aperçu du contrat</DialogTitle>
             {contract.signed_at ? (
-              <Badge className="bg-green-100 text-green-800 border-0">
+              <Badge className="bg-primary/10 text-primary border-0">
                 Signé le {format(new Date(contract.signed_at), "d MMM yyyy", { locale: fr })}
               </Badge>
             ) : (

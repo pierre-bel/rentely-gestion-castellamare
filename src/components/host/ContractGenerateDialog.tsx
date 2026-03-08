@@ -74,7 +74,7 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
     };
 
     Object.entries(replacements).forEach(([key, value]) => {
-      html = html.replaceAll(key, value);
+      html = html.split(key).join(value);
     });
 
     const { error } = await supabase.from("booking_contracts").insert({
