@@ -17,6 +17,7 @@ const getPageTitle = (pathname: string): string => {
   if (pathname === "/host/availability") return "Calendrier des disponibilités";
   if (pathname === "/host/bookings") return "Réservations";
   if (pathname === "/host/pricing") return "Tarifs";
+  if (pathname === "/host/cleaning") return "Ménage";
   if (pathname === "/host/payouts") return "Paiements";
   if (pathname === "/host/earnings-report") return "Rapport de revenus";
   if (pathname === "/host/email-automations") return "E-mails automatiques";
