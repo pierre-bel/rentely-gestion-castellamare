@@ -116,7 +116,7 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
             scheduledDate = addDays(checkout, auto.trigger_days);
           }
 
-          const sendIfLate = (auto as any).send_if_late === true;
+          const isLate = isBefore(scheduledDate, now);
           if (scheduledDate && (isAfter(scheduledDate, now) || sendIfLate)) {
             scheduled.push({
               id: auto.id,
@@ -127,6 +127,7 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
               recipient_type: auto.recipient_type,
               recipient_email: auto.recipient_email,
               scheduled_date: scheduledDate.toISOString(),
+              is_late: isLate,
             });
           }
         }
