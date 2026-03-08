@@ -234,10 +234,6 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
                               <span>{booking.guest_phone}</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-1.5 text-xs">
-                            <User className="h-3 w-3 text-muted-foreground" />
-                            <span>{booking.guests} voyageur{booking.guests > 1 ? "s" : ""}</span>
-                          </div>
                           <p className="text-xs text-muted-foreground">
                             {format(parseISO(booking.checkin_date), "d MMM", { locale: fr })} → {format(parseISO(booking.checkout_date), "d MMM", { locale: fr })}
                           </p>
