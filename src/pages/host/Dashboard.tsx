@@ -15,7 +15,7 @@ const HostDashboard = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="container mx-auto px-4 pb-8 lg:px-8">
+    <div className="container mx-auto px-3 pb-8 sm:px-4 lg:px-8">
       {/* Aperçu des revenus */}
       <Card className="bg-card">
         <CardHeader className="border-b pb-4">
