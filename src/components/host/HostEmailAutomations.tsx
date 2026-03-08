@@ -229,6 +229,7 @@ export default function HostEmailAutomations() {
       listing_ids: formListingIds.length > 0 ? formListingIds : [],
       recipient_type: formRecipientType,
       recipient_email: formRecipientType === "fixed" ? formRecipientEmail : formRecipientType === "host" ? user?.email || null : null,
+      send_if_late: formSendIfLate,
     });
   };
 
