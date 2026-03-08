@@ -264,17 +264,17 @@ const ListingsManagement = () => {
 
               <Select value={sortValue} onValueChange={setSortValue}>
                 <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Sort by" />
+                  <SelectValue placeholder="Trier par" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="created_at-desc">Date: Newest First</SelectItem>
-                  <SelectItem value="created_at-asc">Date: Oldest First</SelectItem>
-                  <SelectItem value="base_price-desc">Price: High to Low</SelectItem>
-                  <SelectItem value="base_price-asc">Price: Low to High</SelectItem>
-                  <SelectItem value="rating_avg-desc">Rating: High to Low</SelectItem>
-                  <SelectItem value="rating_avg-asc">Rating: Low to High</SelectItem>
-                  <SelectItem value="updated_at-desc">Recently Updated</SelectItem>
-                  <SelectItem value="updated_at-asc">Least Recently Updated</SelectItem>
+                  <SelectItem value="created_at-desc">Date : plus récent</SelectItem>
+                  <SelectItem value="created_at-asc">Date : plus ancien</SelectItem>
+                  <SelectItem value="base_price-desc">Prix : décroissant</SelectItem>
+                  <SelectItem value="base_price-asc">Prix : croissant</SelectItem>
+                  <SelectItem value="rating_avg-desc">Note : décroissante</SelectItem>
+                  <SelectItem value="rating_avg-asc">Note : croissante</SelectItem>
+                  <SelectItem value="updated_at-desc">Mis à jour récemment</SelectItem>
+                  <SelectItem value="updated_at-asc">Mis à jour anciennement</SelectItem>
                 </SelectContent>
               </Select>
             </div>
