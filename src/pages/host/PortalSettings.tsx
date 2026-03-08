@@ -260,6 +260,11 @@ export default function PortalSettings() {
           custom_footer_text: settings.custom_footer_text,
           section_order: settings.section_order as any,
           require_full_payment_for_access_code: settings.require_full_payment_for_access_code,
+          contact_email: settings.contact_email,
+          contact_phone: settings.contact_phone,
+          contact_whatsapp: settings.contact_whatsapp,
+          contact_facebook_url: settings.contact_facebook_url,
+          show_contact: settings.show_contact,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "host_user_id" }
