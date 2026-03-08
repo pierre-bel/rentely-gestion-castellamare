@@ -103,8 +103,13 @@ const DEFAULT_SETTINGS: PortalSettings = {
   show_amenities: true,
   show_map_link: true,
   custom_footer_text: null,
-  section_order: ["dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules"],
+  section_order: ["dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules", "contact"],
   require_full_payment_for_access_code: true,
+  contact_email: null,
+  contact_phone: null,
+  contact_whatsapp: null,
+  contact_facebook_url: null,
+  show_contact: true,
 };
 
 export default function BookingPortal() {
