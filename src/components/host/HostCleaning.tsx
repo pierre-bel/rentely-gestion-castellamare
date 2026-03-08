@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   Copy, SprayCan, Calendar, Moon, Phone, User, ChevronLeft, ChevronRight,
-  Plus, Trash2, Settings2, UserCheck,
+  Plus, Trash2, Settings2, UserCheck, ExternalLink, Link2,
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, differenceInCalendarDays, isWithinInterval, isBefore, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
