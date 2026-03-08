@@ -416,7 +416,7 @@ export default function BookingPortal() {
     pricing: renderPricing,
     payment_schedule: renderPaymentSchedule,
     house_rules: renderHouseRules,
-    notes: renderNotes,
+    
   };
 
   const sectionOrder = settings.section_order.length > 0 ? settings.section_order : DEFAULT_SETTINGS.section_order;
