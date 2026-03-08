@@ -93,79 +93,235 @@ export function HostPaymentSettings() {
   const totalPercentage = templates.reduce((s, t) => s + t.percentage, 0);
 
   return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Échéances de paiement par défaut</CardTitle>
+          <CardDescription>
+            Configurez les échéances qui seront pré-remplies lors de la création d'une réservation.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Current templates */}
+          {templates.length > 0 && (
+            <div className="space-y-2">
+              {templates.map(t => (
+                <div key={t.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{t.label}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t.percentage}% — {dueTypeLabels[t.due_type] || t.due_type}
+                      {t.due_days > 0 && ` (${t.due_days} jours)`}
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleDelete(t.id)} disabled={saving}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ))}
+              <p className={`text-xs ${totalPercentage === 100 ? "text-green-600" : "text-amber-600"}`}>
+                Total : {totalPercentage}% {totalPercentage !== 100 && "(devrait être 100%)"}
+              </p>
+            </div>
+          )}
+
+          {templates.length === 0 && !isLoading && (
+            <p className="text-sm text-muted-foreground">Aucune échéance configurée. Ajoutez-en ci-dessous.</p>
+          )}
+
+          {/* Add form */}
+          <div className="space-y-3 border-t pt-4">
+            <p className="text-sm font-medium">Ajouter une échéance</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Libellé</Label>
+                <Input value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Ex: Acompte" />
+              </div>
+              <div>
+                <Label className="text-xs">Pourcentage (%)</Label>
+                <Input type="number" min="0" max="100" value={newPercentage} onChange={e => setNewPercentage(e.target.value)} placeholder="30" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Quand</Label>
+                <Select value={newDueType} onValueChange={setNewDueType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="on_booking">À la réservation</SelectItem>
+                    <SelectItem value="before_checkin">Avant l'arrivée</SelectItem>
+                    <SelectItem value="after_checkout">Après le départ</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Nombre de jours</Label>
+                <Input type="number" min="0" value={newDueDays} onChange={e => setNewDueDays(e.target.value)} placeholder="0" />
+              </div>
+            </div>
+            <Button onClick={handleAdd} disabled={saving || !newLabel.trim() || !newPercentage} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <BeachCabinPeriodSettings />
+    </div>
+  );
+}
+
+function BeachCabinPeriodSettings() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
+  const [startMonth, setStartMonth] = useState("6");
+  const [startDay, setStartDay] = useState("1");
+  const [endMonth, setEndMonth] = useState("9");
+  const [endDay, setEndDay] = useState("30");
+
+  const { data: settings } = useQuery({
+    queryKey: ["portal-settings-beach", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from("portal_settings")
+        .select("beach_cabin_start_month, beach_cabin_start_day, beach_cabin_end_month, beach_cabin_end_day")
+        .eq("host_user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  useEffect(() => {
+    if (settings) {
+      setStartMonth(String(settings.beach_cabin_start_month));
+      setStartDay(String(settings.beach_cabin_start_day));
+      setEndMonth(String(settings.beach_cabin_end_month));
+      setEndDay(String(settings.beach_cabin_end_day));
+    }
+  }, [settings]);
+
+  const monthOptions = [
+    { value: "1", label: "Janvier" }, { value: "2", label: "Février" }, { value: "3", label: "Mars" },
+    { value: "4", label: "Avril" }, { value: "5", label: "Mai" }, { value: "6", label: "Juin" },
+    { value: "7", label: "Juillet" }, { value: "8", label: "Août" }, { value: "9", label: "Septembre" },
+    { value: "10", label: "Octobre" }, { value: "11", label: "Novembre" }, { value: "12", label: "Décembre" },
+  ];
+
+  const handleSave = async () => {
+    if (!user?.id) return;
+    setSaving(true);
+    try {
+      const updateData = {
+        beach_cabin_start_month: parseInt(startMonth),
+        beach_cabin_start_day: parseInt(startDay),
+        beach_cabin_end_month: parseInt(endMonth),
+        beach_cabin_end_day: parseInt(endDay),
+      };
+
+      // Check if settings exist
+      const { data: existing } = await supabase
+        .from("portal_settings")
+        .select("id")
+        .eq("host_user_id", user.id)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from("portal_settings")
+          .update(updateData)
+          .eq("host_user_id", user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("portal_settings")
+          .insert({ host_user_id: user.id, ...updateData });
+        if (error) throw error;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["portal-settings-beach"] });
+      toast({ title: "Période cabine de plage enregistrée" });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
     <Card>
       <CardHeader>
-        <CardTitle>Échéances de paiement par défaut</CardTitle>
+        <div className="flex items-center gap-2">
+          <Umbrella className="h-5 w-5 text-primary" />
+          <CardTitle>Cabine de plage</CardTitle>
+        </div>
         <CardDescription>
-          Configurez les échéances qui seront pré-remplies lors de la création d'une réservation.
+          Définissez la période annuelle pendant laquelle la cabine de plage est automatiquement incluse dans les réservations.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Current templates */}
-        {templates.length > 0 && (
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            {templates.map(t => (
-              <div key={t.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
-                <GripVertical className="h-4 w-4 text-muted-foreground" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{t.label}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {t.percentage}% — {dueTypeLabels[t.due_type] || t.due_type}
-                    {t.due_days > 0 && ` (${t.due_days} jours)`}
-                  </p>
-                </div>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleDelete(t.id)} disabled={saving}>
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ))}
-            <p className={`text-xs ${totalPercentage === 100 ? "text-green-600" : "text-amber-600"}`}>
-              Total : {totalPercentage}% {totalPercentage !== 100 && "(devrait être 100%)"}
-            </p>
-          </div>
-        )}
-
-        {templates.length === 0 && !isLoading && (
-          <p className="text-sm text-muted-foreground">Aucune échéance configurée. Ajoutez-en ci-dessous.</p>
-        )}
-
-        {/* Add form */}
-        <div className="space-y-3 border-t pt-4">
-          <p className="text-sm font-medium">Ajouter une échéance</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">Libellé</Label>
-              <Input value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Ex: Acompte" />
-            </div>
-            <div>
-              <Label className="text-xs">Pourcentage (%)</Label>
-              <Input type="number" min="0" max="100" value={newPercentage} onChange={e => setNewPercentage(e.target.value)} placeholder="30" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">Quand</Label>
-              <Select value={newDueType} onValueChange={setNewDueType}>
+            <Label className="text-xs font-medium">Début de la période</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Select value={startMonth} onValueChange={setStartMonth}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="on_booking">À la réservation</SelectItem>
-                  <SelectItem value="before_checkin">Avant l'arrivée</SelectItem>
-                  <SelectItem value="after_checkout">Après le départ</SelectItem>
+                  {monthOptions.map(m => (
+                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Nombre de jours</Label>
-              <Input type="number" min="0" value={newDueDays} onChange={e => setNewDueDays(e.target.value)} placeholder="0" />
+              <Input
+                type="number"
+                min="1"
+                max="31"
+                value={startDay}
+                onChange={e => setStartDay(e.target.value)}
+                placeholder="Jour"
+              />
             </div>
           </div>
-          <Button onClick={handleAdd} disabled={saving || !newLabel.trim() || !newPercentage} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter
-          </Button>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium">Fin de la période</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Select value={endMonth} onValueChange={setEndMonth}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map(m => (
+                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                type="number"
+                min="1"
+                max="31"
+                value={endDay}
+                onChange={e => setEndDay(e.target.value)}
+                placeholder="Jour"
+              />
+            </div>
+          </div>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Les réservations dont les dates chevauchent cette période auront la case "Cabine de plage" automatiquement cochée.
+        </p>
+        <Button onClick={handleSave} disabled={saving} size="sm">
+          {saving ? "Enregistrement..." : "Enregistrer"}
+        </Button>
       </CardContent>
     </Card>
   );
