@@ -187,22 +187,27 @@ export const ContractTemplateEditor = ({ template, onSave, onCancel }: ContractT
           <CardHeader>
             <CardTitle className="text-sm">Variables dynamiques</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-xs text-muted-foreground mb-3">
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground">
               Cliquez pour insérer une variable à la position du curseur. Elle sera remplacée automatiquement lors de la génération.
             </p>
-            <div className="flex flex-wrap gap-2">
-              {DYNAMIC_VARIABLES.map((v) => (
-                <Badge
-                  key={v.key}
-                  variant="outline"
-                  className="cursor-pointer hover:bg-accent transition-colors"
-                  onClick={() => insertVariable(v.key)}
-                >
-                  {v.label}
-                </Badge>
-              ))}
-            </div>
+            {DYNAMIC_VARIABLES_GROUPS.map((group) => (
+              <div key={group.title}>
+                <p className="text-xs font-semibold text-muted-foreground mb-1.5">{group.title}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {group.vars.map((v) => (
+                    <Badge
+                      key={v.key}
+                      variant="outline"
+                      className="cursor-pointer hover:bg-accent transition-colors text-xs"
+                      onClick={() => insertVariable(v.key)}
+                    >
+                      {v.label}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
