@@ -161,7 +161,7 @@ export default function PortalSettings() {
   const [editingSection, setEditingSection] = useState<CustomSection | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newBody, setNewBody] = useState("");
-  const [previewBookings, setPreviewBookings] = useState<{ id: string; title: string; token: string }[]>([]);
+  const [previewBookings, setPreviewBookings] = useState<{ id: string; title: string; token: string; guestName: string; checkin: string; checkout: string }[]>([]);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
 
   const sensors = useSensors(
