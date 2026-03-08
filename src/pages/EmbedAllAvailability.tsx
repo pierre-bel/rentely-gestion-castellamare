@@ -91,7 +91,7 @@ export default function EmbedAllAvailability() {
   const { data: blockedDates = [] } = useQuery({
     queryKey: ["embed-all-blocked", hostListingIds, format(currentMonth, "yyyy-MM")],
     queryFn: async () => {
-      if (!hostListingIds || hostListingIds.length === 0) return [];
+      if (hostListingIds.length === 0) return [];
       const rangeStart = format(startOfMonth(subMonths(currentMonth, 1)), "yyyy-MM-dd");
       const rangeEnd = format(endOfMonth(addMonths(currentMonth, 2)), "yyyy-MM-dd");
       const { data, error } = await supabase
