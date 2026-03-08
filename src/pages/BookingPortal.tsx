@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isAfter, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   CalendarDays, Users, Home, Euro, MapPin, Clock,
@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { StatusBadge, type StatusValue } from "@/components/ui/status-badge";
 import { Badge } from "@/components/ui/badge";
+import PortalReviewForm from "@/components/portal/PortalReviewForm";
 
 const formatPrice = (price: number, currency = "EUR") =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(price);
