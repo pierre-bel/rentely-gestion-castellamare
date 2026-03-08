@@ -336,7 +336,7 @@ const ListingsManagement = () => {
                       className="flex-1"
                       onClick={() => handleEditClick(listing.id)}
                     >
-                      Edit
+                      Modifier
                     </Button>
                     <Button
                       variant="outline"
