@@ -42,11 +42,12 @@ export default function EmbedAllAvailability() {
     queryFn: async () => {
       if (!hostId) return [];
       const { data, error } = await supabase
-        .from("public_listings")
+        .from("listings")
         .select("id, title, city, base_price, cover_image, bedrooms")
+        .eq("host_user_id", hostId)
+        .in("status", ["approved", "pending"])
         .order("title");
       if (error) throw error;
-      // public_listings doesn't have host_user_id, so we need to filter via listings
       return data || [];
     },
     enabled: !!hostId,
@@ -54,26 +55,13 @@ export default function EmbedAllAvailability() {
 
   // We need to filter listings by host. public_listings view doesn't expose host_user_id.
   // Use embed_listing_info or a direct query. Let's use a separate query to get listing IDs for this host.
-  const { data: hostListingIds } = useQuery({
-    queryKey: ["embed-host-listing-ids", hostId],
-    queryFn: async () => {
-      if (!hostId) return [];
-      // Use the listings table - only approved ones are visible via RLS
-      const { data, error } = await supabase
-        .from("listings")
-        .select("id")
-        .eq("host_user_id", hostId)
-        .eq("status", "approved");
-      if (error) throw error;
-      return (data || []).map((l) => l.id);
-    },
-    enabled: !!hostId,
-  });
+  const hostListingIds = useMemo(() => {
+    return (listings || []).map((l) => l.id);
+  }, [listings]);
 
   const filteredByHost = useMemo(() => {
-    if (!listings || !hostListingIds) return [];
-    return listings.filter((l) => hostListingIds.includes(l.id!));
-  }, [listings, hostListingIds]);
+    return listings || [];
+  }, [listings]);
 
   const displayListings = useMemo(() => {
     if (selectedListing) return filteredByHost.filter((l) => l.id === selectedListing);
@@ -84,7 +72,7 @@ export default function EmbedAllAvailability() {
   const { data: bookedRanges = [] } = useQuery({
     queryKey: ["embed-all-booked", hostListingIds, format(currentMonth, "yyyy-MM")],
     queryFn: async () => {
-      if (!hostListingIds || hostListingIds.length === 0) return [];
+      if (hostListingIds.length === 0) return [];
       const rangeStart = format(startOfMonth(subMonths(currentMonth, 1)), "yyyy-MM-dd");
       const rangeEnd = format(endOfMonth(addMonths(currentMonth, 2)), "yyyy-MM-dd");
       const { data, error } = await supabase
@@ -96,14 +84,14 @@ export default function EmbedAllAvailability() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!hostListingIds && hostListingIds.length > 0,
+    enabled: hostListingIds.length > 0,
   });
 
   // Fetch blocked dates
   const { data: blockedDates = [] } = useQuery({
     queryKey: ["embed-all-blocked", hostListingIds, format(currentMonth, "yyyy-MM")],
     queryFn: async () => {
-      if (!hostListingIds || hostListingIds.length === 0) return [];
+      if (hostListingIds.length === 0) return [];
       const rangeStart = format(startOfMonth(subMonths(currentMonth, 1)), "yyyy-MM-dd");
       const rangeEnd = format(endOfMonth(addMonths(currentMonth, 2)), "yyyy-MM-dd");
       const { data, error } = await supabase
@@ -115,7 +103,7 @@ export default function EmbedAllAvailability() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!hostListingIds && hostListingIds.length > 0,
+    enabled: hostListingIds.length > 0,
   });
 
   const isDayBooked = (day: Date, listingId: string) => {
