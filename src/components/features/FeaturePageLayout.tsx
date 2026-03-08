@@ -70,7 +70,12 @@ const FeaturePageLayout = ({
             </Button>
           </div>
 
-          {heroImage && (
+          {heroMockup && (
+            <div className="mt-14 max-w-4xl mx-auto">
+              {heroMockup}
+            </div>
+          )}
+          {!heroMockup && heroImage && (
             <div className="mt-14 max-w-4xl mx-auto">
               <div className="rounded-2xl border border-border/60 shadow-2xl shadow-primary/10 overflow-hidden bg-card">
                 <img
