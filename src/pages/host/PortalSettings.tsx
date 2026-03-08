@@ -194,6 +194,7 @@ export default function PortalSettings() {
           show_map_link: d.show_map_link,
           custom_footer_text: d.custom_footer_text,
           section_order: d.section_order || DEFAULT_SECTION_ORDER,
+          require_full_payment_for_access_code: d.require_full_payment_for_access_code ?? true,
         });
       }
 
