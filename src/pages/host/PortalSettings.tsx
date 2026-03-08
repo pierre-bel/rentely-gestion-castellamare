@@ -91,6 +91,7 @@ const DEFAULT_SETTINGS: PortalSettingsData = {
   show_map_link: true,
   custom_footer_text: null,
   section_order: DEFAULT_SECTION_ORDER,
+  require_full_payment_for_access_code: true,
 };
 
 // Sortable item component
