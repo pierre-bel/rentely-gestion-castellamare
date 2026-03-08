@@ -270,6 +270,86 @@ export type Database = {
           },
         ]
       }
+      cleaning_staff: {
+        Row: {
+          created_at: string
+          host_user_id: string
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          host_user_id: string
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          host_user_id?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cleaning_staff_listings: {
+        Row: {
+          cleaning_staff_id: string
+          created_at: string
+          host_user_id: string
+          id: string
+          listing_id: string
+        }
+        Insert: {
+          cleaning_staff_id: string
+          created_at?: string
+          host_user_id: string
+          id?: string
+          listing_id: string
+        }
+        Update: {
+          cleaning_staff_id?: string
+          created_at?: string
+          host_user_id?: string
+          id?: string
+          listing_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cleaning_staff_listings_cleaning_staff_id_fkey"
+            columns: ["cleaning_staff_id"]
+            isOneToOne: false
+            referencedRelation: "cleaning_staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cleaning_staff_listings_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "embed_listing_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cleaning_staff_listings_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cleaning_staff_listings_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           code: string
