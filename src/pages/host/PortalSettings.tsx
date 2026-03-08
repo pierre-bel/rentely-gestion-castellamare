@@ -67,7 +67,7 @@ const BUILTIN_SECTION_LABELS: Record<string, string> = {
   pricing: "Tarification",
   payment_schedule: "Échéancier de paiement",
   house_rules: "Règles de la maison",
-  notes: "Notes",
+  
 };
 
 const BUILTIN_TOGGLE_KEYS: Record<string, keyof PortalSettingsData> = {

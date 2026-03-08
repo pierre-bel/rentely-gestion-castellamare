@@ -97,7 +97,7 @@ const DEFAULT_SETTINGS: PortalSettings = {
   show_amenities: true,
   show_map_link: true,
   custom_footer_text: null,
-  section_order: ["dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules", "notes"],
+  section_order: ["dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules"],
 };
 
 export default function BookingPortal() {
