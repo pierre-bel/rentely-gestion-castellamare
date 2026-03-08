@@ -225,8 +225,8 @@ const ListingsManagement = () => {
     } catch (error) {
       console.error("Error saving availability:", error);
       toast({
-        title: "Error",
-        description: "Failed to save availability rules",
+        title: "Erreur",
+        description: "Impossible de sauvegarder les disponibilités",
         variant: "destructive",
       });
     } finally {
