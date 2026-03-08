@@ -21,6 +21,7 @@ interface FeaturePageLayoutProps {
   highlights: string[];
   heroImage?: string;
   heroImageAlt?: string;
+  heroMockup?: ReactElement;
   nextPage?: { label: string; href: string };
   children?: ReactNode;
 }
