@@ -244,14 +244,59 @@ export function HostCleaning() {
   };
 
   const generatePerStaffMessage = (staff: CleaningStaff) => {
-    const staffSlots = cleaningSlots.filter(s => s.staffMember?.id === staff.id);
+    const staffSlots = cleaningSlots
+      .filter(s => s.staffMember?.id === staff.id)
+      .sort((a, b) => a.cleaningDate.getTime() - b.cleaningDate.getTime());
     if (staffSlots.length === 0) return "";
     const monthLabel = format(currentMonth, "MMMM yyyy", { locale: fr });
     let msg = `🧹 PLANNING MÉNAGE — ${staff.name.toUpperCase()}\n`;
     msg += `📆 ${monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}\n`;
     msg += "═".repeat(40) + "\n\n";
-    for (const slot of staffSlots) msg += buildSlotText(slot) + "\n";
+
+    // Group by date for clarity
+    let lastDateKey = "";
+    for (const slot of staffSlots) {
+      const dateKey = format(slot.cleaningDate, "yyyy-MM-dd");
+      if (dateKey !== lastDateKey) {
+        if (lastDateKey) msg += "─".repeat(30) + "\n\n";
+        const dayLabel = format(slot.cleaningDate, "📅 EEEE dd MMMM", { locale: fr }).toUpperCase();
+        msg += `${dayLabel}\n\n`;
+        lastDateKey = dateKey;
+      }
+      msg += buildSlotTextCompact(slot) + "\n";
+    }
     return msg.trim();
+  };
+
+  const buildSlotTextCompact = (slot: CleaningSlot) => {
+    const urgencyLabel = slot.hoursAvailable !== null && slot.hoursAvailable <= 24
+      ? " ⚠️ URGENT" : slot.hoursAvailable !== null && slot.hoursAvailable <= 48 ? " ⏰" : "";
+
+    let msg = `🏠 ${slot.listingTitle}${urgencyLabel}\n`;
+
+    const tenantName = slot.tenant
+      ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
+      : extractTenantFromNotes(slot.checkoutBooking.notes);
+    msg += `   ↗ Départ : ${tenantName || "Non renseigné"}`;
+    if (slot.tenant?.phone) msg += ` — 📞 ${slot.tenant.phone}`;
+    msg += ` (${slot.checkoutBooking.nights} nuit${slot.checkoutBooking.nights > 1 ? "s" : ""})\n`;
+
+    if (slot.nextCheckinBooking) {
+      const nextName = slot.nextTenant
+        ? `${slot.nextTenant.first_name} ${slot.nextTenant.last_name || ""}`.trim()
+        : extractTenantFromNotes(slot.nextCheckinBooking.notes);
+      const nextCheckin = format(parseISO(slot.nextCheckinBooking.checkin_date), "EEEE dd/MM", { locale: fr });
+      msg += `   ↘ Arrivée : ${nextName || "Non renseigné"} — ${nextCheckin}`;
+      if (slot.nextTenant?.phone) msg += ` — 📞 ${slot.nextTenant.phone}`;
+      msg += "\n";
+      if (slot.hoursAvailable !== null) {
+        const days = Math.floor(slot.hoursAvailable / 24);
+        msg += `   ⏱️ ${days === 0 ? "Même jour !" : `${days} jour${days > 1 ? "s" : ""} avant arrivée`}\n`;
+      }
+    } else {
+      msg += `   ✅ Pas d'arrivée prévue ensuite\n`;
+    }
+    return msg;
   };
 
   const handleCopyAll = () => {
