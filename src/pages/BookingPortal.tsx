@@ -80,6 +80,11 @@ interface PortalSettings {
   custom_footer_text: string | null;
   section_order: string[];
   require_full_payment_for_access_code: boolean;
+  contact_email: string | null;
+  contact_phone: string | null;
+  contact_whatsapp: string | null;
+  contact_facebook_url: string | null;
+  show_contact: boolean;
 }
 
 interface CustomSectionData {
