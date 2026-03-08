@@ -310,19 +310,27 @@ export default function PortalSettings() {
     // Fetch bookings with access_token
     const { data } = await supabase
       .from("bookings")
-      .select("id, access_token, listings(title)")
+      .select("id, access_token, checkin_date, checkout_date, pricing_breakdown, listings(title), profiles:guest_user_id(first_name, last_name)")
       .eq("listings.host_user_id", user.id)
       .limit(20)
-      .order("created_at", { ascending: false });
+      .order("checkin_date", { ascending: false });
 
     if (data && data.length > 0) {
       const items = data
         .filter((b: any) => b.listings)
-        .map((b: any) => ({
-          id: b.id,
-          title: (b.listings as any)?.title || "Réservation",
-          token: b.access_token,
-        }));
+        .map((b: any) => {
+          const profile = b.profiles as any;
+          const bd = b.pricing_breakdown as any;
+          const tenantName = bd?.tenant_name || (profile ? [profile.first_name, profile.last_name].filter(Boolean).join(" ") : null);
+          return {
+            id: b.id,
+            title: (b.listings as any)?.title || "Réservation",
+            token: b.access_token,
+            guestName: tenantName || "—",
+            checkin: b.checkin_date,
+            checkout: b.checkout_date,
+          };
+        });
       setPreviewBookings(items);
       if (items.length === 1) {
         window.open(`/portal/${items[0].token}`, "_blank");
