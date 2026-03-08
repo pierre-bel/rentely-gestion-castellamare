@@ -194,7 +194,7 @@ const HostEarningsReport = () => {
           {/* Search */}
           <div className="w-full sm:w-auto sm:flex-1 max-w-sm">
             <Input
-              placeholder="Search by listing name..."
+              placeholder="Rechercher par nom d'annonce..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
