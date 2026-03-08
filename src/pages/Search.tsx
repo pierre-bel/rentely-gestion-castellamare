@@ -182,11 +182,6 @@ const Search = () => {
               <h1 className="text-[48px] font-medium text-primary leading-tight mb-2">
                 {getTitleText()}
               </h1>
-              {searchQuery.guests && (
-                <p className="text-2xl text-foreground">
-                  {searchQuery.guests} {Number(searchQuery.guests) === 1 ? 'Guest' : 'Guests'}
-                </p>
-              )}
             </div>
 
             {/* Filters */}
