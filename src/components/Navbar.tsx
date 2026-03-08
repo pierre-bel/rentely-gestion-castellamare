@@ -71,9 +71,7 @@ const Navbar = () => {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/guest/dashboard">Espace voyageur</Link>
-                  </DropdownMenuItem>
+                  {/* Espace voyageur masqué — conservé pour usage futur */}
                   {isHost && (
                     <DropdownMenuItem asChild>
                       <Link to="/host/dashboard">Gestion des biens</Link>

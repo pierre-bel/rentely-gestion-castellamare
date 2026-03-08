@@ -6,7 +6,7 @@ import { fr } from "date-fns/locale";
 import {
   CalendarDays, Users, Home, Euro, MapPin, Clock,
   ShieldCheck, Bed, Bath, DoorOpen, CheckCircle2, XCircle,
-  KeyRound, Loader2
+  KeyRound, Loader2, Mail, Phone, MessageCircle, Facebook
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -80,6 +80,11 @@ interface PortalSettings {
   custom_footer_text: string | null;
   section_order: string[];
   require_full_payment_for_access_code: boolean;
+  contact_email: string | null;
+  contact_phone: string | null;
+  contact_whatsapp: string | null;
+  contact_facebook_url: string | null;
+  show_contact: boolean;
 }
 
 interface CustomSectionData {
@@ -98,8 +103,13 @@ const DEFAULT_SETTINGS: PortalSettings = {
   show_amenities: true,
   show_map_link: true,
   custom_footer_text: null,
-  section_order: ["dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules"],
+  section_order: ["dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules", "contact"],
   require_full_payment_for_access_code: true,
+  contact_email: null,
+  contact_phone: null,
+  contact_whatsapp: null,
+  contact_facebook_url: null,
+  show_contact: true,
 };
 
 export default function BookingPortal() {
@@ -153,6 +163,11 @@ export default function BookingPortal() {
           ...s,
           section_order: s.section_order || DEFAULT_SETTINGS.section_order,
           require_full_payment_for_access_code: s.require_full_payment_for_access_code ?? true,
+          contact_email: s.contact_email || null,
+          contact_phone: s.contact_phone || null,
+          contact_whatsapp: s.contact_whatsapp || null,
+          contact_facebook_url: s.contact_facebook_url || null,
+          show_contact: s.show_contact ?? true,
         });
       }
       if (customRes.data) setCustomSections(customRes.data as CustomSectionData[]);
@@ -408,6 +423,63 @@ export default function BookingPortal() {
     );
   };
 
+  const renderContact = () => {
+    if (!settings.show_contact) return null;
+    const { contact_email, contact_phone, contact_whatsapp, contact_facebook_url } = settings;
+    if (!contact_email && !contact_phone && !contact_whatsapp && !contact_facebook_url) return null;
+
+    const whatsappNumber = contact_whatsapp?.replace(/[^0-9+]/g, "") || "";
+
+    return (
+      <Card key="contact">
+        <CardContent className="pt-5 space-y-3">
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Nous contacter</p>
+          <div className="flex flex-wrap gap-2">
+            {contact_email && (
+              <a
+                href={`mailto:${contact_email}`}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors text-sm font-medium"
+              >
+                <Mail className="h-4 w-4 text-primary" />
+                E-mail
+              </a>
+            )}
+            {contact_phone && (
+              <a
+                href={`tel:${contact_phone}`}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors text-sm font-medium"
+              >
+                <Phone className="h-4 w-4 text-primary" />
+                Appeler
+              </a>
+            )}
+            {contact_whatsapp && (
+              <a
+                href={`https://wa.me/${whatsappNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors text-sm font-medium"
+              >
+                <MessageCircle className="h-4 w-4 text-[hsl(var(--success))]" />
+                WhatsApp
+              </a>
+            )}
+            {contact_facebook_url && (
+              <a
+                href={contact_facebook_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors text-sm font-medium"
+              >
+                <Facebook className="h-4 w-4 text-[#1877F2]" />
+                Facebook
+              </a>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   const extractVideoEmbeds = (text: string) => {
     const lines = text.split("\n");
@@ -478,7 +550,7 @@ export default function BookingPortal() {
     pricing: renderPricing,
     payment_schedule: renderPaymentSchedule,
     house_rules: renderHouseRules,
-    
+    contact: renderContact,
   };
 
   const sectionOrder = settings.section_order.length > 0 ? settings.section_order : DEFAULT_SETTINGS.section_order;

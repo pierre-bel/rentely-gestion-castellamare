@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, Eye, Globe, GripVertical, Plus, Trash2, Pencil, ExternalLink } from "lucide-react";
+import { Loader2, Save, Eye, Globe, GripVertical, Plus, Trash2, Pencil, ExternalLink, Mail, Phone, MessageCircle, Facebook } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +45,11 @@ interface PortalSettingsData {
   custom_footer_text: string | null;
   section_order: string[];
   require_full_payment_for_access_code: boolean;
+  contact_email: string | null;
+  contact_phone: string | null;
+  contact_whatsapp: string | null;
+  contact_facebook_url: string | null;
+  show_contact: boolean;
 }
 
 interface CustomSection {
@@ -57,7 +62,7 @@ interface CustomSection {
 }
 
 const DEFAULT_SECTION_ORDER = [
-  "dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules",
+  "dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules", "contact",
 ];
 
 const BUILTIN_SECTION_LABELS: Record<string, string> = {
@@ -68,7 +73,7 @@ const BUILTIN_SECTION_LABELS: Record<string, string> = {
   pricing: "Tarification",
   payment_schedule: "Échéancier de paiement",
   house_rules: "Règles de la maison",
-  
+  contact: "Contact",
 };
 
 const BUILTIN_TOGGLE_KEYS: Record<string, keyof PortalSettingsData> = {
@@ -78,6 +83,7 @@ const BUILTIN_TOGGLE_KEYS: Record<string, keyof PortalSettingsData> = {
   access_code: "show_access_code",
   payment_schedule: "show_payment_schedule",
   amenities: "show_amenities",
+  contact: "show_contact",
 };
 
 const DEFAULT_SETTINGS: PortalSettingsData = {
@@ -92,6 +98,11 @@ const DEFAULT_SETTINGS: PortalSettingsData = {
   custom_footer_text: null,
   section_order: DEFAULT_SECTION_ORDER,
   require_full_payment_for_access_code: true,
+  contact_email: null,
+  contact_phone: null,
+  contact_whatsapp: null,
+  contact_facebook_url: null,
+  show_contact: true,
 };
 
 // Sortable item component
@@ -195,6 +206,11 @@ export default function PortalSettings() {
           custom_footer_text: d.custom_footer_text,
           section_order: d.section_order || DEFAULT_SECTION_ORDER,
           require_full_payment_for_access_code: d.require_full_payment_for_access_code ?? true,
+          contact_email: d.contact_email || null,
+          contact_phone: d.contact_phone || null,
+          contact_whatsapp: d.contact_whatsapp || null,
+          contact_facebook_url: d.contact_facebook_url || null,
+          show_contact: d.show_contact ?? true,
         });
       }
 
@@ -244,6 +260,11 @@ export default function PortalSettings() {
           custom_footer_text: settings.custom_footer_text,
           section_order: settings.section_order as any,
           require_full_payment_for_access_code: settings.require_full_payment_for_access_code,
+          contact_email: settings.contact_email,
+          contact_phone: settings.contact_phone,
+          contact_whatsapp: settings.contact_whatsapp,
+          contact_facebook_url: settings.contact_facebook_url,
+          show_contact: settings.show_contact,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "host_user_id" }
@@ -506,7 +527,67 @@ export default function PortalSettings() {
           </CardContent>
         </Card>
 
-        {/* Custom footer */}
+        {/* Contact info */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Phone className="h-4 w-4 text-primary" />
+              Coordonnées de contact
+            </CardTitle>
+            <CardDescription>Informations affichées dans la section "Contact" du portail</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm flex items-center gap-1.5 mb-1.5">
+                  <Mail className="h-3.5 w-3.5" /> E-mail
+                </Label>
+                <Input
+                  type="email"
+                  placeholder="contact@exemple.com"
+                  value={settings.contact_email || ""}
+                  onChange={(e) => setSettings((s) => ({ ...s, contact_email: e.target.value || null }))}
+                />
+              </div>
+              <div>
+                <Label className="text-sm flex items-center gap-1.5 mb-1.5">
+                  <Phone className="h-3.5 w-3.5" /> Téléphone
+                </Label>
+                <Input
+                  type="tel"
+                  placeholder="+33 6 12 34 56 78"
+                  value={settings.contact_phone || ""}
+                  onChange={(e) => setSettings((s) => ({ ...s, contact_phone: e.target.value || null }))}
+                />
+              </div>
+              <div>
+                <Label className="text-sm flex items-center gap-1.5 mb-1.5">
+                  <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                </Label>
+                <Input
+                  type="tel"
+                  placeholder="+33612345678"
+                  value={settings.contact_whatsapp || ""}
+                  onChange={(e) => setSettings((s) => ({ ...s, contact_whatsapp: e.target.value || null }))}
+                />
+                <p className="text-xs text-muted-foreground mt-1">Numéro au format international (ex: +33612345678)</p>
+              </div>
+              <div>
+                <Label className="text-sm flex items-center gap-1.5 mb-1.5">
+                  <Facebook className="h-3.5 w-3.5" /> Facebook
+                </Label>
+                <Input
+                  type="url"
+                  placeholder="https://facebook.com/votrepage"
+                  value={settings.contact_facebook_url || ""}
+                  onChange={(e) => setSettings((s) => ({ ...s, contact_facebook_url: e.target.value || null }))}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Pied de page personnalisé</CardTitle>
