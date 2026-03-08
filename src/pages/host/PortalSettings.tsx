@@ -83,6 +83,7 @@ const BUILTIN_TOGGLE_KEYS: Record<string, keyof PortalSettingsData> = {
   access_code: "show_access_code",
   payment_schedule: "show_payment_schedule",
   amenities: "show_amenities",
+  contact: "show_contact",
 };
 
 const DEFAULT_SETTINGS: PortalSettingsData = {
