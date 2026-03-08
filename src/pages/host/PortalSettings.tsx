@@ -56,7 +56,7 @@ interface CustomSection {
 }
 
 const DEFAULT_SECTION_ORDER = [
-  "dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules", "notes",
+  "dates", "access_code", "address", "amenities", "pricing", "payment_schedule", "house_rules",
 ];
 
 const BUILTIN_SECTION_LABELS: Record<string, string> = {
