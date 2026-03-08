@@ -76,24 +76,8 @@ const CATEGORIES = [
       "Historique d'envoi complet",
     ],
     mockup: (
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-3">
-        <div className="flex items-center gap-2 mb-2">
-          <Mail className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-foreground">Automatisations</span>
-        </div>
-        {[
-          { trigger: "3 jours avant arrivée", subject: "Bienvenue – infos pratiques", enabled: true },
-          { trigger: "Jour du départ", subject: "Merci pour votre séjour", enabled: true },
-          { trigger: "À la réservation", subject: "Confirmation de réservation", enabled: false },
-        ].map((item, i) => (
-          <div key={i} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-            <div>
-              <p className="text-sm font-medium text-foreground">{item.subject}</p>
-              <p className="text-xs text-muted-foreground">{item.trigger}</p>
-            </div>
-            <div className={`h-2.5 w-2.5 rounded-full ${item.enabled ? "bg-primary" : "bg-muted-foreground/30"}`} />
-          </div>
-        ))}
+      <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
+        <img src={mockupEmails} alt="Automatisations e-mails" className="w-full h-auto" loading="lazy" />
       </div>
     ),
   },
