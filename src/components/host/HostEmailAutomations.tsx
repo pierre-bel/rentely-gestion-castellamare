@@ -205,6 +205,7 @@ export default function HostEmailAutomations() {
     setFormListingIds(auto.listing_ids || []);
     setFormRecipientType(auto.recipient_type || "tenant");
     setFormRecipientEmail(auto.recipient_email || "");
+    setFormSendIfLate((auto as any).send_if_late || false);
     setDialogOpen(true);
   };
 
