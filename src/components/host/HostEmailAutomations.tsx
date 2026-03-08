@@ -83,6 +83,7 @@ export default function HostEmailAutomations() {
   const [formListingIds, setFormListingIds] = useState<string[]>([]);
   const [formRecipientType, setFormRecipientType] = useState("tenant");
   const [formRecipientEmail, setFormRecipientEmail] = useState("");
+  const [formSendIfLate, setFormSendIfLate] = useState(false);
 
   const { data: automations = [], isLoading } = useQuery({
     queryKey: ["email-automations", user?.id],
