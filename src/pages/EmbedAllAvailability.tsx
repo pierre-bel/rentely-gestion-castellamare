@@ -42,11 +42,12 @@ export default function EmbedAllAvailability() {
     queryFn: async () => {
       if (!hostId) return [];
       const { data, error } = await supabase
-        .from("public_listings")
+        .from("listings")
         .select("id, title, city, base_price, cover_image, bedrooms")
+        .eq("host_user_id", hostId)
+        .in("status", ["approved", "pending"])
         .order("title");
       if (error) throw error;
-      // public_listings doesn't have host_user_id, so we need to filter via listings
       return data || [];
     },
     enabled: !!hostId,
