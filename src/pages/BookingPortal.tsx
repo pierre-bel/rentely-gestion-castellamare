@@ -6,7 +6,7 @@ import { fr } from "date-fns/locale";
 import {
   CalendarDays, Users, Home, Euro, MapPin, Clock,
   ShieldCheck, Bed, Bath, DoorOpen, CheckCircle2, XCircle,
-  KeyRound, FileText, Loader2
+  KeyRound, Loader2
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
