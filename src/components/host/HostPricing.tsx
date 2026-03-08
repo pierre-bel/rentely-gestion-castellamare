@@ -95,7 +95,7 @@ export function HostPricing() {
     const basePrice = listing?.base_price || 0;
 
     const today = new Date();
-    const firstMonday = startOfWeek(today, { weekStartsOn: 1 });
+    const firstSaturday = startOfWeek(today, { weekStartsOn: 6 });
     const existingDates = new Set(pricingData.map((p) => p.week_start_date));
 
     const newRows: WeeklyPricing[] = [];
