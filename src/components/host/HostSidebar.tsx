@@ -25,6 +25,7 @@ const defaultNavigation: NavigationItem[] = [
   { name: "Paiements", href: "/host/payouts", icon: DollarSign },
   { name: "E-mails auto", href: "/host/email-automations", icon: Mail },
   { name: "Revenus", href: "/host/earnings-report", icon: TrendingUp },
+  { name: "Statistiques", href: "/host/statistics", icon: BarChart3 },
   { name: "Portail client", href: "/host/portal-settings", icon: Globe },
 ];
 
