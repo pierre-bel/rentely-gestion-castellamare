@@ -344,7 +344,7 @@ const ListingsManagement = () => {
                       className="flex-1"
                       onClick={() => handleAvailabilityClick(listing)}
                     >
-                      Availability
+                      Disponibilités
                     </Button>
                   </div>
                 </div>
