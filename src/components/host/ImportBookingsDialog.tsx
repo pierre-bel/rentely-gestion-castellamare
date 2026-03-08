@@ -36,7 +36,6 @@ const TEMPLATE_COLUMNS = [
   { key: "listing_title", label: "Nom du bien", required: true, example: "Appartement Centre-Ville" },
   { key: "checkin_date", label: "Date d'arrivée (JJ/MM/AAAA)", required: true, example: "15/07/2026" },
   { key: "checkout_date", label: "Date de départ (JJ/MM/AAAA)", required: true, example: "22/07/2026" },
-  { key: "guests", label: "Nombre de voyageurs", required: false, example: "2" },
   { key: "rental_price", label: "Prix de location (€)", required: true, example: "700" },
   { key: "cleaning_fee", label: "Frais de ménage (€)", required: false, example: "80" },
   { key: "status", label: "Statut", required: false, example: "confirmed" },

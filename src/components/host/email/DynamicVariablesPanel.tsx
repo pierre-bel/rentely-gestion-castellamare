@@ -12,7 +12,6 @@ export const DYNAMIC_VARIABLES = [
   { key: "checkin_date", label: "Date d'arrivée" },
   { key: "checkout_date", label: "Date de départ" },
   { key: "nights", label: "Nombre de nuits" },
-  { key: "guests_count", label: "Nombre de voyageurs" },
   { key: "total_price", label: "Prix total" },
   { key: "listing_title", label: "Nom du bien" },
   { key: "listing_address", label: "Adresse du bien" },
