@@ -57,6 +57,7 @@ import AdminSupport from "./pages/admin/Support";
 import ContentManagementPage from "./pages/admin/ContentManagement";
 import NotFound from "./pages/NotFound";
 import BookingPortal from "./pages/BookingPortal";
+import CleaningPortal from "./pages/CleaningPortal";
 
 const queryClient = new QueryClient();
 
