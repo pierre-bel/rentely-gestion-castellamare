@@ -100,7 +100,7 @@ export function HostPricing() {
 
     const newRows: WeeklyPricing[] = [];
     for (let i = 0; i < weeksToGenerate; i++) {
-      const weekStart = addWeeks(firstMonday, i);
+      const weekStart = addWeeks(firstSaturday, i);
       const dateStr = format(weekStart, "yyyy-MM-dd");
       if (!existingDates.has(dateStr)) {
         newRows.push({
