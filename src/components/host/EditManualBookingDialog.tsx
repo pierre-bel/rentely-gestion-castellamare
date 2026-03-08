@@ -169,6 +169,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
         total_price: totalNum,
         host_payout_gross: totalNum,
         host_payout_net: totalNum,
+        beach_cabin: beachCabin,
         pricing_breakdown: {
           rental_price: rentalNum,
           deposit: depositNum,
