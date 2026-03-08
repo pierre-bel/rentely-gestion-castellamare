@@ -46,6 +46,7 @@ interface EmailAutomation {
   reply_to_email: string | null;
   recipient_type: string;
   recipient_email: string | null;
+  send_if_late: boolean;
   created_at: string;
 }
 
