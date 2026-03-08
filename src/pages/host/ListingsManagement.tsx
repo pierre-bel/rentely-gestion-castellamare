@@ -182,8 +182,8 @@ const ListingsManagement = () => {
         } : null);
         
         toast({
-          title: "Success",
-          description: "Availability updated successfully",
+          title: "Succès",
+          description: "Disponibilités mises à jour",
         });
       } else {
         // REAL MODE: Update Supabase
