@@ -415,15 +415,62 @@ export default function BookingPortal() {
   };
 
 
+  const extractVideoEmbeds = (text: string) => {
+    const lines = text.split("\n");
+    const result: { type: "text" | "video"; content: string }[] = [];
+    const ytRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})(?:[&?]\S*)?/;
+    const vimeoRegex = /(?:https?:\/\/)?(?:www\.)?(?:vimeo\.com\/)(\d+)/;
+
+    let textBuffer: string[] = [];
+    const flushText = () => {
+      if (textBuffer.length > 0) {
+        result.push({ type: "text", content: textBuffer.join("\n") });
+        textBuffer = [];
+      }
+    };
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      const ytMatch = trimmed.match(ytRegex);
+      const vimeoMatch = trimmed.match(vimeoRegex);
+      if (ytMatch && trimmed === (ytMatch[0] || trimmed)) {
+        flushText();
+        result.push({ type: "video", content: `https://www.youtube.com/embed/${ytMatch[1]}` });
+      } else if (vimeoMatch && trimmed === (vimeoMatch[0] || trimmed)) {
+        flushText();
+        result.push({ type: "video", content: `https://player.vimeo.com/video/${vimeoMatch[1]}` });
+      } else {
+        textBuffer.push(line);
+      }
+    }
+    flushText();
+    return result;
+  };
+
   const renderCustomSection = (key: string) => {
     const sectionKey = key.replace("custom_", "");
     const cs = customSections.find((s) => s.section_key === sectionKey);
     if (!cs) return null;
+    const parts = extractVideoEmbeds(cs.body_html);
     return (
       <Card key={key}>
-        <CardContent className="pt-5 space-y-2">
+        <CardContent className="pt-5 space-y-3">
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{cs.title}</p>
-          <div className="text-sm whitespace-pre-line text-foreground/90">{cs.body_html}</div>
+          {parts.map((part, i) =>
+            part.type === "video" ? (
+              <div key={i} className="relative w-full rounded-lg overflow-hidden" style={{ paddingBottom: "56.25%" }}>
+                <iframe
+                  src={part.content}
+                  className="absolute inset-0 w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title="Video"
+                />
+              </div>
+            ) : (
+              <div key={i} className="text-sm whitespace-pre-line text-foreground/90">{part.content}</div>
+            )
+          )}
         </CardContent>
       </Card>
     );
