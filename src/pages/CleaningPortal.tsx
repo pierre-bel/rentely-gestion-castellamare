@@ -237,7 +237,6 @@ export default function CleaningPortal() {
             <ArrowRightLeft className="h-5 w-5 text-primary" />
             Récapitulatif des rotations — {format(currentMonth, "MMMM", { locale: fr })} & {format(addMonths(currentMonth, 1), "MMMM yyyy", { locale: fr })}
           </h2>
-          </h2>
 
           {cleaningSlots.length === 0 ? (
             <Card>
