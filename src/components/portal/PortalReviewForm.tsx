@@ -70,14 +70,32 @@ function StarRating({
 
 export default function PortalReviewForm({
   bookingId,
-  listingId,
-  guestUserId,
+  listingId: propListingId,
+  guestUserId: propGuestUserId,
   existingReview,
   onReviewSubmitted,
 }: PortalReviewFormProps) {
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(!!existingReview);
+  const [submitted, setSubmitted] = useState(false);
+  const [listingId, setListingId] = useState(propListingId);
+  const [guestUserId, setGuestUserId] = useState(propGuestUserId);
+
+  // Resolve listing_id and guest_user_id from booking if not provided
+  useEffect(() => {
+    if (listingId && guestUserId) return;
+    (async () => {
+      const { data } = await supabase
+        .from("bookings")
+        .select("listing_id, guest_user_id")
+        .eq("id", bookingId)
+        .maybeSingle();
+      if (data) {
+        if (!listingId) setListingId(data.listing_id);
+        if (!guestUserId) setGuestUserId(data.guest_user_id);
+      }
+    })();
+  }, [bookingId, listingId, guestUserId]);
 
   const [ratings, setRatings] = useState<Record<CriterionKey, number>>({
     rating_cleanliness: existingReview?.rating_cleanliness || 0,
