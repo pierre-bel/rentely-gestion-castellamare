@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -161,7 +163,7 @@ export default function PortalSettings() {
   const [editingSection, setEditingSection] = useState<CustomSection | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newBody, setNewBody] = useState("");
-  const [previewBookings, setPreviewBookings] = useState<{ id: string; title: string; token: string }[]>([]);
+  const [previewBookings, setPreviewBookings] = useState<{ id: string; title: string; token: string; guestName: string; checkin: string; checkout: string }[]>([]);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
 
   const sensors = useSensors(
@@ -310,19 +312,27 @@ export default function PortalSettings() {
     // Fetch bookings with access_token
     const { data } = await supabase
       .from("bookings")
-      .select("id, access_token, listings(title)")
+      .select("id, access_token, checkin_date, checkout_date, pricing_breakdown, listings(title), profiles:guest_user_id(first_name, last_name)")
       .eq("listings.host_user_id", user.id)
       .limit(20)
-      .order("created_at", { ascending: false });
+      .order("checkin_date", { ascending: false });
 
     if (data && data.length > 0) {
       const items = data
         .filter((b: any) => b.listings)
-        .map((b: any) => ({
-          id: b.id,
-          title: (b.listings as any)?.title || "Réservation",
-          token: b.access_token,
-        }));
+        .map((b: any) => {
+          const profile = b.profiles as any;
+          const bd = b.pricing_breakdown as any;
+          const tenantName = bd?.tenant_name || (profile ? [profile.first_name, profile.last_name].filter(Boolean).join(" ") : null);
+          return {
+            id: b.id,
+            title: (b.listings as any)?.title || "Réservation",
+            token: b.access_token,
+            guestName: tenantName || "—",
+            checkin: b.checkin_date,
+            checkout: b.checkout_date,
+          };
+        });
       setPreviewBookings(items);
       if (items.length === 1) {
         window.open(`/portal/${items[0].token}`, "_blank");
@@ -550,18 +560,24 @@ export default function PortalSettings() {
           <DialogHeader>
             <DialogTitle>Choisir une réservation pour l'aperçu</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2 max-h-[300px] overflow-y-auto">
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
             {previewBookings.map((b) => (
               <button
                 key={b.id}
-                className="w-full text-left px-3 py-2.5 rounded-lg border border-border hover:bg-accent/50 transition-colors"
+                className="w-full text-left px-3 py-3 rounded-lg border border-border hover:bg-accent/50 transition-colors"
                 onClick={() => {
                   window.open(`/portal/${b.token}`, "_blank");
                   setPreviewDialogOpen(false);
                 }}
               >
                 <p className="text-sm font-medium">{b.title}</p>
-                <p className="text-xs text-muted-foreground font-mono">{b.id.slice(0, 8)}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-muted-foreground">{b.guestName}</span>
+                  <span className="text-xs text-muted-foreground">•</span>
+                  <span className="text-xs text-muted-foreground">
+                    {format(new Date(b.checkin), "dd MMM", { locale: fr })} → {format(new Date(b.checkout), "dd MMM yyyy", { locale: fr })}
+                  </span>
+                </div>
               </button>
             ))}
           </div>
