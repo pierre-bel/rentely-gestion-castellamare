@@ -14,8 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { demoStorage } from "@/lib/demoStorage";
 import { Separator } from "@/components/ui/separator";
+import { activateDemo, type DemoRole } from "@/lib/demoMode";
 
 interface AuthDialogProps {
   open: boolean;
@@ -23,12 +23,7 @@ interface AuthDialogProps {
 }
 
 export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
-  const [loadingStates, setLoadingStates] = useState({
-    regular: false,
-    guestDemo: false,
-    hostDemo: false,
-    adminDemo: false,
-  });
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -38,7 +33,7 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoadingStates(prev => ({ ...prev, regular: true }));
+    setLoading(true);
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -66,12 +61,12 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
       onOpenChange(false);
       navigate("/host/dashboard");
     }
-    setLoadingStates(prev => ({ ...prev, regular: false }));
+    setLoading(false);
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoadingStates(prev => ({ ...prev, regular: true }));
+    setLoading(true);
 
     const { error, data } = await supabase.auth.signInWithPassword({
       email,
@@ -93,209 +88,18 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
       navigate("/host/dashboard");
     }
 
-    setLoadingStates(prev => ({ ...prev, regular: false }));
+    setLoading(false);
   };
 
-  const handleDemoGuestLogin = async () => {
-    setLoadingStates(prev => ({ ...prev, guestDemo: true }));
-    try {
-      // Login as guest@demo.com
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: "guest@demo.com",
-        password: "demoguest12345",
-      });
-
-      if (error) throw error;
-
-      if (!data.user) throw new Error("Failed to login");
-
-      // Wait for data migration to complete
-      const waitForMigration = async (userId: string, maxAttempts = 20): Promise<boolean> => {
-        for (let i = 0; i < maxAttempts; i++) {
-          await new Promise(resolve => setTimeout(resolve, 500)); // Check every 500ms
-          
-          try {
-            const snapshot = demoStorage.getSnapshot(userId);
-            // Check if bookings data exists (indicates migration complete)
-            if (snapshot.bookings && snapshot.bookings.length > 0) {
-              console.log('✅ Migration complete, bookings found:', snapshot.bookings.length);
-              return true;
-            }
-          } catch (err) {
-            console.log('⏳ Waiting for migration...', i + 1);
-          }
-        }
-        return false;
-      };
-
-      toast({
-        title: "Loading Demo Data",
-        description: "Please wait while we load your demo data...",
-      });
-
-      const migrationSuccess = await waitForMigration(data.user.id);
-
-      if (migrationSuccess) {
-        toast({
-          title: "Demo Mode Activated",
-          description: "You're now using demo guest mode with sample data.",
-        });
-
-        onOpenChange(false);
-      } else {
-        throw new Error("Data migration timeout. Please try again.");
-      }
-    } catch (error: any) {
-      console.error("Demo login error:", error);
-      toast({
-        title: "Demo login failed",
-        description: error.message || "Failed to activate demo mode",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingStates(prev => ({ ...prev, guestDemo: false }));
-    }
-  };
-
-  const handleDemoHostLogin = async () => {
-    setLoadingStates(prev => ({ ...prev, hostDemo: true }));
-    
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: "host@demo.com",
-        password: "demohost12345",
-      });
-
-      if (error) throw error;
-      if (!data.user) throw new Error("Failed to login");
-
-      // Wait for data migration to complete
-      const waitForMigration = async (userId: string, maxAttempts = 20): Promise<boolean> => {
-        for (let i = 0; i < maxAttempts; i++) {
-          await new Promise(resolve => setTimeout(resolve, 500)); // Check every 500ms
-          
-          try {
-            const snapshot = demoStorage.getSnapshot(userId);
-            // Check if listings data exists (indicates migration complete)
-            if (snapshot.listings && snapshot.listings.length > 0) {
-              console.log('✅ Migration complete, listings found:', snapshot.listings.length);
-              return true;
-            }
-          } catch (err) {
-            console.log('⏳ Waiting for migration...', i + 1);
-          }
-        }
-        return false;
-      };
-
-      toast({
-        title: "Loading Demo Data",
-        description: "Please wait while we load your demo data...",
-      });
-
-      const migrationSuccess = await waitForMigration(data.user.id);
-
-      if (migrationSuccess) {
-        toast({
-          title: "Demo Mode Activated",
-          description: "You're now using demo host mode with sample data.",
-        });
-
-        onOpenChange(false);
-        navigate("/host/dashboard");
-      } else {
-        throw new Error("Data migration timeout. Please try again.");
-      }
-    } catch (error: any) {
-      console.error("Demo login error:", error);
-      toast({
-        title: "Demo login failed",
-        description: error.message || "Failed to activate demo mode",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingStates(prev => ({ ...prev, hostDemo: false }));
-    }
-  };
-
-  const handleDemoAdminLogin = async () => {
-    setLoadingStates(prev => ({ ...prev, adminDemo: true }));
-    
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: "admin@demo.com",
-        password: "demoadmin12345",
-      });
-
-      if (error) throw error;
-      if (!data.user) throw new Error("Failed to login");
-
-      // Wait for data migration to complete
-      const waitForMigration = async (userId: string, maxAttempts = 20): Promise<boolean> => {
-        for (let i = 0; i < maxAttempts; i++) {
-          await new Promise(resolve => setTimeout(resolve, 500)); // Check every 500ms
-          
-          try {
-            const snapshot = demoStorage.getSnapshot(userId);
-            // Check if ALL admin data is loaded
-            const hasAllAdminData = 
-              snapshot.adminListings && snapshot.adminListings.length > 0 &&
-              snapshot.adminUsers && snapshot.adminUsers.length > 0 &&
-              snapshot.adminReviews && snapshot.adminReviews.length > 0 &&
-              snapshot.adminPayouts && snapshot.adminPayouts.length > 0 &&
-              snapshot.disputes && snapshot.disputes.length > 0 &&
-              snapshot.adminSupportThreads && snapshot.adminSupportThreads.length > 0 &&
-              snapshot.platformSettings && snapshot.platformSettings.default_host_commission_rate &&
-              snapshot.adminFAQs !== undefined;
-
-            if (hasAllAdminData) {
-              console.log('✅ Admin migration complete with full data:', {
-                listings: snapshot.adminListings.length,
-                users: snapshot.adminUsers.length,
-                reviews: snapshot.adminReviews.length,
-                payouts: snapshot.adminPayouts.length,
-                disputes: snapshot.disputes.length,
-                supportThreads: snapshot.adminSupportThreads.length,
-                faqs: snapshot.adminFAQs.length,
-                platformSettings: 'loaded'
-              });
-              return true;
-            }
-          } catch (err) {
-            console.log('⏳ Waiting for admin migration...', i + 1);
-          }
-        }
-        return false;
-      };
-
-      toast({
-        title: "Loading Demo Data",
-        description: "Loading admin dashboard data (listings, users, reviews, disputes, payouts)... This may take a few seconds.",
-      });
-
-      const migrationSuccess = await waitForMigration(data.user.id);
-
-      if (migrationSuccess) {
-        toast({
-          title: "Demo Mode Activated",
-          description: "You're now using demo admin mode with sample data.",
-        });
-
-        onOpenChange(false);
-        navigate("/admin");
-      } else {
-        throw new Error("Data migration timeout. Please try again.");
-      }
-    } catch (error: any) {
-      console.error("Demo admin login error:", error);
-      toast({
-        title: "Demo login failed",
-        description: error.message || "Failed to activate demo mode",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingStates(prev => ({ ...prev, adminDemo: false }));
-    }
+  const handleDemoLogin = (role: DemoRole, redirectTo: string) => {
+    activateDemo(role);
+    toast({
+      title: "Mode démo activé",
+      description: `Vous naviguez en mode ${role === "guest" ? "voyageur" : role === "host" ? "hôte" : "administrateur"} démo.`,
+    });
+    onOpenChange(false);
+    // Force a full page reload to reinitialize auth state with demo user
+    window.location.href = redirectTo;
   };
 
   return (
@@ -337,8 +141,8 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
                   minLength={6}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={loadingStates.regular}>
-                {loadingStates.regular ? (
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Connexion...
@@ -356,51 +160,27 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full bg-white border-2 border-gray-300 hover:bg-gray-50"
-                onClick={handleDemoGuestLogin}
-                disabled={loadingStates.guestDemo}
+                className="w-full border-2 border-border hover:bg-accent/50"
+                onClick={() => handleDemoLogin("guest", "/guest/dashboard")}
               >
-                {loadingStates.guestDemo ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Loading demo...
-                  </>
-                ) : (
-                  "Guest Demo Login"
-                )}
+                Démo Voyageur
               </Button>
               <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full bg-white border-2 border-gray-300 hover:bg-gray-50"
-                  onClick={handleDemoHostLogin}
-                  disabled={loadingStates.hostDemo}
-                >
-                  {loadingStates.hostDemo ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Loading demo...
-                    </>
-                  ) : (
-                    "Host Demo Login"
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full bg-white border-2 border-gray-300 hover:bg-gray-50"
-                  onClick={handleDemoAdminLogin}
-                  disabled={loadingStates.adminDemo}
-                >
-                  {loadingStates.adminDemo ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Loading demo...
-                    </>
-                  ) : (
-                    "Admin Demo Login"
-                  )}
-                </Button>
+                type="button"
+                variant="outline"
+                className="w-full border-2 border-border hover:bg-accent/50"
+                onClick={() => handleDemoLogin("host", "/host/dashboard")}
+              >
+                Démo Hôte
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-2 border-border hover:bg-accent/50"
+                onClick={() => handleDemoLogin("admin", "/admin")}
+              >
+                Démo Admin
+              </Button>
             </div>
           </TabsContent>
 
@@ -456,8 +236,8 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
                   Password must be at least 6 characters
                 </p>
               </div>
-              <Button type="submit" className="w-full" disabled={loadingStates.regular}>
-                {loadingStates.regular ? (
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Creating account...

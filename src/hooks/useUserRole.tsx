@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { getDemoState, isDemoActive } from "@/lib/demoMode";
 
 export const useUserRole = () => {
   const { user, loading: authLoading } = useAuth();
@@ -8,20 +9,32 @@ export const useUserRole = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // CRITICAL: Wait for auth to finish loading first
-    if (authLoading) {
-      return; // Don't do anything while auth is loading
+    // Handle demo mode - return roles immediately without DB query
+    if (isDemoActive()) {
+      const demoState = getDemoState();
+      if (demoState) {
+        const demoRoles: Record<string, string[]> = {
+          guest: ["guest"],
+          host: ["host"],
+          admin: ["admin", "host"],
+        };
+        setRoles(demoRoles[demoState.role] || []);
+      }
+      setLoading(false);
+      return;
     }
 
-    // Auth has finished loading
+    // CRITICAL: Wait for auth to finish loading first
+    if (authLoading) {
+      return;
+    }
+
     if (!user) {
-      // No user found after auth finished - set empty roles
       setRoles([]);
       setLoading(false);
       return;
     }
 
-    // User exists - fetch their roles
     const fetchRoles = async () => {
       const { data, error } = await supabase
         .from("user_roles")

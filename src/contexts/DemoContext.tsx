@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useRef, ReactNode } fro
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { demoStorage } from "@/lib/demoStorage";
+import { isDemoActive, getDemoState } from "@/lib/demoMode";
 
 interface DemoContextType {
   isDemoMode: boolean;
@@ -13,91 +14,60 @@ interface DemoContextType {
 const DemoContext = createContext<DemoContextType | undefined>(undefined);
 
 export const DemoProvider = ({ children }: { children: ReactNode }) => {
-  const [isDemoMode, setIsDemoMode] = useState(false);
-  const [demoUserId, setDemoUserId] = useState<string | null>(null);
+  const [isDemoMode, setIsDemoMode] = useState(isDemoActive());
+  const [demoUserId, setDemoUserId] = useState<string | null>(getDemoState()?.userId || null);
   const [migrationComplete, setMigrationComplete] = useState(false);
   const { user } = useAuth();
-  const retryCountRef = useRef(0);
   const isMigratingRef = useRef(false);
 
   useEffect(() => {
-    const initDemoMode = async () => {
-      // Check if current user is demo guest, demo host, or demo admin
-      const isDemoUser = user?.email === "guest@demo.com" || user?.email === "host@demo.com" || user?.email === "admin@demo.com";
-      
-      if (isDemoUser) {
+    // Check if demo mode is active (client-side, no real auth)
+    if (isDemoActive()) {
+      const state = getDemoState();
+      if (state) {
         setIsDemoMode(true);
-        setDemoUserId(user.id);
-        
-        // Skip if already migrating
-        if (isMigratingRef.current) {
-          return;
-        }
-        
-        setMigrationComplete(false);
-        isMigratingRef.current = true;
-        retryCountRef.current = 0;
-        
-        const MAX_RETRIES = 2;
-        
-        const attemptMigration = async (): Promise<void> => {
-          const userType = user.email === "host@demo.com" ? "host" : "guest";
-          console.log(`🔄 Starting ${userType} migration check for user:`, user.id);
-          
-          try {
-            const result = await demoStorage.migrateAllDataFromDatabase(user.id, supabase);
-            
-            if (result?.migrated) {
-              console.log(`✅ ${userType} demo data migrated successfully:`, result.counts);
-              setMigrationComplete(true);
-              isMigratingRef.current = false;
-            } else if (result?.reason) {
-              console.log('⏭️ Migration skipped:', result.reason);
-              setMigrationComplete(true);
-              isMigratingRef.current = false;
-            } else if (result?.error) {
-              console.error('❌ Migration failed:', result.error);
-              
-              if (retryCountRef.current < MAX_RETRIES) {
-                retryCountRef.current++;
-                console.log(`🔄 Retrying migration (${retryCountRef.current}/${MAX_RETRIES})...`);
-                setTimeout(() => attemptMigration(), 1000 * retryCountRef.current);
-              } else {
-                setMigrationComplete(false);
-                isMigratingRef.current = false;
-              }
-            }
-          } catch (error) {
-            console.error('❌ Migration error:', error);
-            
-            if (retryCountRef.current < MAX_RETRIES) {
-              retryCountRef.current++;
-              console.log(`🔄 Retrying migration (${retryCountRef.current}/${MAX_RETRIES})...`);
-              setTimeout(() => attemptMigration(), 1000 * retryCountRef.current);
-            } else {
-              setMigrationComplete(false);
-              isMigratingRef.current = false;
-            }
-          }
-        };
-        
-        attemptMigration();
-      } else {
-        // Clear demo data from localStorage when logging out of demo account
-        if (demoUserId) {
-          console.log('🧹 Clearing demo data for user:', demoUserId);
-          demoStorage.clearSnapshot(demoUserId);
-        }
-        
-        setIsDemoMode(false);
-        setDemoUserId(null);
+        setDemoUserId(state.userId);
+        // Demo mode is ready immediately - data comes from demoStorage
         setMigrationComplete(true);
-        isMigratingRef.current = false;
       }
-    };
+      return;
+    }
+
+    // Legacy: handle real demo accounts (guest@demo.com etc.)
+    const isDemoUser = user?.email === "guest@demo.com" || user?.email === "host@demo.com" || user?.email === "admin@demo.com";
     
-    initDemoMode();
-  }, [user?.email, user?.id, demoUserId]); // Added demoUserId to dependencies
+    if (isDemoUser && user) {
+      setIsDemoMode(true);
+      setDemoUserId(user.id);
+      
+      if (isMigratingRef.current) return;
+      
+      setMigrationComplete(false);
+      isMigratingRef.current = true;
+      
+      const attemptMigration = async () => {
+        try {
+          const result = await demoStorage.migrateAllDataFromDatabase(user.id, supabase);
+          if (result?.migrated || result?.reason) {
+            setMigrationComplete(true);
+          }
+        } catch (error) {
+          console.error('Migration error:', error);
+        }
+        isMigratingRef.current = false;
+      };
+      
+      attemptMigration();
+    } else {
+      if (demoUserId) {
+        demoStorage.clearSnapshot(demoUserId);
+      }
+      setIsDemoMode(false);
+      setDemoUserId(null);
+      setMigrationComplete(true);
+      isMigratingRef.current = false;
+    }
+  }, [user?.email, user?.id]);
 
   return (
     <DemoContext.Provider value={{ isDemoMode, setIsDemoMode, demoUserId, migrationComplete }}>
