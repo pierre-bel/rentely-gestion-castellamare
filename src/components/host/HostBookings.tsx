@@ -371,7 +371,52 @@ export default function HostBookings() {
     }
   };
 
-  return (
+  const handleExportExcel = () => {
+    if (!bookings || bookings.length === 0) {
+      toast({ title: "Aucune donnée", description: "Aucune réservation à exporter.", variant: "destructive" });
+      return;
+    }
+
+    const STATUS_LABELS: Record<string, string> = {
+      confirmed: "Confirmée",
+      pending_payment: "En attente de paiement",
+      cancelled: "Annulée",
+      completed: "Terminée",
+      cancelled_guest: "Annulée (locataire)",
+      cancelled_host: "Annulée (hôte)",
+      expired: "Expirée",
+    };
+
+    const rows = bookings.map((b) => ({
+      "Logement": b.listing_title,
+      "Locataire": b.guest_name || "—",
+      "E-mail locataire": b.guest_email,
+      "Arrivée": b.checkin_date,
+      "Départ": b.checkout_date,
+      "Nuits": b.nights,
+      "Voyageurs": b.guests,
+      "Montant (€)": b.host_payout_gross ?? 0,
+      "Statut": STATUS_LABELS[b.status] || b.status,
+      "Créée le": new Date(b.created_at).toLocaleDateString("fr-FR"),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    // Auto-size columns
+    const colWidths = Object.keys(rows[0]).map((key) => ({
+      wch: Math.max(key.length, ...rows.map((r) => String((r as any)[key] ?? "").length)) + 2,
+    }));
+    ws["!cols"] = colWidths;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Réservations");
+
+    const today = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `reservations-${today}.xlsx`);
+
+    toast({ title: "Export réussi", description: `${rows.length} réservation(s) exportée(s).` });
+  };
+
+
     <Card className="bg-card">
       <CardContent className="p-6">
         {/* Controls Row */}
