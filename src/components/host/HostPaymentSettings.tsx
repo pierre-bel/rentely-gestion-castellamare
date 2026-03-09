@@ -238,8 +238,15 @@ function BankCredentialsSettings() {
             <Input value={bic} onChange={e => setBic(e.target.value)} placeholder="BNPAFRPP" />
           </div>
         </div>
+        <div className="space-y-2">
+          <Label className="text-xs">Communication du virement</Label>
+          <Input value={referenceTemplate} onChange={e => setReferenceTemplate(e.target.value)} placeholder="{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}" />
+          <p className="text-xs text-muted-foreground">
+            Variables disponibles : <code className="text-[10px]">{"{{guest_last_name}}, {{guest_full_name}}, {{listing_title}}, {{checkin_date}}, {{checkout_date}}"}</code>
+          </p>
+        </div>
         <p className="text-xs text-muted-foreground">
-          Ces données ne sont jamais partagées directement — elles sont uniquement encodées dans le QR code affiché sur le portail.
+          Ces données sont uniquement encodées dans le QR code affiché sur le portail, dans les e-mails et les contrats.
         </p>
         <Button onClick={handleSave} disabled={saving} size="sm">
           {saving ? "Enregistrement..." : "Enregistrer"}
