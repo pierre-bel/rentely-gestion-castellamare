@@ -287,6 +287,8 @@ export function ImportBookingsDialog({ open, onOpenChange }: Props) {
           guest_user_id: user.id,
           checkin_date: format(checkin, "yyyy-MM-dd"),
           checkout_date: format(checkout, "yyyy-MM-dd"),
+          checkin_time: (listing as any).checkin_from || null,
+          checkout_time: (listing as any).checkout_until || null,
           nights,
           guests: guestsCount,
           subtotal: rentalPrice,
