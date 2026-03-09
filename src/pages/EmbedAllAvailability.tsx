@@ -138,6 +138,37 @@ export default function EmbedAllAvailability() {
     enabled: !!checkinDate && !!checkoutDate && hostListingIds.length > 0,
   });
 
+  // Fetch school holidays for this host
+  const { data: schoolHolidays = [] } = useQuery({
+    queryKey: ["embed-school-holidays", hostId],
+    queryFn: async () => {
+      if (!hostId) return [];
+      const { data, error } = await supabase
+        .from("public_host_school_holidays" as any)
+        .select("start_date, end_date, label")
+        .eq("host_user_id", hostId);
+      if (error) throw error;
+      return (data || []) as unknown as Array<{ start_date: string; end_date: string; label: string }>;
+    },
+    enabled: !!hostId,
+  });
+
+  // Fetch host contact info
+  const { data: hostContact } = useQuery({
+    queryKey: ["embed-host-contact", hostId],
+    queryFn: async () => {
+      if (!hostId) return null;
+      const { data, error } = await supabase
+        .from("public_host_contact" as any)
+        .select("contact_email, contact_phone, contact_whatsapp")
+        .eq("host_user_id", hostId)
+        .maybeSingle();
+      if (error) throw error;
+      return data as unknown as { contact_email: string | null; contact_phone: string | null; contact_whatsapp: string | null } | null;
+    },
+    enabled: !!hostId,
+  });
+
   const days = useMemo(
     () => eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }),
     [currentMonth]
