@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search } from "lucide-react";
+import { Search, Download } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,6 +29,7 @@ import { BookingDetailDialog, type BookingDetailData } from "./BookingDetailDial
 import { ImportBookingsDialog } from "./ImportBookingsDialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload } from "lucide-react";
+import * as XLSX from "xlsx";
 
 interface Booking {
   id: string;
@@ -370,6 +371,52 @@ export default function HostBookings() {
     }
   };
 
+  const handleExportExcel = () => {
+    if (!bookings || bookings.length === 0) {
+      toast({ title: "Aucune donnée", description: "Aucune réservation à exporter.", variant: "destructive" });
+      return;
+    }
+
+    const STATUS_LABELS: Record<string, string> = {
+      confirmed: "Confirmée",
+      pending_payment: "En attente de paiement",
+      cancelled: "Annulée",
+      completed: "Terminée",
+      cancelled_guest: "Annulée (locataire)",
+      cancelled_host: "Annulée (hôte)",
+      expired: "Expirée",
+    };
+
+    const rows = bookings.map((b) => ({
+      "Logement": b.listing_title,
+      "Locataire": b.guest_name || "—",
+      "E-mail locataire": b.guest_email,
+      "Arrivée": b.checkin_date,
+      "Départ": b.checkout_date,
+      "Nuits": b.nights,
+      "Voyageurs": b.guests,
+      "Montant (€)": b.host_payout_gross ?? 0,
+      "Statut": STATUS_LABELS[b.status] || b.status,
+      "Créée le": new Date(b.created_at).toLocaleDateString("fr-FR"),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    // Auto-size columns
+    const colWidths = Object.keys(rows[0]).map((key) => ({
+      wch: Math.max(key.length, ...rows.map((r) => String((r as any)[key] ?? "").length)) + 2,
+    }));
+    ws["!cols"] = colWidths;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Réservations");
+
+    const today = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `reservations-${today}.xlsx`);
+
+    toast({ title: "Export réussi", description: `${rows.length} réservation(s) exportée(s).` });
+  };
+
+
   return (
     <Card className="bg-card">
       <CardContent className="p-6">
@@ -395,6 +442,10 @@ export default function HostBookings() {
             <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
               <Upload className="h-4 w-4 sm:mr-1.5" />
               <span className="hidden sm:inline">Importer</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportExcel}>
+              <Download className="h-4 w-4 sm:mr-1.5" />
+              <span className="hidden sm:inline">Exporter</span>
             </Button>
             <BookingsFiltersSheet
               statusFilter={statusFilter}
