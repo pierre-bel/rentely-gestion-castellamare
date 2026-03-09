@@ -369,7 +369,11 @@ export default function HostEmailAutomations() {
             <div className="text-center py-12 text-muted-foreground">
               <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Aucune automatisation e-mail configurée.</p>
-              <p className="text-sm">Créez votre premier modèle pour commencer.</p>
+              <p className="text-sm mb-4">Créez votre premier modèle ou chargez nos modèles pré-configurés.</p>
+              <Button variant="outline" onClick={handleLoadDefaults} disabled={loadingDefaults}>
+                <Sparkles className="h-4 w-4 mr-2" />
+                {loadingDefaults ? "Chargement..." : "Charger les modèles par défaut (9 e-mails)"}
+              </Button>
             </div>
           ) : (
             <div className="rounded-md border">
