@@ -50,6 +50,7 @@ export default function EmbedAllAvailability() {
   const [checkoutDate, setCheckoutDate] = useState<Date | undefined>();
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [inquiryListingId, setInquiryListingId] = useState<string | null>(null);
 
   const today = startOfDay(new Date());
   const currentMonthStart = startOfMonth(today);
