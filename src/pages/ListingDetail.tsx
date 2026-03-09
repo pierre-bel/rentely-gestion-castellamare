@@ -314,6 +314,17 @@ const ListingDetail = () => {
                 </>
               )}
 
+              {/* Rooms Detail */}
+              {rooms.length > 0 && (
+                <>
+                  <div>
+                    <h3 className="text-2xl font-medium mb-4">Rooms</h3>
+                    <RoomDetailDisplay rooms={rooms} variant="inline" />
+                  </div>
+                  <Separator />
+                </>
+              )}
+
               {/* House Rules */}
               <div>
                 <h3 className="text-2xl font-medium mb-4">Rules</h3>
