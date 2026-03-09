@@ -570,6 +570,12 @@ export function HostCleaning() {
                                 <Moon className="h-3.5 w-3.5 flex-shrink-0 ml-1" />
                                 <span>{slot.checkoutBooking.nights} nuit{slot.checkoutBooking.nights > 1 ? "s" : ""}</span>
                               </div>
+                              {slot.checkoutTime && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
+                                  <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                                  <span>Départ à {slot.checkoutTime}</span>
+                                </div>
+                              )}
                             </div>
 
                             <Separator orientation="vertical" className="hidden lg:block h-auto self-stretch" />
