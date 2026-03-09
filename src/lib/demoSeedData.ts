@@ -1235,7 +1235,8 @@ export function seedGuestData(userId: string) {
 
 export function seedHostData(userId: string) {
   const snapshot = demoStorage.getSnapshot(userId);
-  if (snapshot.listings.length > 0) return;
+  // Re-seed if missing new data (tenants, cleaningStaff, etc.)
+  if (snapshot.listings.length > 0 && (snapshot.tenants || []).length > 0) return;
 
   demoStorage.saveSnapshot(userId, {
     bookings: [],
