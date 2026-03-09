@@ -135,6 +135,8 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
       const parts = rawNotes.split(" | ").filter((p: string) => !p.startsWith("Locataire:") && !p.startsWith("Acompte:"));
       setNotes(parts.join(" | "));
       setBeachCabin(booking.beach_cabin || false);
+      setCheckinTime(booking.checkin_time?.slice(0, 5) || "");
+      setCheckoutTime(booking.checkout_time?.slice(0, 5) || "");
     }
   }, [booking, open, tenants]);
 
