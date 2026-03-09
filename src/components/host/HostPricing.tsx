@@ -70,26 +70,10 @@ export function HostPricing() {
     enabled: !!user?.id,
   });
 
-  // Sync school holidays to state
-  useState(() => {
-    if (schoolHolidaysData.length > 0 && schoolHolidays.length === 0) {
-      setSchoolHolidays(schoolHolidaysData.map((h: any) => ({
-        id: h.id, label: h.label, start_date: h.start_date, end_date: h.end_date,
-      })));
-    }
-  });
-
-  // Keep state in sync with query data
-  useMemo(() => {
-    if (schoolHolidaysData.length > 0 || schoolHolidays.length > 0) {
-      const mapped = schoolHolidaysData.map((h: any) => ({
-        id: h.id, label: h.label, start_date: h.start_date, end_date: h.end_date,
-      }));
-      if (JSON.stringify(mapped) !== JSON.stringify(schoolHolidays)) {
-        setSchoolHolidays(mapped);
-      }
-    }
-  }, [schoolHolidaysData]);
+  const schoolHolidays: SchoolHoliday[] = useMemo(() =>
+    schoolHolidaysData.map((h: any) => ({ id: h.id, label: h.label, start_date: h.start_date, end_date: h.end_date })),
+    [schoolHolidaysData]
+  );
 
   // Fetch listings
   const { data: listings = [] } = useQuery({
