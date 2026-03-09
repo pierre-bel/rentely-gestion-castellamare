@@ -18,6 +18,7 @@ const adminNavigationItems: NavigationItem[] = [
   { name: "Commissions", href: "/admin/commissions", icon: Percent },
   { name: "Reports & Analytics", href: "/admin/reports", icon: FileText },
   { name: "Content", href: "/admin/content", icon: FilePenLine },
+  { name: "Debug", href: "/admin/debug", icon: Bug },
 ];
 
 // Map routes to page titles
