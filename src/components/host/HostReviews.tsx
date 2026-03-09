@@ -124,8 +124,32 @@ const HostReviews = () => {
     );
   }
 
+  // Build criteria labels map from configured criteria
+  const criteriaLabels = useMemo(() => {
+    const map: Record<string, string> = {};
+    (criteriaList || DEFAULT_CRITERIA).forEach((c) => {
+      map[c.criterion_key] = c.label;
+    });
+    return map;
+  }, [criteriaList]);
+
   return (
     <div className="space-y-6">
+      {/* Config toggle */}
+      <div className="flex justify-end">
+        <Button
+          variant={showConfig ? "default" : "outline"}
+          size="sm"
+          className="gap-1.5"
+          onClick={() => setShowConfig(!showConfig)}
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+          Configurer les critères
+        </Button>
+      </div>
+
+      {showConfig && <ReviewCriteriaConfig />}
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
