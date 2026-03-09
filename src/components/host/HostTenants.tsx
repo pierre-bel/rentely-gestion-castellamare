@@ -74,8 +74,18 @@ export default function HostTenants() {
 
   // Fetch booking counts per tenant to determine new vs returning
   const { data: bookingCounts = {} } = useQuery({
-    queryKey: ["host-tenant-booking-counts", user?.id],
+    queryKey: ["host-tenant-booking-counts", user?.id, isDemoMode],
     queryFn: async () => {
+      if (isDemoMode && demoUserId) {
+        const snapshot = demoStorage.getSnapshot(demoUserId);
+        const counts: Record<string, number> = {};
+        for (const b of snapshot.hostBookings || []) {
+          const pb = b.pricing_breakdown as any;
+          const tid = pb?.tenant_id;
+          if (tid) counts[tid] = (counts[tid] || 0) + 1;
+        }
+        return counts;
+      }
       if (!user?.id) return {};
       const { data, error } = await supabase
         .from("bookings")
@@ -90,7 +100,7 @@ export default function HostTenants() {
       }
       return counts;
     },
-    enabled: !!user?.id,
+    enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
   const filtered = tenants.filter((t) => {
