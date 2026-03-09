@@ -181,6 +181,17 @@ export default function BookingPortal() {
       }
       if (customRes.data) setCustomSections(customRes.data as CustomSectionData[]);
 
+      // Fetch rooms for listing
+      const listingId = (bookingRow as any)?.listing_id;
+      if (listingId) {
+        const { data: roomsData } = await supabase
+          .from("listing_rooms")
+          .select("*")
+          .eq("listing_id", listingId)
+          .order("sort_order");
+        if (roomsData) setRooms(roomsData);
+      }
+
       // Check for existing review
       const { data: reviewData } = await supabase
         .from("reviews")
