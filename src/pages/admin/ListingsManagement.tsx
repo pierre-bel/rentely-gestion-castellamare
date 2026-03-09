@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { updateById } from "@/lib/supabase-helpers";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useDemoData } from "@/hooks/useDemoData";
 import { Button } from "@/components/ui/button";
