@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, Bed, Bath, Sofa, ChefHat, LayoutGrid } from "lucide-react";
+import { Plus, Trash2, Bed, Bath, Sofa, ChefHat, LayoutGrid, DoorOpen } from "lucide-react";
 
 export interface BedData {
   type: string;
@@ -29,8 +29,11 @@ interface StepRoomsProps {
 const ROOM_TYPES = [
   { value: "bedroom", label: "Chambre", icon: Bed },
   { value: "bathroom", label: "Salle de bain", icon: Bath },
-  { value: "living_room", label: "Salon", icon: Sofa },
+  { value: "wc", label: "WC", icon: Bath },
+  { value: "living_room", label: "Living", icon: Sofa },
   { value: "kitchen", label: "Cuisine", icon: ChefHat },
+  { value: "entrance_hall", label: "Hall d'entrée", icon: DoorOpen },
+  { value: "night_hall", label: "Hall de nuit", icon: DoorOpen },
   { value: "other", label: "Autre", icon: LayoutGrid },
 ];
 
@@ -41,6 +44,7 @@ const BED_TYPES = [
   { value: "king_180", label: "Lit King (180 cm)" },
   { value: "bunk", label: "Lit superposé" },
   { value: "sofa_bed", label: "Canapé-lit" },
+  { value: "baby_crib", label: "Lit bébé" },
 ];
 
 const BATHROOM_FEATURES = [
