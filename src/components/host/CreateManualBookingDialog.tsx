@@ -262,6 +262,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   };
 
   const resetForm = () => {
+    setBookingType("normal");
     setSelectedListingId("");
     setSelectedTenantId("");
     setCheckinDate(undefined);
@@ -272,6 +273,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     setIgloohomeCode("");
     setScheduleItems([]);
     setBeachCabin(false);
+    setBlockName("");
   };
 
   const handleSave = async () => {
