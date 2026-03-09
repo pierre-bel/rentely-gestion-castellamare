@@ -55,6 +55,7 @@ const TEMPLATE_COLUMNS = [
   { key: "tenant_country", label: "Pays", required: false, example: "Belgique" },
   { key: "tenant_notes", label: "Notes locataire", required: false, example: "" },
   // Payment status
+  { key: "deposit_amount", label: "Montant acompte (€)", required: false, example: "250" },
   { key: "deposit_paid", label: "Acompte payé (oui/non)", required: false, example: "non" },
   { key: "balance_paid", label: "Solde payé (oui/non)", required: false, example: "non" },
 ];
