@@ -315,34 +315,47 @@ export function ImportBookingsDialog({ open, onOpenChange }: Props) {
 
         if (bErr) throw bErr;
 
-        // Mark payment items as paid if specified
+        // Update deposit amount and mark payment items as paid if specified
         if (newBooking) {
           const isYes = (v: any) => v && ["oui", "yes", "true", "1", "o"].includes(String(v).toLowerCase().trim());
           const depositPaid = isYes(d.deposit_paid);
           const balancePaid = isYes(d.balance_paid);
+          const customDepositAmount = d.deposit_amount != null ? parseFloat(String(d.deposit_amount)) : null;
 
-          if (depositPaid || balancePaid) {
-            const { data: payItems } = await supabase
+          const { data: payItems } = await supabase
+            .from("booking_payment_items")
+            .select("id, sort_order, amount, label")
+            .eq("booking_id", newBooking.id)
+            .order("sort_order");
+
+          // If a custom deposit amount is provided, update the first payment item (deposit) and recalculate the balance
+          if (customDepositAmount != null && !isNaN(customDepositAmount) && payItems && payItems.length >= 2) {
+            const balanceAmount = totalPrice - customDepositAmount;
+            const now = new Date().toISOString();
+            await supabase
               .from("booking_payment_items")
-              .select("id, sort_order")
-              .eq("booking_id", newBooking.id)
-              .order("sort_order");
+              .update({ amount: customDepositAmount, updated_at: now })
+              .eq("id", payItems[0].id);
+            await supabase
+              .from("booking_payment_items")
+              .update({ amount: Math.max(0, balanceAmount), updated_at: now })
+              .eq("id", payItems[1].id);
+          }
 
-            if (payItems && payItems.length > 0) {
-              const now = new Date().toISOString();
-              const idsToMark: string[] = [];
-              if (depositPaid && payItems[0]) idsToMark.push(payItems[0].id);
-              if (balancePaid && payItems.length > 1) {
-                payItems.slice(1).forEach(p => idsToMark.push(p.id));
-              } else if (balancePaid && payItems.length === 1) {
-                idsToMark.push(payItems[0].id);
-              }
-              if (idsToMark.length > 0) {
-                await supabase
-                  .from("booking_payment_items")
-                  .update({ is_paid: true, paid_at: now, updated_at: now })
-                  .in("id", idsToMark);
-              }
+          if ((depositPaid || balancePaid) && payItems && payItems.length > 0) {
+            const now = new Date().toISOString();
+            const idsToMark: string[] = [];
+            if (depositPaid && payItems[0]) idsToMark.push(payItems[0].id);
+            if (balancePaid && payItems.length > 1) {
+              payItems.slice(1).forEach(p => idsToMark.push(p.id));
+            } else if (balancePaid && payItems.length === 1) {
+              idsToMark.push(payItems[0].id);
+            }
+            if (idsToMark.length > 0) {
+              await supabase
+                .from("booking_payment_items")
+                .update({ is_paid: true, paid_at: now, updated_at: now })
+                .in("id", idsToMark);
             }
           }
         }
