@@ -117,7 +117,7 @@ export function ImportBookingsDialog({ open, onOpenChange }: Props) {
       if (!user?.id) return [];
       const { data, error } = await supabase
         .from("listings")
-        .select("id, title, base_price, cleaning_fee")
+        .select("id, title, base_price, cleaning_fee, checkin_from, checkout_until")
         .eq("host_user_id", user.id)
         .order("title");
       if (error) throw error;
