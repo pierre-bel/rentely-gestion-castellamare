@@ -79,7 +79,7 @@ export function HostCleaning() {
         return (snapshot.listings || []).map((l: any) => ({ id: l.id, title: l.title })) as Listing[];
       }
       if (!user?.id) return [];
-      const { data, error } = await supabase.from("listings").select("id, title").eq("host_user_id", user.id).order("title");
+      const { data, error } = await supabase.from("listings").select("id, title, checkin_from, checkout_until").eq("host_user_id", user.id).order("title");
       if (error) throw error;
       return data as Listing[];
     },
