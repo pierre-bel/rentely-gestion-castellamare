@@ -46,6 +46,7 @@ export default function HostTenants() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isDemoMode, demoUserId } = useDemoMode();
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
@@ -53,8 +54,12 @@ export default function HostTenants() {
   const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
 
   const { data: tenants = [], isLoading } = useQuery({
-    queryKey: ["host-tenants", user?.id],
+    queryKey: ["host-tenants", user?.id, isDemoMode],
     queryFn: async () => {
+      if (isDemoMode && demoUserId) {
+        const snapshot = demoStorage.getSnapshot(demoUserId);
+        return (snapshot.tenants || []) as Tenant[];
+      }
       if (!user?.id) return [];
       const { data, error } = await supabase
         .from("tenants")
@@ -64,7 +69,7 @@ export default function HostTenants() {
       if (error) throw error;
       return data as Tenant[];
     },
-    enabled: !!user?.id,
+    enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
   // Fetch booking counts per tenant to determine new vs returning
