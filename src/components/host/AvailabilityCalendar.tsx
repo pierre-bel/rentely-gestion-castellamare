@@ -123,7 +123,7 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
   };
 
   const getDayClasses = (status: DayStatus, inMonth: boolean, today: boolean): string => {
-    const base = "relative flex items-center justify-center h-10 w-10 rounded-full text-sm transition-all cursor-default select-none mx-auto";
+    const base = "relative flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-full text-xs sm:text-sm transition-all cursor-default select-none mx-auto";
 
     if (!inMonth) return cn(base, "opacity-20 text-muted-foreground");
 
