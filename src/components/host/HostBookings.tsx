@@ -527,6 +527,18 @@ export default function HostBookings() {
             })();
           }}
         />
+          onDeleteBooking={async (booking) => {
+            try {
+              const { error } = await supabase.from("bookings").delete().eq("id", booking.id);
+              if (error) throw error;
+              queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
+              queryClient.invalidateQueries({ queryKey: ["host-calendar-bookings"] });
+              toast({ title: "Supprimée", description: "La réservation a été supprimée." });
+            } catch (err: any) {
+              toast({ title: "Erreur", description: err.message, variant: "destructive" });
+            }
+          }}
+        />
       </CardContent>
 
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
