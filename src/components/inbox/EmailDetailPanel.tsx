@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { InboxEmail } from "@/hooks/useInboxEmails";
 import { format } from "date-fns";
-import { Mail, ArrowLeft, Paperclip } from "lucide-react";
+import { Mail, ArrowLeft, Paperclip, Sparkles, Loader2, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface EmailDetailPanelProps {
   email: InboxEmail | null;
@@ -12,6 +17,41 @@ interface EmailDetailPanelProps {
 }
 
 export const EmailDetailPanel = ({ email, onBack, showBackButton }: EmailDetailPanelProps) => {
+  const [aiLoading, setAiLoading] = useState(false);
+  const [draftOpen, setDraftOpen] = useState(false);
+  const [draftText, setDraftText] = useState("");
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+
+  const handleGenerateAiReply = async () => {
+    if (!email) return;
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-email-reply", {
+        body: { emailId: email.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setDraftText(data.draft || "");
+      setDraftOpen(true);
+    } catch (err: any) {
+      toast({
+        title: "Erreur",
+        description: err?.message || "Impossible de générer la réponse IA",
+        variant: "destructive",
+      });
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleCopyDraft = async () => {
+    await navigator.clipboard.writeText(draftText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toast({ title: "Copié", description: "Le brouillon a été copié dans le presse-papiers" });
+  };
+
   if (!email) {
     return (
       <div className="flex-1 w-full flex flex-col items-center justify-center">
@@ -37,6 +77,20 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton }: EmailDetailP
           <h2 className="text-lg font-semibold text-foreground truncate flex-1">
             {email.subject || "(Sans objet)"}
           </h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleGenerateAiReply}
+            disabled={aiLoading}
+            className="shrink-0 gap-1.5"
+          >
+            {aiLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            {aiLoading ? "Analyse…" : "Réponse IA"}
+          </Button>
         </div>
         <div className="flex items-center justify-between text-sm">
           <div>
@@ -77,6 +131,38 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton }: EmailDetailP
           </pre>
         )}
       </ScrollArea>
+
+      {/* AI Draft Dialog */}
+      <Dialog open={draftOpen} onOpenChange={setDraftOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Brouillon de réponse IA
+            </DialogTitle>
+            <DialogDescription>
+              Relisez et modifiez le brouillon avant de l'envoyer. Copiez-le pour l'utiliser dans votre client email.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            <Textarea
+              value={draftText}
+              onChange={(e) => setDraftText(e.target.value)}
+              className="min-h-[300px] h-full resize-none text-sm"
+              placeholder="Le brouillon apparaîtra ici…"
+            />
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setDraftOpen(false)}>
+              Fermer
+            </Button>
+            <Button onClick={handleCopyDraft} className="gap-1.5">
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied ? "Copié !" : "Copier le brouillon"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
