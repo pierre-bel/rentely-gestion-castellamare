@@ -262,6 +262,7 @@ const EditListing = () => {
         weekly_discount: data.weekly_discount || 0,
         monthly_discount: data.monthly_discount || 0,
         availability_rules: availabilityRules,
+        rooms: [],
       });
 
       setInitialLoading(false);
