@@ -63,6 +63,72 @@ export default function HostListings() {
     navigate("/host/create-listing", { state: { from: location.pathname } });
   };
 
+  const handleDuplicateListing = async (listingId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("listings")
+        .select(`
+          *,
+          listing_rooms(id, room_type, name, beds, features, sort_order)
+        `)
+        .eq("id", listingId)
+        .single();
+
+      if (error || !data) {
+        toast({ title: "Erreur", description: "Impossible de charger l'annonce.", variant: "destructive" });
+        return;
+      }
+
+      const duplicateData: ListingFormData = {
+        address: data.address || "",
+        city: data.city || "",
+        state: data.state || "",
+        postal_code: data.postal_code || "",
+        country: data.country || "USA",
+        latitude: data.latitude || null,
+        longitude: data.longitude || null,
+        city_id: data.city_id || null,
+        state_region_id: data.state_region_id || null,
+        country_id: data.country_id || null,
+        title: data.title || "",
+        description: data.description || "",
+        type: data.type || "apartment",
+        guests_max: data.guests_max || 1,
+        bedrooms: data.bedrooms || 1,
+        beds: data.beds || 1,
+        bathrooms: data.bathrooms || 1,
+        square_feet: data.size_sqft || 0,
+        amenities: data.amenities || [],
+        cover_image: data.cover_image || "",
+        images: data.images || [],
+        check_in_time: data.checkin_from || "14:00",
+        check_out_time: data.checkout_until || "11:00",
+        min_nights: data.min_nights || 1,
+        max_nights: data.max_nights || 30,
+        house_rules: data.house_rules || "",
+        cancellation_policy_id: data.cancellation_policy_id || null,
+        cleaning_fee: data.cleaning_fee ?? null,
+        base_price: data.base_price || 0,
+        weekly_discount: data.weekly_discount || 0,
+        monthly_discount: data.monthly_discount || 0,
+        rooms: ((data as any).listing_rooms as any[] || []).map((r: any) => ({
+          id: crypto.randomUUID(),
+          room_type: r.room_type || "bedroom",
+          name: r.name || "",
+          beds: r.beds || [],
+          features: r.features || [],
+          sort_order: r.sort_order || 0,
+        })),
+        availability_rules: [],
+      };
+
+      navigate("/host/create-listing", { state: { from: location.pathname, duplicateData } });
+      toast({ title: "Annonce dupliquée", description: "Modifiez les informations différentes puis enregistrez." });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    }
+  };
+
   const activeListings = listings.filter(l => l.status === "approved");
   const draftListings = listings.filter(l => l.status === "draft" || l.status === "pending" || l.status === "rejected");
 
