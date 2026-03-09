@@ -30,13 +30,15 @@ interface Booking {
   listing_id: string;
   checkin_date: string;
   checkout_date: string;
+  checkin_time: string | null;
+  checkout_time: string | null;
   nights: number;
   notes: string | null;
   pricing_breakdown: any;
   status: string;
 }
 
-interface Listing { id: string; title: string; }
+interface Listing { id: string; title: string; checkin_from: string | null; checkout_until: string | null; }
 interface Tenant { id: string; first_name: string; last_name: string | null; phone: string | null; }
 interface CleaningStaff { id: string; name: string; phone: string | null; access_token: string; }
 interface StaffAssignment { id: string; cleaning_staff_id: string; listing_id: string; }
