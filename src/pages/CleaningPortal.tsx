@@ -218,10 +218,12 @@ export default function CleaningPortal() {
                     <Moon className="h-4 w-4 text-muted-foreground" />
                     <span>{selectedBooking.booking.nights} nuit{selectedBooking.booking.nights > 1 ? "s" : ""}</span>
                   </div>
-                  {selectedBooking.listing.checkin_from && (
+                  {(selectedBooking.booking.checkin_time || selectedBooking.listing.checkin_from) && (
                     <div className="flex items-center gap-2 text-sm">
                       <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>Arrivée dès {selectedBooking.listing.checkin_from?.slice(0, 5)} — Départ avant {selectedBooking.listing.checkout_until?.slice(0, 5)}</span>
+                      <span>
+                        Arrivée dès {(selectedBooking.booking.checkin_time || selectedBooking.listing.checkin_from)?.slice(0, 5)} — Départ avant {(selectedBooking.booking.checkout_time || selectedBooking.listing.checkout_until)?.slice(0, 5)}
+                      </span>
                     </div>
                   )}
                 </div>
