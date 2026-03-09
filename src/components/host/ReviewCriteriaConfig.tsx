@@ -41,35 +41,24 @@ export function ReviewCriteriaConfig() {
 
   const loadCriteria = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("host_review_criteria")
-      .select("*")
-      .eq("host_user_id", user!.id)
-      .order("sort_order");
+    const { data, error } = await selectByOwner<Criterion>(
+      "host_review_criteria", "host_user_id", user!.id,
+      { order: "sort_order", ascending: true }
+    );
 
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Erreur", description: error, variant: "destructive" });
       setLoading(false);
       return;
     }
 
     if (!data || data.length === 0) {
-      // Initialize with defaults
-      const defaults: Criterion[] = DEFAULT_CRITERIA.map((d, i) => ({
-        ...d,
-        is_enabled: true,
-        sort_order: i,
-      }));
-      setCriteria(defaults);
+      setCriteria(DEFAULT_CRITERIA.map((d, i) => ({ ...d, is_enabled: true, sort_order: i })));
     } else {
-      setCriteria(data.map((d: any) => ({
-        id: d.id,
-        criterion_key: d.criterion_key,
-        label: d.label,
-        description: d.description || "",
-        is_enabled: d.is_enabled,
-        is_default: d.is_default,
-        sort_order: d.sort_order,
+      setCriteria(data.map((d) => ({
+        id: d.id, criterion_key: d.criterion_key, label: d.label,
+        description: d.description || "", is_enabled: d.is_enabled,
+        is_default: d.is_default, sort_order: d.sort_order,
       })));
     }
     setLoading(false);
