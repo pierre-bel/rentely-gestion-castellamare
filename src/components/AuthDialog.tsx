@@ -66,7 +66,7 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoadingStates(prev => ({ ...prev, regular: true }));
+    setLoading(true);
 
     const { error, data } = await supabase.auth.signInWithPassword({
       email,
