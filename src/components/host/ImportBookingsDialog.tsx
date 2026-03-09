@@ -41,6 +41,7 @@ const TEMPLATE_COLUMNS = [
   { key: "status", label: "Statut", required: false, example: "confirmed" },
   { key: "igloohome_code", label: "Code clé Igloohome", required: false, example: "123456789" },
   { key: "notes", label: "Notes", required: false, example: "" },
+  { key: "created_at", label: "Date de création (AA-MM-JJ HH:mm)", required: false, example: "23-01-21 22:42" },
   // Tenant
   { key: "tenant_first_name", label: "Prénom du locataire", required: true, example: "Jean" },
   { key: "tenant_last_name", label: "Nom du locataire", required: false, example: "Dupont" },
@@ -77,6 +78,27 @@ function parseDate(val: any): Date | null {
   const parsed3 = parse(str, "dd-MM-yyyy", new Date());
   if (isValid(parsed3)) return parsed3;
   return null;
+}
+
+function parseDateTime(val: any): Date | null {
+  if (!val) return null;
+  if (typeof val === "number") {
+    const d = XLSX.SSF.parse_date_code(val);
+    if (d) return new Date(d.y, d.m - 1, d.d, d.H || 0, d.M || 0, d.S || 0);
+    return null;
+  }
+  const str = String(val).trim();
+  // Try YY-MM-DD HH:mm (e.g. 23-01-21 22:42)
+  const p1 = parse(str, "yy-MM-dd HH:mm", new Date());
+  if (isValid(p1)) return p1;
+  // Try YYYY-MM-DD HH:mm
+  const p2 = parse(str, "yyyy-MM-dd HH:mm", new Date());
+  if (isValid(p2)) return p2;
+  // Try DD/MM/YYYY HH:mm
+  const p3 = parse(str, "dd/MM/yyyy HH:mm", new Date());
+  if (isValid(p3)) return p3;
+  // Fallback to date-only parsers
+  return parseDate(val);
 }
 
 export function ImportBookingsDialog({ open, onOpenChange }: Props) {
@@ -256,7 +278,10 @@ export function ImportBookingsDialog({ open, onOpenChange }: Props) {
 
         const tenantName = [tenantFirstName, tenantLastName].filter(Boolean).join(" ");
 
-        const { data: newBooking, error: bErr } = await supabase.from("bookings").insert({
+        // Parse optional created_at
+        const importedCreatedAt = d.created_at ? parseDateTime(d.created_at) : null;
+
+        const bookingInsert: Record<string, any> = {
           listing_id: listing.id,
           guest_user_id: user.id,
           checkin_date: format(checkin, "yyyy-MM-dd"),
@@ -279,7 +304,13 @@ export function ImportBookingsDialog({ open, onOpenChange }: Props) {
             `Locataire: ${tenantName}`,
             d.notes ? String(d.notes).trim() : null,
           ].filter(Boolean).join(" | ") || null,
-        }).select("id").single();
+        };
+
+        if (importedCreatedAt) {
+          bookingInsert.created_at = importedCreatedAt.toISOString();
+        }
+
+        const { data: newBooking, error: bErr } = await supabase.from("bookings").insert(bookingInsert as any).select("id").single();
 
         if (bErr) throw bErr;
 
