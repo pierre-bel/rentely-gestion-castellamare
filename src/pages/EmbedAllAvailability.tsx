@@ -288,6 +288,33 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
     return result.total;
   };
 
+  // Check if dates are Saturday-to-Saturday
+  const isSaturdayToSaturday = useMemo(() => {
+    if (!checkinDate || !checkoutDate) return false;
+    return getDay(checkinDate) === 6 && getDay(checkoutDate) === 6;
+  }, [checkinDate, checkoutDate]);
+
+  // Check if the selected period falls within school holidays
+  const isInSchoolHolidays = useMemo(() => {
+    if (!checkinDate || !checkoutDate || schoolHolidays.length === 0) return false;
+    for (const holiday of schoolHolidays) {
+      const hStart = parseISO(holiday.start_date);
+      const hEnd = parseISO(holiday.end_date);
+      // If the checkin falls within a holiday period
+      if (checkinDate >= hStart && checkinDate <= hEnd) return true;
+    }
+    return false;
+  }, [checkinDate, checkoutDate, schoolHolidays]);
+
+  // Determine simulator display mode
+  type SimulatorMode = "price" | "holidays_only_saturday" | "contact_required";
+  const simulatorMode: SimulatorMode = useMemo(() => {
+    if (!checkinDate || !checkoutDate) return "price";
+    if (isSaturdayToSaturday) return "price";
+    if (isInSchoolHolidays) return "holidays_only_saturday";
+    return "contact_required";
+  }, [checkinDate, checkoutDate, isSaturdayToSaturday, isInSchoolHolidays]);
+
   // Simulator results
   const simulatorResults = useMemo(() => {
     if (!checkinDate || !checkoutDate || !listings) return null;
@@ -298,10 +325,10 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
     return listings.map((listing) => ({
       ...listing,
       isAvailable: checkListingAvailability(listing.id),
-      price: calculateListingPrice(listing.id, listing.base_price),
+      price: simulatorMode === "price" ? calculateListingPrice(listing.id, listing.base_price) : null,
       nights,
     }));
-  }, [checkinDate, checkoutDate, listings, bookedRanges, blockedDates, weeklyPricing]);
+  }, [checkinDate, checkoutDate, listings, bookedRanges, blockedDates, weeklyPricing, simulatorMode]);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 0 }).format(price);
