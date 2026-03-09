@@ -39,7 +39,7 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: `${window.location.origin}/host/dashboard`,
         data: {
           first_name: firstName,
           last_name: lastName,
