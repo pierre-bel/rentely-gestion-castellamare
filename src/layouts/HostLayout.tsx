@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useTeamAccess } from "@/hooks/useTeamAccess";
 import { HostSidebar } from "@/components/host/HostSidebar";
 import { HostPageHeader } from "@/components/host/HostPageHeader";
 import { Loader2, Home } from "lucide-react";
@@ -41,22 +42,24 @@ const HostLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isHost, isGuest, requestHostRole, loading: roleLoading } = useUserRole();
+  const { isTeamMember, loading: teamLoading } = useTeamAccess();
   const [requesting, setRequesting] = useState(false);
   const { toast } = useToast();
   
   const pageTitle = getPageTitle(location.pathname);
   const hideHeader = shouldHideHeader(location.pathname);
 
+  const isLoading = roleLoading || teamLoading;
+
   useEffect(() => {
-    if (!roleLoading) {
+    if (!isLoading) {
       if (!user) {
         navigate("/");
-      } else if (!isHost && !isGuest) {
-        // If user has no roles at all, redirect to home
+      } else if (!isHost && !isGuest && !isTeamMember) {
         navigate("/");
       }
     }
-  }, [user, isHost, isGuest, roleLoading, navigate]);
+  }, [user, isHost, isGuest, isTeamMember, isLoading, navigate]);
 
   const handleRequestHost = async () => {
     setRequesting(true);
@@ -77,7 +80,7 @@ const HostLayout = () => {
     setRequesting(false);
   };
 
-  if (roleLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -89,7 +92,8 @@ const HostLayout = () => {
     return null;
   }
 
-  if (isGuest && !isHost) {
+  // Team members can access directly, skip the "become host" screen
+  if (isGuest && !isHost && !isTeamMember) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-primary/5">
         <Card className="max-w-md border-primary/20">

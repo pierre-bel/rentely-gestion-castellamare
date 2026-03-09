@@ -59,6 +59,7 @@ import AdminDisputesManagement from "./pages/admin/DisputesManagement";
 import AdminSupport from "./pages/admin/Support";
 import ContentManagementPage from "./pages/admin/ContentManagement";
 import NotFound from "./pages/NotFound";
+import AcceptInvitation from "./pages/AcceptInvitation";
 import BookingPortal from "./pages/BookingPortal";
 import CleaningPortal from "./pages/CleaningPortal";
 import CalendarFeature from "./pages/features/CalendarFeature";
@@ -95,6 +96,7 @@ const App = () => (
             <Route path="/embed/availability/:listingId" element={<EmbedAvailability />} />
             <Route path="/portal/:token" element={<BookingPortal />} />
             <Route path="/cleaning-portal/:token" element={<CleaningPortal />} />
+            <Route path="/accept-invitation" element={<><Navbar /><AcceptInvitation /></>} />
             <Route path="/host" element={<HostLayout />}>
               <Route path="dashboard" element={<HostDashboard />} />
               <Route path="listings" element={<ListingsManagement />} />
