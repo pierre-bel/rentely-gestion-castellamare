@@ -121,6 +121,7 @@ export default function BookingPortal() {
   const [customSections, setCustomSections] = useState<CustomSectionData[]>([]);
   const [existingReview, setExistingReview] = useState<any>(null);
   const [reviewChecked, setReviewChecked] = useState(false);
+  const [hostUserId, setHostUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
