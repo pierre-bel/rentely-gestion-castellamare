@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { generateQRDataUrl, buildTransferReference, type PaymentQRCodeProps } from "@/components/portal/PaymentQRCode";
 
 interface Template {
   id: string;
