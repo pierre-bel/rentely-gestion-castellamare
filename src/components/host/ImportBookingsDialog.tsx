@@ -39,7 +39,7 @@ const TEMPLATE_COLUMNS = [
   { key: "rental_price", label: "Prix de location (€)", required: true, example: "700" },
   { key: "cleaning_fee", label: "Frais de ménage (€)", required: false, example: "80" },
   { key: "status", label: "Statut", required: false, example: "confirmed" },
-  { key: "igloohome_code", label: "Code clé Igloohome", required: false, example: "123456789" },
+  { key: "igloohome_code", label: "Code clé Igloohome", required: false, example: "" },
   { key: "notes", label: "Notes", required: false, example: "" },
   { key: "created_at", label: "Date de création (AA-MM-JJ HH:mm)", required: false, example: "23-01-21 22:42" },
   // Tenant
