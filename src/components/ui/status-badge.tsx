@@ -78,6 +78,8 @@ const VARIANT_STYLES: Record<StatusVariant, string> = {
   destructive: "bg-destructive/10 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30",
   muted: "bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 hover:text-muted-foreground hover:border-muted-foreground/20",
   outline: "bg-transparent text-foreground border-border hover:bg-transparent hover:text-foreground hover:border-border",
+  purple: "bg-[hsl(var(--calendar-owner-blocked)/0.15)] text-[hsl(var(--calendar-owner-blocked))] border-[hsl(var(--calendar-owner-blocked)/0.3)] hover:bg-[hsl(var(--calendar-owner-blocked)/0.15)]",
+  orange: "bg-[hsl(var(--calendar-pre-reservation)/0.15)] text-[hsl(var(--calendar-pre-reservation))] border-[hsl(var(--calendar-pre-reservation)/0.3)] hover:bg-[hsl(var(--calendar-pre-reservation)/0.15)]",
 };
 
 export const StatusBadge = ({ status, className }: StatusBadgeProps) => {
