@@ -55,6 +55,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
 
+  const [bookingType, setBookingType] = useState<"normal" | "owner_blocked" | "pre_reservation">("normal");
   const [selectedListingId, setSelectedListingId] = useState("");
   const [selectedTenantId, setSelectedTenantId] = useState("");
   const [checkinDate, setCheckinDate] = useState<Date>();
@@ -66,6 +67,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   const [newTenantDialogOpen, setNewTenantDialogOpen] = useState(false);
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [beachCabin, setBeachCabin] = useState(false);
+  const [blockName, setBlockName] = useState("");
 
   // Fetch host listings
   const { data: listings = [] } = useQuery({
