@@ -79,6 +79,7 @@ export function HostPaymentsBookingsList() {
   const [selectedBooking, setSelectedBooking] = useState<BookingWithPayments | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [filterOverdue, setFilterOverdue] = useState(false);
 
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: ["host-payments-bookings", user?.id],
