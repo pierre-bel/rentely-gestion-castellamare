@@ -53,6 +53,9 @@ interface CleaningSlot {
   listingTitle: string;
   hoursAvailable: number | null;
   staffMember: CleaningStaff | null;
+  checkinTime: string | null;
+  checkoutTime: string | null;
+  nextCheckinTime: string | null;
 }
 
 // ── Component ────────────────────────────────────────
