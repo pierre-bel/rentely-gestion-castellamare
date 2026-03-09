@@ -144,11 +144,8 @@ const ListingsManagement = () => {
       await queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
       toast({ title: "Success", description: "Listing blocked successfully" });
     } else {
-      // REAL MODE: Update Supabase
-      const { error } = await supabase
-        .from("listings")
-        .update({ status: "blocked" })
-        .eq("id", listingToBlock);
+      // REAL MODE: Update via helper
+      const { error } = await updateById("listings", listingToBlock, { status: "blocked" });
 
       if (error) {
         toast({
