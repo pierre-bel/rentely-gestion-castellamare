@@ -50,6 +50,8 @@ const getInitials = (name: string | null) => {
 export default function DashboardRecentBookings({ userId }: DashboardRecentBookingsProps) {
   const [selectedBooking, setSelectedBooking] = useState<BookingDetailData | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [editBooking, setEditBooking] = useState<BookingDetailData | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["dashboard-recent-bookings", userId],
