@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ClipboardList } from "lucide-react";
 import { BookingDetailDialog, type BookingDetailData } from "./BookingDetailDialog";
+import { EditManualBookingDialog } from "./EditManualBookingDialog";
 
 interface DashboardBooking {
   id: string;

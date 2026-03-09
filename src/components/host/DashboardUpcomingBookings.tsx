@@ -10,6 +10,7 @@ import { fr } from "date-fns/locale";
 import { CalendarClock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BookingDetailDialog, type BookingDetailData } from "./BookingDetailDialog";
+import { EditManualBookingDialog } from "./EditManualBookingDialog";
 
 interface UpcomingBooking {
   id: string;
