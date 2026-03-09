@@ -236,8 +236,8 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
                   Password must be at least 6 characters
                 </p>
               </div>
-              <Button type="submit" className="w-full" disabled={loadingStates.regular}>
-                {loadingStates.regular ? (
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Creating account...
