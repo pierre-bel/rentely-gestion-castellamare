@@ -42,22 +42,24 @@ const HostLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isHost, isGuest, requestHostRole, loading: roleLoading } = useUserRole();
+  const { isTeamMember, loading: teamLoading } = useTeamAccess();
   const [requesting, setRequesting] = useState(false);
   const { toast } = useToast();
   
   const pageTitle = getPageTitle(location.pathname);
   const hideHeader = shouldHideHeader(location.pathname);
 
+  const isLoading = roleLoading || teamLoading;
+
   useEffect(() => {
-    if (!roleLoading) {
+    if (!isLoading) {
       if (!user) {
         navigate("/");
-      } else if (!isHost && !isGuest) {
-        // If user has no roles at all, redirect to home
+      } else if (!isHost && !isGuest && !isTeamMember) {
         navigate("/");
       }
     }
-  }, [user, isHost, isGuest, roleLoading, navigate]);
+  }, [user, isHost, isGuest, isTeamMember, isLoading, navigate]);
 
   const handleRequestHost = async () => {
     setRequesting(true);
