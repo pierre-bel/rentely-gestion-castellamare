@@ -648,6 +648,36 @@ export default function HostBookings() {
           setEditBookingOpen(true);
         }}
       />
+      <AlertDialog open={deleteAllDialogOpen} onOpenChange={setDeleteAllDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer TOUTES les réservations ?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p className="text-destructive font-semibold">
+                ⚠️ Attention : cette action est irréversible !
+              </p>
+              <p>
+                Vous êtes sur le point de supprimer définitivement toutes vos réservations 
+                ({bookings.length} réservation{bookings.length > 1 ? "s" : ""}), 
+                ainsi que leurs échéances de paiement et contrats associés.
+              </p>
+              <p>
+                Cette action ne peut pas être annulée. Êtes-vous absolument sûr(e) ?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingAll}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAllBookings}
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={isDeletingAll}
+            >
+              {isDeletingAll ? "Suppression..." : "Oui, tout supprimer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
