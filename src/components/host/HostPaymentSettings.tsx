@@ -176,12 +176,11 @@ function BeachCabinPeriodSettings() {
     queryKey: ["portal-settings-beach", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("portal_settings")
-        .select("beach_cabin_start_month, beach_cabin_start_day, beach_cabin_end_month, beach_cabin_end_day")
-        .eq("host_user_id", user.id)
-        .maybeSingle();
-      if (error) throw error;
+      const { data, error } = await selectOne(
+        "portal_settings", "host_user_id", user.id,
+        "beach_cabin_start_month, beach_cabin_start_day, beach_cabin_end_month, beach_cabin_end_day"
+      );
+      if (error) throw new Error(error);
       return data;
     },
     enabled: !!user?.id,
