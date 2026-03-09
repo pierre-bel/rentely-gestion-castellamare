@@ -30,12 +30,13 @@ const STEP_TO_FEEDBACK_SECTION: Record<number, {
 } | null> = {
   0: { key: "map", displayName: "Location & Map" },
   1: { key: "title_description", displayName: "Title & Description" },
-  2: { key: "photos", displayName: "Photos" },
-  3: null, // StepDetails (Amenities) - no feedback
-  4: { key: "rules", displayName: "House Rules" },
-  5: { key: "price_summary", displayName: "Pricing" },
-  6: null, // StepAvailability - no feedback
-  7: null, // StepReview - handled separately
+  2: null, // StepRooms - no feedback
+  3: { key: "photos", displayName: "Photos" },
+  4: null, // StepDetails (Amenities) - no feedback
+  5: { key: "rules", displayName: "House Rules" },
+  6: { key: "price_summary", displayName: "Pricing" },
+  7: null, // StepAvailability - no feedback
+  8: null, // StepReview - handled separately
 };
 
 const EditListing = () => {

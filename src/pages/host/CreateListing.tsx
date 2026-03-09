@@ -375,21 +375,24 @@ const CreateListing = () => {
               <StepPropertyType formData={formData} updateFormData={updateFormData} />
             )}
             {currentStep === 2 && (
-              <StepPhotos formData={formData} updateFormData={updateFormData} />
+              <StepRooms rooms={formData.rooms} onRoomsChange={(rooms) => updateFormData({ rooms })} />
             )}
             {currentStep === 3 && (
-              <StepDetails formData={formData} updateFormData={updateFormData} />
+              <StepPhotos formData={formData} updateFormData={updateFormData} />
             )}
             {currentStep === 4 && (
-              <StepRules formData={formData} updateFormData={updateFormData} />
+              <StepDetails formData={formData} updateFormData={updateFormData} />
             )}
             {currentStep === 5 && (
-              <StepPricing formData={formData} updateFormData={updateFormData} />
+              <StepRules formData={formData} updateFormData={updateFormData} />
             )}
             {currentStep === 6 && (
+              <StepPricing formData={formData} updateFormData={updateFormData} />
+            )}
+            {currentStep === 7 && (
               <StepAvailability formData={formData} updateFormData={updateFormData} />
             )}
-            {currentStep === 7 && <StepReview formData={formData} />}
+            {currentStep === 8 && <StepReview formData={formData} />}
 
             <div className="flex justify-between pt-6">
               <Button
