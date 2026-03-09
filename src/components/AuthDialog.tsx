@@ -141,8 +141,8 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
                   minLength={6}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={loadingStates.regular}>
-                {loadingStates.regular ? (
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Connexion...
