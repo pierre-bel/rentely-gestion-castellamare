@@ -310,7 +310,7 @@ export function ImportBookingsDialog({ open, onOpenChange }: Props) {
           bookingInsert.created_at = importedCreatedAt.toISOString();
         }
 
-        const { data: newBooking, error: bErr } = await supabase.from("bookings").insert(bookingInsert).select("id").single();
+        const { data: newBooking, error: bErr } = await supabase.from("bookings").insert(bookingInsert as any).select("id").single();
 
         if (bErr) throw bErr;
 
