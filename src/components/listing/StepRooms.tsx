@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, Bed, Bath, Sofa, ChefHat, LayoutGrid } from "lucide-react";
+import { Plus, Trash2, Bed, Bath, Sofa, ChefHat, LayoutGrid, DoorOpen } from "lucide-react";
 
 export interface BedData {
   type: string;
