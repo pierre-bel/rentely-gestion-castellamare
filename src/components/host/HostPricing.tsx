@@ -59,8 +59,12 @@ export function HostPricing() {
 
   // Fetch school holidays
   const { data: schoolHolidaysData = [] } = useQuery({
-    queryKey: ["host-school-holidays", user?.id],
+    queryKey: ["host-school-holidays", user?.id, isDemoMode],
     queryFn: async () => {
+      if (isDemoMode && demoUserId) {
+        const snapshot = demoStorage.getSnapshot(demoUserId);
+        return (snapshot.schoolHolidays || []) as any[];
+      }
       if (!user?.id) return [];
       const { data, error } = await supabase
         .from("host_school_holidays")
@@ -70,7 +74,7 @@ export function HostPricing() {
       if (error) throw error;
       return data as any[];
     },
-    enabled: !!user?.id,
+    enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
   const schoolHolidays: SchoolHoliday[] = useMemo(() =>
@@ -80,8 +84,12 @@ export function HostPricing() {
 
   // Fetch listings
   const { data: listings = [] } = useQuery({
-    queryKey: ["host-listings-pricing", user?.id],
+    queryKey: ["host-listings-pricing", user?.id, isDemoMode],
     queryFn: async () => {
+      if (isDemoMode && demoUserId) {
+        const snapshot = demoStorage.getSnapshot(demoUserId);
+        return (snapshot.listings || []).map((l: any) => ({ id: l.id, title: l.title, base_price: l.base_price })) as Listing[];
+      }
       if (!user?.id) return [];
       const { data, error } = await supabase
         .from("listings")
@@ -91,7 +99,7 @@ export function HostPricing() {
       if (error) throw error;
       return data as Listing[];
     },
-    enabled: !!user?.id,
+    enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
   const allSelected = listings.length > 0 && selectedListingIds.length === listings.length;
