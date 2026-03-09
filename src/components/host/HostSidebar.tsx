@@ -78,8 +78,8 @@ const SidebarContent = ({
     <div className="flex flex-col h-full">
       {/* Logo */}
       <Link to="/" className="flex items-center gap-3 mb-8 cursor-pointer hover:opacity-80 transition-opacity">
-        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-          <Building2 className="h-5 w-5 text-foreground" />
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-warm to-accent-cool flex items-center justify-center">
+          <Building2 className="h-5 w-5 text-white" />
         </div>
         <span className="text-lg font-semibold">{logoText}</span>
       </Link>
@@ -134,7 +134,7 @@ interface SidebarProps {
 
 export const HostSidebar = ({ navigationItems, logoText }: SidebarProps) => {
   return (
-    <aside className="hidden lg:flex lg:flex-col w-[275px] flex-shrink-0 h-screen border-r border-border bg-card p-7 sticky top-0">
+    <aside className="hidden lg:flex lg:flex-col w-[275px] flex-shrink-0 h-screen border-r border-border bg-gradient-to-b from-card to-card/95 p-7 sticky top-0">
       <SidebarContent 
         navigationItems={navigationItems}
         logoText={logoText}

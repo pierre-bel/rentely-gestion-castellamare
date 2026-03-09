@@ -129,48 +129,54 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
       label: "Taux d'occupation",
       value: formatPercentage(summaryData.occupancyRate),
       icon: TrendingUp,
-      bgColor: "bg-blue-500/10",
-      iconColor: "text-blue-600",
+      bgColor: "bg-accent-cool/15",
+      iconColor: "text-accent-cool",
+      borderColor: "hover:border-accent-cool/30",
       href: "/host/earnings-report",
     },
     {
       label: "Tarif moyen",
       value: formatCurrency(summaryData.averageRate, true),
       icon: DollarSign,
-      bgColor: "bg-green-500/10",
-      iconColor: "text-green-600",
+      bgColor: "bg-success/15",
+      iconColor: "text-success",
+      borderColor: "hover:border-success/30",
       href: "/host/earnings-report",
     },
     {
       label: "Revenus bruts",
       value: formatCurrency(summaryData.totalGrossRevenue),
       icon: ArrowUpCircle,
-      bgColor: "bg-purple-500/10",
-      iconColor: "text-purple-600",
+      bgColor: "bg-accent-purple/15",
+      iconColor: "text-accent-purple",
+      borderColor: "hover:border-accent-purple/30",
       href: "/host/earnings-report",
     },
     {
       label: "Revenus nets",
       value: formatCurrency(summaryData.actualNetRevenue),
       icon: Wallet,
-      bgColor: "bg-emerald-500/10",
-      iconColor: "text-emerald-600",
+      bgColor: "bg-primary/15",
+      iconColor: "text-primary",
+      borderColor: "hover:border-primary/30",
       href: "/host/earnings-report",
     },
     {
       label: "Versements en attente",
       value: formatCurrency(Number(payoutData?.pending_payouts || 0)),
       icon: Clock,
-      bgColor: "bg-amber-500/10",
-      iconColor: "text-amber-600",
+      bgColor: "bg-accent-warm/15",
+      iconColor: "text-accent-warm",
+      borderColor: "hover:border-accent-warm/30",
       href: "/host/payouts",
     },
     {
       label: "Frais payés",
       value: formatCurrency(summaryData.hostFeesPaid),
       icon: Receipt,
-      bgColor: "bg-slate-500/10",
-      iconColor: "text-slate-600",
+      bgColor: "bg-muted",
+      iconColor: "text-muted-foreground",
+      borderColor: "hover:border-border",
       href: "/host/earnings-report",
     },
   ];
@@ -182,11 +188,11 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
         return (
           <Card 
             key={index} 
-            className="bg-card hover:shadow-md transition-shadow cursor-pointer"
+            className={`bg-card border transition-all cursor-pointer hover:shadow-md ${metric.borderColor}`}
             onClick={() => navigate(metric.href)}
           >
             <CardContent className="p-3 md:p-6">
-              <div className={`inline-flex p-2 md:p-3 rounded-lg ${metric.bgColor} mb-2 md:mb-4`}>
+              <div className={`inline-flex p-2 md:p-3 rounded-xl ${metric.bgColor} mb-2 md:mb-4`}>
                 <Icon className={`h-4 w-4 md:h-5 md:w-5 ${metric.iconColor}`} />
               </div>
               <p className="text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">{metric.label}</p>

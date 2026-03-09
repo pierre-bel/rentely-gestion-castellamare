@@ -91,26 +91,28 @@ const HostLayout = () => {
 
   if (isGuest && !isHost) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="max-w-md">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-primary/5">
+        <Card className="max-w-md border-primary/20">
           <CardContent className="p-6 space-y-4">
             <div className="text-center">
-              <Home className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2">Become a Host</h2>
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-accent-warm to-accent-cool flex items-center justify-center mx-auto mb-4">
+                <Home className="h-8 w-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Devenir hôte</h2>
               <p className="text-muted-foreground mb-6">
-                Start earning by sharing your space with travelers from around the world.
+                Commencez à gagner de l'argent en partageant votre espace avec des voyageurs du monde entier.
               </p>
             </div>
             <Button onClick={handleRequestHost} className="w-full" disabled={requesting} size="lg">
               {requesting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
+                  En cours...
                 </>
               ) : (
                 <>
                   <Home className="h-4 w-4 mr-2" />
-                  Become a Host
+                  Devenir hôte
                 </>
               )}
             </Button>
