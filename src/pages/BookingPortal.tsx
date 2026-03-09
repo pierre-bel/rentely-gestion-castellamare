@@ -322,8 +322,6 @@ export default function BookingPortal() {
     );
   };
 
-  const [rooms, setRooms] = useState<any[]>([]);
-
   const renderAmenities = () => {
     if (!settings.show_amenities) return null;
 
