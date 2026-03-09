@@ -402,10 +402,9 @@ export default function BookingPortal() {
 
   const getPaymentReference = (paymentLabel: string) => {
     const template = bankInfo.referenceTemplate || "{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}";
-    // We don't have guest_last_name on the portal, use listing info + dates
     return buildTransferReference(template, {
-      guest_last_name: "", // not available in portal context
-      guest_full_name: "",
+      guest_last_name: data.guest_last_name || "",
+      guest_full_name: `${data.guest_first_name || ""} ${data.guest_last_name || ""}`.trim(),
       listing_title: data.listing_title,
       checkin_date: format(checkin, "dd/MM/yyyy"),
       checkout_date: format(checkout, "dd/MM/yyyy"),
