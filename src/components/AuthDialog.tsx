@@ -73,59 +73,14 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
     e.preventDefault();
     setLoadingStates(prev => ({ ...prev, regular: true }));
 
-    const demoEmails = ["demo.admin@example.com", "demo.host@example.com", "demo.guest@example.com"];
-    const isDemoEmail = demoEmails.includes(email.toLowerCase());
-
-    let { error, data } = await supabase.auth.signInWithPassword({
+    const { error, data } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    // If login fails with demo credentials, auto-create the account
-    if (error && isDemoEmail && password === "demo123") {
-      const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            first_name: email.includes("admin") ? "Demo" : email.includes("host") ? "Demo" : "Demo",
-            last_name: email.includes("admin") ? "Admin" : email.includes("host") ? "Host" : "Guest",
-          },
-        },
-      });
-
-      if (signUpError) {
-        toast({
-          title: "Login failed",
-          description: signUpError.message,
-          variant: "destructive",
-        });
-        setLoadingStates(prev => ({ ...prev, regular: false }));
-        return;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      if (signUpData.user) {
-        const roleTableName = "user_roles";
-        const roleValue = email.includes("admin") ? "admin" : email.includes("host") ? "host" : "guest";
-        
-        const { error: roleError } = await supabase
-          .from(roleTableName)
-          .insert([{ user_id: signUpData.user.id, role: roleValue }]);
-
-        if (roleError) {
-          console.error("Failed to assign role:", roleError);
-        }
-
-        data = signUpData;
-      }
-    }
-
     if (error) {
       toast({
-        title: "Login failed",
+        title: "Erreur de connexion",
         description: error.message,
         variant: "destructive",
       });
