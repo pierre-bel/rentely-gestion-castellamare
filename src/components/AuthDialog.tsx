@@ -14,8 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { demoStorage } from "@/lib/demoStorage";
 import { Separator } from "@/components/ui/separator";
+import { activateDemo, type DemoRole } from "@/lib/demoMode";
 
 interface AuthDialogProps {
   open: boolean;
