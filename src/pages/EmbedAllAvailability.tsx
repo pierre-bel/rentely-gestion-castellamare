@@ -1,26 +1,23 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   format,
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
-  isSameMonth,
   isToday,
+  isWeekend,
   addMonths,
   subMonths,
-  startOfWeek,
-  endOfWeek,
-  isWithinInterval,
   parseISO,
   isBefore,
   startOfDay,
+  isSameMonth,
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -28,7 +25,7 @@ import { cn } from "@/lib/utils";
 export default function EmbedAllAvailability() {
   const { hostId } = useParams<{ hostId: string }>();
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedListing, setSelectedListing] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const today = startOfDay(new Date());
   const currentMonthStart = startOfMonth(today);
@@ -43,29 +40,22 @@ export default function EmbedAllAvailability() {
       if (!hostId) return [];
       const { data, error } = await supabase
         .from("embed_host_listings" as any)
-        .select("id, title, city, base_price, cover_image, bedrooms")
+        .select("id, title, city, base_price, bedrooms")
         .eq("host_user_id", hostId)
         .order("title");
       if (error) throw error;
-      return (data || []) as unknown as Array<{ id: string; title: string; city: string | null; base_price: number; cover_image: string | null; bedrooms: number | null }>;
+      return (data || []) as unknown as Array<{
+        id: string;
+        title: string;
+        city: string | null;
+        base_price: number;
+        bedrooms: number | null;
+      }>;
     },
     enabled: !!hostId,
   });
 
-  // We need to filter listings by host. public_listings view doesn't expose host_user_id.
-  // Use embed_listing_info or a direct query. Let's use a separate query to get listing IDs for this host.
-  const hostListingIds = useMemo(() => {
-    return (listings || []).map((l) => l.id);
-  }, [listings]);
-
-  const filteredByHost = useMemo(() => {
-    return listings || [];
-  }, [listings]);
-
-  const displayListings = useMemo(() => {
-    if (selectedListing) return filteredByHost.filter((l) => l.id === selectedListing);
-    return filteredByHost;
-  }, [filteredByHost, selectedListing]);
+  const hostListingIds = useMemo(() => (listings || []).map((l) => l.id), [listings]);
 
   // Fetch booked dates
   const { data: bookedRanges = [] } = useQuery({
@@ -73,7 +63,7 @@ export default function EmbedAllAvailability() {
     queryFn: async () => {
       if (hostListingIds.length === 0) return [];
       const rangeStart = format(startOfMonth(subMonths(currentMonth, 1)), "yyyy-MM-dd");
-      const rangeEnd = format(endOfMonth(addMonths(currentMonth, 2)), "yyyy-MM-dd");
+      const rangeEnd = format(endOfMonth(addMonths(currentMonth, 1)), "yyyy-MM-dd");
       const { data, error } = await supabase
         .from("public_booking_dates")
         .select("listing_id, checkin_date, checkout_date")
@@ -92,7 +82,7 @@ export default function EmbedAllAvailability() {
     queryFn: async () => {
       if (hostListingIds.length === 0) return [];
       const rangeStart = format(startOfMonth(subMonths(currentMonth, 1)), "yyyy-MM-dd");
-      const rangeEnd = format(endOfMonth(addMonths(currentMonth, 2)), "yyyy-MM-dd");
+      const rangeEnd = format(endOfMonth(addMonths(currentMonth, 1)), "yyyy-MM-dd");
       const { data, error } = await supabase
         .from("public_listing_availability")
         .select("listing_id, start_date, end_date")
@@ -105,91 +95,47 @@ export default function EmbedAllAvailability() {
     enabled: hostListingIds.length > 0,
   });
 
-  const isDayBooked = (day: Date, listingId: string) => {
-    return bookedRanges.some(
-      (b) =>
-        b.listing_id === listingId &&
-        isWithinInterval(day, {
-          start: parseISO(b.checkin_date!),
-          end: parseISO(b.checkout_date!),
-        })
-    );
-  };
-
-  const isDayBlocked = (day: Date, listingId: string) => {
-    return blockedDates.some(
-      (bd) =>
-        bd.listing_id === listingId &&
-        isWithinInterval(day, {
-          start: parseISO(bd.start_date!),
-          end: parseISO(bd.end_date!),
-        })
-    );
-  };
-
-  const weekDays = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
-  const nextMonth = addMonths(currentMonth, 1);
-
-  const getMonthDays = (monthDate: Date) => {
-    const ms = startOfMonth(monthDate);
-    const me = endOfMonth(monthDate);
-    const cs = startOfWeek(ms, { weekStartsOn: 1 });
-    const ce = endOfWeek(me, { weekStartsOn: 1 });
-    return eachDayOfInterval({ start: cs, end: ce });
-  };
-
-  const currentDays = getMonthDays(currentMonth);
-  const nextDays = getMonthDays(nextMonth);
-
-  const renderMonth = (monthDate: Date, days: Date[], listingId: string) => (
-    <div>
-      <h3 className="text-center font-semibold capitalize mb-2 text-sm">
-        {format(monthDate, "MMMM yyyy", { locale: fr })}
-      </h3>
-      <div className="grid grid-cols-7 gap-px mb-1">
-        {weekDays.map((d) => (
-          <div key={d} className="text-center text-[10px] font-medium text-muted-foreground py-0.5">
-            {d}
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden">
-        {days.map((day) => {
-          const inMonth = isSameMonth(day, monthDate);
-          const isPast = isBefore(day, today);
-          const booked = isDayBooked(day, listingId);
-          const blocked = isDayBlocked(day, listingId);
-          const unavailable = booked || blocked || isPast;
-
-          return (
-            <div
-              key={day.toISOString()}
-              className={cn(
-                "h-8 flex items-center justify-center text-xs bg-card transition-colors",
-                !inMonth && "opacity-30",
-                isToday(day) && "font-bold ring-1 ring-primary/30",
-                unavailable && inMonth && "bg-destructive/10 text-muted-foreground",
-                !unavailable && inMonth && "bg-[hsl(var(--calendar-available)/0.2)] text-foreground font-medium",
-                isPast && inMonth && "opacity-50"
-              )}
-            >
-              {format(day, "d")}
-            </div>
-          );
-        })}
-      </div>
-    </div>
+  const days = useMemo(
+    () => eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }),
+    [currentMonth]
   );
+
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const CELL_W = isMobile ? 28 : 36;
+  const LABEL_W = isMobile ? 90 : 130;
+
+  const getBarStyle = (checkinStr: string, checkoutStr: string) => {
+    const checkin = parseISO(checkinStr);
+    const checkout = parseISO(checkoutStr);
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+
+    const visibleStart = checkin < monthStart ? monthStart : checkin;
+    const visibleEnd = checkout > monthEnd ? monthEnd : checkout;
+
+    const startIdx = Math.max(0, Math.round((visibleStart.getTime() - monthStart.getTime()) / 86400000));
+    const endIdx = Math.min(days.length - 1, Math.round((visibleEnd.getTime() - monthStart.getTime()) / 86400000));
+
+    const halfCell = CELL_W / 2;
+    const startsInMonth = checkin >= monthStart;
+    const endsInMonth = checkout <= monthEnd;
+
+    const left = startIdx * CELL_W + (startsInMonth ? halfCell : 0);
+    const right = (endIdx + 1) * CELL_W - (endsInMonth ? halfCell : 0);
+    const width = right - left - 2;
+
+    return { left, width };
+  };
 
   if (listingsLoading) {
     return (
       <div className="p-4">
-        <Skeleton className="h-[400px] w-full" />
+        <Skeleton className="h-[300px] w-full" />
       </div>
     );
   }
 
-  if (filteredByHost.length === 0) {
+  if (!listings || listings.length === 0) {
     return (
       <div className="p-4 text-center text-muted-foreground text-sm">
         Aucun appartement disponible
@@ -198,103 +144,164 @@ export default function EmbedAllAvailability() {
   }
 
   return (
-    <div className="p-4 font-sans bg-background text-foreground max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="text-center mb-4">
-        <p className="font-semibold text-base">Disponibilités</p>
-        <p className="text-xs text-muted-foreground">
-          {filteredByHost.length} appartement{filteredByHost.length > 1 ? "s" : ""}
-        </p>
-      </div>
-
-      {/* Listing filter */}
-      {filteredByHost.length > 1 && (
-        <div className="flex items-center justify-center gap-2 mb-4 flex-wrap">
-          <Badge
-            variant={selectedListing === null ? "default" : "outline"}
-            className="cursor-pointer text-xs"
-            onClick={() => setSelectedListing(null)}
+    <div className="p-3 font-sans bg-background text-foreground max-w-5xl mx-auto">
+      {/* Header + navigation */}
+      <div className="flex items-center justify-between mb-3">
+        <p className="font-semibold text-sm">Disponibilités</p>
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-7 w-7"
+            disabled={!canGoPrev}
+            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
           >
-            Tous
-          </Badge>
-          {filteredByHost.map((l) => (
-            <Badge
-              key={l.id}
-              variant={selectedListing === l.id ? "default" : "outline"}
-              className="cursor-pointer text-xs"
-              onClick={() => setSelectedListing(selectedListing === l.id ? null : l.id)}
-            >
-              {l.title}
-            </Badge>
-          ))}
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs h-7 capitalize font-semibold min-w-[120px]"
+            onClick={() => setCurrentMonth(new Date())}
+          >
+            {format(currentMonth, "MMMM yyyy", { locale: fr })}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
         </div>
-      )}
-
-      {/* Navigation */}
-      <div className="flex items-center justify-center gap-2 mb-4">
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8"
-          disabled={!canGoPrev}
-          onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs h-8"
-          onClick={() => setCurrentMonth(new Date())}
-        >
-          Aujourd'hui
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
       </div>
 
-      {/* Calendars per listing */}
-      <div className="space-y-6">
-        {displayListings.map((listing) => (
-          <div key={listing.id} className="border rounded-xl p-4">
-            <div className="flex items-center gap-3 mb-3">
-              {listing.cover_image && (
-                <img
-                  src={listing.cover_image}
-                  alt=""
-                  className="w-10 h-10 rounded-lg object-cover"
-                />
-              )}
-              <div>
-                <p className="font-semibold text-sm">{listing.title}</p>
+      {/* Timeline */}
+      <div className="border rounded-xl overflow-hidden bg-card">
+        <div className="flex">
+          {/* Listing labels column (fixed) */}
+          <div className="flex-shrink-0 border-r border-border bg-card z-10" style={{ width: LABEL_W }}>
+            <div className="h-9 border-b border-border flex items-center px-2">
+              <span className="text-[10px] font-semibold text-muted-foreground">Biens</span>
+            </div>
+            {listings.map((listing) => (
+              <div key={listing.id} className="h-12 border-b border-border flex flex-col justify-center px-2">
+                <span className="text-xs font-medium truncate" title={listing.title}>
+                  {listing.title}
+                </span>
                 {listing.city && (
-                  <p className="text-xs text-muted-foreground">{listing.city}</p>
+                  <span className="text-[9px] text-muted-foreground truncate">{listing.city}</span>
                 )}
               </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {renderMonth(currentMonth, currentDays, listing.id!)}
-              {renderMonth(nextMonth, nextDays, listing.id!)}
+            ))}
+          </div>
+
+          {/* Scrollable timeline */}
+          <div className="overflow-x-auto flex-1" ref={scrollRef}>
+            <div style={{ minWidth: days.length * CELL_W }}>
+              {/* Day headers */}
+              <div className="flex h-9 border-b border-border">
+                {days.map((day) => {
+                  const todayDay = isToday(day);
+                  const weekend = isWeekend(day);
+                  return (
+                    <div
+                      key={day.toISOString()}
+                      className={cn(
+                        "flex flex-col items-center justify-center text-[9px] border-r border-border/50 flex-shrink-0",
+                        todayDay && "bg-primary/10 font-bold",
+                        weekend && !todayDay && "bg-muted/50"
+                      )}
+                      style={{ width: CELL_W }}
+                    >
+                      <span className="uppercase text-muted-foreground leading-none">
+                        {format(day, "EEE", { locale: fr }).slice(0, 2)}
+                      </span>
+                      <span className={cn("leading-none mt-0.5", todayDay && "text-primary font-bold")}>
+                        {format(day, "d")}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Rows per listing */}
+              {listings.map((listing) => {
+                const listingBookings = bookedRanges.filter((b) => b.listing_id === listing.id);
+                const listingBlocked = blockedDates.filter((bd) => bd.listing_id === listing.id);
+
+                return (
+                  <div key={listing.id} className="relative h-12 border-b border-border">
+                    {/* Background grid */}
+                    <div className="absolute inset-0 flex">
+                      {days.map((day) => {
+                        const todayDay = isToday(day);
+                        const weekend = isWeekend(day);
+                        return (
+                          <div
+                            key={day.toISOString()}
+                            className={cn(
+                              "border-r border-border/30 flex-shrink-0 h-full",
+                              todayDay && "bg-primary/5",
+                              weekend && !todayDay && "bg-muted/30"
+                            )}
+                            style={{ width: CELL_W }}
+                          />
+                        );
+                      })}
+                    </div>
+
+                    {/* Blocked date bars */}
+                    {listingBlocked.map((bd, idx) => {
+                      const { left, width } = getBarStyle(bd.start_date!, bd.end_date!);
+                      if (width <= 0) return null;
+                      return (
+                        <div
+                          key={`blocked-${idx}`}
+                          className="absolute top-1.5 bottom-1.5 rounded bg-[hsl(var(--calendar-blocked)/0.15)] border border-[hsl(var(--calendar-blocked)/0.3)]"
+                          style={{ left: left + 2, width }}
+                        />
+                      );
+                    })}
+
+                    {/* Booking bars */}
+                    {listingBookings.map((booking, idx) => {
+                      const { left, width } = getBarStyle(booking.checkin_date!, booking.checkout_date!);
+                      if (width <= 0) return null;
+                      return (
+                        <div
+                          key={`booking-${idx}`}
+                          className="absolute top-2 bottom-2 rounded-md bg-primary text-primary-foreground shadow-sm flex items-center px-1.5 overflow-hidden"
+                          style={{ left: left + 2, width }}
+                        >
+                          <span className="text-[10px] font-medium truncate leading-none whitespace-nowrap">
+                            Réservé
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
           </div>
-        ))}
+        </div>
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-center gap-6 mt-4 pt-3 border-t text-xs">
+      <div className="flex items-center justify-center gap-6 mt-3 text-xs">
         <div className="flex items-center gap-1.5">
-          <CheckCircle2 className="h-3.5 w-3.5 text-[hsl(var(--calendar-available))]" />
+          <div className="w-3 h-3 rounded-sm bg-card border border-border" />
           <span className="text-muted-foreground">Disponible</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <XCircle className="h-3.5 w-3.5 text-destructive" />
-          <span className="text-muted-foreground">Indisponible</span>
+          <div className="w-3 h-3 rounded-sm bg-primary" />
+          <span className="text-muted-foreground">Réservé</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm bg-[hsl(var(--calendar-blocked)/0.3)]" />
+          <span className="text-muted-foreground">Bloqué</span>
         </div>
       </div>
     </div>
