@@ -34,6 +34,8 @@ interface Listing {
   title: string;
   base_price: number;
   cleaning_fee: number | null;
+  checkin_from: string | null;
+  checkout_until: string | null;
 }
 
 interface Props {
