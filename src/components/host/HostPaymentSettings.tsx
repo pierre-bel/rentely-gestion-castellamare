@@ -46,27 +46,19 @@ export function HostPaymentSettings() {
   const handleAdd = async () => {
     if (!user?.id || !newLabel.trim() || !newPercentage) return;
     setSaving(true);
-    try {
-      const { error } = await supabase.from("host_payment_schedules").insert({
-        host_user_id: user.id,
-        label: newLabel.trim(),
-        percentage: parseFloat(newPercentage),
-        due_type: newDueType,
-        due_days: parseInt(newDueDays) || 0,
-        sort_order: templates.length,
-      });
-      if (error) throw error;
+    const success = await withToast(
+      () => insertRow("host_payment_schedules", {
+        host_user_id: user.id, label: newLabel.trim(),
+        percentage: parseFloat(newPercentage), due_type: newDueType,
+        due_days: parseInt(newDueDays) || 0, sort_order: templates.length,
+      }),
+      toast, "Échéance ajoutée"
+    );
+    if (success) {
       queryClient.invalidateQueries({ queryKey: ["host-payment-schedules"] });
-      setNewLabel("");
-      setNewPercentage("");
-      setNewDueType("on_booking");
-      setNewDueDays("0");
-      toast({ title: "Échéance ajoutée" });
-    } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
+      setNewLabel(""); setNewPercentage(""); setNewDueType("on_booking"); setNewDueDays("0");
     }
+    setSaving(false);
   };
 
   const handleDelete = async (id: string) => {
