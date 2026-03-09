@@ -318,8 +318,8 @@ export function ImportBookingsDialog({ open, onOpenChange }: Props) {
         // Create payment schedule items and handle paid status
         if (newBooking) {
           const isYes = (v: any) => v && ["oui", "yes", "true", "1", "o"].includes(String(v).toLowerCase().trim());
-          const depositPaid = isYes(d.deposit_paid);
           const balancePaid = isYes(d.balance_paid);
+          const depositPaid = balancePaid || isYes(d.deposit_paid); // Si solde payé, acompte forcément payé
           const now = new Date().toISOString();
 
           // Parse deposit amount with locale awareness
