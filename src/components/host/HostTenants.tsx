@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Search, Edit, Trash2, Users } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useDemoMode } from "@/contexts/DemoContext";
+import { demoStorage } from "@/lib/demoStorage";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { CreateEditTenantDialog } from "./CreateEditTenantDialog";
@@ -44,6 +46,7 @@ export default function HostTenants() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isDemoMode, demoUserId } = useDemoMode();
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
@@ -51,8 +54,12 @@ export default function HostTenants() {
   const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
 
   const { data: tenants = [], isLoading } = useQuery({
-    queryKey: ["host-tenants", user?.id],
+    queryKey: ["host-tenants", user?.id, isDemoMode],
     queryFn: async () => {
+      if (isDemoMode && demoUserId) {
+        const snapshot = demoStorage.getSnapshot(demoUserId);
+        return (snapshot.tenants || []) as Tenant[];
+      }
       if (!user?.id) return [];
       const { data, error } = await supabase
         .from("tenants")
@@ -62,13 +69,23 @@ export default function HostTenants() {
       if (error) throw error;
       return data as Tenant[];
     },
-    enabled: !!user?.id,
+    enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
   // Fetch booking counts per tenant to determine new vs returning
   const { data: bookingCounts = {} } = useQuery({
-    queryKey: ["host-tenant-booking-counts", user?.id],
+    queryKey: ["host-tenant-booking-counts", user?.id, isDemoMode],
     queryFn: async () => {
+      if (isDemoMode && demoUserId) {
+        const snapshot = demoStorage.getSnapshot(demoUserId);
+        const counts: Record<string, number> = {};
+        for (const b of snapshot.hostBookings || []) {
+          const pb = b.pricing_breakdown as any;
+          const tid = pb?.tenant_id;
+          if (tid) counts[tid] = (counts[tid] || 0) + 1;
+        }
+        return counts;
+      }
       if (!user?.id) return {};
       const { data, error } = await supabase
         .from("bookings")
@@ -83,7 +100,7 @@ export default function HostTenants() {
       }
       return counts;
     },
-    enabled: !!user?.id,
+    enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
   const filtered = tenants.filter((t) => {

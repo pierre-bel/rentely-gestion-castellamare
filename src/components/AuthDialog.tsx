@@ -165,14 +165,6 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
               >
                 Démo Hôte
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full border-2 border-border hover:bg-accent/50"
-                onClick={() => handleDemoLogin("admin", "/admin")}
-              >
-                Démo Admin
-              </Button>
               <p className="text-xs text-muted-foreground text-center">
                 Aucun e-mail ne sera envoyé. Les données sont fictives.
               </p>

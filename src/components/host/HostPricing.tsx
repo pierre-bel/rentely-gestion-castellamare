@@ -2,6 +2,8 @@ import { useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useDemoMode } from "@/contexts/DemoContext";
+import { demoStorage } from "@/lib/demoStorage";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +42,7 @@ export function HostPricing() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isDemoMode, demoUserId } = useDemoMode();
   const [selectedListingIds, setSelectedListingIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [weeksToGenerate, setWeeksToGenerate] = useState(12);
@@ -56,8 +59,12 @@ export function HostPricing() {
 
   // Fetch school holidays
   const { data: schoolHolidaysData = [] } = useQuery({
-    queryKey: ["host-school-holidays", user?.id],
+    queryKey: ["host-school-holidays", user?.id, isDemoMode],
     queryFn: async () => {
+      if (isDemoMode && demoUserId) {
+        const snapshot = demoStorage.getSnapshot(demoUserId);
+        return (snapshot.schoolHolidays || []) as any[];
+      }
       if (!user?.id) return [];
       const { data, error } = await supabase
         .from("host_school_holidays")
@@ -67,7 +74,7 @@ export function HostPricing() {
       if (error) throw error;
       return data as any[];
     },
-    enabled: !!user?.id,
+    enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
   const schoolHolidays: SchoolHoliday[] = useMemo(() =>
@@ -77,8 +84,12 @@ export function HostPricing() {
 
   // Fetch listings
   const { data: listings = [] } = useQuery({
-    queryKey: ["host-listings-pricing", user?.id],
+    queryKey: ["host-listings-pricing", user?.id, isDemoMode],
     queryFn: async () => {
+      if (isDemoMode && demoUserId) {
+        const snapshot = demoStorage.getSnapshot(demoUserId);
+        return (snapshot.listings || []).map((l: any) => ({ id: l.id, title: l.title, base_price: l.base_price })) as Listing[];
+      }
       if (!user?.id) return [];
       const { data, error } = await supabase
         .from("listings")
@@ -88,7 +99,7 @@ export function HostPricing() {
       if (error) throw error;
       return data as Listing[];
     },
-    enabled: !!user?.id,
+    enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
   const allSelected = listings.length > 0 && selectedListingIds.length === listings.length;
@@ -112,9 +123,15 @@ export function HostPricing() {
 
   // Fetch weekly pricing for the first selected listing (reference grid)
   const { data: pricingData = [], isLoading } = useQuery({
-    queryKey: ["listing-weekly-pricing", primaryListingId],
+    queryKey: ["listing-weekly-pricing", primaryListingId, isDemoMode],
     queryFn: async () => {
       if (!primaryListingId) return [];
+      if (isDemoMode && demoUserId) {
+        const snapshot = demoStorage.getSnapshot(demoUserId);
+        return (snapshot.weeklyPricing || [])
+          .filter((p: any) => p.listing_id === primaryListingId)
+          .sort((a: any, b: any) => a.week_start_date.localeCompare(b.week_start_date)) as WeeklyPricing[];
+      }
       const { data, error } = await supabase
         .from("listing_weekly_pricing")
         .select("*")
