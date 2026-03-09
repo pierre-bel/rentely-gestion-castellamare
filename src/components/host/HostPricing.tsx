@@ -123,9 +123,15 @@ export function HostPricing() {
 
   // Fetch weekly pricing for the first selected listing (reference grid)
   const { data: pricingData = [], isLoading } = useQuery({
-    queryKey: ["listing-weekly-pricing", primaryListingId],
+    queryKey: ["listing-weekly-pricing", primaryListingId, isDemoMode],
     queryFn: async () => {
       if (!primaryListingId) return [];
+      if (isDemoMode && demoUserId) {
+        const snapshot = demoStorage.getSnapshot(demoUserId);
+        return (snapshot.weeklyPricing || [])
+          .filter((p: any) => p.listing_id === primaryListingId)
+          .sort((a: any, b: any) => a.week_start_date.localeCompare(b.week_start_date)) as WeeklyPricing[];
+      }
       const { data, error } = await supabase
         .from("listing_weekly_pricing")
         .select("*")
