@@ -25,6 +25,8 @@ export interface BookingDetailData {
   listing_title: string;
   checkin_date: string;
   checkout_date: string;
+  checkin_time: string | null;
+  checkout_time: string | null;
   nights: number;
   guests: number;
   total_price: number;

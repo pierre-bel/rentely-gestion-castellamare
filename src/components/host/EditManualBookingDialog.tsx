@@ -287,9 +287,21 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
             </div>
           </div>
 
-          {nights > 0 && <p className="text-sm text-muted-foreground">{nights} nuit(s)</p>}
+            {nights > 0 && <p className="text-sm text-muted-foreground">{nights} nuit(s)</p>}
 
-          <Separator />
+            {/* Times */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Heure d'arrivée</Label>
+                <Input type="time" value={checkinTime} onChange={(e) => setCheckinTime(e.target.value)} />
+              </div>
+              <div>
+                <Label>Heure de départ</Label>
+                <Input type="time" value={checkoutTime} onChange={(e) => setCheckoutTime(e.target.value)} />
+              </div>
+            </div>
+
+            <Separator />
           <p className="text-sm font-medium">Tarification</p>
 
           <div>
