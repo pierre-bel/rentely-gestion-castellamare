@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,13 +7,16 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, Eye, Globe, GripVertical, Plus, Trash2, Pencil, ExternalLink, Mail, Phone, MessageCircle, Facebook } from "lucide-react";
+import { Loader2, Save, Eye, Globe, GripVertical, Plus, Trash2, Pencil, ExternalLink, Mail, Phone, MessageCircle, Facebook, CalendarDays } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { HostPageHeader } from "@/components/host/HostPageHeader";
 import {
   DndContext,
@@ -178,6 +181,16 @@ export default function PortalSettings() {
   const [newBody, setNewBody] = useState("");
   const [previewBookings, setPreviewBookings] = useState<{ id: string; title: string; token: string; guestName: string; checkin: string; checkout: string }[]>([]);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  
+  // School holidays state
+  interface SchoolHoliday { id: string; label: string; start_date: string; end_date: string; }
+  const [schoolHolidays, setSchoolHolidays] = useState<SchoolHoliday[]>([]);
+  const [holidayLabel, setHolidayLabel] = useState("");
+  const [holidayStart, setHolidayStart] = useState<Date | undefined>();
+  const [holidayEnd, setHolidayEnd] = useState<Date | undefined>();
+  const [holidayDialogOpen, setHolidayDialogOpen] = useState(false);
+  const [holidayStartOpen, setHolidayStartOpen] = useState(false);
+  const [holidayEndOpen, setHolidayEndOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -187,9 +200,10 @@ export default function PortalSettings() {
   useEffect(() => {
     if (!user?.id) return;
     (async () => {
-      const [settingsRes, sectionsRes] = await Promise.all([
+      const [settingsRes, sectionsRes, holidaysRes] = await Promise.all([
         supabase.from("portal_settings").select("*").eq("host_user_id", user.id).maybeSingle(),
         supabase.from("portal_custom_sections").select("*").eq("host_user_id", user.id).order("sort_order"),
+        supabase.from("host_school_holidays").select("*").eq("host_user_id", user.id).order("start_date"),
       ]);
 
       if (settingsRes.data) {
@@ -216,6 +230,15 @@ export default function PortalSettings() {
 
       if (sectionsRes.data) {
         setCustomSections(sectionsRes.data as CustomSection[]);
+      }
+
+      if (holidaysRes.data) {
+        setSchoolHolidays((holidaysRes.data as any[]).map((h: any) => ({
+          id: h.id,
+          label: h.label,
+          start_date: h.start_date,
+          end_date: h.end_date,
+        })));
       }
 
       setLoading(false);
@@ -392,6 +415,37 @@ export default function PortalSettings() {
       .then(() => {
         setCustomSections((prev) => prev.map((s) => (s.id === cs.id ? { ...s, is_enabled: checked } : s)));
       });
+  };
+
+  // School holidays CRUD
+  const handleAddHoliday = async () => {
+    if (!user?.id || !holidayLabel.trim() || !holidayStart || !holidayEnd) return;
+    const { data, error } = await supabase
+      .from("host_school_holidays")
+      .insert({
+        host_user_id: user.id,
+        label: holidayLabel.trim(),
+        start_date: format(holidayStart, "yyyy-MM-dd"),
+        end_date: format(holidayEnd, "yyyy-MM-dd"),
+      })
+      .select()
+      .single();
+    if (!error && data) {
+      const h = data as any;
+      setSchoolHolidays((prev) => [...prev, { id: h.id, label: h.label, start_date: h.start_date, end_date: h.end_date }].sort((a, b) => a.start_date.localeCompare(b.start_date)));
+      setHolidayLabel("");
+      setHolidayStart(undefined);
+      setHolidayEnd(undefined);
+      setHolidayDialogOpen(false);
+      toast({ title: "Période ajoutée" });
+    } else {
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible d'ajouter la période." });
+    }
+  };
+
+  const handleDeleteHoliday = async (id: string) => {
+    await supabase.from("host_school_holidays").delete().eq("id", id);
+    setSchoolHolidays((prev) => prev.filter((h) => h.id !== id));
   };
 
   if (loading) {
@@ -587,6 +641,55 @@ export default function PortalSettings() {
           </CardContent>
         </Card>
 
+        {/* School holidays */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-primary" />
+                  Vacances scolaires
+                </CardTitle>
+                <CardDescription className="mt-1">Définissez les périodes pendant lesquelles la location est uniquement du samedi au samedi</CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => {
+                  setHolidayLabel("");
+                  setHolidayStart(undefined);
+                  setHolidayEnd(undefined);
+                  setHolidayDialogOpen(true);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Ajouter
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {schoolHolidays.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Aucune période de vacances scolaires définie</p>
+            ) : (
+              <div className="space-y-2">
+                {schoolHolidays.map((h) => (
+                  <div key={h.id} className="flex items-center justify-between py-2 px-3 rounded-lg border border-border bg-card">
+                    <div>
+                      <span className="text-sm font-medium">{h.label}</span>
+                      <p className="text-xs text-muted-foreground">
+                        {format(parseISO(h.start_date), "d MMM yyyy", { locale: fr })} → {format(parseISO(h.end_date), "d MMM yyyy", { locale: fr })}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDeleteHoliday(h.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -679,6 +782,77 @@ export default function PortalSettings() {
               </button>
             ))}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* School holiday dialog */}
+      <Dialog open={holidayDialogOpen} onOpenChange={setHolidayDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ajouter une période de vacances scolaires</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Nom de la période</Label>
+              <Input
+                placeholder="Ex: Été 2026, Toussaint 2026..."
+                value={holidayLabel}
+                onChange={(e) => setHolidayLabel(e.target.value)}
+                className="mt-1.5"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm mb-1.5 block">Début</Label>
+                <Popover open={holidayStartOpen} onOpenChange={setHolidayStartOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal h-9", !holidayStart && "text-muted-foreground")}>
+                      <CalendarDays className="mr-2 h-4 w-4" />
+                      {holidayStart ? format(holidayStart, "d MMM yyyy", { locale: fr }) : "Sélectionner"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={holidayStart}
+                      onSelect={(d) => { setHolidayStart(d); setHolidayStartOpen(false); }}
+                      initialFocus
+                      locale={fr}
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <Label className="text-sm mb-1.5 block">Fin</Label>
+                <Popover open={holidayEndOpen} onOpenChange={setHolidayEndOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal h-9", !holidayEnd && "text-muted-foreground")}>
+                      <CalendarDays className="mr-2 h-4 w-4" />
+                      {holidayEnd ? format(holidayEnd, "d MMM yyyy", { locale: fr }) : "Sélectionner"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={holidayEnd}
+                      onSelect={(d) => { setHolidayEnd(d); setHolidayEndOpen(false); }}
+                      disabled={(d) => holidayStart ? d < holidayStart : false}
+                      initialFocus
+                      locale={fr}
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setHolidayDialogOpen(false)}>Annuler</Button>
+            <Button onClick={handleAddHoliday} disabled={!holidayLabel.trim() || !holidayStart || !holidayEnd}>
+              Ajouter
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -7,7 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, CalendarDays, Search, CheckCircle2, XCircle, Euro } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Search, CheckCircle2, XCircle, Euro, Info, Mail, Phone } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   format,
   startOfMonth,
@@ -23,6 +24,8 @@ import {
   isSameMonth,
   isWithinInterval,
   differenceInDays,
+  isSaturday,
+  getDay,
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -133,6 +136,37 @@ export default function EmbedAllAvailability() {
       return (data || []) as unknown as WeeklyPricing[];
     },
     enabled: !!checkinDate && !!checkoutDate && hostListingIds.length > 0,
+  });
+
+  // Fetch school holidays for this host
+  const { data: schoolHolidays = [] } = useQuery({
+    queryKey: ["embed-school-holidays", hostId],
+    queryFn: async () => {
+      if (!hostId) return [];
+      const { data, error } = await supabase
+        .from("public_host_school_holidays" as any)
+        .select("start_date, end_date, label")
+        .eq("host_user_id", hostId);
+      if (error) throw error;
+      return (data || []) as unknown as Array<{ start_date: string; end_date: string; label: string }>;
+    },
+    enabled: !!hostId,
+  });
+
+  // Fetch host contact info
+  const { data: hostContact } = useQuery({
+    queryKey: ["embed-host-contact", hostId],
+    queryFn: async () => {
+      if (!hostId) return null;
+      const { data, error } = await supabase
+        .from("public_host_contact" as any)
+        .select("contact_email, contact_phone, contact_whatsapp")
+        .eq("host_user_id", hostId)
+        .maybeSingle();
+      if (error) throw error;
+      return data as unknown as { contact_email: string | null; contact_phone: string | null; contact_whatsapp: string | null } | null;
+    },
+    enabled: !!hostId,
   });
 
   const days = useMemo(
@@ -254,6 +288,33 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
     return result.total;
   };
 
+  // Check if dates are Saturday-to-Saturday
+  const isSaturdayToSaturday = useMemo(() => {
+    if (!checkinDate || !checkoutDate) return false;
+    return getDay(checkinDate) === 6 && getDay(checkoutDate) === 6;
+  }, [checkinDate, checkoutDate]);
+
+  // Check if the selected period falls within school holidays
+  const isInSchoolHolidays = useMemo(() => {
+    if (!checkinDate || !checkoutDate || schoolHolidays.length === 0) return false;
+    for (const holiday of schoolHolidays) {
+      const hStart = parseISO(holiday.start_date);
+      const hEnd = parseISO(holiday.end_date);
+      // If the checkin falls within a holiday period
+      if (checkinDate >= hStart && checkinDate <= hEnd) return true;
+    }
+    return false;
+  }, [checkinDate, checkoutDate, schoolHolidays]);
+
+  // Determine simulator display mode
+  type SimulatorMode = "price" | "holidays_only_saturday" | "contact_required";
+  const simulatorMode: SimulatorMode = useMemo(() => {
+    if (!checkinDate || !checkoutDate) return "price";
+    if (isSaturdayToSaturday) return "price";
+    if (isInSchoolHolidays) return "holidays_only_saturday";
+    return "contact_required";
+  }, [checkinDate, checkoutDate, isSaturdayToSaturday, isInSchoolHolidays]);
+
   // Simulator results
   const simulatorResults = useMemo(() => {
     if (!checkinDate || !checkoutDate || !listings) return null;
@@ -264,10 +325,10 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
     return listings.map((listing) => ({
       ...listing,
       isAvailable: checkListingAvailability(listing.id),
-      price: calculateListingPrice(listing.id, listing.base_price),
+      price: simulatorMode === "price" ? calculateListingPrice(listing.id, listing.base_price) : null,
       nights,
     }));
-  }, [checkinDate, checkoutDate, listings, bookedRanges, blockedDates, weeklyPricing]);
+  }, [checkinDate, checkoutDate, listings, bookedRanges, blockedDates, weeklyPricing, simulatorMode]);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 0 }).format(price);
@@ -386,10 +447,47 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
 
           {/* Results */}
           {simulatorResults && (
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-3">
               <p className="text-xs text-muted-foreground">
                 {simulatorResults[0].nights} nuit{simulatorResults[0].nights > 1 ? "s" : ""} • {format(checkinDate!, "d MMM", { locale: fr })} → {format(checkoutDate!, "d MMM yyyy", { locale: fr })}
               </p>
+
+              {/* Message for non Saturday-to-Saturday */}
+              {simulatorMode === "holidays_only_saturday" && (
+                <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20">
+                  <Info className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
+                    En période de vacances scolaires, la location est uniquement du <strong>samedi au samedi</strong>. Ajustez vos dates pour voir le tarif.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {simulatorMode === "contact_required" && (
+                <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950/20">
+                  <Info className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
+                    <p>Hors vacances scolaires, les réservations hors samedi-samedi sont possibles sur demande. Contactez-nous :</p>
+                    {(hostContact?.contact_email || hostContact?.contact_phone) && (
+                      <div className="flex flex-wrap gap-3 mt-2">
+                        {hostContact.contact_email && (
+                          <a href={`mailto:${hostContact.contact_email}`} className="inline-flex items-center gap-1.5 text-blue-700 dark:text-blue-300 hover:underline font-medium">
+                            <Mail className="h-3.5 w-3.5" />
+                            {hostContact.contact_email}
+                          </a>
+                        )}
+                        {hostContact.contact_phone && (
+                          <a href={`tel:${hostContact.contact_phone}`} className="inline-flex items-center gap-1.5 text-blue-700 dark:text-blue-300 hover:underline font-medium">
+                            <Phone className="h-3.5 w-3.5" />
+                            {hostContact.contact_phone}
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Availability results (always shown) */}
               <div className="grid gap-2">
                 {simulatorResults.map((result) => (
                   <div
@@ -416,15 +514,19 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
                     </div>
                     <div className="text-right flex-shrink-0 ml-3">
                       {result.isAvailable ? (
-                        result.price ? (
-                          <div>
-                            <p className="font-bold text-success">{formatPrice(result.price)}</p>
-                            <p className="text-[10px] text-muted-foreground">
-                              ~{formatPrice(result.price / result.nights)}/nuit
-                            </p>
-                          </div>
+                        simulatorMode === "price" ? (
+                          result.price ? (
+                            <div>
+                              <p className="font-bold text-success">{formatPrice(result.price)}</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                ~{formatPrice(result.price / result.nights)}/nuit
+                              </p>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Prix sur demande</span>
+                          )
                         ) : (
-                          <span className="text-xs text-muted-foreground">Prix sur demande</span>
+                          <span className="text-xs text-success font-medium">Disponible</span>
                         )
                       ) : (
                         <span className="text-xs text-destructive font-medium">Indisponible</span>
