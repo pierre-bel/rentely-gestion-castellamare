@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, Send, Mail } from "lucide-react";
+import { Plus, Pencil, Trash2, Send, Mail, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { selectByOwner, deleteById, updateById } from "@/lib/supabase-helpers";
@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import DynamicVariablesPanel, { DYNAMIC_VARIABLES } from "./email/DynamicVariablesPanel";
 import EmailBodyEditor from "./email/EmailBodyEditor";
+import { DEFAULT_EMAIL_TEMPLATES } from "./email/defaultEmailTemplates";
 
 const TRIGGER_LABELS: Record<string, string> = {
   booking_confirmed: "À la confirmation de réservation",
@@ -86,6 +87,36 @@ export default function HostEmailAutomations() {
   const [formRecipientType, setFormRecipientType] = useState("tenant");
   const [formRecipientEmail, setFormRecipientEmail] = useState("");
   const [formSendIfLate, setFormSendIfLate] = useState(false);
+  const [loadingDefaults, setLoadingDefaults] = useState(false);
+
+  const handleLoadDefaults = async () => {
+    if (!user?.id) return;
+    setLoadingDefaults(true);
+    try {
+      const rows = DEFAULT_EMAIL_TEMPLATES.map((t) => ({
+        host_user_id: user.id,
+        name: t.name,
+        subject: t.subject,
+        body_html: t.body_html,
+        trigger_type: t.trigger_type,
+        trigger_days: t.trigger_days,
+        is_enabled: true,
+        recipient_type: t.recipient_type,
+        recipient_email: t.recipient_type === "host" ? user.email || null : null,
+        reply_to_email: user.email || null,
+        send_if_late: t.send_if_late,
+        listing_ids: [],
+      }));
+      const { error } = await supabase.from("email_automations").insert(rows as any);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["email-automations"] });
+      toast({ title: "9 modèles chargés", description: "Vous pouvez les personnaliser à votre convenance." });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    } finally {
+      setLoadingDefaults(false);
+    }
+  };
 
   const { data: automations = [], isLoading } = useQuery({
     queryKey: ["email-automations", user?.id],
@@ -368,7 +399,11 @@ export default function HostEmailAutomations() {
             <div className="text-center py-12 text-muted-foreground">
               <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Aucune automatisation e-mail configurée.</p>
-              <p className="text-sm">Créez votre premier modèle pour commencer.</p>
+              <p className="text-sm mb-4">Créez votre premier modèle ou chargez nos modèles pré-configurés.</p>
+              <Button variant="outline" onClick={handleLoadDefaults} disabled={loadingDefaults}>
+                <Sparkles className="h-4 w-4 mr-2" />
+                {loadingDefaults ? "Chargement..." : "Charger les modèles par défaut (9 e-mails)"}
+              </Button>
             </div>
           ) : (
             <div className="rounded-md border">
