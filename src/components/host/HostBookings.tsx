@@ -526,7 +526,6 @@ export default function HostBookings() {
               }
             })();
           }}
-        />
           onDeleteBooking={async (booking) => {
             try {
               const { error } = await supabase.from("bookings").delete().eq("id", booking.id);
