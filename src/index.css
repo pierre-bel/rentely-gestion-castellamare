@@ -33,6 +33,9 @@ All colors MUST be HSL.
     --warning: 38 92% 50%;
     --warning-foreground: 38 92% 40%;
     --info: 217 91% 60%;
+    --accent-warm: 24 95% 60%;
+    --accent-cool: 199 89% 48%;
+    --accent-purple: 262 83% 58%;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -72,6 +75,9 @@ All colors MUST be HSL.
     --warning: 38 92% 50%;
     --warning-foreground: 38 92% 60%;
     --info: 217 91% 60%;
+    --accent-warm: 24 95% 55%;
+    --accent-cool: 199 89% 55%;
+    --accent-purple: 262 83% 65%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

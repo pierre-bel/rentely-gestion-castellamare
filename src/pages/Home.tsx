@@ -132,15 +132,20 @@ const Home = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {HIGHLIGHTS.map((item) => (
-                <div
-                  key={item}
-                  className="flex items-start gap-3 p-4 rounded-xl bg-background border border-border/60 hover:border-primary/30 hover:shadow-sm transition-all duration-300"
-                >
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span className="text-sm font-medium text-foreground">{item}</span>
-                </div>
-              ))}
+              {HIGHLIGHTS.map((item, index) => {
+                const accentColors = ["border-accent-warm/40", "border-accent-cool/40", "border-accent-purple/40"];
+                const iconColors = ["text-accent-warm", "text-accent-cool", "text-accent-purple"];
+                const colorIndex = index % 3;
+                return (
+                  <div
+                    key={item}
+                    className={`flex items-start gap-3 p-4 rounded-xl bg-background border border-border/60 hover:${accentColors[colorIndex]} hover:shadow-sm transition-all duration-300 group`}
+                  >
+                    <CheckCircle2 className={`h-5 w-5 text-primary group-hover:${iconColors[colorIndex]} flex-shrink-0 mt-0.5 transition-colors`} />
+                    <span className="text-sm font-medium text-foreground">{item}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
