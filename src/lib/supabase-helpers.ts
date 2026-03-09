@@ -1,8 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
 
-type Tables = Database["public"]["Tables"];
-type TableName = keyof Tables;
+// Simple helper to get a dynamic table reference (bypasses strict typing for generic helpers)
+const from = (table: string) => supabase.from(table as any);
 
 // ─── Generic result type ───
 interface QueryResult<T> {
@@ -10,7 +9,6 @@ interface QueryResult<T> {
   error: string | null;
 }
 
-// ─── Error extractor ───
 function errMsg(error: unknown): string {
   if (error && typeof error === "object" && "message" in error) return (error as any).message;
   return String(error);
@@ -23,8 +21,7 @@ export async function selectByOwner<T = any>(
   userId: string,
   options?: { order?: string; ascending?: boolean; select?: string }
 ): Promise<QueryResult<T[]>> {
-  const { data, error } = await supabase
-    .from(table)
+  const { data, error } = await from(table)
     .select(options?.select ?? "*")
     .eq(ownerCol, userId)
     .order(options?.order ?? "created_at", { ascending: options?.ascending ?? false });
@@ -39,8 +36,7 @@ export async function selectOne<T = any>(
   value: string,
   select?: string
 ): Promise<QueryResult<T>> {
-  const { data, error } = await supabase
-    .from(table)
+  const { data, error } = await from(table)
     .select(select ?? "*")
     .eq(column, value)
     .maybeSingle();
@@ -53,7 +49,7 @@ export async function insertRow(
   table: string,
   row: Record<string, any>
 ): Promise<QueryResult<any>> {
-  const { data, error } = await supabase.from(table).insert(row).select().single();
+  const { data, error } = await from(table).insert(row as any).select().single();
   if (error) return { data: null, error: errMsg(error) };
   return { data, error: null };
 }
@@ -63,7 +59,7 @@ export async function insertRows(
   table: string,
   rows: Record<string, any>[]
 ): Promise<QueryResult<any[]>> {
-  const { data, error } = await supabase.from(table).insert(rows as any).select();
+  const { data, error } = await from(table).insert(rows as any).select();
   if (error) return { data: null, error: errMsg(error) };
   return { data, error: null };
 }
@@ -74,7 +70,7 @@ export async function updateById(
   id: string,
   updates: Record<string, any>
 ): Promise<QueryResult<any>> {
-  const { data, error } = await supabase.from(table).update(updates).eq("id", id).select().single();
+  const { data, error } = await from(table).update(updates).eq("id", id).select().single();
   if (error) return { data: null, error: errMsg(error) };
   return { data, error: null };
 }
@@ -86,7 +82,7 @@ export async function updateByOwner(
   userId: string,
   updates: Record<string, any>
 ): Promise<QueryResult<any>> {
-  const { data, error } = await supabase.from(table).update(updates).eq(ownerCol, userId).select();
+  const { data, error } = await from(table).update(updates).eq(ownerCol, userId).select();
   if (error) return { data: null, error: errMsg(error) };
   return { data, error: null };
 }
@@ -96,7 +92,7 @@ export async function deleteById(
   table: string,
   id: string
 ): Promise<{ error: string | null }> {
-  const { error } = await supabase.from(table).delete().eq("id", id);
+  const { error } = await from(table).delete().eq("id", id);
   return { error: error ? errMsg(error) : null };
 }
 
@@ -106,27 +102,24 @@ export async function deleteByOwner(
   ownerCol: string,
   userId: string
 ): Promise<{ error: string | null }> {
-  const { error } = await supabase.from(table).delete().eq(ownerCol, userId);
+  const { error } = await from(table).delete().eq(ownerCol, userId);
   return { error: error ? errMsg(error) : null };
 }
 
-// ─── 9. UPSERT (insert or update) ───
+// ─── 9. UPSERT (check exists then insert or update) ───
 export async function upsertByOwner(
   table: string,
   ownerCol: string,
   userId: string,
   data: Record<string, any>
 ): Promise<QueryResult<any>> {
-  // Check if exists
-  const { data: existing } = await supabase
-    .from(table)
+  const { data: existing } = await from(table)
     .select("id")
     .eq(ownerCol, userId)
     .maybeSingle();
 
   if (existing) {
-    const { data: updated, error } = await supabase
-      .from(table)
+    const { data: updated, error } = await from(table)
       .update(data)
       .eq(ownerCol, userId)
       .select()
@@ -134,9 +127,8 @@ export async function upsertByOwner(
     if (error) return { data: null, error: errMsg(error) };
     return { data: updated, error: null };
   } else {
-    const { data: inserted, error } = await supabase
-      .from(table)
-      .insert({ [ownerCol]: userId, ...data })
+    const { data: inserted, error } = await from(table)
+      .insert({ [ownerCol]: userId, ...data } as any)
       .select()
       .single();
     if (error) return { data: null, error: errMsg(error) };
@@ -144,13 +136,13 @@ export async function upsertByOwner(
   }
 }
 
-// ─── 10. SELECT with multiple filters ───
+// ─── 10. SELECT with multiple eq filters ───
 export async function selectWhere<T = any>(
   table: string,
   filters: Record<string, any>,
   options?: { order?: string; ascending?: boolean; select?: string; limit?: number }
 ): Promise<QueryResult<T[]>> {
-  let query = supabase.from(table).select(options?.select ?? "*");
+  let query = from(table).select(options?.select ?? "*");
   for (const [col, val] of Object.entries(filters)) {
     query = query.eq(col, val);
   }
@@ -168,10 +160,10 @@ export async function replaceAllForOwner(
   userId: string,
   rows: Record<string, any>[]
 ): Promise<{ error: string | null }> {
-  const { error: delErr } = await supabase.from(table).delete().eq(ownerCol, userId);
+  const { error: delErr } = await from(table).delete().eq(ownerCol, userId);
   if (delErr) return { error: errMsg(delErr) };
   if (rows.length === 0) return { error: null };
-  const { error: insErr } = await supabase.from(table).insert(rows as any);
+  const { error: insErr } = await from(table).insert(rows as any);
   if (insErr) return { error: errMsg(insErr) };
   return { error: null };
 }
@@ -181,7 +173,7 @@ export async function countWhere(
   table: string,
   filters: Record<string, any>
 ): Promise<QueryResult<number>> {
-  let query = supabase.from(table).select("*", { count: "exact", head: true });
+  let query = from(table).select("*", { count: "exact", head: true });
   for (const [col, val] of Object.entries(filters)) {
     query = query.eq(col, val);
   }
@@ -197,8 +189,7 @@ export async function selectWhereIn<T = any>(
   values: string[],
   options?: { select?: string; order?: string; ascending?: boolean }
 ): Promise<QueryResult<T[]>> {
-  const { data, error } = await supabase
-    .from(table)
+  const { data, error } = await from(table)
     .select(options?.select ?? "*")
     .in(column, values)
     .order(options?.order ?? "created_at", { ascending: options?.ascending ?? false });
