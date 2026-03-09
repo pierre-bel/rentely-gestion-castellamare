@@ -61,6 +61,8 @@ export default function DashboardUpcomingBookings({ userId }: DashboardUpcomingB
   const [selectedBooking, setSelectedBooking] = useState<BookingDetailData | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [editBooking, setEditBooking] = useState<BookingDetailData | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["dashboard-upcoming-bookings", userId],
