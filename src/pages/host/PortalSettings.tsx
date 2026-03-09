@@ -181,16 +181,8 @@ export default function PortalSettings() {
   const [newBody, setNewBody] = useState("");
   const [previewBookings, setPreviewBookings] = useState<{ id: string; title: string; token: string; guestName: string; checkin: string; checkout: string }[]>([]);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
-  
-  // School holidays state
-  interface SchoolHoliday { id: string; label: string; start_date: string; end_date: string; }
-  const [schoolHolidays, setSchoolHolidays] = useState<SchoolHoliday[]>([]);
-  const [holidayLabel, setHolidayLabel] = useState("");
-  const [holidayStart, setHolidayStart] = useState<Date | undefined>();
-  const [holidayEnd, setHolidayEnd] = useState<Date | undefined>();
-  const [holidayDialogOpen, setHolidayDialogOpen] = useState(false);
-  const [holidayStartOpen, setHolidayStartOpen] = useState(false);
-  const [holidayEndOpen, setHolidayEndOpen] = useState(false);
+
+
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
