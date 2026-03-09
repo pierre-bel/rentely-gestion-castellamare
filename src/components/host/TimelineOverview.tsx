@@ -104,9 +104,10 @@ export default function TimelineOverview({ listings, bookings, blockedDates, cur
     return { left, width };
   };
 
-  const truncateName = (name: string, maxLen = 12) => {
-    if (name.length <= maxLen) return name;
-    return name.slice(0, maxLen) + "…";
+  const truncateName = (name: string, maxLen?: number) => {
+    const limit = maxLen ?? (isMobile ? 8 : 12);
+    if (name.length <= limit) return name;
+    return name.slice(0, limit) + "…";
   };
 
   return (

@@ -256,71 +256,72 @@ export default function Availability() {
   return (
     <div className="container mx-auto px-4 pb-8 lg:px-8 space-y-6">
       {/* Controls bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <h2 className="text-lg font-semibold capitalize min-w-[160px] text-center">
-            {format(currentMonth, "MMMM yyyy", { locale: fr })}
-          </h2>
-          <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(new Date())} className="text-xs">
-            Aujourd'hui
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* View toggle */}
-          <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
-            <Button
-              variant={viewMode === "grid" ? "default" : "ghost"}
-              size="sm"
-              className="h-7 gap-1.5 text-xs"
-              onClick={() => setViewMode("grid")}
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-              Grille
+      <div className="flex flex-col gap-3">
+        {/* Row 1: Month navigation */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+              <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button
-              variant={viewMode === "timeline" ? "default" : "ghost"}
-              size="sm"
-              className="h-7 gap-1.5 text-xs"
-              onClick={() => setViewMode("timeline")}
-            >
-              <GanttChart className="h-3.5 w-3.5" />
-              Vue d'ensemble
+            <h2 className="text-base sm:text-lg font-semibold capitalize min-w-[120px] sm:min-w-[160px] text-center">
+              {format(currentMonth, "MMMM yyyy", { locale: fr })}
+            </h2>
+            <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(new Date())} className="text-xs hidden sm:inline-flex">
+              Aujourd'hui
             </Button>
           </div>
 
-          {/* Share embed button */}
-          <ShareEmbedButton userId={user?.id} />
-
-          {/* Listing filter */}
-          {listings && listings.length > 1 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge
-                variant={selectedListing === null ? "default" : "outline"}
-                className="cursor-pointer text-xs"
-                onClick={() => setSelectedListing(null)}
+          {/* View toggle + share */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+              <Button
+                variant={viewMode === "grid" ? "default" : "ghost"}
+                size="sm"
+                className="h-7 gap-1 text-xs px-2 sm:px-3"
+                onClick={() => setViewMode("grid")}
               >
-                Tous ({listings.length})
-              </Badge>
-              {listings.map((l) => (
-                <Badge
-                  key={l.id}
-                  variant={selectedListing === l.id ? "default" : "outline"}
-                  className="cursor-pointer text-xs"
-                  onClick={() => setSelectedListing(selectedListing === l.id ? null : l.id)}
-                >
-                  {l.title}
-                </Badge>
-              ))}
+                <LayoutGrid className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Grille</span>
+              </Button>
+              <Button
+                variant={viewMode === "timeline" ? "default" : "ghost"}
+                size="sm"
+                className="h-7 gap-1 text-xs px-2 sm:px-3"
+                onClick={() => setViewMode("timeline")}
+              >
+                <GanttChart className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Vue d'ensemble</span>
+              </Button>
             </div>
-          )}
+            <ShareEmbedButton userId={user?.id} />
+          </div>
         </div>
+
+        {/* Row 2: Listing filter badges (horizontal scroll on mobile) */}
+        {listings && listings.length > 1 && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+            <Badge
+              variant={selectedListing === null ? "default" : "outline"}
+              className="cursor-pointer text-xs whitespace-nowrap flex-shrink-0"
+              onClick={() => setSelectedListing(null)}
+            >
+              Tous ({listings.length})
+            </Badge>
+            {listings.map((l) => (
+              <Badge
+                key={l.id}
+                variant={selectedListing === l.id ? "default" : "outline"}
+                className="cursor-pointer text-xs whitespace-nowrap flex-shrink-0"
+                onClick={() => setSelectedListing(selectedListing === l.id ? null : l.id)}
+              >
+                {l.title}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Views */}

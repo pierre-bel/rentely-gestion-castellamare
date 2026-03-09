@@ -253,32 +253,32 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
             </div>
 
             {/* Legend */}
-            <div className="flex items-center gap-4 mt-4 flex-wrap">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <div className="w-3 h-3 rounded-full bg-[hsl(var(--calendar-available)/0.3)]" />
+            <div className="grid grid-cols-3 sm:flex sm:items-center gap-2 sm:gap-4 mt-4">
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--calendar-available)/0.3)] flex-shrink-0" />
                 Disponible
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <div className="w-3 h-3 rounded-full bg-primary" />
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-primary flex-shrink-0" />
                 Réservé
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <div className="w-3 h-3 rounded-full bg-[hsl(var(--warning)/0.8)]" />
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--warning)/0.8)] flex-shrink-0" />
                 En attente
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <div className="w-3 h-3 rounded-full bg-[hsl(var(--calendar-blocked)/0.25)]" />
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--calendar-blocked)/0.25)] flex-shrink-0" />
                 Bloqué
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <div className="w-3 h-3 rounded-full overflow-hidden flex">
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full overflow-hidden flex flex-shrink-0">
                   <div className="w-1/2 bg-[hsl(var(--calendar-available)/0.3)]" />
                   <div className="w-1/2 bg-primary/70" />
                 </div>
                 Arrivée
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <div className="w-3 h-3 rounded-full overflow-hidden flex">
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full overflow-hidden flex flex-shrink-0">
                   <div className="w-1/2 bg-primary/70" />
                   <div className="w-1/2 bg-[hsl(var(--calendar-available)/0.3)]" />
                 </div>

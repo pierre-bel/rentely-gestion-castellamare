@@ -35,9 +35,9 @@ export const HostPageHeader = ({ title }: HostPageHeaderProps) => {
   return (
     <div className="flex items-center justify-between mb-8">
       {/* Left Side - Title */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <MobileHostSidebar />
-        <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+        <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">{title}</h1>
       </div>
 
       {/* Right Side - Icons and Avatar */}
