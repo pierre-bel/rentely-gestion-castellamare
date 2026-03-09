@@ -41,6 +41,7 @@ const TEMPLATE_COLUMNS = [
   { key: "status", label: "Statut", required: false, example: "confirmed" },
   { key: "igloohome_code", label: "Code clé Igloohome", required: false, example: "123456789" },
   { key: "notes", label: "Notes", required: false, example: "" },
+  { key: "created_at", label: "Date de création (AA-MM-JJ HH:mm)", required: false, example: "23-01-21 22:42" },
   // Tenant
   { key: "tenant_first_name", label: "Prénom du locataire", required: true, example: "Jean" },
   { key: "tenant_last_name", label: "Nom du locataire", required: false, example: "Dupont" },
