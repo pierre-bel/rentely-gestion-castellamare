@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquare } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -10,8 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { MobileHostSidebar } from "./HostSidebar";
-import { ChatSidebar } from "@/components/inbox/ChatSidebar";
-import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { CreateManualBookingDialog } from "./CreateManualBookingDialog";
 
 interface HostPageHeaderProps {
   title: string;
