@@ -847,6 +847,33 @@ export type Database = {
         }
         Relationships: []
       }
+      host_school_holidays: {
+        Row: {
+          created_at: string
+          end_date: string
+          host_user_id: string
+          id: string
+          label: string
+          start_date: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          host_user_id: string
+          id?: string
+          label: string
+          start_date: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          host_user_id?: string
+          id?: string
+          label?: string
+          start_date?: string
+        }
+        Relationships: []
+      }
       inbox_emails: {
         Row: {
           attachments: Json | null
@@ -2026,6 +2053,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      public_host_contact: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          contact_whatsapp: string | null
+          host_user_id: string | null
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
+          host_user_id?: string | null
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          contact_whatsapp?: string | null
+          host_user_id?: string | null
+        }
+        Relationships: []
+      }
+      public_host_school_holidays: {
+        Row: {
+          end_date: string | null
+          host_user_id: string | null
+          id: string | null
+          label: string | null
+          start_date: string | null
+        }
+        Insert: {
+          end_date?: string | null
+          host_user_id?: string | null
+          id?: string | null
+          label?: string | null
+          start_date?: string | null
+        }
+        Update: {
+          end_date?: string | null
+          host_user_id?: string | null
+          id?: string | null
+          label?: string | null
+          start_date?: string | null
+        }
+        Relationships: []
       }
       public_listing_availability: {
         Row: {
