@@ -192,10 +192,9 @@ export default function PortalSettings() {
   useEffect(() => {
     if (!user?.id) return;
     (async () => {
-      const [settingsRes, sectionsRes, holidaysRes] = await Promise.all([
+      const [settingsRes, sectionsRes] = await Promise.all([
         supabase.from("portal_settings").select("*").eq("host_user_id", user.id).maybeSingle(),
         supabase.from("portal_custom_sections").select("*").eq("host_user_id", user.id).order("sort_order"),
-        supabase.from("host_school_holidays").select("*").eq("host_user_id", user.id).order("start_date"),
       ]);
 
       if (settingsRes.data) {
