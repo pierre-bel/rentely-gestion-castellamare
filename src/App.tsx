@@ -80,6 +80,7 @@ const AdminBookingsManagement = lazy(() => import("./pages/admin/BookingsManagem
 const AdminDisputesManagement = lazy(() => import("./pages/admin/DisputesManagement"));
 const AdminSupport = lazy(() => import("./pages/admin/Support"));
 const ContentManagementPage = lazy(() => import("./pages/admin/ContentManagement"));
+const AdminDebug = lazy(() => import("./pages/admin/Debug"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
