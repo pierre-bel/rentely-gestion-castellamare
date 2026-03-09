@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Search, Edit, Trash2, Users } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useDemoMode } from "@/contexts/DemoContext";
+import { demoStorage } from "@/lib/demoStorage";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { CreateEditTenantDialog } from "./CreateEditTenantDialog";
