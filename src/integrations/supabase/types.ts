@@ -2074,6 +2074,59 @@ export type Database = {
           },
         ]
       }
+      public_listing_weekly_pricing: {
+        Row: {
+          extra_night_weekend_rate: number | null
+          listing_id: string | null
+          week_start_date: string | null
+          weekend_rate: number | null
+          weekly_rate: number | null
+        }
+        Insert: {
+          extra_night_weekend_rate?: number | null
+          listing_id?: string | null
+          week_start_date?: string | null
+          weekend_rate?: number | null
+          weekly_rate?: number | null
+        }
+        Update: {
+          extra_night_weekend_rate?: number | null
+          listing_id?: string | null
+          week_start_date?: string | null
+          weekend_rate?: number | null
+          weekly_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_weekly_pricing_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "embed_host_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_weekly_pricing_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "embed_listing_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_weekly_pricing_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_weekly_pricing_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_listings: {
         Row: {
           address: string | null
