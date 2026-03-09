@@ -485,6 +485,20 @@ const EditListing = () => {
       }
     }
 
+    // Save rooms: delete existing and re-insert
+    await supabase.from("listing_rooms").delete().eq("listing_id", id);
+    if (formData.rooms && formData.rooms.length > 0) {
+      const roomRecords = formData.rooms.map((room, index) => ({
+        listing_id: id,
+        room_type: room.room_type,
+        name: room.name,
+        beds: room.beds as any,
+        features: room.features,
+        sort_order: index,
+      }));
+      await supabase.from("listing_rooms").insert(roomRecords);
+    }
+
     setLoading(false);
     toast({
       title: "Success!",
