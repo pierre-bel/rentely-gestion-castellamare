@@ -82,6 +82,15 @@ Deno.serve(async (req) => {
     const siteUrl = Deno.env.get("SITE_URL") || `${supabaseUrl.replace('.supabase.co', '')}.lovable.app`;
     const acceptUrl = `${siteUrl}/accept-invitation?token=${invitation.token}`;
 
+    // Skip email for demo accounts
+    const demoEmails = ["guest@demo.com", "host@demo.com", "admin@demo.com"];
+    if (demoEmails.includes(invitation.email.toLowerCase())) {
+      console.log("Skipping email for demo account:", invitation.email);
+      return new Response(JSON.stringify({ success: true, skipped: "demo_account" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Send email via Resend if API key is available
     if (resendApiKey) {
       const emailRes = await fetch("https://api.resend.com/emails", {
