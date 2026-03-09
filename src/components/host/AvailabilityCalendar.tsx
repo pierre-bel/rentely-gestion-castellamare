@@ -277,7 +277,7 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
             </div>
 
             {/* Legend */}
-            <div className="grid grid-cols-3 sm:flex sm:items-center gap-2 sm:gap-4 mt-4">
+            <div className="grid grid-cols-4 sm:flex sm:items-center gap-2 sm:gap-4 mt-4">
               <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
                 <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--calendar-available)/0.3)] flex-shrink-0" />
                 Disponible
@@ -289,6 +289,14 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
               <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
                 <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--warning)/0.8)] flex-shrink-0" />
                 En attente
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--calendar-owner-blocked)/0.7)] flex-shrink-0" />
+                Bloqué (perso)
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--calendar-pre-reservation)/0.7)] flex-shrink-0" />
+                Pré-résa
               </div>
               <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
                 <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--calendar-blocked)/0.25)] flex-shrink-0" />
