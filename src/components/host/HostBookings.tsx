@@ -417,6 +417,7 @@ export default function HostBookings() {
   };
 
 
+  return (
     <Card className="bg-card">
       <CardContent className="p-6">
         {/* Controls Row */}
