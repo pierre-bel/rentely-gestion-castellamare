@@ -124,7 +124,7 @@ export default function EmbedAllAvailability() {
       const rangeStart = format(subMonths(checkinDate, 1), "yyyy-MM-dd");
       const rangeEnd = format(addMonths(checkoutDate, 1), "yyyy-MM-dd");
       const { data, error } = await supabase
-        .from("listing_weekly_pricing")
+        .from("public_listing_weekly_pricing" as any)
         .select("listing_id, week_start_date, weekly_rate, weekend_rate, extra_night_weekend_rate")
         .in("listing_id", hostListingIds)
         .gte("week_start_date", rangeStart)
