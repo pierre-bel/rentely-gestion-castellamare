@@ -372,8 +372,6 @@ export function HostPricing() {
       .select()
       .single();
     if (!error && data) {
-      const h = data as any;
-      setSchoolHolidays((prev) => [...prev, { id: h.id, label: h.label, start_date: h.start_date, end_date: h.end_date }].sort((a, b) => a.start_date.localeCompare(b.start_date)));
       setHolidayLabel("");
       setHolidayStart(undefined);
       setHolidayEnd(undefined);
@@ -387,7 +385,6 @@ export function HostPricing() {
 
   const handleDeleteHoliday = async (id: string) => {
     await supabase.from("host_school_holidays").delete().eq("id", id);
-    setSchoolHolidays((prev) => prev.filter((h) => h.id !== id));
     queryClient.invalidateQueries({ queryKey: ["host-school-holidays"] });
   };
 
