@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, ArrowLeft } from "lucide-react";
 import StepBasics from "@/components/listing/StepBasics";
 import StepPropertyType from "@/components/listing/StepPropertyType";
+import StepRooms from "@/components/listing/StepRooms";
 import StepDetails from "@/components/listing/StepDetails";
 import StepPhotos from "@/components/listing/StepPhotos";
 import StepRules from "@/components/listing/StepRules";
@@ -20,7 +21,7 @@ import StepAvailability from "@/components/listing/StepAvailability";
 import FeedbackBlock from "@/components/listing/FeedbackBlock";
 import type { ListingFormData } from "./CreateListing";
 
-const STEPS = ["Address", "Property Type", "Photos", "Amenities", "Rules", "Pricing", "Availability", "Review"];
+const STEPS = ["Address", "Property Type", "Rooms", "Photos", "Amenities", "Rules", "Pricing", "Availability", "Review"];
 
 // Map editing steps to admin feedback sections
 const STEP_TO_FEEDBACK_SECTION: Record<number, {
@@ -29,12 +30,13 @@ const STEP_TO_FEEDBACK_SECTION: Record<number, {
 } | null> = {
   0: { key: "map", displayName: "Location & Map" },
   1: { key: "title_description", displayName: "Title & Description" },
-  2: { key: "photos", displayName: "Photos" },
-  3: null, // StepDetails (Amenities) - no feedback
-  4: { key: "rules", displayName: "House Rules" },
-  5: { key: "price_summary", displayName: "Pricing" },
-  6: null, // StepAvailability - no feedback
-  7: null, // StepReview - handled separately
+  2: null, // StepRooms - no feedback
+  3: { key: "photos", displayName: "Photos" },
+  4: null, // StepDetails (Amenities) - no feedback
+  5: { key: "rules", displayName: "House Rules" },
+  6: { key: "price_summary", displayName: "Pricing" },
+  7: null, // StepAvailability - no feedback
+  8: null, // StepReview - handled separately
 };
 
 const EditListing = () => {
@@ -89,6 +91,7 @@ const EditListing = () => {
     weekly_discount: 0,
     monthly_discount: 0,
     availability_rules: [],
+    rooms: [],
   });
 
   useEffect(() => {
@@ -160,6 +163,7 @@ const EditListing = () => {
           weekly_discount: listing.weekly_discount || 0,
           monthly_discount: listing.monthly_discount || 0,
           availability_rules: availabilityRules,
+          rooms: [],
         });
         
         setInitialLoading(false);
@@ -182,6 +186,14 @@ const EditListing = () => {
             start_date,
             end_date,
             price
+          ),
+          listing_rooms(
+            id,
+            room_type,
+            name,
+            beds,
+            features,
+            sort_order
           )
         `)
         .eq("id", id)
@@ -258,6 +270,14 @@ const EditListing = () => {
         weekly_discount: data.weekly_discount || 0,
         monthly_discount: data.monthly_discount || 0,
         availability_rules: availabilityRules,
+        rooms: ((data as any).listing_rooms as any[] || []).map((r: any) => ({
+          id: r.id,
+          room_type: r.room_type || "bedroom",
+          name: r.name || "",
+          beds: r.beds || [],
+          features: r.features || [],
+          sort_order: r.sort_order || 0,
+        })),
       });
 
       setInitialLoading(false);
@@ -463,6 +483,20 @@ const EditListing = () => {
         navigate("/host/dashboard");
         return;
       }
+    }
+
+    // Save rooms: delete existing and re-insert
+    await supabase.from("listing_rooms").delete().eq("listing_id", id);
+    if (formData.rooms && formData.rooms.length > 0) {
+      const roomRecords = formData.rooms.map((room, index) => ({
+        listing_id: id,
+        room_type: room.room_type,
+        name: room.name,
+        beds: room.beds as any,
+        features: room.features,
+        sort_order: index,
+      }));
+      await supabase.from("listing_rooms").insert(roomRecords);
     }
 
     setLoading(false);
@@ -678,21 +712,24 @@ const EditListing = () => {
               <StepPropertyType formData={formData} updateFormData={updateFormData} />
             )}
             {currentStep === 2 && (
-              <StepPhotos formData={formData} updateFormData={updateFormData} />
+              <StepRooms rooms={formData.rooms} onRoomsChange={(rooms) => updateFormData({ rooms })} />
             )}
             {currentStep === 3 && (
-              <StepDetails formData={formData} updateFormData={updateFormData} />
+              <StepPhotos formData={formData} updateFormData={updateFormData} />
             )}
             {currentStep === 4 && (
-              <StepRules formData={formData} updateFormData={updateFormData} />
+              <StepDetails formData={formData} updateFormData={updateFormData} />
             )}
             {currentStep === 5 && (
-              <StepPricing formData={formData} updateFormData={updateFormData} />
+              <StepRules formData={formData} updateFormData={updateFormData} />
             )}
             {currentStep === 6 && (
+              <StepPricing formData={formData} updateFormData={updateFormData} />
+            )}
+            {currentStep === 7 && (
               <StepAvailability formData={formData} updateFormData={updateFormData} listingId={id} />
             )}
-            {currentStep === 7 && <StepReview formData={formData} />}
+            {currentStep === 8 && <StepReview formData={formData} />}
 
             {/* Show feedback for current step if available */}
             {listingStatus === "rejected" && getCurrentStepFeedback() && (

@@ -14,6 +14,7 @@ import { ReviewsSection } from "@/components/listing/ReviewsSection";
 import { ContactHostDialog } from "@/components/listing/ContactHostDialog";
 import { AuthDialog } from "@/components/AuthDialog";
 import { format24to12Hour } from "@/lib/exportUtils";
+import RoomDetailDisplay from "@/components/listing/RoomDetailDisplay";
 import {
   MapPin,
   Users,
@@ -85,6 +86,7 @@ const ListingDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [rooms, setRooms] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -121,6 +123,15 @@ const ListingDetail = () => {
         ...listingData,
         profiles: profileData || {}
       } as any);
+
+      // Fetch rooms
+      const { data: roomsData } = await supabase
+        .from("listing_rooms")
+        .select("*")
+        .eq("listing_id", id!)
+        .order("sort_order");
+      if (roomsData) setRooms(roomsData);
+
       setLoading(false);
     };
 
@@ -298,6 +309,17 @@ const ListingDetail = () => {
                         </div>
                       ))}
                     </div>
+                  </div>
+                  <Separator />
+                </>
+              )}
+
+              {/* Rooms Detail */}
+              {rooms.length > 0 && (
+                <>
+                  <div>
+                    <h3 className="text-2xl font-medium mb-4">Rooms</h3>
+                    <RoomDetailDisplay rooms={rooms} variant="inline" />
                   </div>
                   <Separator />
                 </>

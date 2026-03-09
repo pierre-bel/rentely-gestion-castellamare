@@ -1212,6 +1212,68 @@ export type Database = {
           },
         ]
       }
+      listing_rooms: {
+        Row: {
+          beds: Json | null
+          created_at: string
+          features: string[] | null
+          id: string
+          listing_id: string
+          name: string
+          room_type: string
+          sort_order: number
+        }
+        Insert: {
+          beds?: Json | null
+          created_at?: string
+          features?: string[] | null
+          id?: string
+          listing_id: string
+          name?: string
+          room_type?: string
+          sort_order?: number
+        }
+        Update: {
+          beds?: Json | null
+          created_at?: string
+          features?: string[] | null
+          id?: string
+          listing_id?: string
+          name?: string
+          room_type?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_rooms_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "embed_host_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_rooms_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "embed_listing_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_rooms_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_rooms_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listing_weekly_pricing: {
         Row: {
           created_at: string

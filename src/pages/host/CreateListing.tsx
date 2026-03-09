@@ -11,12 +11,14 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, ArrowLeft } from "lucide-react";
 import StepBasics from "@/components/listing/StepBasics";
 import StepPropertyType from "@/components/listing/StepPropertyType";
+import StepRooms from "@/components/listing/StepRooms";
 import StepDetails from "@/components/listing/StepDetails";
 import StepPhotos from "@/components/listing/StepPhotos";
 import StepRules from "@/components/listing/StepRules";
 import StepPricing from "@/components/listing/StepPricing";
 import StepReview from "@/components/listing/StepReview";
 import StepAvailability from "@/components/listing/StepAvailability";
+import type { RoomData } from "@/components/listing/StepRooms";
 
 export type AvailabilityRule = {
   id: string;
@@ -71,11 +73,14 @@ export type ListingFormData = {
   weekly_discount: number;
   monthly_discount: number;
   
+  // Rooms
+  rooms: RoomData[];
+  
   // Availability
   availability_rules: AvailabilityRule[];
 }
 
-const STEPS = ["Adresse", "Type de bien", "Photos", "Équipements", "Règles", "Tarifs", "Disponibilité", "Récapitulatif"];
+const STEPS = ["Adresse", "Type de bien", "Pièces", "Photos", "Équipements", "Règles", "Tarifs", "Disponibilité", "Récapitulatif"];
 
 const CreateListing = () => {
   const { user } = useAuth();
@@ -118,6 +123,7 @@ const CreateListing = () => {
     base_price: 0,
     weekly_discount: 0,
     monthly_discount: 0,
+    rooms: [],
     availability_rules: [],
   });
 
@@ -316,7 +322,26 @@ const CreateListing = () => {
         }
       }
 
-      setLoading(false);
+      // Phase 4: Handle rooms if they exist
+      if (formData.rooms && formData.rooms.length > 0) {
+        const roomRecords = formData.rooms.map((room, index) => ({
+          listing_id: createdListing.id,
+          room_type: room.room_type,
+          name: room.name,
+          beds: room.beds as any,
+          features: room.features,
+          sort_order: index,
+        }));
+
+        const { error: roomsError } = await supabase
+          .from("listing_rooms")
+          .insert(roomRecords);
+
+        if (roomsError) {
+          console.error("Error saving rooms:", roomsError);
+        }
+      }
+
       toast({
         title: "Succès !",
         description: "Votre annonce a été créée et publiée avec succès",
@@ -369,21 +394,24 @@ const CreateListing = () => {
               <StepPropertyType formData={formData} updateFormData={updateFormData} />
             )}
             {currentStep === 2 && (
-              <StepPhotos formData={formData} updateFormData={updateFormData} />
+              <StepRooms rooms={formData.rooms} onRoomsChange={(rooms) => updateFormData({ rooms })} />
             )}
             {currentStep === 3 && (
-              <StepDetails formData={formData} updateFormData={updateFormData} />
+              <StepPhotos formData={formData} updateFormData={updateFormData} />
             )}
             {currentStep === 4 && (
-              <StepRules formData={formData} updateFormData={updateFormData} />
+              <StepDetails formData={formData} updateFormData={updateFormData} />
             )}
             {currentStep === 5 && (
-              <StepPricing formData={formData} updateFormData={updateFormData} />
+              <StepRules formData={formData} updateFormData={updateFormData} />
             )}
             {currentStep === 6 && (
+              <StepPricing formData={formData} updateFormData={updateFormData} />
+            )}
+            {currentStep === 7 && (
               <StepAvailability formData={formData} updateFormData={updateFormData} />
             )}
-            {currentStep === 7 && <StepReview formData={formData} />}
+            {currentStep === 8 && <StepReview formData={formData} />}
 
             <div className="flex justify-between pt-6">
               <Button
