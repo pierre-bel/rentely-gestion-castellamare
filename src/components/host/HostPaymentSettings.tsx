@@ -205,41 +205,19 @@ function BeachCabinPeriodSettings() {
   const handleSave = async () => {
     if (!user?.id) return;
     setSaving(true);
-    try {
-      const updateData = {
-        beach_cabin_start_month: parseInt(startMonth),
-        beach_cabin_start_day: parseInt(startDay),
-        beach_cabin_end_month: parseInt(endMonth),
-        beach_cabin_end_day: parseInt(endDay),
-      };
+    const updateData = {
+      beach_cabin_start_month: parseInt(startMonth),
+      beach_cabin_start_day: parseInt(startDay),
+      beach_cabin_end_month: parseInt(endMonth),
+      beach_cabin_end_day: parseInt(endDay),
+    };
 
-      // Check if settings exist
-      const { data: existing } = await supabase
-        .from("portal_settings")
-        .select("id")
-        .eq("host_user_id", user.id)
-        .maybeSingle();
-
-      if (existing) {
-        const { error } = await supabase
-          .from("portal_settings")
-          .update(updateData)
-          .eq("host_user_id", user.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("portal_settings")
-          .insert({ host_user_id: user.id, ...updateData });
-        if (error) throw error;
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["portal-settings-beach"] });
-      toast({ title: "Période cabine de plage enregistrée" });
-    } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
+    const success = await withToast(
+      () => upsertByOwner("portal_settings", "host_user_id", user.id, updateData),
+      toast, "Période cabine de plage enregistrée"
+    );
+    if (success) queryClient.invalidateQueries({ queryKey: ["portal-settings-beach"] });
+    setSaving(false);
   };
 
   return (
