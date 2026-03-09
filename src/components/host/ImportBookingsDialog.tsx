@@ -278,7 +278,10 @@ export function ImportBookingsDialog({ open, onOpenChange }: Props) {
 
         const tenantName = [tenantFirstName, tenantLastName].filter(Boolean).join(" ");
 
-        const { data: newBooking, error: bErr } = await supabase.from("bookings").insert({
+        // Parse optional created_at
+        const importedCreatedAt = d.created_at ? parseDateTime(d.created_at) : null;
+
+        const bookingInsert: Record<string, any> = {
           listing_id: listing.id,
           guest_user_id: user.id,
           checkin_date: format(checkin, "yyyy-MM-dd"),
@@ -301,7 +304,13 @@ export function ImportBookingsDialog({ open, onOpenChange }: Props) {
             `Locataire: ${tenantName}`,
             d.notes ? String(d.notes).trim() : null,
           ].filter(Boolean).join(" | ") || null,
-        }).select("id").single();
+        };
+
+        if (importedCreatedAt) {
+          bookingInsert.created_at = importedCreatedAt.toISOString();
+        }
+
+        const { data: newBooking, error: bErr } = await supabase.from("bookings").insert(bookingInsert).select("id").single();
 
         if (bErr) throw bErr;
 
