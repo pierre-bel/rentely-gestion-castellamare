@@ -44,6 +44,7 @@ const BED_TYPES = [
   { value: "king_180", label: "Lit King (180 cm)" },
   { value: "bunk", label: "Lit superposé" },
   { value: "sofa_bed", label: "Canapé-lit" },
+  { value: "baby_crib", label: "Lit bébé" },
 ];
 
 const BATHROOM_FEATURES = [

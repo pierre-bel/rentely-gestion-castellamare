@@ -28,13 +28,17 @@ const BED_TYPE_LABELS: Record<string, string> = {
   king_180: "Lit King (180 cm)",
   bunk: "Lit superposé",
   sofa_bed: "Canapé-lit",
+  baby_crib: "Lit bébé",
 };
 
 const ROOM_TYPE_CONFIG: Record<string, { label: string; icon: typeof Bed }> = {
   bedroom: { label: "Chambre", icon: Bed },
   bathroom: { label: "Salle de bain", icon: Bath },
-  living_room: { label: "Salon", icon: Sofa },
+  wc: { label: "WC", icon: Bath },
+  living_room: { label: "Living", icon: Sofa },
   kitchen: { label: "Cuisine", icon: ChefHat },
+  entrance_hall: { label: "Hall d'entrée", icon: DoorOpen },
+  night_hall: { label: "Hall de nuit", icon: DoorOpen },
   other: { label: "Autre", icon: LayoutGrid },
 };
 
