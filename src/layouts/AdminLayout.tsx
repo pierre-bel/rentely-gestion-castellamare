@@ -34,6 +34,7 @@ const getPageTitle = (pathname: string): string => {
   if (pathname === "/admin/reports") return "Reports & Analytics";
   if (pathname === "/admin/support") return "Support Chat";
   if (pathname === "/admin/content") return "Content Management";
+  if (pathname === "/admin/debug") return "Debug & Santé";
   return "Admin Panel";
 };
 

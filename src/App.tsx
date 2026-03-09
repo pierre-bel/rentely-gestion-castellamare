@@ -171,6 +171,7 @@ const App = () => (
                 <Route path="reports" element={<Reports />} />
                 <Route path="support" element={<AdminSupport />} />
                 <Route path="content" element={<ContentManagementPage />} />
+                <Route path="debug" element={<AdminDebug />} />
               </Route>
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<><Navbar /><NotFound /></>} />
