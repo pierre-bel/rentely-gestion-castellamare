@@ -122,6 +122,15 @@ const ListingDetail = () => {
         ...listingData,
         profiles: profileData || {}
       } as any);
+
+      // Fetch rooms
+      const { data: roomsData } = await supabase
+        .from("listing_rooms")
+        .select("*")
+        .eq("listing_id", id!)
+        .order("sort_order");
+      if (roomsData) setRooms(roomsData);
+
       setLoading(false);
     };
 
