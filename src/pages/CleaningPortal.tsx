@@ -324,7 +324,10 @@ export default function CleaningPortal() {
                                       )}
                                       <p className="text-muted-foreground text-xs capitalize">
                                         {format(parseISO(slot.incoming.checkin_date), "EEEE dd/MM", { locale: fr })}
-                                        {slot.listing.checkin_from && ` — arrivée ${slot.listing.checkin_from.slice(0, 5)}`}
+                                        {(() => {
+                                          const t = slot.incoming.checkin_time?.slice(0, 5) || slot.listing.checkin_from?.slice(0, 5);
+                                          return t ? ` — arrivée ${t}` : "";
+                                        })()}
                                       </p>
                                     </>
                                   ) : (
