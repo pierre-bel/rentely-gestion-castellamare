@@ -65,6 +65,27 @@ export default function HostTenants() {
     enabled: !!user?.id,
   });
 
+  // Fetch booking counts per tenant to determine new vs returning
+  const { data: bookingCounts = {} } = useQuery({
+    queryKey: ["host-tenant-booking-counts", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return {};
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("pricing_breakdown, status")
+        .in("status", ["confirmed", "completed", "pending_payment"]);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const b of data || []) {
+        const pb = b.pricing_breakdown as any;
+        const tid = pb?.tenant_id;
+        if (tid) counts[tid] = (counts[tid] || 0) + 1;
+      }
+      return counts;
+    },
+    enabled: !!user?.id,
+  });
+
   const filtered = tenants.filter((t) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
