@@ -226,6 +226,9 @@ export function HostCleaning() {
           listingTitle: listing?.title || "Bien inconnu",
           hoursAvailable,
           staffMember: staffByListing.get(listingId) || null,
+          checkoutTime: (booking as any).checkout_time?.slice(0, 5) || listing?.checkout_until?.slice(0, 5) || null,
+          checkinTime: (booking as any).checkin_time?.slice(0, 5) || listing?.checkin_from?.slice(0, 5) || null,
+          nextCheckinTime: nextBooking ? ((nextBooking as any).checkin_time?.slice(0, 5) || listing?.checkin_from?.slice(0, 5) || null) : null,
         });
       }
     }
