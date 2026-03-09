@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Pencil, Trash2, Send, Mail } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { selectByOwner, deleteById, updateById } from "@/lib/supabase-helpers";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
