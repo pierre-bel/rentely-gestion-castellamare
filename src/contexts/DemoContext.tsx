@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { demoStorage } from "@/lib/demoStorage";
 import { isDemoActive, getDemoState } from "@/lib/demoMode";
+import { seedDemoData } from "@/lib/demoSeedData";
 
 interface DemoContextType {
   isDemoMode: boolean;
