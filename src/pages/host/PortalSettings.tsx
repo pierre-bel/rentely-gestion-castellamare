@@ -400,36 +400,6 @@ export default function PortalSettings() {
       });
   };
 
-  // School holidays CRUD
-  const handleAddHoliday = async () => {
-    if (!user?.id || !holidayLabel.trim() || !holidayStart || !holidayEnd) return;
-    const { data, error } = await supabase
-      .from("host_school_holidays")
-      .insert({
-        host_user_id: user.id,
-        label: holidayLabel.trim(),
-        start_date: format(holidayStart, "yyyy-MM-dd"),
-        end_date: format(holidayEnd, "yyyy-MM-dd"),
-      })
-      .select()
-      .single();
-    if (!error && data) {
-      const h = data as any;
-      setSchoolHolidays((prev) => [...prev, { id: h.id, label: h.label, start_date: h.start_date, end_date: h.end_date }].sort((a, b) => a.start_date.localeCompare(b.start_date)));
-      setHolidayLabel("");
-      setHolidayStart(undefined);
-      setHolidayEnd(undefined);
-      setHolidayDialogOpen(false);
-      toast({ title: "Période ajoutée" });
-    } else {
-      toast({ variant: "destructive", title: "Erreur", description: "Impossible d'ajouter la période." });
-    }
-  };
-
-  const handleDeleteHoliday = async (id: string) => {
-    await supabase.from("host_school_holidays").delete().eq("id", id);
-    setSchoolHolidays((prev) => prev.filter((h) => h.id !== id));
-  };
 
   if (loading) {
     return (
