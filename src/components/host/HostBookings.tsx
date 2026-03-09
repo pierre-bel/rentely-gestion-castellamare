@@ -420,6 +420,43 @@ export default function HostBookings() {
     toast({ title: "Export réussi", description: `${rows.length} réservation(s) exportée(s).` });
   };
 
+  const handleDeleteAllBookings = async () => {
+    if (!user?.id) return;
+    setIsDeletingAll(true);
+    try {
+      // Get all booking IDs for this host's listings
+      const { data: hostListings } = await supabase
+        .from("listings")
+        .select("id")
+        .eq("host_user_id", user.id);
+
+      if (!hostListings || hostListings.length === 0) {
+        toast({ title: "Aucune réservation à supprimer" });
+        return;
+      }
+
+      const listingIds = hostListings.map((l) => l.id);
+
+      // Delete all bookings for these listings
+      const { error } = await supabase
+        .from("bookings")
+        .delete()
+        .in("listing_id", listingIds);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["host-calendar-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-recent-bookings"] });
+      toast({ title: "Toutes les réservations ont été supprimées" });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    } finally {
+      setIsDeletingAll(false);
+      setDeleteAllDialogOpen(false);
+    }
+  };
+
 
   return (
     <Card className="bg-card">
