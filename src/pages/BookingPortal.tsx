@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { StatusBadge, type StatusValue } from "@/components/ui/status-badge";
 import { Badge } from "@/components/ui/badge";
 import PortalReviewForm from "@/components/portal/PortalReviewForm";
+import { PaymentQRCode } from "@/components/portal/PaymentQRCode";
 
 const formatPrice = (price: number, currency = "EUR") =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(price);
