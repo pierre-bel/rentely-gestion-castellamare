@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { demoStorage } from "@/lib/demoStorage";
 import { isDemoActive, getDemoState } from "@/lib/demoMode";
+import { seedDemoData } from "@/lib/demoSeedData";
 
 interface DemoContextType {
   isDemoMode: boolean;
@@ -27,6 +28,8 @@ export const DemoProvider = ({ children }: { children: ReactNode }) => {
       if (state) {
         setIsDemoMode(true);
         setDemoUserId(state.userId);
+        // Seed demo data on first activation
+        seedDemoData(state.role, state.userId);
         // Demo mode is ready immediately - data comes from demoStorage
         setMigrationComplete(true);
       }
