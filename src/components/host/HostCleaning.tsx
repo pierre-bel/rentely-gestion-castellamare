@@ -59,6 +59,7 @@ export function HostCleaning() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isDemoMode, demoUserId } = useDemoMode();
   const [selectedListingId, setSelectedListingId] = useState("all");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [staffDialogOpen, setStaffDialogOpen] = useState(false);
