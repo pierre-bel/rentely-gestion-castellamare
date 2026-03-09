@@ -205,6 +205,13 @@ export type Database = {
             foreignKeyName: "bookings_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
+            referencedRelation: "embed_host_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
             referencedRelation: "embed_listing_info"
             referencedColumns: ["id"]
           },
@@ -375,6 +382,13 @@ export type Database = {
             foreignKeyName: "cleaning_staff_listings_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
+            referencedRelation: "embed_host_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cleaning_staff_listings_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
             referencedRelation: "embed_listing_info"
             referencedColumns: ["id"]
           },
@@ -527,6 +541,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputes_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "embed_host_listings"
             referencedColumns: ["id"]
           },
           {
@@ -904,6 +925,13 @@ export type Database = {
             foreignKeyName: "listing_availability_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
+            referencedRelation: "embed_host_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_availability_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
             referencedRelation: "embed_listing_info"
             referencedColumns: ["id"]
           },
@@ -966,6 +994,13 @@ export type Database = {
             foreignKeyName: "listing_moderation_feedback_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
+            referencedRelation: "embed_host_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_moderation_feedback_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
             referencedRelation: "embed_listing_info"
             referencedColumns: ["id"]
           },
@@ -1020,6 +1055,13 @@ export type Database = {
           weekly_rate?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "listing_weekly_pricing_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "embed_host_listings"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "listing_weekly_pricing_listing_id_fkey"
             columns: ["listing_id"]
@@ -1259,6 +1301,13 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_threads_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "embed_host_listings"
             referencedColumns: ["id"]
           },
           {
@@ -1685,6 +1734,13 @@ export type Database = {
             foreignKeyName: "reviews_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
+            referencedRelation: "embed_host_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
             referencedRelation: "embed_listing_info"
             referencedColumns: ["id"]
           },
@@ -1873,6 +1929,36 @@ export type Database = {
       }
     }
     Views: {
+      embed_host_listings: {
+        Row: {
+          base_price: number | null
+          bedrooms: number | null
+          city: string | null
+          cover_image: string | null
+          host_user_id: string | null
+          id: string | null
+          title: string | null
+        }
+        Insert: {
+          base_price?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          cover_image?: string | null
+          host_user_id?: string | null
+          id?: string | null
+          title?: string | null
+        }
+        Update: {
+          base_price?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          cover_image?: string | null
+          host_user_id?: string | null
+          id?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       embed_listing_info: {
         Row: {
           base_price: number | null
@@ -1915,6 +2001,13 @@ export type Database = {
             foreignKeyName: "bookings_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
+            referencedRelation: "embed_host_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
             referencedRelation: "embed_listing_info"
             referencedColumns: ["id"]
           },
@@ -1951,6 +2044,13 @@ export type Database = {
           start_date?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "listing_availability_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "embed_host_listings"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "listing_availability_listing_id_fkey"
             columns: ["listing_id"]
