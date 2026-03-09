@@ -65,13 +65,14 @@ const getInitials = (name: string | null) => {
 
 const headers = ["ID", "Bien", "Locataire", "Dates", "Montant", "Statut", "Action"];
 
-const BookingActions = ({ booking, onCancelBooking, onContactSupport, onContactGuest, onEditBooking, onViewDetails }: {
+const BookingActions = ({ booking, onCancelBooking, onContactSupport, onContactGuest, onEditBooking, onViewDetails, onDeleteBooking }: {
   booking: Booking;
   onCancelBooking: (b: Booking) => void;
   onContactSupport: (b: Booking) => void;
   onContactGuest: (b: Booking) => void;
   onEditBooking?: (b: Booking) => void;
   onViewDetails?: (b: Booking) => void;
+  onDeleteBooking?: (b: Booking) => void;
 }) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
@@ -94,12 +95,24 @@ const BookingActions = ({ booking, onCancelBooking, onContactSupport, onContactG
         </DropdownMenuItem>
       )}
       <DropdownMenuItem onClick={() => onViewDetails?.(booking)}>Voir les détails</DropdownMenuItem>
-      <DropdownMenuItem onClick={() => onContactGuest(booking)}>
-        Contacter le locataire
-      </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => onContactSupport(booking)}>
-        Contacter le support
-      </DropdownMenuItem>
+      {booking.status !== 'owner_blocked' && booking.status !== 'pre_reservation' && (
+        <>
+          <DropdownMenuItem onClick={() => onContactGuest(booking)}>
+            Contacter le locataire
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onContactSupport(booking)}>
+            Contacter le support
+          </DropdownMenuItem>
+        </>
+      )}
+      {onDeleteBooking && (
+        <DropdownMenuItem
+          onClick={() => onDeleteBooking(booking)}
+          className="text-destructive focus:text-destructive"
+        >
+          Supprimer
+        </DropdownMenuItem>
+      )}
     </DropdownMenuContent>
   </DropdownMenu>
 );
