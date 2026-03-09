@@ -127,6 +127,7 @@ export default function BookingPortal() {
   const [hostUserId, setHostUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [rooms, setRooms] = useState<any[]>([]);
 
   useEffect(() => {
     if (!token) return;
