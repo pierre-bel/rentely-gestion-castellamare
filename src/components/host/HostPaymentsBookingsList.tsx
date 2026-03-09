@@ -153,19 +153,23 @@ export function HostPaymentsBookingsList() {
 
   const filteredAndSorted = useMemo(() => {
     const q = search.toLowerCase().trim();
-    const filtered = q
+    let filtered = q
       ? bookings.filter(b =>
           b.tenant_name.toLowerCase().includes(q) ||
           b.listing_title.toLowerCase().includes(q)
         )
       : bookings;
 
+    if (filterOverdue) {
+      filtered = filtered.filter(b => getPaymentStatus(b.payment_items) === "overdue");
+    }
+
     return [...filtered].sort((a, b) => {
       const sa = STATUS_ORDER[getPaymentStatus(a.payment_items)];
       const sb = STATUS_ORDER[getPaymentStatus(b.payment_items)];
       return sa - sb;
     });
-  }, [bookings, search]);
+  }, [bookings, search, filterOverdue]);
 
   const handleView = (booking: BookingWithPayments) => {
     setSelectedBooking(booking);
