@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from "react";
+import BookingInquiryForm from "@/components/embed/BookingInquiryForm";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, CalendarDays, Search, CheckCircle2, XCircle, Euro, Info, Mail, Phone } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Search, CheckCircle2, XCircle, Euro, Info, Mail, Phone, Send } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   format,
@@ -49,6 +50,7 @@ export default function EmbedAllAvailability() {
   const [checkoutDate, setCheckoutDate] = useState<Date | undefined>();
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [inquiryListingId, setInquiryListingId] = useState<string | null>(null);
 
   const today = startOfDay(new Date());
   const currentMonthStart = startOfMonth(today);
@@ -466,7 +468,8 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
                 <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950/20">
                   <Info className="h-4 w-4 text-blue-600" />
                   <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
-                    <p>Hors vacances scolaires, les réservations hors samedi-samedi sont possibles sur demande. Contactez-nous :</p>
+                    <p>Hors vacances scolaires, les réservations hors samedi-samedi sont possibles sur demande.</p>
+                    <p className="mt-1 text-xs">Utilisez le bouton <strong>"Demande"</strong> ci-dessous pour envoyer votre demande.</p>
                     {(hostContact?.contact_email || hostContact?.contact_phone) && (
                       <div className="flex flex-wrap gap-3 mt-2">
                         {hostContact.contact_email && (
@@ -490,48 +493,77 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
               {/* Availability results (always shown) */}
               <div className="grid gap-2">
                 {simulatorResults.map((result) => (
-                  <div
-                    key={result.id}
-                    className={cn(
-                      "flex items-center justify-between p-3 rounded-lg border transition-all",
-                      result.isAvailable
-                        ? "bg-success/5 border-success/30"
-                        : "bg-destructive/5 border-destructive/20 opacity-60"
-                    )}
-                  >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      {result.isAvailable ? (
-                        <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                  <div key={result.id}>
+                    <div
+                      className={cn(
+                        "flex items-center justify-between p-3 rounded-lg border transition-all",
+                        result.isAvailable
+                          ? "bg-success/5 border-success/30"
+                          : "bg-destructive/5 border-destructive/20 opacity-60"
                       )}
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{result.title}</p>
-                        {result.city && (
-                          <p className="text-xs text-muted-foreground">{result.city}</p>
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {result.isAvailable ? (
+                          <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0" />
+                        ) : (
+                          <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{result.title}</p>
+                          {result.city && (
+                            <p className="text-xs text-muted-foreground">{result.city}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                        <div className="text-right">
+                          {result.isAvailable ? (
+                            simulatorMode === "price" ? (
+                              result.price ? (
+                                <div>
+                                  <p className="font-bold text-success">{formatPrice(result.price)}</p>
+                                  <p className="text-[10px] text-muted-foreground">
+                                    ~{formatPrice(result.price / result.nights)}/nuit
+                                  </p>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">Prix sur demande</span>
+                              )
+                            ) : (
+                              <span className="text-xs text-success font-medium">Disponible</span>
+                            )
+                          ) : (
+                            <span className="text-xs text-destructive font-medium">Indisponible</span>
+                          )}
+                        </div>
+                        {result.isAvailable && (
+                          <Button
+                            size="sm"
+                            variant={inquiryListingId === result.id ? "secondary" : "default"}
+                            className="h-7 text-xs gap-1"
+                            onClick={() => setInquiryListingId(inquiryListingId === result.id ? null : result.id)}
+                          >
+                            <Send className="h-3 w-3" />
+                            Demande
+                          </Button>
                         )}
                       </div>
                     </div>
-                    <div className="text-right flex-shrink-0 ml-3">
-                      {result.isAvailable ? (
-                        simulatorMode === "price" ? (
-                          result.price ? (
-                            <div>
-                              <p className="font-bold text-success">{formatPrice(result.price)}</p>
-                              <p className="text-[10px] text-muted-foreground">
-                                ~{formatPrice(result.price / result.nights)}/nuit
-                              </p>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">Prix sur demande</span>
-                          )
-                        ) : (
-                          <span className="text-xs text-success font-medium">Disponible</span>
-                        )
-                      ) : (
-                        <span className="text-xs text-destructive font-medium">Indisponible</span>
-                      )}
-                    </div>
+
+                    {/* Inquiry form */}
+                    {inquiryListingId === result.id && hostId && checkinDate && checkoutDate && (
+                      <div className="border border-t-0 rounded-b-lg p-3 bg-card">
+                        <BookingInquiryForm
+                          hostId={hostId}
+                          listingTitle={result.title}
+                          checkinDate={format(checkinDate, "d MMMM yyyy", { locale: fr })}
+                          checkoutDate={format(checkoutDate, "d MMMM yyyy", { locale: fr })}
+                          nights={result.nights}
+                          price={result.price}
+                          onClose={() => setInquiryListingId(null)}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
