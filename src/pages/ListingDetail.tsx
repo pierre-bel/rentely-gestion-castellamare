@@ -14,6 +14,7 @@ import { ReviewsSection } from "@/components/listing/ReviewsSection";
 import { ContactHostDialog } from "@/components/listing/ContactHostDialog";
 import { AuthDialog } from "@/components/AuthDialog";
 import { format24to12Hour } from "@/lib/exportUtils";
+import RoomDetailDisplay from "@/components/listing/RoomDetailDisplay";
 import {
   MapPin,
   Users,
