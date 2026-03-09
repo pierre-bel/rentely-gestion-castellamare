@@ -599,6 +599,12 @@ export function HostCleaning() {
                                     <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
                                     <span className="capitalize">{format(parseISO(slot.nextCheckinBooking.checkin_date), "EEEE dd/MM", { locale: fr })}</span>
                                   </div>
+                                  {slot.nextCheckinTime && (
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
+                                      <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                                      <span>Arrivée à {slot.nextCheckinTime}</span>
+                                    </div>
+                                  )}
                                   {slot.hoursAvailable !== null && (
                                     <p className="text-xs text-muted-foreground mt-1">
                                       ⏱️ {Math.floor(slot.hoursAvailable / 24)} jour{Math.floor(slot.hoursAvailable / 24) > 1 ? "s" : ""} entre les deux
