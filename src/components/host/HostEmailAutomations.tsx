@@ -87,6 +87,36 @@ export default function HostEmailAutomations() {
   const [formRecipientType, setFormRecipientType] = useState("tenant");
   const [formRecipientEmail, setFormRecipientEmail] = useState("");
   const [formSendIfLate, setFormSendIfLate] = useState(false);
+  const [loadingDefaults, setLoadingDefaults] = useState(false);
+
+  const handleLoadDefaults = async () => {
+    if (!user?.id) return;
+    setLoadingDefaults(true);
+    try {
+      const rows = DEFAULT_EMAIL_TEMPLATES.map((t) => ({
+        host_user_id: user.id,
+        name: t.name,
+        subject: t.subject,
+        body_html: t.body_html,
+        trigger_type: t.trigger_type,
+        trigger_days: t.trigger_days,
+        is_enabled: true,
+        recipient_type: t.recipient_type,
+        recipient_email: t.recipient_type === "host" ? user.email || null : null,
+        reply_to_email: user.email || null,
+        send_if_late: t.send_if_late,
+        listing_ids: [],
+      }));
+      const { error } = await supabase.from("email_automations").insert(rows as any);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["email-automations"] });
+      toast({ title: "9 modèles chargés", description: "Vous pouvez les personnaliser à votre convenance." });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    } finally {
+      setLoadingDefaults(false);
+    }
+  };
 
   const { data: automations = [], isLoading } = useQuery({
     queryKey: ["email-automations", user?.id],
