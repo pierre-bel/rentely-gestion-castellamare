@@ -160,49 +160,81 @@ export default function HostTenants() {
             </Button>
           </div>
         ) : (
-          <div className="rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-background hover:bg-background">
-                  <TableHead className="font-semibold">Nom</TableHead>
-                  <TableHead className="font-semibold">Statut</TableHead>
-                  <TableHead className="font-semibold">Email</TableHead>
-                  <TableHead className="font-semibold">Téléphone</TableHead>
-                  <TableHead className="font-semibold">Sexe</TableHead>
-                  <TableHead className="font-semibold">Ville</TableHead>
-                  <TableHead className="font-semibold text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((tenant, i) => (
-                  <TableRow key={tenant.id} className={i % 2 === 0 ? "bg-muted/30" : ""}>
-                    <TableCell className="font-medium">{tenant.first_name} {tenant.last_name}</TableCell>
-                    <TableCell>
-                      {(bookingCounts[tenant.id] || 0) >= 1 ? (
-                        <Badge className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/10 text-[11px]">Habitué</Badge>
-                      ) : (
-                        <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Nouveau</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>{tenant.email || "—"}</TableCell>
-                    <TableCell>{tenant.phone || "—"}</TableCell>
-                    <TableCell>{tenant.gender === "H" ? "Homme" : tenant.gender === "F" ? "Femme" : "—"}</TableCell>
-                    <TableCell>{tenant.city || "—"}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingTenant(tenant); setDialogOpen(true); }}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => { setTenantToDelete(tenant); setDeleteDialogOpen(true); }}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
+          <>
+            {/* Desktop table */}
+            <div className="rounded-lg border overflow-hidden hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-background hover:bg-background">
+                    <TableHead className="font-semibold">Nom</TableHead>
+                    <TableHead className="font-semibold">Statut</TableHead>
+                    <TableHead className="font-semibold">Email</TableHead>
+                    <TableHead className="font-semibold">Téléphone</TableHead>
+                    <TableHead className="font-semibold">Sexe</TableHead>
+                    <TableHead className="font-semibold">Ville</TableHead>
+                    <TableHead className="font-semibold text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((tenant, i) => (
+                    <TableRow key={tenant.id} className={i % 2 === 0 ? "bg-muted/30" : ""}>
+                      <TableCell className="font-medium">{tenant.first_name} {tenant.last_name}</TableCell>
+                      <TableCell>
+                        {(bookingCounts[tenant.id] || 0) >= 1 ? (
+                          <Badge className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/10 text-[11px]">Habitué</Badge>
+                        ) : (
+                          <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Nouveau</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>{tenant.email || "—"}</TableCell>
+                      <TableCell>{tenant.phone || "—"}</TableCell>
+                      <TableCell>{tenant.gender === "H" ? "Homme" : tenant.gender === "F" ? "Femme" : "—"}</TableCell>
+                      <TableCell>{tenant.city || "—"}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => { setEditingTenant(tenant); setDialogOpen(true); }}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => { setTenantToDelete(tenant); setDeleteDialogOpen(true); }}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {filtered.map((tenant) => (
+                <div key={tenant.id} className="rounded-lg border bg-card p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium">{tenant.first_name} {tenant.last_name}</div>
+                    {(bookingCounts[tenant.id] || 0) >= 1 ? (
+                      <Badge className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/10 text-[11px]">Habitué</Badge>
+                    ) : (
+                      <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Nouveau</Badge>
+                    )}
+                  </div>
+                  {tenant.email && <p className="text-sm text-muted-foreground truncate">{tenant.email}</p>}
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>{tenant.phone || "—"}</span>
+                    <span>{tenant.city || "—"}</span>
+                  </div>
+                  <div className="flex justify-end gap-1 pt-1">
+                    <Button variant="ghost" size="sm" onClick={() => { setEditingTenant(tenant); setDialogOpen(true); }}>
+                      <Edit className="h-4 w-4 mr-1" /> Modifier
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => { setTenantToDelete(tenant); setDeleteDialogOpen(true); }}>
+                      <Trash2 className="h-4 w-4 mr-1 text-destructive" /> Supprimer
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </CardContent>
 
