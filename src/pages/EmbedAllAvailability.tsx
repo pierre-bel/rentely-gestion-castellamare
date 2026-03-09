@@ -47,7 +47,7 @@ export default function EmbedAllAvailability() {
         .eq("host_user_id", hostId)
         .order("title");
       if (error) throw error;
-      return data || [];
+      return (data || []) as Array<{ id: string; title: string; city: string | null; base_price: number; cover_image: string | null; bedrooms: number | null }>;
     },
     enabled: !!hostId,
   });
