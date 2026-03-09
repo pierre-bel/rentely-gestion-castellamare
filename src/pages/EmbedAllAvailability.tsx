@@ -568,8 +568,8 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
                     })}
 
                     {/* Booking bars */}
-                    {listingBookings.map((booking, idx) => {
-                      const { left, width } = getBarStyle(booking.checkin_date!, booking.checkout_date!);
+                    {mergeBookingPeriods(listingBookings).map((period, idx) => {
+                      const { left, width } = getBarStyle(period.checkin_date, period.checkout_date);
                       if (width <= 0) return null;
                       return (
                         <div
@@ -578,7 +578,7 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
                           style={{ left: left + 2, width }}
                         >
                           <span className="text-[10px] font-medium truncate leading-none whitespace-nowrap">
-                            Réservé
+                            Loué
                           </span>
                         </div>
                       );
