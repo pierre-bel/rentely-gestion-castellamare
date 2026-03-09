@@ -443,6 +443,10 @@ export default function HostBookings() {
               <Upload className="h-4 w-4 sm:mr-1.5" />
               <span className="hidden sm:inline">Importer</span>
             </Button>
+            <Button variant="outline" size="sm" onClick={handleExportExcel}>
+              <Download className="h-4 w-4 sm:mr-1.5" />
+              <span className="hidden sm:inline">Exporter</span>
+            </Button>
             <BookingsFiltersSheet
               statusFilter={statusFilter}
               minPrice={minPrice}
