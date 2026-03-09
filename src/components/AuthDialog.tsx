@@ -61,7 +61,7 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
       onOpenChange(false);
       navigate("/host/dashboard");
     }
-    setLoadingStates(prev => ({ ...prev, regular: false }));
+    setLoading(false);
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
