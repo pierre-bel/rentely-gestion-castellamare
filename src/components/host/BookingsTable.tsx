@@ -26,7 +26,7 @@ interface Booking {
   nights: number;
   guests: number;
   host_payout_gross: number;
-  status: "confirmed" | "pending_payment" | "cancelled" | "completed" | "cancelled_guest" | "cancelled_host" | "expired";
+  status: "confirmed" | "pending_payment" | "cancelled" | "completed" | "cancelled_guest" | "cancelled_host" | "expired" | "owner_blocked" | "pre_reservation";
   created_at: string;
 }
 
@@ -38,6 +38,7 @@ interface BookingsTableProps {
   onContactGuest: (booking: Booking) => void;
   onEditBooking?: (booking: Booking) => void;
   onViewDetails?: (booking: Booking) => void;
+  onDeleteBooking?: (booking: Booking) => void;
 }
 
 const formatBookingDates = (checkin: string, checkout: string) => {
@@ -64,13 +65,14 @@ const getInitials = (name: string | null) => {
 
 const headers = ["ID", "Bien", "Locataire", "Dates", "Montant", "Statut", "Action"];
 
-const BookingActions = ({ booking, onCancelBooking, onContactSupport, onContactGuest, onEditBooking, onViewDetails }: {
+const BookingActions = ({ booking, onCancelBooking, onContactSupport, onContactGuest, onEditBooking, onViewDetails, onDeleteBooking }: {
   booking: Booking;
   onCancelBooking: (b: Booking) => void;
   onContactSupport: (b: Booking) => void;
   onContactGuest: (b: Booking) => void;
   onEditBooking?: (b: Booking) => void;
   onViewDetails?: (b: Booking) => void;
+  onDeleteBooking?: (b: Booking) => void;
 }) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
@@ -93,17 +95,29 @@ const BookingActions = ({ booking, onCancelBooking, onContactSupport, onContactG
         </DropdownMenuItem>
       )}
       <DropdownMenuItem onClick={() => onViewDetails?.(booking)}>Voir les détails</DropdownMenuItem>
-      <DropdownMenuItem onClick={() => onContactGuest(booking)}>
-        Contacter le locataire
-      </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => onContactSupport(booking)}>
-        Contacter le support
-      </DropdownMenuItem>
+      {booking.status !== 'owner_blocked' && booking.status !== 'pre_reservation' && (
+        <>
+          <DropdownMenuItem onClick={() => onContactGuest(booking)}>
+            Contacter le locataire
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onContactSupport(booking)}>
+            Contacter le support
+          </DropdownMenuItem>
+        </>
+      )}
+      {onDeleteBooking && (
+        <DropdownMenuItem
+          onClick={() => onDeleteBooking(booking)}
+          className="text-destructive focus:text-destructive"
+        >
+          Supprimer
+        </DropdownMenuItem>
+      )}
     </DropdownMenuContent>
   </DropdownMenu>
 );
 
-export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSupport, onContactGuest, onEditBooking, onViewDetails }: BookingsTableProps) => {
+export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSupport, onContactGuest, onEditBooking, onViewDetails, onDeleteBooking }: BookingsTableProps) => {
   if (loading) {
     return (
       <div className="space-y-3">
@@ -149,6 +163,7 @@ export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSup
                 onContactGuest={onContactGuest}
                 onEditBooking={onEditBooking}
                 onViewDetails={onViewDetails}
+                onDeleteBooking={onDeleteBooking}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -213,6 +228,7 @@ export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSup
                     onContactGuest={onContactGuest}
                     onEditBooking={onEditBooking}
                     onViewDetails={onViewDetails}
+                    onDeleteBooking={onDeleteBooking}
                   />
                 </TableCell>
               </TableRow>

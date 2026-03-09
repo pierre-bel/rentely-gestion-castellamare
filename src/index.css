@@ -48,6 +48,8 @@ All colors MUST be HSL.
     --calendar-blocked: 346 100% 64%;
     --calendar-booked: 220 33% 87%;
     --calendar-selected: 178 49% 16%;
+    --calendar-owner-blocked: 262 60% 55%;
+    --calendar-pre-reservation: 28 90% 55%;
   }
 
   .dark {
@@ -90,6 +92,8 @@ All colors MUST be HSL.
     --calendar-blocked: 346 100% 64%;
     --calendar-booked: 220 33% 87%;
     --calendar-selected: 178 49% 16%;
+    --calendar-owner-blocked: 262 60% 60%;
+    --calendar-pre-reservation: 28 90% 60%;
   }
 }
 

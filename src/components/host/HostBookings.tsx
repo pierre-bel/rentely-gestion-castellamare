@@ -44,7 +44,7 @@ interface Booking {
   nights: number;
   guests: number;
   host_payout_gross: number;
-  status: "confirmed" | "pending_payment" | "cancelled" | "completed" | "cancelled_guest" | "cancelled_host" | "expired";
+  status: "confirmed" | "pending_payment" | "cancelled" | "completed" | "cancelled_guest" | "cancelled_host" | "expired" | "owner_blocked" | "pre_reservation";
   created_at: string;
 }
 
@@ -385,6 +385,8 @@ export default function HostBookings() {
       cancelled_guest: "Annulée (locataire)",
       cancelled_host: "Annulée (hôte)",
       expired: "Expirée",
+      owner_blocked: "Bloqué (perso)",
+      pre_reservation: "Pré-réservation",
     };
 
     const rows = bookings.map((b) => ({
@@ -523,6 +525,17 @@ export default function HostBookings() {
                 toast({ title: "Erreur", description: "Impossible de charger les détails.", variant: "destructive" });
               }
             })();
+          }}
+          onDeleteBooking={async (booking) => {
+            try {
+              const { error } = await supabase.from("bookings").delete().eq("id", booking.id);
+              if (error) throw error;
+              queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
+              queryClient.invalidateQueries({ queryKey: ["host-calendar-bookings"] });
+              toast({ title: "Supprimée", description: "La réservation a été supprimée." });
+            } catch (err: any) {
+              toast({ title: "Erreur", description: err.message, variant: "destructive" });
+            }
           }}
         />
       </CardContent>

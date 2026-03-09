@@ -55,6 +55,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
 
+  const [bookingType, setBookingType] = useState<"normal" | "owner_blocked" | "pre_reservation">("normal");
   const [selectedListingId, setSelectedListingId] = useState("");
   const [selectedTenantId, setSelectedTenantId] = useState("");
   const [checkinDate, setCheckinDate] = useState<Date>();
@@ -66,6 +67,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   const [newTenantDialogOpen, setNewTenantDialogOpen] = useState(false);
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [beachCabin, setBeachCabin] = useState(false);
+  const [blockName, setBlockName] = useState("");
 
   // Fetch host listings
   const { data: listings = [] } = useQuery({
@@ -260,6 +262,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   };
 
   const resetForm = () => {
+    setBookingType("normal");
     setSelectedListingId("");
     setSelectedTenantId("");
     setCheckinDate(undefined);
@@ -270,6 +273,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     setIgloohomeCode("");
     setScheduleItems([]);
     setBeachCabin(false);
+    setBlockName("");
   };
 
   const handleSave = async () => {
@@ -277,55 +281,86 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     setSaving(true);
 
     try {
-      const tenant = tenants.find((t) => t.id === selectedTenantId);
+      if (bookingType === "owner_blocked" || bookingType === "pre_reservation") {
+        // Simplified booking for blocked/pre-reservation
+        const noteParts = [];
+        if (blockName.trim()) noteParts.push(bookingType === "pre_reservation" ? `Pré-résa: ${blockName.trim()}` : `Blocage: ${blockName.trim()}`);
+        if (notes.trim()) noteParts.push(notes.trim());
 
-      const { data: bookingData, error } = await supabase.from("bookings").insert({
-        listing_id: selectedListingId,
-        guest_user_id: user.id,
-        checkin_date: format(checkinDate, "yyyy-MM-dd"),
-        checkout_date: format(checkoutDate, "yyyy-MM-dd"),
-        nights,
-        guests: 1,
-        subtotal: rentalNum,
-        cleaning_fee: cleaningNum,
-        total_price: totalNum,
-        host_payout_gross: totalNum,
-        host_payout_net: totalNum,
-        status: "confirmed",
-        currency: "EUR",
-        igloohome_code: igloohomeCode.replace(/\D/g, "") || null,
-        beach_cabin: beachCabin,
-        pricing_breakdown: {
-          rental_price: rentalNum,
-          tenant_id: selectedTenantId || undefined,
-        },
-        notes: [
-          tenant ? `Locataire: ${tenant.first_name} ${tenant.last_name || ""}`.trim() : null,
-          notes.trim() || null,
-        ].filter(Boolean).join(" | ") || null,
-      }).select("id").single();
+        const { error } = await supabase.from("bookings").insert({
+          listing_id: selectedListingId,
+          guest_user_id: user.id,
+          checkin_date: format(checkinDate, "yyyy-MM-dd"),
+          checkout_date: format(checkoutDate, "yyyy-MM-dd"),
+          nights,
+          guests: 1,
+          subtotal: 0,
+          cleaning_fee: 0,
+          total_price: 0,
+          host_payout_gross: 0,
+          host_payout_net: 0,
+          status: bookingType,
+          currency: "EUR",
+          notes: noteParts.join(" | ") || null,
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Insert payment schedule items
-      if (bookingData && scheduleItems.length > 0) {
-        const paymentItems = scheduleItems
-          .filter(s => s.label.trim() && s.amount > 0)
-          .map((s, i) => ({
-            booking_id: bookingData.id,
-            label: s.label,
-            amount: s.amount,
-            due_date: s.due_date || null,
-            sort_order: i,
-          }));
+        const label = bookingType === "owner_blocked" ? "Blocage" : "Pré-réservation";
+        toast({ title: `${label} créé(e)`, description: `${nights} nuit(s) bloquée(s) avec succès.` });
+      } else {
+        // Normal booking flow
+        const tenant = tenants.find((t) => t.id === selectedTenantId);
 
-        if (paymentItems.length > 0) {
-          const { error: pErr } = await supabase.from("booking_payment_items").insert(paymentItems);
-          if (pErr) throw pErr;
+        const { data: bookingData, error } = await supabase.from("bookings").insert({
+          listing_id: selectedListingId,
+          guest_user_id: user.id,
+          checkin_date: format(checkinDate, "yyyy-MM-dd"),
+          checkout_date: format(checkoutDate, "yyyy-MM-dd"),
+          nights,
+          guests: 1,
+          subtotal: rentalNum,
+          cleaning_fee: cleaningNum,
+          total_price: totalNum,
+          host_payout_gross: totalNum,
+          host_payout_net: totalNum,
+          status: "confirmed",
+          currency: "EUR",
+          igloohome_code: igloohomeCode.replace(/\D/g, "") || null,
+          beach_cabin: beachCabin,
+          pricing_breakdown: {
+            rental_price: rentalNum,
+            tenant_id: selectedTenantId || undefined,
+          },
+          notes: [
+            tenant ? `Locataire: ${tenant.first_name} ${tenant.last_name || ""}`.trim() : null,
+            notes.trim() || null,
+          ].filter(Boolean).join(" | ") || null,
+        }).select("id").single();
+
+        if (error) throw error;
+
+        // Insert payment schedule items
+        if (bookingData && scheduleItems.length > 0) {
+          const paymentItems = scheduleItems
+            .filter(s => s.label.trim() && s.amount > 0)
+            .map((s, i) => ({
+              booking_id: bookingData.id,
+              label: s.label,
+              amount: s.amount,
+              due_date: s.due_date || null,
+              sort_order: i,
+            }));
+
+          if (paymentItems.length > 0) {
+            const { error: pErr } = await supabase.from("booking_payment_items").insert(paymentItems);
+            if (pErr) throw pErr;
+          }
         }
+
+        toast({ title: "Réservation créée", description: `${nights} nuit(s) ajoutée(s) avec succès.` });
       }
 
-      toast({ title: "Réservation créée", description: `${nights} nuit(s) ajoutée(s) avec succès.` });
       queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
       queryClient.invalidateQueries({ queryKey: ["host-calendar-bookings"] });
       queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
@@ -343,9 +378,45 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nouvelle réservation manuelle</DialogTitle>
+            <DialogTitle>
+              {bookingType === "normal" ? "Nouvelle réservation manuelle" : 
+               bookingType === "owner_blocked" ? "Bloquer le calendrier" : "Pré-réservation"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Booking Type Selector */}
+            <div>
+              <Label>Type</Label>
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                <Button
+                  type="button"
+                  variant={bookingType === "normal" ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => setBookingType("normal")}
+                >
+                  Réservation
+                </Button>
+                <Button
+                  type="button"
+                  variant={bookingType === "owner_blocked" ? "default" : "outline"}
+                  size="sm"
+                  className={cn("text-xs", bookingType === "owner_blocked" && "bg-[hsl(var(--calendar-owner-blocked))] hover:bg-[hsl(var(--calendar-owner-blocked)/0.9)]")}
+                  onClick={() => setBookingType("owner_blocked")}
+                >
+                  Blocage perso
+                </Button>
+                <Button
+                  type="button"
+                  variant={bookingType === "pre_reservation" ? "default" : "outline"}
+                  size="sm"
+                  className={cn("text-xs", bookingType === "pre_reservation" && "bg-[hsl(var(--calendar-pre-reservation))] hover:bg-[hsl(var(--calendar-pre-reservation)/0.9)]")}
+                  onClick={() => setBookingType("pre_reservation")}
+                >
+                  Pré-réservation
+                </Button>
+              </div>
+            </div>
             {/* Listing */}
             <div>
               <Label>Bien *</Label>
@@ -361,33 +432,47 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
               </Select>
             </div>
 
-            {/* Tenant */}
-            <div>
-              <Label>Locataire</Label>
-              <div className="flex gap-2">
-                <Select value={selectedTenantId} onValueChange={setSelectedTenantId}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Choisir un locataire..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tenants.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.first_name} {t.last_name || ""} {t.email ? `(${t.email})` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setNewTenantDialogOpen(true)}
-                  title="Nouveau locataire"
-                >
-                  <UserPlus className="h-4 w-4" />
-                </Button>
+            {/* Tenant - normal only */}
+            {bookingType === "normal" && (
+              <div>
+                <Label>Locataire</Label>
+                <div className="flex gap-2">
+                  <Select value={selectedTenantId} onValueChange={setSelectedTenantId}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Choisir un locataire..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tenants.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.first_name} {t.last_name || ""} {t.email ? `(${t.email})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setNewTenantDialogOpen(true)}
+                    title="Nouveau locataire"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Name field for blocked/pre-reservation */}
+            {bookingType !== "normal" && (
+              <div>
+                <Label>{bookingType === "pre_reservation" ? "Nom du demandeur" : "Raison / Nom"}</Label>
+                <Input
+                  value={blockName}
+                  onChange={(e) => setBlockName(e.target.value)}
+                  placeholder={bookingType === "pre_reservation" ? "Ex: M. Dupont" : "Ex: Séjour personnel"}
+                />
+              </div>
+            )}
 
             {/* Dates */}
             <div className="grid grid-cols-2 gap-4">
@@ -444,108 +529,112 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
               <p className="text-sm text-muted-foreground">{nights} nuit(s)</p>
             )}
 
-            {/* Pricing section */}
-            <Separator />
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium">Tarification</p>
-              {pricingSuggested && nights > 0 && (
-                <Badge variant="secondary" className="text-xs">Calculé via tarifs hebdo</Badge>
-              )}
-            </div>
-
-            <div>
-              <Label>Prix de location (€)</Label>
-              <Input type="number" min="0" step="0.01" value={rentalPrice} onChange={(e) => setRentalPrice(e.target.value)} placeholder="0.00" />
-            </div>
-
-            <div>
-              <Label>Frais de ménage (€)</Label>
-              <Input type="number" min="0" step="0.01" value={cleaningFee} onChange={(e) => setCleaningFee(e.target.value)} placeholder="0.00" />
-            </div>
-
-            <div>
-              <Label>Prix total (€)</Label>
-              <Input type="number" value={totalNum.toFixed(2)} readOnly className="bg-muted" />
-            </div>
-
-            {/* Payment schedule */}
-            <Separator />
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">Échéances de paiement</p>
-            </div>
-
-            {scheduleItems.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                {defaultSchedules.length === 0
-                  ? "Configurez vos échéances par défaut dans l'onglet Paramètres."
-                  : "Les échéances seront pré-remplies une fois le total calculé."}
-              </p>
-            )}
-
-            {scheduleItems.map((item, idx) => {
-              const isLast = idx === scheduleItems.length - 1 && scheduleItems.length > 1;
-              return (
-                <div key={idx} className="flex gap-2 items-end">
-                  <div className="flex-1">
-                    <Label className="text-xs">Libellé</Label>
-                    <Input value={item.label} readOnly className="bg-muted" />
-                  </div>
-                  <div className="w-24">
-                    <Label className="text-xs">Montant</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={item.amount || ""}
-                      readOnly={isLast}
-                      className={isLast ? "bg-muted" : ""}
-                      onChange={e => updateScheduleItem(idx, "amount", parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-                  <div className="w-32">
-                    <Label className="text-xs">Échéance</Label>
-                    <Input type="date" value={item.due_date} onChange={e => updateScheduleItem(idx, "due_date", e.target.value)} />
-                  </div>
+            {/* Pricing section - normal only */}
+            {bookingType === "normal" && (
+              <>
+                <Separator />
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium">Tarification</p>
+                  {pricingSuggested && nights > 0 && (
+                    <Badge variant="secondary" className="text-xs">Calculé via tarifs hebdo</Badge>
+                  )}
                 </div>
-              );
-            })}
 
-            {/* Beach Cabin */}
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="beach-cabin"
-                checked={beachCabin}
-                onCheckedChange={(checked) => setBeachCabin(checked === true)}
-              />
-              <Label htmlFor="beach-cabin" className="text-sm font-normal cursor-pointer">
-                Cabine de plage incluse
-              </Label>
-              {checkinDate && checkoutDate && portalSettings && isBeachCabinPeriod(
-                checkinDate, checkoutDate,
-                portalSettings.beach_cabin_start_month, portalSettings.beach_cabin_start_day,
-                portalSettings.beach_cabin_end_month, portalSettings.beach_cabin_end_day
-              ) && (
-                <Badge variant="secondary" className="text-xs">Période cabine</Badge>
-              )}
-            </div>
+                <div>
+                  <Label>Prix de location (€)</Label>
+                  <Input type="number" min="0" step="0.01" value={rentalPrice} onChange={(e) => setRentalPrice(e.target.value)} placeholder="0.00" />
+                </div>
 
-            {/* Igloohome Code */}
-            <div>
-              <Label>Code clé Igloohome</Label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                value={igloohomeCode.replace(/\D/g, "").replace(/(\d{3})(?=\d)/g, "$1 ")}
-                onChange={(e) => setIgloohomeCode(e.target.value.replace(/\D/g, ""))}
-                placeholder="123 456 789"
-                maxLength={15}
-              />
-            </div>
+                <div>
+                  <Label>Frais de ménage (€)</Label>
+                  <Input type="number" min="0" step="0.01" value={cleaningFee} onChange={(e) => setCleaningFee(e.target.value)} placeholder="0.00" />
+                </div>
+
+                <div>
+                  <Label>Prix total (€)</Label>
+                  <Input type="number" value={totalNum.toFixed(2)} readOnly className="bg-muted" />
+                </div>
+
+                {/* Payment schedule */}
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Échéances de paiement</p>
+                </div>
+
+                {scheduleItems.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {defaultSchedules.length === 0
+                      ? "Configurez vos échéances par défaut dans l'onglet Paramètres."
+                      : "Les échéances seront pré-remplies une fois le total calculé."}
+                  </p>
+                )}
+
+                {scheduleItems.map((item, idx) => {
+                  const isLast = idx === scheduleItems.length - 1 && scheduleItems.length > 1;
+                  return (
+                    <div key={idx} className="flex gap-2 items-end">
+                      <div className="flex-1">
+                        <Label className="text-xs">Libellé</Label>
+                        <Input value={item.label} readOnly className="bg-muted" />
+                      </div>
+                      <div className="w-24">
+                        <Label className="text-xs">Montant</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.amount || ""}
+                          readOnly={isLast}
+                          className={isLast ? "bg-muted" : ""}
+                          onChange={e => updateScheduleItem(idx, "amount", parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="w-32">
+                        <Label className="text-xs">Échéance</Label>
+                        <Input type="date" value={item.due_date} onChange={e => updateScheduleItem(idx, "due_date", e.target.value)} />
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Beach Cabin */}
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="beach-cabin"
+                    checked={beachCabin}
+                    onCheckedChange={(checked) => setBeachCabin(checked === true)}
+                  />
+                  <Label htmlFor="beach-cabin" className="text-sm font-normal cursor-pointer">
+                    Cabine de plage incluse
+                  </Label>
+                  {checkinDate && checkoutDate && portalSettings && isBeachCabinPeriod(
+                    checkinDate, checkoutDate,
+                    portalSettings.beach_cabin_start_month, portalSettings.beach_cabin_start_day,
+                    portalSettings.beach_cabin_end_month, portalSettings.beach_cabin_end_day
+                  ) && (
+                    <Badge variant="secondary" className="text-xs">Période cabine</Badge>
+                  )}
+                </div>
+
+                {/* Igloohome Code */}
+                <div>
+                  <Label>Code clé Igloohome</Label>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    value={igloohomeCode.replace(/\D/g, "").replace(/(\d{3})(?=\d)/g, "$1 ")}
+                    onChange={(e) => setIgloohomeCode(e.target.value.replace(/\D/g, ""))}
+                    placeholder="123 456 789"
+                    maxLength={15}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Notes */}
             <div>
-              <Label>Notes</Label>
-              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes sur la réservation..." rows={2} />
+              <Label>{bookingType === "normal" ? "Notes" : "Remarque"}</Label>
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={bookingType === "normal" ? "Notes sur la réservation..." : "Remarque optionnelle..."} rows={2} />
             </div>
           </div>
           <DialogFooter>
@@ -553,8 +642,15 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
             <Button
               onClick={handleSave}
               disabled={saving || !selectedListingId || !checkinDate || !checkoutDate || nights <= 0}
+              className={cn(
+                bookingType === "owner_blocked" && "bg-[hsl(var(--calendar-owner-blocked))] hover:bg-[hsl(var(--calendar-owner-blocked)/0.9)]",
+                bookingType === "pre_reservation" && "bg-[hsl(var(--calendar-pre-reservation))] hover:bg-[hsl(var(--calendar-pre-reservation)/0.9)]"
+              )}
             >
-              {saving ? "Création..." : "Créer la réservation"}
+              {saving ? "Création..." : 
+               bookingType === "owner_blocked" ? "Bloquer" :
+               bookingType === "pre_reservation" ? "Pré-réserver" :
+               "Créer la réservation"}
             </Button>
           </DialogFooter>
         </DialogContent>

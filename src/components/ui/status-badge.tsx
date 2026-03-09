@@ -6,6 +6,7 @@ export type StatusValue =
   // Booking statuses
   | "confirmed" | "pending_payment" | "completed" 
   | "cancelled" | "cancelled_guest" | "cancelled_host" | "expired"
+  | "owner_blocked" | "pre_reservation"
   // Listing statuses
   | "approved" | "draft" | "pending" | "blocked" | "rejected"
   // User statuses
@@ -17,7 +18,7 @@ export type StatusValue =
   // Dispute statuses
   | "open" | "in_progress" | "on_hold" | "resolved" | "resolved_approved" | "resolved_declined" | "closed" | "escalated" | "pending";
 
-export type StatusVariant = "success" | "primary" | "warning" | "destructive" | "muted" | "outline";
+export type StatusVariant = "success" | "primary" | "warning" | "destructive" | "muted" | "outline" | "purple" | "orange";
 
 interface StatusBadgeProps {
   status: StatusValue;
@@ -61,6 +62,10 @@ const STATUS_CONFIG: Record<StatusValue, { variant: StatusVariant; label: string
   draft: { variant: "muted", label: "Brouillon" },
   closed: { variant: "muted", label: "Fermé" },
   
+  // Special booking states
+  owner_blocked: { variant: "purple", label: "Bloqué (perso)" },
+  pre_reservation: { variant: "orange", label: "Pré-réservation" },
+  
   // Types (for transactions)
   capture: { variant: "outline", label: "Encaissement" },
   refund: { variant: "outline", label: "Remboursement" },
@@ -73,6 +78,8 @@ const VARIANT_STYLES: Record<StatusVariant, string> = {
   destructive: "bg-destructive/10 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30",
   muted: "bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 hover:text-muted-foreground hover:border-muted-foreground/20",
   outline: "bg-transparent text-foreground border-border hover:bg-transparent hover:text-foreground hover:border-border",
+  purple: "bg-[hsl(var(--calendar-owner-blocked)/0.15)] text-[hsl(var(--calendar-owner-blocked))] border-[hsl(var(--calendar-owner-blocked)/0.3)] hover:bg-[hsl(var(--calendar-owner-blocked)/0.15)]",
+  orange: "bg-[hsl(var(--calendar-pre-reservation)/0.15)] text-[hsl(var(--calendar-pre-reservation))] border-[hsl(var(--calendar-pre-reservation)/0.3)] hover:bg-[hsl(var(--calendar-pre-reservation)/0.15)]",
 };
 
 export const StatusBadge = ({ status, className }: StatusBadgeProps) => {

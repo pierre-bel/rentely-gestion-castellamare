@@ -3687,6 +3687,8 @@ export type Database = {
         | "cancelled_host"
         | "completed"
         | "expired"
+        | "owner_blocked"
+        | "pre_reservation"
       cancellation_policy: "flexible" | "moderate" | "strict"
       dispute_category:
         | "refund_request"
@@ -3861,6 +3863,8 @@ export const Constants = {
         "cancelled_host",
         "completed",
         "expired",
+        "owner_blocked",
+        "pre_reservation",
       ],
       cancellation_policy: ["flexible", "moderate", "strict"],
       dispute_category: [
