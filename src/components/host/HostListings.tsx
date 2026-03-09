@@ -26,6 +26,7 @@ interface Listing {
 export default function HostListings() {
   const { user } = useAuth();
   const { isDemoMode, getListings } = useDemoData();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const [listings, setListings] = useState<Listing[]>([]);
