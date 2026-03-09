@@ -192,7 +192,7 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
                       <div className="flex items-center justify-center">
                         {(status === "checkin-only" || status === "checkout-only" || status === "turnaround") ? (
                           <div className={cn(
-                            "relative flex items-center justify-center h-10 w-10 rounded-full text-sm font-medium cursor-default select-none mx-auto overflow-hidden",
+                            "relative flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-full text-xs sm:text-sm font-medium cursor-default select-none mx-auto overflow-hidden",
                             !inMonth && "opacity-20",
                             today && "ring-2 ring-primary",
                           )}>
