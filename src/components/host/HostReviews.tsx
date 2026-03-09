@@ -101,6 +101,15 @@ const HostReviews = () => {
     return dist;
   }, [filtered]);
 
+  // Build criteria labels map from configured criteria
+  const criteriaLabels = useMemo(() => {
+    const map: Record<string, string> = {};
+    (criteriaList || DEFAULT_CRITERIA).forEach((c) => {
+      map[c.criterion_key] = c.label;
+    });
+    return map;
+  }, [criteriaList]);
+
   const handleRespond = async (response: string) => {
     if (!respondingReview) return;
     const { error } = await supabase
@@ -126,14 +135,6 @@ const HostReviews = () => {
     );
   }
 
-  // Build criteria labels map from configured criteria
-  const criteriaLabels = useMemo(() => {
-    const map: Record<string, string> = {};
-    (criteriaList || DEFAULT_CRITERIA).forEach((c) => {
-      map[c.criterion_key] = c.label;
-    });
-    return map;
-  }, [criteriaList]);
 
   return (
     <div className="space-y-6">
