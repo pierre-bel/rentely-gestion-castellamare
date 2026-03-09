@@ -443,7 +443,7 @@ export default function BookingPortal() {
                     iban={bankInfo.iban!}
                     bic={bankInfo.bic!}
                     amount={p.amount}
-                    reference={`REF-${data.booking_id.substring(0, 8).toUpperCase()}-${p.label.substring(0, 20)}`}
+                    reference={getPaymentReference(p.label)}
                   />
                 )}
               </div>
