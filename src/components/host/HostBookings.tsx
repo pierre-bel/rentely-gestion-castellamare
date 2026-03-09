@@ -488,6 +488,10 @@ export default function HostBookings() {
               <Download className="h-4 w-4 sm:mr-1.5" />
               <span className="hidden sm:inline">Exporter</span>
             </Button>
+            <Button variant="destructive" size="sm" onClick={() => setDeleteAllDialogOpen(true)} disabled={bookings.length === 0}>
+              <Trash2 className="h-4 w-4 sm:mr-1.5" />
+              <span className="hidden sm:inline">Tout supprimer</span>
+            </Button>
             <BookingsFiltersSheet
               statusFilter={statusFilter}
               minPrice={minPrice}
