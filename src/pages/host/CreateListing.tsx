@@ -80,7 +80,7 @@ export type ListingFormData = {
   availability_rules: AvailabilityRule[];
 }
 
-const STEPS = ["Adresse", "Type de bien", "Photos", "Équipements", "Règles", "Tarifs", "Disponibilité", "Récapitulatif"];
+const STEPS = ["Adresse", "Type de bien", "Pièces", "Photos", "Équipements", "Règles", "Tarifs", "Disponibilité", "Récapitulatif"];
 
 const CreateListing = () => {
   const { user } = useAuth();
