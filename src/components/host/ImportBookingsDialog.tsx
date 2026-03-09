@@ -315,49 +315,60 @@ export function ImportBookingsDialog({ open, onOpenChange }: Props) {
 
         if (bErr) throw bErr;
 
-        // Update deposit amount and mark payment items as paid if specified
+        // Create payment schedule items and handle paid status
         if (newBooking) {
           const isYes = (v: any) => v && ["oui", "yes", "true", "1", "o"].includes(String(v).toLowerCase().trim());
           const depositPaid = isYes(d.deposit_paid);
           const balancePaid = isYes(d.balance_paid);
-          const customDepositAmount = d.deposit_amount != null ? parseFloat(String(d.deposit_amount)) : null;
+          const now = new Date().toISOString();
 
-          const { data: payItems } = await supabase
-            .from("booking_payment_items")
-            .select("id, sort_order, amount, label")
-            .eq("booking_id", newBooking.id)
-            .order("sort_order");
-
-          // If a custom deposit amount is provided, update the first payment item (deposit) and recalculate the balance
-          if (customDepositAmount != null && !isNaN(customDepositAmount) && payItems && payItems.length >= 2) {
-            const balanceAmount = totalPrice - customDepositAmount;
-            const now = new Date().toISOString();
-            await supabase
-              .from("booking_payment_items")
-              .update({ amount: customDepositAmount, updated_at: now })
-              .eq("id", payItems[0].id);
-            await supabase
-              .from("booking_payment_items")
-              .update({ amount: Math.max(0, balanceAmount), updated_at: now })
-              .eq("id", payItems[1].id);
-          }
-
-          if ((depositPaid || balancePaid) && payItems && payItems.length > 0) {
-            const now = new Date().toISOString();
-            const idsToMark: string[] = [];
-            if (depositPaid && payItems[0]) idsToMark.push(payItems[0].id);
-            if (balancePaid && payItems.length > 1) {
-              payItems.slice(1).forEach(p => idsToMark.push(p.id));
-            } else if (balancePaid && payItems.length === 1) {
-              idsToMark.push(payItems[0].id);
+          // Parse deposit amount with locale awareness
+          let depositAmount: number;
+          if (d.deposit_amount != null && String(d.deposit_amount).trim() !== "") {
+            let raw = String(d.deposit_amount).trim().replace(/[€$£¥\s]/g, "");
+            const lastComma = raw.lastIndexOf(",");
+            const lastDot = raw.lastIndexOf(".");
+            if (lastComma > lastDot) {
+              raw = raw.replace(/\./g, "").replace(",", ".");
+            } else {
+              raw = raw.replace(/,/g, "");
             }
-            if (idsToMark.length > 0) {
-              await supabase
-                .from("booking_payment_items")
-                .update({ is_paid: true, paid_at: now, updated_at: now })
-                .in("id", idsToMark);
-            }
+            depositAmount = parseFloat(raw) || 0;
+          } else {
+            // Default: 30% rounded to nearest 10
+            depositAmount = Math.round((totalPrice * 0.3) / 10) * 10;
           }
+          const balanceAmount = Math.max(0, totalPrice - depositAmount);
+
+          // Calculate due dates
+          const bookingCreatedAt = importedCreatedAt || new Date();
+          const depositDueDate = format(addDays(bookingCreatedAt, 7), "yyyy-MM-dd");
+          const balanceDueDate = format(subWeeks(checkin, 6), "yyyy-MM-dd");
+
+          // Create payment items
+          const paymentItems = [
+            {
+              booking_id: newBooking.id,
+              label: "Acompte",
+              amount: depositAmount,
+              due_date: depositDueDate,
+              sort_order: 0,
+              is_paid: depositPaid,
+              paid_at: depositPaid ? now : null,
+            },
+            {
+              booking_id: newBooking.id,
+              label: "Solde",
+              amount: balanceAmount,
+              due_date: balanceDueDate,
+              sort_order: 1,
+              is_paid: balancePaid,
+              paid_at: balancePaid ? now : null,
+            },
+          ];
+
+          const { error: payErr } = await supabase.from("booking_payment_items").insert(paymentItems);
+          if (payErr) throw payErr;
         }
         success++;
       } catch (err: any) {
