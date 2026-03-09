@@ -29,6 +29,7 @@ import { BookingDetailDialog, type BookingDetailData } from "./BookingDetailDial
 import { ImportBookingsDialog } from "./ImportBookingsDialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload } from "lucide-react";
+import * as XLSX from "xlsx";
 
 interface Booking {
   id: string;
