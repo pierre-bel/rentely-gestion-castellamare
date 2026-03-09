@@ -186,6 +186,14 @@ const EditListing = () => {
             start_date,
             end_date,
             price
+          ),
+          listing_rooms(
+            id,
+            room_type,
+            name,
+            beds,
+            features,
+            sort_order
           )
         `)
         .eq("id", id)
