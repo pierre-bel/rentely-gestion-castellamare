@@ -123,6 +123,7 @@ const CreateListing = () => {
     base_price: 0,
     weekly_discount: 0,
     monthly_discount: 0,
+    rooms: [],
     availability_rules: [],
   });
 
