@@ -4,7 +4,7 @@ import { QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-interface PaymentQRCodeProps {
+export interface PaymentQRCodeProps {
   beneficiary: string;
   iban: string;
   bic: string;
@@ -13,8 +13,8 @@ interface PaymentQRCodeProps {
   currency?: string;
 }
 
-function buildEpcString({ beneficiary, iban, bic, amount, reference }: PaymentQRCodeProps): string {
-  // EPC069-12 standard
+export function buildEpcString({ beneficiary, iban, bic, amount, reference }: PaymentQRCodeProps): string {
+  // EPC069-12 standard — remittance info (unstructured, max 140 chars)
   const lines = [
     "BCD",           // Service Tag
     "002",           // Version
@@ -25,10 +25,16 @@ function buildEpcString({ beneficiary, iban, bic, amount, reference }: PaymentQR
     iban.replace(/\s/g, "").toUpperCase(),
     `EUR${amount.toFixed(2)}`,
     "",              // Purpose (empty)
-    reference.substring(0, 35),
-    "",              // Display text (empty)
+    "",              // Structured reference (empty)
+    reference.substring(0, 140), // Unstructured remittance info
   ];
   return lines.join("\n");
+}
+
+/** Generate a QR code as a base64 data URL (for embedding in emails/contracts) */
+export async function generateQRDataUrl(props: PaymentQRCodeProps): Promise<string> {
+  const epcString = buildEpcString(props);
+  return QRCode.toDataURL(epcString, { margin: 2, width: 200 });
 }
 
 export function PaymentQRCode(props: PaymentQRCodeProps) {
@@ -59,4 +65,17 @@ export function PaymentQRCode(props: PaymentQRCodeProps) {
       </PopoverContent>
     </Popover>
   );
+}
+
+/** Build the reference string from a template and booking data */
+export function buildTransferReference(
+  template: string,
+  vars: Record<string, string>
+): string {
+  let result = template;
+  for (const [key, value] of Object.entries(vars)) {
+    result = result.replaceAll(`{{${key}}}`, value || "");
+  }
+  // EPC unstructured remittance info max 140 chars
+  return result.substring(0, 140);
 }
