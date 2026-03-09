@@ -22,6 +22,8 @@ interface PortalBooking {
   id: string;
   checkin_date: string;
   checkout_date: string;
+  checkin_time: string | null;
+  checkout_time: string | null;
   nights: number;
   status: string;
   tenant_name: string;
@@ -216,10 +218,12 @@ export default function CleaningPortal() {
                     <Moon className="h-4 w-4 text-muted-foreground" />
                     <span>{selectedBooking.booking.nights} nuit{selectedBooking.booking.nights > 1 ? "s" : ""}</span>
                   </div>
-                  {selectedBooking.listing.checkin_from && (
+                  {(selectedBooking.booking.checkin_time || selectedBooking.listing.checkin_from) && (
                     <div className="flex items-center gap-2 text-sm">
                       <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>Arrivée dès {selectedBooking.listing.checkin_from?.slice(0, 5)} — Départ avant {selectedBooking.listing.checkout_until?.slice(0, 5)}</span>
+                      <span>
+                        Arrivée dès {(selectedBooking.booking.checkin_time || selectedBooking.listing.checkin_from)?.slice(0, 5)} — Départ avant {(selectedBooking.booking.checkout_time || selectedBooking.listing.checkout_until)?.slice(0, 5)}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -304,7 +308,10 @@ export default function CleaningPortal() {
                                   )}
                                   <p className="text-muted-foreground text-xs">
                                     {slot.outgoing.nights} nuit{slot.outgoing.nights > 1 ? "s" : ""}
-                                    {slot.listing.checkout_until && ` — départ ${slot.listing.checkout_until.slice(0, 5)}`}
+                                    {(() => {
+                                      const t = slot.outgoing.checkout_time?.slice(0, 5) || slot.listing.checkout_until?.slice(0, 5);
+                                      return t ? ` — départ ${t}` : "";
+                                    })()}
                                   </p>
                                 </div>
                                 <div>
@@ -317,7 +324,10 @@ export default function CleaningPortal() {
                                       )}
                                       <p className="text-muted-foreground text-xs capitalize">
                                         {format(parseISO(slot.incoming.checkin_date), "EEEE dd/MM", { locale: fr })}
-                                        {slot.listing.checkin_from && ` — arrivée ${slot.listing.checkin_from.slice(0, 5)}`}
+                                        {(() => {
+                                          const t = slot.incoming.checkin_time?.slice(0, 5) || slot.listing.checkin_from?.slice(0, 5);
+                                          return t ? ` — arrivée ${t}` : "";
+                                        })()}
                                       </p>
                                     </>
                                   ) : (

@@ -34,6 +34,8 @@ interface Listing {
   title: string;
   base_price: number;
   cleaning_fee: number | null;
+  checkin_from: string | null;
+  checkout_until: string | null;
 }
 
 interface Props {
@@ -68,6 +70,8 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [beachCabin, setBeachCabin] = useState(false);
   const [blockName, setBlockName] = useState("");
+  const [checkinTime, setCheckinTime] = useState("");
+  const [checkoutTime, setCheckoutTime] = useState("");
 
   // Fetch host listings
   const { data: listings = [] } = useQuery({
@@ -76,7 +80,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
       if (!user?.id) return [];
       const { data, error } = await supabase
         .from("listings")
-        .select("id, title, base_price, cleaning_fee")
+        .select("id, title, base_price, cleaning_fee, checkin_from, checkout_until")
         .eq("host_user_id", user.id)
         .order("title");
       if (error) throw error;
@@ -169,6 +173,15 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
       setBeachCabin(shouldCheck);
     }
   }, [checkinDate, checkoutDate, portalSettings]);
+
+  // Auto-fill check-in/check-out times from listing defaults
+  useEffect(() => {
+    const listing = listings.find((l) => l.id === selectedListingId);
+    if (listing) {
+      setCheckinTime(listing.checkin_from?.slice(0, 5) || "");
+      setCheckoutTime(listing.checkout_until?.slice(0, 5) || "");
+    }
+  }, [selectedListingId, listings]);
 
   // Auto-fill prices when listing or dates change
   useEffect(() => {
@@ -274,6 +287,8 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     setScheduleItems([]);
     setBeachCabin(false);
     setBlockName("");
+    setCheckinTime("");
+    setCheckoutTime("");
   };
 
   const handleSave = async () => {
@@ -292,6 +307,8 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
           guest_user_id: user.id,
           checkin_date: format(checkinDate, "yyyy-MM-dd"),
           checkout_date: format(checkoutDate, "yyyy-MM-dd"),
+          checkin_time: checkinTime || null,
+          checkout_time: checkoutTime || null,
           nights,
           guests: 1,
           subtotal: 0,
@@ -302,7 +319,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
           status: bookingType,
           currency: "EUR",
           notes: noteParts.join(" | ") || null,
-        });
+        } as any);
 
         if (error) throw error;
 
@@ -317,6 +334,8 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
           guest_user_id: user.id,
           checkin_date: format(checkinDate, "yyyy-MM-dd"),
           checkout_date: format(checkoutDate, "yyyy-MM-dd"),
+          checkin_time: checkinTime || null,
+          checkout_time: checkoutTime || null,
           nights,
           guests: 1,
           subtotal: rentalNum,
@@ -522,6 +541,18 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
                     />
                   </PopoverContent>
                 </Popover>
+              </div>
+            </div>
+
+            {/* Times */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Heure d'arrivée</Label>
+                <Input type="time" value={checkinTime} onChange={(e) => setCheckinTime(e.target.value)} />
+              </div>
+              <div>
+                <Label>Heure de départ</Label>
+                <Input type="time" value={checkoutTime} onChange={(e) => setCheckoutTime(e.target.value)} />
               </div>
             </div>
 

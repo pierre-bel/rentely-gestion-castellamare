@@ -95,6 +95,8 @@ export default function DashboardRecentBookings({ userId }: DashboardRecentBooki
         listing_title: (full.listings as any)?.title || booking.listing_title,
         checkin_date: full.checkin_date,
         checkout_date: full.checkout_date,
+        checkin_time: (full as any).checkin_time || null,
+        checkout_time: (full as any).checkout_time || null,
         nights: full.nights,
         guests: full.guests,
         total_price: full.total_price,

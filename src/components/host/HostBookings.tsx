@@ -549,13 +549,15 @@ export default function HostBookings() {
               try {
                 const { data, error } = await supabase
                   .from("bookings")
-                  .select("id, listing_id, checkin_date, checkout_date, nights, guests, total_price, cleaning_fee, notes, status, pricing_breakdown, access_token, beach_cabin")
+                   .select("id, listing_id, checkin_date, checkout_date, checkin_time, checkout_time, nights, guests, total_price, cleaning_fee, notes, status, pricing_breakdown, access_token, beach_cabin")
                   .eq("id", booking.id)
                   .maybeSingle();
                 if (error) throw error;
                 if (data) {
                   setBookingDetail({
                     ...data,
+                    checkin_time: (data as any).checkin_time || null,
+                    checkout_time: (data as any).checkout_time || null,
                     listing_title: booking.listing_title,
                     guest_name: booking.guest_name || "Locataire inconnu",
                     guest_email: booking.guest_email,

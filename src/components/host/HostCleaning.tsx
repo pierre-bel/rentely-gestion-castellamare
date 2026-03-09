@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   Copy, SprayCan, Calendar, Moon, Phone, User, ChevronLeft, ChevronRight,
-  Plus, Trash2, Settings2, UserCheck, Link2,
+  Plus, Trash2, Settings2, UserCheck, Link2, Clock,
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, differenceInCalendarDays, isWithinInterval, isBefore, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -30,13 +30,15 @@ interface Booking {
   listing_id: string;
   checkin_date: string;
   checkout_date: string;
+  checkin_time: string | null;
+  checkout_time: string | null;
   nights: number;
   notes: string | null;
   pricing_breakdown: any;
   status: string;
 }
 
-interface Listing { id: string; title: string; }
+interface Listing { id: string; title: string; checkin_from: string | null; checkout_until: string | null; }
 interface Tenant { id: string; first_name: string; last_name: string | null; phone: string | null; }
 interface CleaningStaff { id: string; name: string; phone: string | null; access_token: string; }
 interface StaffAssignment { id: string; cleaning_staff_id: string; listing_id: string; }
@@ -51,6 +53,9 @@ interface CleaningSlot {
   listingTitle: string;
   hoursAvailable: number | null;
   staffMember: CleaningStaff | null;
+  checkinTime: string | null;
+  checkoutTime: string | null;
+  nextCheckinTime: string | null;
 }
 
 // ── Component ────────────────────────────────────────
@@ -74,7 +79,7 @@ export function HostCleaning() {
         return (snapshot.listings || []).map((l: any) => ({ id: l.id, title: l.title })) as Listing[];
       }
       if (!user?.id) return [];
-      const { data, error } = await supabase.from("listings").select("id, title").eq("host_user_id", user.id).order("title");
+      const { data, error } = await supabase.from("listings").select("id, title, checkin_from, checkout_until").eq("host_user_id", user.id).order("title");
       if (error) throw error;
       return data as Listing[];
     },
@@ -102,7 +107,7 @@ export function HostCleaning() {
       const rangeEnd = format(addMonths(monthEnd, 1), "yyyy-MM-dd");
       const { data, error } = await supabase
         .from("bookings")
-        .select("id, listing_id, checkin_date, checkout_date, nights, notes, pricing_breakdown, status")
+        .select("id, listing_id, checkin_date, checkout_date, checkin_time, checkout_time, nights, notes, pricing_breakdown, status")
         .in("status", ["confirmed", "completed"])
         .gte("checkout_date", rangeStart)
         .lte("checkin_date", rangeEnd)
@@ -221,6 +226,9 @@ export function HostCleaning() {
           listingTitle: listing?.title || "Bien inconnu",
           hoursAvailable,
           staffMember: staffByListing.get(listingId) || null,
+          checkoutTime: (booking as any).checkout_time?.slice(0, 5) || listing?.checkout_until?.slice(0, 5) || null,
+          checkinTime: (booking as any).checkin_time?.slice(0, 5) || listing?.checkin_from?.slice(0, 5) || null,
+          nextCheckinTime: nextBooking ? ((nextBooking as any).checkin_time?.slice(0, 5) || listing?.checkin_from?.slice(0, 5) || null) : null,
         });
       }
     }
@@ -242,6 +250,7 @@ export function HostCleaning() {
       ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
       : extractTenantFromNotes(slot.checkoutBooking.notes);
     msg += `👤 Départ : ${tenantName || "Non renseigné"}`;
+    if (slot.checkoutTime) msg += ` — 🕐 ${slot.checkoutTime}`;
     if (slot.tenant?.phone) msg += ` — 📞 ${slot.tenant.phone}`;
     msg += "\n";
     msg += `   Séjour : ${format(parseISO(slot.checkoutBooking.checkin_date), "dd/MM")} → ${format(parseISO(slot.checkoutBooking.checkout_date), "dd/MM")} (${slot.checkoutBooking.nights} nuit${slot.checkoutBooking.nights > 1 ? "s" : ""})\n`;
@@ -252,6 +261,7 @@ export function HostCleaning() {
         : extractTenantFromNotes(slot.nextCheckinBooking.notes);
       const nextCheckin = format(parseISO(slot.nextCheckinBooking.checkin_date), "EEEE dd MMMM", { locale: fr });
       msg += `👤 Arrivée suivante : ${nextName || "Non renseigné"} — ${nextCheckin}`;
+      if (slot.nextCheckinTime) msg += ` — 🕐 ${slot.nextCheckinTime}`;
       if (slot.nextTenant?.phone) msg += ` — 📞 ${slot.nextTenant.phone}`;
       msg += "\n";
       if (slot.hoursAvailable !== null) {
@@ -307,6 +317,7 @@ export function HostCleaning() {
       ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
       : extractTenantFromNotes(slot.checkoutBooking.notes);
     msg += `   ↗ Départ : ${tenantName || "Non renseigné"}`;
+    if (slot.checkoutTime) msg += ` — 🕐 ${slot.checkoutTime}`;
     if (slot.tenant?.phone) msg += ` — 📞 ${slot.tenant.phone}`;
     msg += ` (${slot.checkoutBooking.nights} nuit${slot.checkoutBooking.nights > 1 ? "s" : ""})\n`;
 
@@ -316,6 +327,7 @@ export function HostCleaning() {
         : extractTenantFromNotes(slot.nextCheckinBooking.notes);
       const nextCheckin = format(parseISO(slot.nextCheckinBooking.checkin_date), "EEEE dd/MM", { locale: fr });
       msg += `   ↘ Arrivée : ${nextName || "Non renseigné"} — ${nextCheckin}`;
+      if (slot.nextCheckinTime) msg += ` — 🕐 ${slot.nextCheckinTime}`;
       if (slot.nextTenant?.phone) msg += ` — 📞 ${slot.nextTenant.phone}`;
       msg += "\n";
       if (slot.hoursAvailable !== null) {
@@ -558,6 +570,12 @@ export function HostCleaning() {
                                 <Moon className="h-3.5 w-3.5 flex-shrink-0 ml-1" />
                                 <span>{slot.checkoutBooking.nights} nuit{slot.checkoutBooking.nights > 1 ? "s" : ""}</span>
                               </div>
+                              {slot.checkoutTime && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
+                                  <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                                  <span>Départ à {slot.checkoutTime}</span>
+                                </div>
+                              )}
                             </div>
 
                             <Separator orientation="vertical" className="hidden lg:block h-auto self-stretch" />
@@ -581,6 +599,12 @@ export function HostCleaning() {
                                     <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
                                     <span className="capitalize">{format(parseISO(slot.nextCheckinBooking.checkin_date), "EEEE dd/MM", { locale: fr })}</span>
                                   </div>
+                                  {slot.nextCheckinTime && (
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
+                                      <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                                      <span>Arrivée à {slot.nextCheckinTime}</span>
+                                    </div>
+                                  )}
                                   {slot.hoursAvailable !== null && (
                                     <p className="text-xs text-muted-foreground mt-1">
                                       ⏱️ {Math.floor(slot.hoursAvailable / 24)} jour{Math.floor(slot.hoursAvailable / 24) > 1 ? "s" : ""} entre les deux

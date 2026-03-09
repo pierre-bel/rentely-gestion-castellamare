@@ -33,6 +33,8 @@ interface BookingToEdit {
   listing_title: string;
   checkin_date: string;
   checkout_date: string;
+  checkin_time: string | null;
+  checkout_time: string | null;
   nights: number;
   guests: number;
   total_price: number;
@@ -65,6 +67,8 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
   const [notes, setNotes] = useState("");
   const [selectedTenantId, setSelectedTenantId] = useState("");
   const [beachCabin, setBeachCabin] = useState(false);
+  const [checkinTime, setCheckinTime] = useState("");
+  const [checkoutTime, setCheckoutTime] = useState("");
 
   // Fetch tenants
   const { data: tenants = [] } = useQuery({
@@ -131,6 +135,8 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
       const parts = rawNotes.split(" | ").filter((p: string) => !p.startsWith("Locataire:") && !p.startsWith("Acompte:"));
       setNotes(parts.join(" | "));
       setBeachCabin(booking.beach_cabin || false);
+      setCheckinTime(booking.checkin_time?.slice(0, 5) || "");
+      setCheckoutTime(booking.checkout_time?.slice(0, 5) || "");
     }
   }, [booking, open, tenants]);
 
@@ -162,6 +168,8 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
       const { error } = await supabase.from("bookings").update({
         checkin_date: format(checkinDate, "yyyy-MM-dd"),
         checkout_date: format(checkoutDate, "yyyy-MM-dd"),
+        checkin_time: checkinTime || null,
+        checkout_time: checkoutTime || null,
         nights,
         guests: 1,
         subtotal: rentalNum,
@@ -279,9 +287,21 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
             </div>
           </div>
 
-          {nights > 0 && <p className="text-sm text-muted-foreground">{nights} nuit(s)</p>}
+            {nights > 0 && <p className="text-sm text-muted-foreground">{nights} nuit(s)</p>}
 
-          <Separator />
+            {/* Times */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Heure d'arrivée</Label>
+                <Input type="time" value={checkinTime} onChange={(e) => setCheckinTime(e.target.value)} />
+              </div>
+              <div>
+                <Label>Heure de départ</Label>
+                <Input type="time" value={checkoutTime} onChange={(e) => setCheckoutTime(e.target.value)} />
+              </div>
+            </div>
+
+            <Separator />
           <p className="text-sm font-medium">Tarification</p>
 
           <div>
