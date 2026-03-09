@@ -1732,6 +1732,9 @@ export type Database = {
       }
       portal_settings: {
         Row: {
+          bank_beneficiary_name: string | null
+          bank_bic: string | null
+          bank_iban: string | null
           beach_cabin_end_day: number
           beach_cabin_end_month: number
           beach_cabin_start_day: number
@@ -1758,6 +1761,9 @@ export type Database = {
           welcome_message: string | null
         }
         Insert: {
+          bank_beneficiary_name?: string | null
+          bank_bic?: string | null
+          bank_iban?: string | null
           beach_cabin_end_day?: number
           beach_cabin_end_month?: number
           beach_cabin_start_day?: number
@@ -1784,6 +1790,9 @@ export type Database = {
           welcome_message?: string | null
         }
         Update: {
+          bank_beneficiary_name?: string | null
+          bank_bic?: string | null
+          bank_iban?: string | null
           beach_cabin_end_day?: number
           beach_cabin_end_month?: number
           beach_cabin_start_day?: number
@@ -2521,6 +2530,9 @@ export type Database = {
       }
       public_portal_settings: {
         Row: {
+          bank_beneficiary_name: string | null
+          bank_bic: string | null
+          bank_iban: string | null
           contact_email: string | null
           contact_facebook_url: string | null
           contact_phone: string | null
@@ -2540,6 +2552,9 @@ export type Database = {
           welcome_message: string | null
         }
         Insert: {
+          bank_beneficiary_name?: string | null
+          bank_bic?: string | null
+          bank_iban?: string | null
           contact_email?: string | null
           contact_facebook_url?: string | null
           contact_phone?: string | null
@@ -2559,6 +2574,9 @@ export type Database = {
           welcome_message?: string | null
         }
         Update: {
+          bank_beneficiary_name?: string | null
+          bank_bic?: string | null
+          bank_iban?: string | null
           contact_email?: string | null
           contact_facebook_url?: string | null
           contact_phone?: string | null

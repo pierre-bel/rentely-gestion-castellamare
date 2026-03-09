@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { StatusBadge, type StatusValue } from "@/components/ui/status-badge";
 import { Badge } from "@/components/ui/badge";
 import PortalReviewForm from "@/components/portal/PortalReviewForm";
+import { PaymentQRCode } from "@/components/portal/PaymentQRCode";
 
 const formatPrice = (price: number, currency = "EUR") =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(price);
@@ -389,6 +390,13 @@ export default function BookingPortal() {
     );
   };
 
+  const bankInfo = {
+    beneficiary: (settings as any).bank_beneficiary_name as string | null,
+    iban: (settings as any).bank_iban as string | null,
+    bic: (settings as any).bank_bic as string | null,
+  };
+  const hasBankInfo = !!(bankInfo.beneficiary && bankInfo.iban && bankInfo.bic);
+
   const renderPaymentSchedule = () => {
     if (!settings.show_payment_schedule || payments.length === 0) return null;
     return (
@@ -412,9 +420,20 @@ export default function BookingPortal() {
                   )}
                 </div>
               </div>
-              <span className={p.is_paid ? "text-muted-foreground" : "font-medium"}>
-                {formatPrice(p.amount, data.currency || "EUR")}
-              </span>
+              <div className="flex items-center gap-1">
+                <span className={p.is_paid ? "text-muted-foreground" : "font-medium"}>
+                  {formatPrice(p.amount, data.currency || "EUR")}
+                </span>
+                {!p.is_paid && hasBankInfo && (
+                  <PaymentQRCode
+                    beneficiary={bankInfo.beneficiary!}
+                    iban={bankInfo.iban!}
+                    bic={bankInfo.bic!}
+                    amount={p.amount}
+                    reference={`REF-${data.booking_id.substring(0, 8).toUpperCase()}-${p.label.substring(0, 20)}`}
+                  />
+                )}
+              </div>
             </div>
           ))}
         </CardContent>
