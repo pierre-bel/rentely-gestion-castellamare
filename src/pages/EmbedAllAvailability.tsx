@@ -447,10 +447,47 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
 
           {/* Results */}
           {simulatorResults && (
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-3">
               <p className="text-xs text-muted-foreground">
                 {simulatorResults[0].nights} nuit{simulatorResults[0].nights > 1 ? "s" : ""} • {format(checkinDate!, "d MMM", { locale: fr })} → {format(checkoutDate!, "d MMM yyyy", { locale: fr })}
               </p>
+
+              {/* Message for non Saturday-to-Saturday */}
+              {simulatorMode === "holidays_only_saturday" && (
+                <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20">
+                  <Info className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
+                    En période de vacances scolaires, la location est uniquement du <strong>samedi au samedi</strong>. Ajustez vos dates pour voir le tarif.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {simulatorMode === "contact_required" && (
+                <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950/20">
+                  <Info className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
+                    <p>Hors vacances scolaires, les réservations hors samedi-samedi sont possibles sur demande. Contactez-nous :</p>
+                    {(hostContact?.contact_email || hostContact?.contact_phone) && (
+                      <div className="flex flex-wrap gap-3 mt-2">
+                        {hostContact.contact_email && (
+                          <a href={`mailto:${hostContact.contact_email}`} className="inline-flex items-center gap-1.5 text-blue-700 dark:text-blue-300 hover:underline font-medium">
+                            <Mail className="h-3.5 w-3.5" />
+                            {hostContact.contact_email}
+                          </a>
+                        )}
+                        {hostContact.contact_phone && (
+                          <a href={`tel:${hostContact.contact_phone}`} className="inline-flex items-center gap-1.5 text-blue-700 dark:text-blue-300 hover:underline font-medium">
+                            <Phone className="h-3.5 w-3.5" />
+                            {hostContact.contact_phone}
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Availability results (always shown) */}
               <div className="grid gap-2">
                 {simulatorResults.map((result) => (
                   <div
@@ -477,15 +514,19 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
                     </div>
                     <div className="text-right flex-shrink-0 ml-3">
                       {result.isAvailable ? (
-                        result.price ? (
-                          <div>
-                            <p className="font-bold text-success">{formatPrice(result.price)}</p>
-                            <p className="text-[10px] text-muted-foreground">
-                              ~{formatPrice(result.price / result.nights)}/nuit
-                            </p>
-                          </div>
+                        simulatorMode === "price" ? (
+                          result.price ? (
+                            <div>
+                              <p className="font-bold text-success">{formatPrice(result.price)}</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                ~{formatPrice(result.price / result.nights)}/nuit
+                              </p>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Prix sur demande</span>
+                          )
                         ) : (
-                          <span className="text-xs text-muted-foreground">Prix sur demande</span>
+                          <span className="text-xs text-success font-medium">Disponible</span>
                         )
                       ) : (
                         <span className="text-xs text-destructive font-medium">Indisponible</span>
