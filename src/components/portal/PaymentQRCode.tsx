@@ -74,7 +74,7 @@ export function buildTransferReference(
 ): string {
   let result = template;
   for (const [key, value] of Object.entries(vars)) {
-    result = result.replaceAll(`{{${key}}}`, value || "");
+    result = result.split(`{{${key}}}`).join(value || "");
   }
   // EPC unstructured remittance info max 140 chars
   return result.substring(0, 140);
