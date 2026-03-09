@@ -599,7 +599,7 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-primary" />
-          <span className="text-muted-foreground">Réservé</span>
+          <span className="text-muted-foreground">Loué</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-[hsl(var(--calendar-blocked)/0.3)]" />
