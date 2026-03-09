@@ -247,6 +247,50 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
                 </div>
               </div>
             )}
+
+            {/* Review */}
+            {review && (
+              <>
+                <Separator />
+                <div className="flex items-start gap-3">
+                  <Sparkles className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
+                  <div className="w-full space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Avis du locataire</p>
+                      <div className="flex items-center gap-1.5">
+                        <Star className="h-4 w-4 fill-primary text-primary" />
+                        <span className="text-sm font-bold text-primary">{review.rating?.toFixed(1)}</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                      {[
+                        { label: "Propreté", value: review.rating_cleanliness },
+                        { label: "Emplacement", value: review.rating_location },
+                        { label: "Communication", value: review.rating_communication },
+                        { label: "Qualité/prix", value: review.rating_value },
+                        { label: "État du logement", value: review.rating_maintenance },
+                      ].map((c) => c.value != null && (
+                        <div key={c.label} className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">{c.label}</span>
+                          <div className="flex items-center gap-1">
+                            <Star className="h-3 w-3 fill-primary text-primary" />
+                            <span className="font-medium">{c.value}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {review.text && (
+                      <p className="text-sm text-foreground/90 italic border-l-2 border-primary/30 pl-3">
+                        "{review.text}"
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      {format(parseISO(review.created_at), "d MMMM yyyy", { locale: fr })}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="payments" className="mt-4">
