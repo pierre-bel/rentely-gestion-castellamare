@@ -618,6 +618,9 @@ export default function PortalSettings() {
             Aperçu
           </Button>
         </div>
+
+        {/* Team management */}
+        <HostTeamManagement />
       </div>
 
       {/* Custom section dialog */}
