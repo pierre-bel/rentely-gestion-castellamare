@@ -826,6 +826,51 @@ export type Database = {
         }
         Relationships: []
       }
+      inbox_emails: {
+        Row: {
+          attachments: Json | null
+          body_html: string | null
+          body_text: string | null
+          created_at: string
+          from_email: string
+          from_name: string | null
+          host_id: string
+          id: string
+          read: boolean
+          received_at: string
+          subject: string | null
+          to_email: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          body_html?: string | null
+          body_text?: string | null
+          created_at?: string
+          from_email: string
+          from_name?: string | null
+          host_id: string
+          id?: string
+          read?: boolean
+          received_at?: string
+          subject?: string | null
+          to_email?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          body_html?: string | null
+          body_text?: string | null
+          created_at?: string
+          from_email?: string
+          from_name?: string | null
+          host_id?: string
+          id?: string
+          read?: boolean
+          received_at?: string
+          subject?: string | null
+          to_email?: string | null
+        }
+        Relationships: []
+      }
       listing_availability: {
         Row: {
           created_at: string
