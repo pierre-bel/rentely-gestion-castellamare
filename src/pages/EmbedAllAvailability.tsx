@@ -130,7 +130,7 @@ export default function EmbedAllAvailability() {
         .gte("week_start_date", rangeStart)
         .lte("week_start_date", rangeEnd);
       if (error) throw error;
-      return (data || []) as WeeklyPricing[];
+      return (data || []) as unknown as WeeklyPricing[];
     },
     enabled: !!checkinDate && !!checkoutDate && hostListingIds.length > 0,
   });
