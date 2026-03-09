@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { HostPageHeader } from "@/components/host/HostPageHeader";
+import HostTeamManagement from "@/components/host/HostTeamManagement";
 import {
   DndContext,
   closestCenter,
