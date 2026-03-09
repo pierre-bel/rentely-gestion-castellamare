@@ -133,7 +133,7 @@ const HostLayout = () => {
       <div className="flex-1 flex flex-col">
         <DemoBanner />
         {!hideHeader && (
-          <div className="container mx-auto px-4 pt-8 lg:px-8">
+          <div className="container mx-auto px-3 pt-6 sm:px-4 sm:pt-8 lg:px-8">
             <HostPageHeader 
               title={pageTitle}
             />
