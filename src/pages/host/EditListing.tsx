@@ -91,6 +91,7 @@ const EditListing = () => {
     weekly_discount: 0,
     monthly_discount: 0,
     availability_rules: [],
+    rooms: [],
   });
 
   useEffect(() => {
