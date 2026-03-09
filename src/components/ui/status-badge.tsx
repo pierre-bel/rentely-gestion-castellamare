@@ -6,6 +6,7 @@ export type StatusValue =
   // Booking statuses
   | "confirmed" | "pending_payment" | "completed" 
   | "cancelled" | "cancelled_guest" | "cancelled_host" | "expired"
+  | "owner_blocked" | "pre_reservation"
   // Listing statuses
   | "approved" | "draft" | "pending" | "blocked" | "rejected"
   // User statuses
