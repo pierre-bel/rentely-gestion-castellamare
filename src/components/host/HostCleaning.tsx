@@ -67,22 +67,36 @@ export function HostCleaning() {
   // ── Data fetching ──────────────────────────────────
 
   const { data: listings = [] } = useQuery({
-    queryKey: ["host-listings-cleaning", user?.id],
+    queryKey: ["host-listings-cleaning", user?.id, isDemoMode],
     queryFn: async () => {
+      if (isDemoMode && demoUserId) {
+        const snapshot = demoStorage.getSnapshot(demoUserId);
+        return (snapshot.listings || []).map((l: any) => ({ id: l.id, title: l.title })) as Listing[];
+      }
       if (!user?.id) return [];
       const { data, error } = await supabase.from("listings").select("id, title").eq("host_user_id", user.id).order("title");
       if (error) throw error;
       return data as Listing[];
     },
-    enabled: !!user?.id,
+    enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
 
   const { data: bookings = [] } = useQuery({
-    queryKey: ["host-cleaning-bookings", user?.id, format(monthStart, "yyyy-MM-dd")],
+    queryKey: ["host-cleaning-bookings", user?.id, format(monthStart, "yyyy-MM-dd"), isDemoMode],
     queryFn: async () => {
+      if (isDemoMode && demoUserId) {
+        const snapshot = demoStorage.getSnapshot(demoUserId);
+        const rangeStart = format(subMonths(monthStart, 1), "yyyy-MM-dd");
+        const rangeEnd = format(addMonths(monthEnd, 1), "yyyy-MM-dd");
+        return (snapshot.hostBookings || []).filter((b: any) =>
+          ["confirmed", "completed"].includes(b.status) &&
+          b.checkout_date >= rangeStart &&
+          b.checkin_date <= rangeEnd
+        ) as Booking[];
+      }
       if (!user?.id) return [];
       const rangeStart = format(subMonths(monthStart, 1), "yyyy-MM-dd");
       const rangeEnd = format(addMonths(monthEnd, 1), "yyyy-MM-dd");
@@ -96,40 +110,52 @@ export function HostCleaning() {
       if (error) throw error;
       return data as Booking[];
     },
-    enabled: !!user?.id,
+    enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
   const { data: tenants = [] } = useQuery({
-    queryKey: ["host-tenants-cleaning", user?.id],
+    queryKey: ["host-tenants-cleaning", user?.id, isDemoMode],
     queryFn: async () => {
+      if (isDemoMode && demoUserId) {
+        const snapshot = demoStorage.getSnapshot(demoUserId);
+        return (snapshot.tenants || []).map((t: any) => ({ id: t.id, first_name: t.first_name, last_name: t.last_name, phone: t.phone })) as Tenant[];
+      }
       if (!user?.id) return [];
       const { data, error } = await supabase.from("tenants").select("id, first_name, last_name, phone").eq("host_user_id", user.id);
       if (error) throw error;
       return data as Tenant[];
     },
-    enabled: !!user?.id,
+    enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
   const { data: cleaningStaff = [] } = useQuery({
-    queryKey: ["cleaning-staff", user?.id],
+    queryKey: ["cleaning-staff", user?.id, isDemoMode],
     queryFn: async () => {
+      if (isDemoMode && demoUserId) {
+        const snapshot = demoStorage.getSnapshot(demoUserId);
+        return (snapshot.cleaningStaff || []) as CleaningStaff[];
+      }
       if (!user?.id) return [];
       const { data, error } = await supabase.from("cleaning_staff").select("id, name, phone, access_token").eq("host_user_id", user.id).order("name");
       if (error) throw error;
       return data as CleaningStaff[];
     },
-    enabled: !!user?.id,
+    enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
   const { data: staffAssignments = [] } = useQuery({
-    queryKey: ["cleaning-staff-listings", user?.id],
+    queryKey: ["cleaning-staff-listings", user?.id, isDemoMode],
     queryFn: async () => {
+      if (isDemoMode && demoUserId) {
+        const snapshot = demoStorage.getSnapshot(demoUserId);
+        return (snapshot.cleaningStaffListings || []) as StaffAssignment[];
+      }
       if (!user?.id) return [];
       const { data, error } = await supabase.from("cleaning_staff_listings").select("id, cleaning_staff_id, listing_id").eq("host_user_id", user.id);
       if (error) throw error;
       return data as StaffAssignment[];
     },
-    enabled: !!user?.id,
+    enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
   // ── Lookups ────────────────────────────────────────
