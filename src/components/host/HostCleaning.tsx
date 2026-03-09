@@ -250,6 +250,7 @@ export function HostCleaning() {
       ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
       : extractTenantFromNotes(slot.checkoutBooking.notes);
     msg += `👤 Départ : ${tenantName || "Non renseigné"}`;
+    if (slot.checkoutTime) msg += ` — 🕐 ${slot.checkoutTime}`;
     if (slot.tenant?.phone) msg += ` — 📞 ${slot.tenant.phone}`;
     msg += "\n";
     msg += `   Séjour : ${format(parseISO(slot.checkoutBooking.checkin_date), "dd/MM")} → ${format(parseISO(slot.checkoutBooking.checkout_date), "dd/MM")} (${slot.checkoutBooking.nights} nuit${slot.checkoutBooking.nights > 1 ? "s" : ""})\n`;
