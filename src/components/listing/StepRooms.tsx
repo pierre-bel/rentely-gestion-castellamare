@@ -29,8 +29,11 @@ interface StepRoomsProps {
 const ROOM_TYPES = [
   { value: "bedroom", label: "Chambre", icon: Bed },
   { value: "bathroom", label: "Salle de bain", icon: Bath },
-  { value: "living_room", label: "Salon", icon: Sofa },
+  { value: "wc", label: "WC", icon: Bath },
+  { value: "living_room", label: "Living", icon: Sofa },
   { value: "kitchen", label: "Cuisine", icon: ChefHat },
+  { value: "entrance_hall", label: "Hall d'entrée", icon: DoorOpen },
+  { value: "night_hall", label: "Hall de nuit", icon: DoorOpen },
   { value: "other", label: "Autre", icon: LayoutGrid },
 ];
 
