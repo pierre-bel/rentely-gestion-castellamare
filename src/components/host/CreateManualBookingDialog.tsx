@@ -281,55 +281,86 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     setSaving(true);
 
     try {
-      const tenant = tenants.find((t) => t.id === selectedTenantId);
+      if (bookingType === "owner_blocked" || bookingType === "pre_reservation") {
+        // Simplified booking for blocked/pre-reservation
+        const noteParts = [];
+        if (blockName.trim()) noteParts.push(bookingType === "pre_reservation" ? `Pré-résa: ${blockName.trim()}` : `Blocage: ${blockName.trim()}`);
+        if (notes.trim()) noteParts.push(notes.trim());
 
-      const { data: bookingData, error } = await supabase.from("bookings").insert({
-        listing_id: selectedListingId,
-        guest_user_id: user.id,
-        checkin_date: format(checkinDate, "yyyy-MM-dd"),
-        checkout_date: format(checkoutDate, "yyyy-MM-dd"),
-        nights,
-        guests: 1,
-        subtotal: rentalNum,
-        cleaning_fee: cleaningNum,
-        total_price: totalNum,
-        host_payout_gross: totalNum,
-        host_payout_net: totalNum,
-        status: "confirmed",
-        currency: "EUR",
-        igloohome_code: igloohomeCode.replace(/\D/g, "") || null,
-        beach_cabin: beachCabin,
-        pricing_breakdown: {
-          rental_price: rentalNum,
-          tenant_id: selectedTenantId || undefined,
-        },
-        notes: [
-          tenant ? `Locataire: ${tenant.first_name} ${tenant.last_name || ""}`.trim() : null,
-          notes.trim() || null,
-        ].filter(Boolean).join(" | ") || null,
-      }).select("id").single();
+        const { error } = await supabase.from("bookings").insert({
+          listing_id: selectedListingId,
+          guest_user_id: user.id,
+          checkin_date: format(checkinDate, "yyyy-MM-dd"),
+          checkout_date: format(checkoutDate, "yyyy-MM-dd"),
+          nights,
+          guests: 1,
+          subtotal: 0,
+          cleaning_fee: 0,
+          total_price: 0,
+          host_payout_gross: 0,
+          host_payout_net: 0,
+          status: bookingType,
+          currency: "EUR",
+          notes: noteParts.join(" | ") || null,
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Insert payment schedule items
-      if (bookingData && scheduleItems.length > 0) {
-        const paymentItems = scheduleItems
-          .filter(s => s.label.trim() && s.amount > 0)
-          .map((s, i) => ({
-            booking_id: bookingData.id,
-            label: s.label,
-            amount: s.amount,
-            due_date: s.due_date || null,
-            sort_order: i,
-          }));
+        const label = bookingType === "owner_blocked" ? "Blocage" : "Pré-réservation";
+        toast({ title: `${label} créé(e)`, description: `${nights} nuit(s) bloquée(s) avec succès.` });
+      } else {
+        // Normal booking flow
+        const tenant = tenants.find((t) => t.id === selectedTenantId);
 
-        if (paymentItems.length > 0) {
-          const { error: pErr } = await supabase.from("booking_payment_items").insert(paymentItems);
-          if (pErr) throw pErr;
+        const { data: bookingData, error } = await supabase.from("bookings").insert({
+          listing_id: selectedListingId,
+          guest_user_id: user.id,
+          checkin_date: format(checkinDate, "yyyy-MM-dd"),
+          checkout_date: format(checkoutDate, "yyyy-MM-dd"),
+          nights,
+          guests: 1,
+          subtotal: rentalNum,
+          cleaning_fee: cleaningNum,
+          total_price: totalNum,
+          host_payout_gross: totalNum,
+          host_payout_net: totalNum,
+          status: "confirmed",
+          currency: "EUR",
+          igloohome_code: igloohomeCode.replace(/\D/g, "") || null,
+          beach_cabin: beachCabin,
+          pricing_breakdown: {
+            rental_price: rentalNum,
+            tenant_id: selectedTenantId || undefined,
+          },
+          notes: [
+            tenant ? `Locataire: ${tenant.first_name} ${tenant.last_name || ""}`.trim() : null,
+            notes.trim() || null,
+          ].filter(Boolean).join(" | ") || null,
+        }).select("id").single();
+
+        if (error) throw error;
+
+        // Insert payment schedule items
+        if (bookingData && scheduleItems.length > 0) {
+          const paymentItems = scheduleItems
+            .filter(s => s.label.trim() && s.amount > 0)
+            .map((s, i) => ({
+              booking_id: bookingData.id,
+              label: s.label,
+              amount: s.amount,
+              due_date: s.due_date || null,
+              sort_order: i,
+            }));
+
+          if (paymentItems.length > 0) {
+            const { error: pErr } = await supabase.from("booking_payment_items").insert(paymentItems);
+            if (pErr) throw pErr;
+          }
         }
+
+        toast({ title: "Réservation créée", description: `${nights} nuit(s) ajoutée(s) avec succès.` });
       }
 
-      toast({ title: "Réservation créée", description: `${nights} nuit(s) ajoutée(s) avec succès.` });
       queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
       queryClient.invalidateQueries({ queryKey: ["host-calendar-bookings"] });
       queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
