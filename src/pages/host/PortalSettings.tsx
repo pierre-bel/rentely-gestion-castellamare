@@ -231,6 +231,15 @@ export default function PortalSettings() {
         setCustomSections(sectionsRes.data as CustomSection[]);
       }
 
+      if (holidaysRes.data) {
+        setSchoolHolidays((holidaysRes.data as any[]).map((h: any) => ({
+          id: h.id,
+          label: h.label,
+          start_date: h.start_date,
+          end_date: h.end_date,
+        })));
+      }
+
       setLoading(false);
     })();
   }, [user?.id]);
