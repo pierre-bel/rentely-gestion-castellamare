@@ -52,7 +52,7 @@ const HostReviews = lazy(() => import("./pages/host/Reviews"));
 const HostAvailability = lazy(() => import("./pages/host/Availability"));
 const HostPayouts = lazy(() => import("./pages/host/Payouts"));
 const EarningsReport = lazy(() => import("./pages/host/EarningsReport"));
-const HostStatistics = lazy(() => import("./pages/host/Statistics"));
+
 const HostContracts = lazy(() => import("./pages/host/Contracts"));
 const HostPricingPage = lazy(() => import("./pages/host/Pricing"));
 const HostCleaningPage = lazy(() => import("./pages/host/Cleaning"));
@@ -138,7 +138,7 @@ const App = () => (
                 <Route path="cleaning" element={<HostCleaningPage />} />
                 <Route path="payouts" element={<HostPayouts />} />
                 <Route path="earnings-report" element={<EarningsReport />} />
-                <Route path="statistics" element={<HostStatistics />} />
+                <Route path="statistics" element={<Navigate to="/host/earnings-report" replace />} />
                 <Route path="contracts" element={<HostContracts />} />
                 <Route path="inbox" element={<HostInbox />} />
                 <Route path="email-automations" element={<EmailAutomations />} />
