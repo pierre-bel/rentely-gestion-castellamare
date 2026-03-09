@@ -157,8 +157,92 @@ export function HostPaymentSettings() {
         </CardContent>
       </Card>
 
+      <BankCredentialsSettings />
       <BeachCabinPeriodSettings />
     </div>
+  );
+}
+
+function BankCredentialsSettings() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
+  const [beneficiary, setBeneficiary] = useState("");
+  const [iban, setIban] = useState("");
+  const [bic, setBic] = useState("");
+
+  const { data: settings } = useQuery({
+    queryKey: ["portal-settings-bank", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await selectOne(
+        "portal_settings", "host_user_id", user.id,
+        "bank_beneficiary_name, bank_iban, bank_bic"
+      );
+      if (error) throw new Error(error);
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  useEffect(() => {
+    if (settings) {
+      setBeneficiary(settings.bank_beneficiary_name || "");
+      setIban(settings.bank_iban || "");
+      setBic(settings.bank_bic || "");
+    }
+  }, [settings]);
+
+  const handleSave = async () => {
+    if (!user?.id) return;
+    setSaving(true);
+    const success = await withToast(
+      () => upsertByOwner("portal_settings", "host_user_id", user.id, {
+        bank_beneficiary_name: beneficiary.trim() || null,
+        bank_iban: iban.replace(/\s/g, "").toUpperCase() || null,
+        bank_bic: bic.replace(/\s/g, "").toUpperCase() || null,
+      }),
+      toast, "Coordonnées bancaires enregistrées"
+    );
+    if (success) queryClient.invalidateQueries({ queryKey: ["portal-settings-bank"] });
+    setSaving(false);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <CreditCard className="h-5 w-5 text-primary" />
+          <CardTitle>Coordonnées bancaires (QR SEPA)</CardTitle>
+        </div>
+        <CardDescription>
+          Ces informations seront utilisées pour générer un QR code de paiement SEPA sur le portail locataire. Le locataire scanne le QR avec son app bancaire et le virement est pré-rempli.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label className="text-xs">Nom du bénéficiaire</Label>
+          <Input value={beneficiary} onChange={e => setBeneficiary(e.target.value)} placeholder="Ex: Jean Dupont" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label className="text-xs">IBAN</Label>
+            <Input value={iban} onChange={e => setIban(e.target.value)} placeholder="FR76 1234 5678 9012 3456 7890 123" />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs">BIC / SWIFT</Label>
+            <Input value={bic} onChange={e => setBic(e.target.value)} placeholder="BNPAFRPP" />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Ces données ne sont jamais partagées directement — elles sont uniquement encodées dans le QR code affiché sur le portail.
+        </p>
+        <Button onClick={handleSave} disabled={saving} size="sm">
+          {saving ? "Enregistrement..." : "Enregistrer"}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
