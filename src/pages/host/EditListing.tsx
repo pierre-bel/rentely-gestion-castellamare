@@ -21,7 +21,7 @@ import StepAvailability from "@/components/listing/StepAvailability";
 import FeedbackBlock from "@/components/listing/FeedbackBlock";
 import type { ListingFormData } from "./CreateListing";
 
-const STEPS = ["Address", "Property Type", "Photos", "Amenities", "Rules", "Pricing", "Availability", "Review"];
+const STEPS = ["Address", "Property Type", "Rooms", "Photos", "Amenities", "Rules", "Pricing", "Availability", "Review"];
 
 // Map editing steps to admin feedback sections
 const STEP_TO_FEEDBACK_SECTION: Record<number, {
