@@ -174,6 +174,15 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     }
   }, [checkinDate, checkoutDate, portalSettings]);
 
+  // Auto-fill check-in/check-out times from listing defaults
+  useEffect(() => {
+    const listing = listings.find((l) => l.id === selectedListingId);
+    if (listing) {
+      setCheckinTime(listing.checkin_from?.slice(0, 5) || "");
+      setCheckoutTime(listing.checkout_until?.slice(0, 5) || "");
+    }
+  }, [selectedListingId, listings]);
+
   // Auto-fill prices when listing or dates change
   useEffect(() => {
     const listing = listings.find((l) => l.id === selectedListingId);
