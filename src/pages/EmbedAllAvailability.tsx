@@ -535,6 +535,14 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
                   </div>
                 ))}
               </div>
+
+              {/* Beta + cleaning fee notice */}
+              {simulatorMode === "price" && simulatorResults.some((r) => r.isAvailable && r.price) && (
+                <div className="text-[11px] text-muted-foreground space-y-0.5 border-t pt-2">
+                  <p>⚠️ <strong>Version bêta</strong> — Le tarif affiché est indicatif et peut contenir des erreurs.</p>
+                  <p>Le tarif ne comprend pas les frais de nettoyage (45 €).</p>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

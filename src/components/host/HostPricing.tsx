@@ -6,14 +6,18 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Save, Download, Upload, Trash2, Plus, FileSpreadsheet } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Save, Download, Upload, Trash2, Plus, FileSpreadsheet, CalendarDays } from "lucide-react";
 import { format, startOfWeek, addWeeks, parseISO, getISOWeek } from "date-fns";
 import { fr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import * as XLSX from "xlsx";
 
 interface WeeklyPricing {
@@ -40,6 +44,36 @@ export function HostPricing() {
   const [saving, setSaving] = useState(false);
   const [weeksToGenerate, setWeeksToGenerate] = useState(12);
   const [editedRows, setEditedRows] = useState<Record<string, Partial<WeeklyPricing>>>({});
+
+  // School holidays state (for optimistic UI after add/delete)
+  interface SchoolHoliday { id: string; label: string; start_date: string; end_date: string; }
+  const [holidayLabel, setHolidayLabel] = useState("");
+  const [holidayStart, setHolidayStart] = useState<Date | undefined>();
+  const [holidayEnd, setHolidayEnd] = useState<Date | undefined>();
+  const [holidayDialogOpen, setHolidayDialogOpen] = useState(false);
+  const [holidayStartOpen, setHolidayStartOpen] = useState(false);
+  const [holidayEndOpen, setHolidayEndOpen] = useState(false);
+
+  // Fetch school holidays
+  const { data: schoolHolidaysData = [] } = useQuery({
+    queryKey: ["host-school-holidays", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("host_school_holidays")
+        .select("*")
+        .eq("host_user_id", user.id)
+        .order("start_date");
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!user?.id,
+  });
+
+  const schoolHolidays: SchoolHoliday[] = useMemo(() =>
+    schoolHolidaysData.map((h: any) => ({ id: h.id, label: h.label, start_date: h.start_date, end_date: h.end_date })),
+    [schoolHolidaysData]
+  );
 
   // Fetch listings
   const { data: listings = [] } = useQuery({
@@ -324,6 +358,36 @@ export function HostPricing() {
     [user?.id, selectedListingIds, queryClient, toast]
   );
 
+  // School holidays CRUD
+  const handleAddHoliday = async () => {
+    if (!user?.id || !holidayLabel.trim() || !holidayStart || !holidayEnd) return;
+    const { data, error } = await supabase
+      .from("host_school_holidays")
+      .insert({
+        host_user_id: user.id,
+        label: holidayLabel.trim(),
+        start_date: format(holidayStart, "yyyy-MM-dd"),
+        end_date: format(holidayEnd, "yyyy-MM-dd"),
+      })
+      .select()
+      .single();
+    if (!error && data) {
+      setHolidayLabel("");
+      setHolidayStart(undefined);
+      setHolidayEnd(undefined);
+      setHolidayDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["host-school-holidays"] });
+      toast({ title: "Période ajoutée" });
+    } else {
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible d'ajouter la période." });
+    }
+  };
+
+  const handleDeleteHoliday = async (id: string) => {
+    await supabase.from("host_school_holidays").delete().eq("id", id);
+    queryClient.invalidateQueries({ queryKey: ["host-school-holidays"] });
+  };
+
   const hasEdits = Object.keys(editedRows).length > 0;
   const hasSelection = selectedListingIds.length > 0;
 
@@ -499,6 +563,127 @@ export function HostPricing() {
           </CardContent>
         </Card>
       )}
+
+      {/* School holidays */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-primary" />
+                Vacances scolaires
+              </CardTitle>
+              <CardDescription className="mt-1">Périodes pendant lesquelles la location est uniquement du samedi au samedi</CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => {
+                setHolidayLabel("");
+                setHolidayStart(undefined);
+                setHolidayEnd(undefined);
+                setHolidayDialogOpen(true);
+              }}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Ajouter
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {schoolHolidays.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Aucune période de vacances scolaires définie</p>
+          ) : (
+            <div className="space-y-2">
+              {schoolHolidays.map((h) => (
+                <div key={h.id} className="flex items-center justify-between py-2 px-3 rounded-lg border border-border bg-card">
+                  <div>
+                    <span className="text-sm font-medium">{h.label}</span>
+                    <p className="text-xs text-muted-foreground">
+                      {format(parseISO(h.start_date), "d MMM yyyy", { locale: fr })} → {format(parseISO(h.end_date), "d MMM yyyy", { locale: fr })}
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDeleteHoliday(h.id)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* School holiday dialog */}
+      <Dialog open={holidayDialogOpen} onOpenChange={setHolidayDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ajouter une période de vacances scolaires</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Nom de la période</Label>
+              <Input
+                placeholder="Ex: Été 2026, Toussaint 2026..."
+                value={holidayLabel}
+                onChange={(e) => setHolidayLabel(e.target.value)}
+                className="mt-1.5"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm mb-1.5 block">Début</Label>
+                <Popover open={holidayStartOpen} onOpenChange={setHolidayStartOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal h-9", !holidayStart && "text-muted-foreground")}>
+                      <CalendarDays className="mr-2 h-4 w-4" />
+                      {holidayStart ? format(holidayStart, "d MMM yyyy", { locale: fr }) : "Sélectionner"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={holidayStart}
+                      onSelect={(d) => { setHolidayStart(d); setHolidayStartOpen(false); }}
+                      initialFocus
+                      locale={fr}
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <Label className="text-sm mb-1.5 block">Fin</Label>
+                <Popover open={holidayEndOpen} onOpenChange={setHolidayEndOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal h-9", !holidayEnd && "text-muted-foreground")}>
+                      <CalendarDays className="mr-2 h-4 w-4" />
+                      {holidayEnd ? format(holidayEnd, "d MMM yyyy", { locale: fr }) : "Sélectionner"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={holidayEnd}
+                      onSelect={(d) => { setHolidayEnd(d); setHolidayEndOpen(false); }}
+                      disabled={(d) => holidayStart ? d < holidayStart : false}
+                      initialFocus
+                      locale={fr}
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setHolidayDialogOpen(false)}>Annuler</Button>
+            <Button onClick={handleAddHoliday} disabled={!holidayLabel.trim() || !holidayStart || !holidayEnd}>
+              Ajouter
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
