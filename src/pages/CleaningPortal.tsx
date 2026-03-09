@@ -308,7 +308,10 @@ export default function CleaningPortal() {
                                   )}
                                   <p className="text-muted-foreground text-xs">
                                     {slot.outgoing.nights} nuit{slot.outgoing.nights > 1 ? "s" : ""}
-                                    {slot.listing.checkout_until && ` — départ ${slot.listing.checkout_until.slice(0, 5)}`}
+                                    {(() => {
+                                      const t = slot.outgoing.checkout_time?.slice(0, 5) || slot.listing.checkout_until?.slice(0, 5);
+                                      return t ? ` — départ ${t}` : "";
+                                    })()}
                                   </p>
                                 </div>
                                 <div>
