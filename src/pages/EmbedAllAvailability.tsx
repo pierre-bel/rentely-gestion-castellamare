@@ -492,48 +492,77 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
               {/* Availability results (always shown) */}
               <div className="grid gap-2">
                 {simulatorResults.map((result) => (
-                  <div
-                    key={result.id}
-                    className={cn(
-                      "flex items-center justify-between p-3 rounded-lg border transition-all",
-                      result.isAvailable
-                        ? "bg-success/5 border-success/30"
-                        : "bg-destructive/5 border-destructive/20 opacity-60"
-                    )}
-                  >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      {result.isAvailable ? (
-                        <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                  <div key={result.id}>
+                    <div
+                      className={cn(
+                        "flex items-center justify-between p-3 rounded-lg border transition-all",
+                        result.isAvailable
+                          ? "bg-success/5 border-success/30"
+                          : "bg-destructive/5 border-destructive/20 opacity-60"
                       )}
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{result.title}</p>
-                        {result.city && (
-                          <p className="text-xs text-muted-foreground">{result.city}</p>
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {result.isAvailable ? (
+                          <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0" />
+                        ) : (
+                          <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{result.title}</p>
+                          {result.city && (
+                            <p className="text-xs text-muted-foreground">{result.city}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                        <div className="text-right">
+                          {result.isAvailable ? (
+                            simulatorMode === "price" ? (
+                              result.price ? (
+                                <div>
+                                  <p className="font-bold text-success">{formatPrice(result.price)}</p>
+                                  <p className="text-[10px] text-muted-foreground">
+                                    ~{formatPrice(result.price / result.nights)}/nuit
+                                  </p>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">Prix sur demande</span>
+                              )
+                            ) : (
+                              <span className="text-xs text-success font-medium">Disponible</span>
+                            )
+                          ) : (
+                            <span className="text-xs text-destructive font-medium">Indisponible</span>
+                          )}
+                        </div>
+                        {result.isAvailable && (
+                          <Button
+                            size="sm"
+                            variant={inquiryListingId === result.id ? "secondary" : "default"}
+                            className="h-7 text-xs gap-1"
+                            onClick={() => setInquiryListingId(inquiryListingId === result.id ? null : result.id)}
+                          >
+                            <Send className="h-3 w-3" />
+                            Demande
+                          </Button>
                         )}
                       </div>
                     </div>
-                    <div className="text-right flex-shrink-0 ml-3">
-                      {result.isAvailable ? (
-                        simulatorMode === "price" ? (
-                          result.price ? (
-                            <div>
-                              <p className="font-bold text-success">{formatPrice(result.price)}</p>
-                              <p className="text-[10px] text-muted-foreground">
-                                ~{formatPrice(result.price / result.nights)}/nuit
-                              </p>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">Prix sur demande</span>
-                          )
-                        ) : (
-                          <span className="text-xs text-success font-medium">Disponible</span>
-                        )
-                      ) : (
-                        <span className="text-xs text-destructive font-medium">Indisponible</span>
-                      )}
-                    </div>
+
+                    {/* Inquiry form */}
+                    {inquiryListingId === result.id && hostId && checkinDate && checkoutDate && (
+                      <div className="border border-t-0 rounded-b-lg p-3 bg-card">
+                        <BookingInquiryForm
+                          hostId={hostId}
+                          listingTitle={result.title}
+                          checkinDate={format(checkinDate, "d MMMM yyyy", { locale: fr })}
+                          checkoutDate={format(checkoutDate, "d MMMM yyyy", { locale: fr })}
+                          nights={result.nights}
+                          price={result.price}
+                          onClose={() => setInquiryListingId(null)}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
