@@ -4,7 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Card, CardContent } from "@/components/ui/card";
+import { ChevronLeft, ChevronRight, CalendarDays, Search, CheckCircle2, XCircle, Euro } from "lucide-react";
 import {
   format,
   startOfMonth,
@@ -18,14 +21,31 @@ import {
   isBefore,
   startOfDay,
   isSameMonth,
+  isWithinInterval,
+  differenceInDays,
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { calculatePricingFromWeeklyRates } from "@/lib/pricingUtils";
+
+interface WeeklyPricing {
+  listing_id: string;
+  week_start_date: string;
+  weekly_rate: number;
+  weekend_rate: number;
+  extra_night_weekend_rate: number;
+}
 
 export default function EmbedAllAvailability() {
   const { hostId } = useParams<{ hostId: string }>();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // Simulator state
+  const [checkinDate, setCheckinDate] = useState<Date | undefined>();
+  const [checkoutDate, setCheckoutDate] = useState<Date | undefined>();
+  const [checkinOpen, setCheckinOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const today = startOfDay(new Date());
   const currentMonthStart = startOfMonth(today);
@@ -40,7 +60,7 @@ export default function EmbedAllAvailability() {
       if (!hostId) return [];
       const { data, error } = await supabase
         .from("embed_host_listings" as any)
-        .select("id, title, city, base_price, bedrooms")
+        .select("id, title, city, base_price, bedrooms, cover_image")
         .eq("host_user_id", hostId)
         .order("title");
       if (error) throw error;
@@ -50,6 +70,7 @@ export default function EmbedAllAvailability() {
         city: string | null;
         base_price: number;
         bedrooms: number | null;
+        cover_image: string | null;
       }>;
     },
     enabled: !!hostId,
@@ -95,6 +116,25 @@ export default function EmbedAllAvailability() {
     enabled: hostListingIds.length > 0,
   });
 
+  // Fetch weekly pricing for simulator
+  const { data: weeklyPricing = [] } = useQuery({
+    queryKey: ["embed-weekly-pricing", hostListingIds, checkinDate, checkoutDate],
+    queryFn: async () => {
+      if (!checkinDate || !checkoutDate || hostListingIds.length === 0) return [];
+      const rangeStart = format(subMonths(checkinDate, 1), "yyyy-MM-dd");
+      const rangeEnd = format(addMonths(checkoutDate, 1), "yyyy-MM-dd");
+      const { data, error } = await supabase
+        .from("listing_weekly_pricing")
+        .select("listing_id, week_start_date, weekly_rate, weekend_rate, extra_night_weekend_rate")
+        .in("listing_id", hostListingIds)
+        .gte("week_start_date", rangeStart)
+        .lte("week_start_date", rangeEnd);
+      if (error) throw error;
+      return (data || []) as WeeklyPricing[];
+    },
+    enabled: !!checkinDate && !!checkoutDate && hostListingIds.length > 0,
+  });
+
   const days = useMemo(
     () => eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }),
     [currentMonth]
@@ -102,7 +142,7 @@ export default function EmbedAllAvailability() {
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const CELL_W = isMobile ? 28 : 36;
-  const LABEL_W = isMobile ? 90 : 130;
+  const LABEL_W = isMobile ? 140 : 220; // Increased width for full names
 
   const getBarStyle = (checkinStr: string, checkoutStr: string) => {
     const checkin = parseISO(checkinStr);
@@ -127,6 +167,74 @@ export default function EmbedAllAvailability() {
     return { left, width };
   };
 
+  // Simulator: check availability for a listing
+  const checkListingAvailability = (listingId: string): boolean => {
+    if (!checkinDate || !checkoutDate) return true;
+    
+    // Check bookings
+    for (const booking of bookedRanges) {
+      if (booking.listing_id !== listingId) continue;
+      const bCheckin = parseISO(booking.checkin_date!);
+      const bCheckout = parseISO(booking.checkout_date!);
+      // Overlap check
+      if (checkinDate < bCheckout && checkoutDate > bCheckin) {
+        return false;
+      }
+    }
+    
+    // Check blocked dates
+    for (const blocked of blockedDates) {
+      if (blocked.listing_id !== listingId) continue;
+      const bStart = parseISO(blocked.start_date!);
+      const bEnd = parseISO(blocked.end_date!);
+      if (checkinDate <= bEnd && checkoutDate > bStart) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
+  // Simulator: calculate price for a listing
+  const calculateListingPrice = (listingId: string, basePrice: number): number | null => {
+    if (!checkinDate || !checkoutDate) return null;
+    
+    const listingPricing = weeklyPricing.filter((p) => p.listing_id === listingId);
+    const nights = differenceInDays(checkoutDate, checkinDate);
+    
+    if (listingPricing.length === 0) {
+      // Fallback to base price
+      return basePrice * nights;
+    }
+    
+    const result = calculatePricingFromWeeklyRates(
+      checkinDate,
+      checkoutDate,
+      listingPricing,
+      basePrice * 7 // fallback weekly rate
+    );
+    
+    return result.total;
+  };
+
+  // Simulator results
+  const simulatorResults = useMemo(() => {
+    if (!checkinDate || !checkoutDate || !listings) return null;
+    
+    const nights = differenceInDays(checkoutDate, checkinDate);
+    if (nights <= 0) return null;
+    
+    return listings.map((listing) => ({
+      ...listing,
+      isAvailable: checkListingAvailability(listing.id),
+      price: calculateListingPrice(listing.id, listing.base_price),
+      nights,
+    }));
+  }, [checkinDate, checkoutDate, listings, bookedRanges, blockedDates, weeklyPricing]);
+
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 0 }).format(price);
+
   if (listingsLoading) {
     return (
       <div className="p-4">
@@ -144,10 +252,158 @@ export default function EmbedAllAvailability() {
   }
 
   return (
-    <div className="p-3 font-sans bg-background text-foreground max-w-5xl mx-auto">
+    <div className="p-3 font-sans bg-background text-foreground max-w-6xl mx-auto space-y-4">
+      {/* Simulator Section */}
+      <Card className="border-accent-cool/30 bg-gradient-to-r from-accent-cool/5 to-transparent">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Search className="h-4 w-4 text-accent-cool" />
+            <span className="font-semibold text-sm">Simulateur de disponibilité</span>
+          </div>
+          
+          <div className="flex flex-wrap items-end gap-3">
+            {/* Check-in date */}
+            <div className="flex-1 min-w-[140px]">
+              <label className="text-xs text-muted-foreground mb-1 block">Arrivée</label>
+              <Popover open={checkinOpen} onOpenChange={setCheckinOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal h-9",
+                      !checkinDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarDays className="mr-2 h-4 w-4" />
+                    {checkinDate ? format(checkinDate, "d MMM yyyy", { locale: fr }) : "Sélectionner"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={checkinDate}
+                    onSelect={(date) => {
+                      setCheckinDate(date);
+                      setCheckinOpen(false);
+                      if (date && checkoutDate && date >= checkoutDate) {
+                        setCheckoutDate(undefined);
+                      }
+                    }}
+                    disabled={(date) => isBefore(date, today)}
+                    initialFocus
+                    locale={fr}
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Check-out date */}
+            <div className="flex-1 min-w-[140px]">
+              <label className="text-xs text-muted-foreground mb-1 block">Départ</label>
+              <Popover open={checkoutOpen} onOpenChange={setCheckoutOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal h-9",
+                      !checkoutDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarDays className="mr-2 h-4 w-4" />
+                    {checkoutDate ? format(checkoutDate, "d MMM yyyy", { locale: fr }) : "Sélectionner"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={checkoutDate}
+                    onSelect={(date) => {
+                      setCheckoutDate(date);
+                      setCheckoutOpen(false);
+                    }}
+                    disabled={(date) => isBefore(date, checkinDate || today) || (checkinDate && date <= checkinDate)}
+                    initialFocus
+                    locale={fr}
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Clear button */}
+            {(checkinDate || checkoutDate) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 text-xs"
+                onClick={() => {
+                  setCheckinDate(undefined);
+                  setCheckoutDate(undefined);
+                }}
+              >
+                Effacer
+              </Button>
+            )}
+          </div>
+
+          {/* Results */}
+          {simulatorResults && (
+            <div className="mt-4 space-y-2">
+              <p className="text-xs text-muted-foreground">
+                {simulatorResults[0].nights} nuit{simulatorResults[0].nights > 1 ? "s" : ""} • {format(checkinDate!, "d MMM", { locale: fr })} → {format(checkoutDate!, "d MMM yyyy", { locale: fr })}
+              </p>
+              <div className="grid gap-2">
+                {simulatorResults.map((result) => (
+                  <div
+                    key={result.id}
+                    className={cn(
+                      "flex items-center justify-between p-3 rounded-lg border transition-all",
+                      result.isAvailable
+                        ? "bg-success/5 border-success/30"
+                        : "bg-destructive/5 border-destructive/20 opacity-60"
+                    )}
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {result.isAvailable ? (
+                        <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{result.title}</p>
+                        {result.city && (
+                          <p className="text-xs text-muted-foreground">{result.city}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0 ml-3">
+                      {result.isAvailable ? (
+                        result.price ? (
+                          <div>
+                            <p className="font-bold text-success">{formatPrice(result.price)}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              ~{formatPrice(result.price / result.nights)}/nuit
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Prix sur demande</span>
+                        )
+                      ) : (
+                        <span className="text-xs text-destructive font-medium">Indisponible</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Header + navigation */}
-      <div className="flex items-center justify-between mb-3">
-        <p className="font-semibold text-sm">Disponibilités</p>
+      <div className="flex items-center justify-between">
+        <p className="font-semibold text-sm">Calendrier des disponibilités</p>
         <div className="flex items-center gap-1.5">
           <Button
             variant="outline"
@@ -182,17 +438,26 @@ export default function EmbedAllAvailability() {
         <div className="flex">
           {/* Listing labels column (fixed) */}
           <div className="flex-shrink-0 border-r border-border bg-card z-10" style={{ width: LABEL_W }}>
-            <div className="h-9 border-b border-border flex items-center px-2">
-              <span className="text-[10px] font-semibold text-muted-foreground">Biens</span>
+            <div className="h-9 border-b border-border flex items-center px-3">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Appartements</span>
             </div>
             {listings.map((listing) => (
-              <div key={listing.id} className="h-12 border-b border-border flex flex-col justify-center px-2">
-                <span className="text-xs font-medium truncate" title={listing.title}>
-                  {listing.title}
-                </span>
-                {listing.city && (
-                  <span className="text-[9px] text-muted-foreground truncate">{listing.city}</span>
+              <div key={listing.id} className="h-14 border-b border-border flex items-center gap-2 px-3">
+                {listing.cover_image && (
+                  <img
+                    src={listing.cover_image}
+                    alt=""
+                    className="w-8 h-8 rounded object-cover flex-shrink-0"
+                  />
                 )}
+                <div className="min-w-0 flex-1">
+                  <span className="text-xs font-medium block leading-tight" title={listing.title}>
+                    {listing.title}
+                  </span>
+                  {listing.city && (
+                    <span className="text-[10px] text-muted-foreground block leading-tight">{listing.city}</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -232,7 +497,7 @@ export default function EmbedAllAvailability() {
                 const listingBlocked = blockedDates.filter((bd) => bd.listing_id === listing.id);
 
                 return (
-                  <div key={listing.id} className="relative h-12 border-b border-border">
+                  <div key={listing.id} className="relative h-14 border-b border-border">
                     {/* Background grid */}
                     <div className="absolute inset-0 flex">
                       {days.map((day) => {
@@ -259,7 +524,7 @@ export default function EmbedAllAvailability() {
                       return (
                         <div
                           key={`blocked-${idx}`}
-                          className="absolute top-1.5 bottom-1.5 rounded bg-[hsl(var(--calendar-blocked)/0.15)] border border-[hsl(var(--calendar-blocked)/0.3)]"
+                          className="absolute top-2 bottom-2 rounded bg-[hsl(var(--calendar-blocked)/0.15)] border border-[hsl(var(--calendar-blocked)/0.3)]"
                           style={{ left: left + 2, width }}
                         />
                       );
@@ -272,7 +537,7 @@ export default function EmbedAllAvailability() {
                       return (
                         <div
                           key={`booking-${idx}`}
-                          className="absolute top-2 bottom-2 rounded-md bg-primary text-primary-foreground shadow-sm flex items-center px-1.5 overflow-hidden"
+                          className="absolute top-2.5 bottom-2.5 rounded-md bg-primary text-primary-foreground shadow-sm flex items-center px-2 overflow-hidden"
                           style={{ left: left + 2, width }}
                         >
                           <span className="text-[10px] font-medium truncate leading-none whitespace-nowrap">
@@ -290,7 +555,7 @@ export default function EmbedAllAvailability() {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-center gap-6 mt-3 text-xs">
+      <div className="flex items-center justify-center gap-6 text-xs">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-card border border-border" />
           <span className="text-muted-foreground">Disponible</span>
