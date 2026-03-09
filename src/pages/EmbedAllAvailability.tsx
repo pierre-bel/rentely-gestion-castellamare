@@ -468,7 +468,8 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
                 <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950/20">
                   <Info className="h-4 w-4 text-blue-600" />
                   <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
-                    <p>Hors vacances scolaires, les réservations hors samedi-samedi sont possibles sur demande. Contactez-nous :</p>
+                    <p>Hors vacances scolaires, les réservations hors samedi-samedi sont possibles sur demande.</p>
+                    <p className="mt-1 text-xs">Utilisez le bouton <strong>"Demande"</strong> ci-dessous pour envoyer votre demande.</p>
                     {(hostContact?.contact_email || hostContact?.contact_phone) && (
                       <div className="flex flex-wrap gap-3 mt-2">
                         {hostContact.contact_email && (
