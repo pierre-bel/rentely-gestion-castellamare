@@ -394,8 +394,21 @@ export default function BookingPortal() {
     beneficiary: (settings as any).bank_beneficiary_name as string | null,
     iban: (settings as any).bank_iban as string | null,
     bic: (settings as any).bank_bic as string | null,
+    referenceTemplate: (settings as any).bank_transfer_reference_template as string | null,
   };
   const hasBankInfo = !!(bankInfo.beneficiary && bankInfo.iban && bankInfo.bic);
+
+  const getPaymentReference = (paymentLabel: string) => {
+    const template = bankInfo.referenceTemplate || "{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}";
+    // We don't have guest_last_name on the portal, use listing info + dates
+    return buildTransferReference(template, {
+      guest_last_name: "", // not available in portal context
+      guest_full_name: "",
+      listing_title: data.listing_title,
+      checkin_date: format(checkin, "dd/MM/yyyy"),
+      checkout_date: format(checkout, "dd/MM/yyyy"),
+    });
+  };
 
   const renderPaymentSchedule = () => {
     if (!settings.show_payment_schedule || payments.length === 0) return null;
