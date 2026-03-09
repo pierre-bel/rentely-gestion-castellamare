@@ -185,7 +185,356 @@ const hostListings = [
   },
 ];
 
-// ──── Profiles ────
+// ──── LISTING 5 & 6 ────
+
+const LISTING_5 = "demo-listing-0005-0005-000000000005";
+const LISTING_6 = "demo-listing-0006-0006-000000000006";
+
+const extraListings = [
+  {
+    id: LISTING_5,
+    title: "Mas Provençal avec Oliveraie",
+    description: "Authentique mas provençal entouré d'oliviers centenaires. Piscine, terrasse ombragée et vue sur les Alpilles.",
+    address: "Route des Baux",
+    city: "Saint-Rémy-de-Provence",
+    state: "Provence-Alpes-Côte d'Azur",
+    country: "France",
+    type: "villa",
+    status: "approved",
+    base_price: 195,
+    cleaning_fee: 70,
+    security_deposit: 450,
+    guests_max: 7,
+    bedrooms: 3,
+    beds: 4,
+    bathrooms: 2,
+    size_sqft: 160,
+    cover_image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80",
+    images: ["https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80", COVER_IMAGES[0]],
+    amenities: ["wifi", "pool", "parking", "kitchen", "washer", "garden"],
+    rating_avg: 4.8,
+    rating_count: 34,
+    host_user_id: HOST_ID,
+    min_nights: 4,
+    max_nights: 21,
+    currency: "EUR",
+    cancellation_policy_id: "00000000-0000-0000-0000-000000000001",
+    latitude: 43.7884,
+    longitude: 4.8312,
+    created_at: isoAgo(250),
+    updated_at: isoAgo(3),
+  },
+  {
+    id: LISTING_6,
+    title: "Studio Bord de Mer",
+    description: "Studio moderne avec balcon face à l'océan. Accès direct plage, idéal pour couple.",
+    address: "15 Boulevard de la Plage",
+    city: "Biarritz",
+    state: "Nouvelle-Aquitaine",
+    country: "France",
+    type: "apartment",
+    status: "approved",
+    base_price: 95,
+    cleaning_fee: 35,
+    security_deposit: 200,
+    guests_max: 2,
+    bedrooms: 1,
+    beds: 1,
+    bathrooms: 1,
+    size_sqft: 35,
+    cover_image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+    images: ["https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80"],
+    amenities: ["wifi", "air_conditioning", "ocean_view", "balcony"],
+    rating_avg: 4.6,
+    rating_count: 52,
+    host_user_id: HOST_ID,
+    min_nights: 2,
+    max_nights: 14,
+    currency: "EUR",
+    cancellation_policy_id: "00000000-0000-0000-0000-000000000001",
+    latitude: 43.4832,
+    longitude: -1.5586,
+    created_at: isoAgo(150),
+    updated_at: isoAgo(1),
+  },
+];
+
+// Merge all host listings
+const allHostListings = [...hostListings, ...extraListings];
+
+// ──── TENANTS ────
+
+const TENANT_1 = "demo-tenant-0001-0001-000000000001";
+const TENANT_2 = "demo-tenant-0002-0002-000000000002";
+const TENANT_3 = "demo-tenant-0003-0003-000000000003";
+const TENANT_4 = "demo-tenant-0004-0004-000000000004";
+const TENANT_5 = "demo-tenant-0005-0005-000000000005";
+const TENANT_6 = "demo-tenant-0006-0006-000000000006";
+const TENANT_7 = "demo-tenant-0007-0007-000000000007";
+const TENANT_8 = "demo-tenant-0008-0008-000000000008";
+
+const hostTenants = [
+  {
+    id: TENANT_1,
+    host_user_id: HOST_ID,
+    first_name: "Sophie",
+    last_name: "Durand",
+    email: "sophie.durand@example.com",
+    phone: "+33 6 12 45 78 90",
+    gender: "F",
+    street: "14 Rue de la Paix",
+    street_number: "14",
+    postal_code: "75002",
+    city: "Paris",
+    country: "France",
+    notes: "Cliente fidèle, préfère le calme",
+    created_at: isoAgo(200),
+    updated_at: isoAgo(10),
+  },
+  {
+    id: TENANT_2,
+    host_user_id: HOST_ID,
+    first_name: "Marc",
+    last_name: "Lefèvre",
+    email: "marc.lefevre@example.com",
+    phone: "+33 6 23 56 89 01",
+    gender: "H",
+    street: "5 Avenue des Champs-Élysées",
+    street_number: "5",
+    postal_code: "75008",
+    city: "Paris",
+    country: "France",
+    notes: null,
+    created_at: isoAgo(150),
+    updated_at: isoAgo(5),
+  },
+  {
+    id: TENANT_3,
+    host_user_id: HOST_ID,
+    first_name: "Camille",
+    last_name: "Bernard",
+    email: "camille.bernard@example.com",
+    phone: "+33 6 34 67 90 12",
+    gender: "F",
+    street: "22 Rue du Port",
+    street_number: "22",
+    postal_code: "64500",
+    city: "Saint-Jean-de-Luz",
+    country: "France",
+    notes: "Famille avec 2 enfants",
+    created_at: isoAgo(120),
+    updated_at: isoAgo(8),
+  },
+  {
+    id: TENANT_4,
+    host_user_id: HOST_ID,
+    first_name: "Thomas",
+    last_name: "Moreau",
+    email: "thomas.moreau@example.com",
+    phone: "+33 6 45 78 01 23",
+    gender: "H",
+    street: "8 Place Bellecour",
+    street_number: "8",
+    postal_code: "69002",
+    city: "Lyon",
+    country: "France",
+    notes: null,
+    created_at: isoAgo(100),
+    updated_at: isoAgo(15),
+  },
+  {
+    id: TENANT_5,
+    host_user_id: HOST_ID,
+    first_name: "Émilie",
+    last_name: "Petit",
+    email: "emilie.petit@example.com",
+    phone: "+33 6 56 89 12 34",
+    gender: "F",
+    street: "3 Rue des Lilas",
+    street_number: "3",
+    postal_code: "31000",
+    city: "Toulouse",
+    country: "France",
+    notes: "Allergie aux animaux",
+    created_at: isoAgo(90),
+    updated_at: isoAgo(20),
+  },
+  {
+    id: TENANT_6,
+    host_user_id: HOST_ID,
+    first_name: "Antoine",
+    last_name: "Roux",
+    email: "antoine.roux@example.com",
+    phone: "+33 6 67 90 23 45",
+    gender: "H",
+    street: "17 Boulevard Haussmann",
+    street_number: "17",
+    postal_code: "75009",
+    city: "Paris",
+    country: "France",
+    notes: "Voyage d'affaires fréquent",
+    created_at: isoAgo(80),
+    updated_at: isoAgo(3),
+  },
+  {
+    id: TENANT_7,
+    host_user_id: HOST_ID,
+    first_name: "Julie",
+    last_name: "Martin",
+    email: "julie.martin@example.com",
+    phone: "+33 6 78 01 34 56",
+    gender: "F",
+    street: "11 Rue Sainte-Catherine",
+    street_number: "11",
+    postal_code: "33000",
+    city: "Bordeaux",
+    country: "France",
+    notes: null,
+    created_at: isoAgo(60),
+    updated_at: isoAgo(12),
+  },
+  {
+    id: TENANT_8,
+    host_user_id: HOST_ID,
+    first_name: "Nicolas",
+    last_name: "Dubois",
+    email: "nicolas.dubois@example.com",
+    phone: "+33 6 89 12 45 67",
+    gender: "H",
+    street: "6 Cours Mirabeau",
+    street_number: "6",
+    postal_code: "13100",
+    city: "Aix-en-Provence",
+    country: "France",
+    notes: "Couple sans enfant, séjours longs",
+    created_at: isoAgo(45),
+    updated_at: isoAgo(2),
+  },
+];
+
+// ──── CLEANING STAFF ────
+
+const STAFF_1 = "demo-staff-0001-0001-000000000001";
+const STAFF_2 = "demo-staff-0002-0002-000000000002";
+const STAFF_3 = "demo-staff-0003-0003-000000000003";
+
+const hostCleaningStaff = [
+  {
+    id: STAFF_1,
+    host_user_id: HOST_ID,
+    name: "Maria Santos",
+    phone: "+33 6 11 22 33 44",
+    access_token: "demo-clean-token-1",
+    created_at: isoAgo(300),
+    updated_at: isoAgo(5),
+  },
+  {
+    id: STAFF_2,
+    host_user_id: HOST_ID,
+    name: "Fatima El Amrani",
+    phone: "+33 6 55 66 77 88",
+    access_token: "demo-clean-token-2",
+    created_at: isoAgo(200),
+    updated_at: isoAgo(3),
+  },
+  {
+    id: STAFF_3,
+    host_user_id: HOST_ID,
+    name: "Isabelle Dupont",
+    phone: "+33 6 99 00 11 22",
+    access_token: "demo-clean-token-3",
+    created_at: isoAgo(100),
+    updated_at: isoAgo(1),
+  },
+];
+
+const hostCleaningStaffListings = [
+  { id: "demo-csl-001", cleaning_staff_id: STAFF_1, listing_id: LISTING_1, host_user_id: HOST_ID, created_at: isoAgo(300) },
+  { id: "demo-csl-002", cleaning_staff_id: STAFF_1, listing_id: LISTING_5, host_user_id: HOST_ID, created_at: isoAgo(250) },
+  { id: "demo-csl-003", cleaning_staff_id: STAFF_2, listing_id: LISTING_2, host_user_id: HOST_ID, created_at: isoAgo(200) },
+  { id: "demo-csl-004", cleaning_staff_id: STAFF_2, listing_id: LISTING_3, host_user_id: HOST_ID, created_at: isoAgo(200) },
+  { id: "demo-csl-005", cleaning_staff_id: STAFF_3, listing_id: LISTING_4, host_user_id: HOST_ID, created_at: isoAgo(100) },
+  { id: "demo-csl-006", cleaning_staff_id: STAFF_3, listing_id: LISTING_6, host_user_id: HOST_ID, created_at: isoAgo(100) },
+];
+
+// ──── WEEKLY PRICING ────
+
+function generateWeeklyPricing(): any[] {
+  const rows: any[] = [];
+  const today = new Date();
+  // Start from 4 weeks ago
+  const startSat = startOfSaturday(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 28));
+  
+  const pricingConfigs: Record<string, { weekly: number; weekend: number; extra: number }> = {
+    [LISTING_1]: { weekly: 1540, weekend: 500, extra: 250 },
+    [LISTING_2]: { weekly: 1260, weekend: 420, extra: 210 },
+    [LISTING_3]: { weekly: 1050, weekend: 350, extra: 175 },
+    [LISTING_5]: { weekly: 1365, weekend: 450, extra: 225 },
+    [LISTING_6]: { weekly: 665, weekend: 220, extra: 110 },
+  };
+
+  for (const [listingId, config] of Object.entries(pricingConfigs)) {
+    for (let w = 0; w < 20; w++) {
+      const weekStart = new Date(startSat);
+      weekStart.setDate(weekStart.getDate() + w * 7);
+      const dateStr = weekStart.toISOString().split("T")[0];
+      
+      // Add seasonal variation: +20% in summer (weeks 8-16), +10% in school holidays
+      const weekIndex = w;
+      const seasonMultiplier = weekIndex >= 8 && weekIndex <= 16 ? 1.2 : 1.0;
+      
+      rows.push({
+        id: `demo-wp-${listingId.slice(-4)}-${w.toString().padStart(2, "0")}`,
+        listing_id: listingId,
+        host_user_id: HOST_ID,
+        week_start_date: dateStr,
+        weekly_rate: Math.round(config.weekly * seasonMultiplier),
+        weekend_rate: Math.round(config.weekend * seasonMultiplier),
+        extra_night_weekend_rate: Math.round(config.extra * seasonMultiplier),
+        created_at: isoAgo(30),
+        updated_at: isoAgo(1),
+      });
+    }
+  }
+  return rows;
+}
+
+function startOfSaturday(d: Date): Date {
+  const day = d.getDay();
+  const diff = (day >= 6 ? 0 : -(day + 1));
+  const sat = new Date(d);
+  sat.setDate(sat.getDate() + diff);
+  return sat;
+}
+
+// ──── SCHOOL HOLIDAYS ────
+
+const hostSchoolHolidays = [
+  {
+    id: "demo-holiday-001",
+    host_user_id: HOST_ID,
+    label: "Vacances de Pâques",
+    start_date: daysFromNow(30),
+    end_date: daysFromNow(44),
+    created_at: isoAgo(60),
+  },
+  {
+    id: "demo-holiday-002",
+    host_user_id: HOST_ID,
+    label: "Vacances d'été",
+    start_date: daysFromNow(80),
+    end_date: daysFromNow(140),
+    created_at: isoAgo(60),
+  },
+  {
+    id: "demo-holiday-003",
+    host_user_id: HOST_ID,
+    label: "Toussaint",
+    start_date: daysFromNow(200),
+    end_date: daysFromNow(214),
+    created_at: isoAgo(30),
+  },
+];
 
 const profiles: Record<string, any> = {
   [HOST_ID]: {
