@@ -73,6 +73,8 @@ export default function HostBookings() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [bookingDetail, setBookingDetail] = useState<BookingDetailData | null>(null);
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
