@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ClipboardList } from "lucide-react";
 import { BookingDetailDialog, type BookingDetailData } from "./BookingDetailDialog";
+import { EditManualBookingDialog } from "./EditManualBookingDialog";
 
 interface DashboardBooking {
   id: string;
@@ -49,6 +50,8 @@ const getInitials = (name: string | null) => {
 export default function DashboardRecentBookings({ userId }: DashboardRecentBookingsProps) {
   const [selectedBooking, setSelectedBooking] = useState<BookingDetailData | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [editBooking, setEditBooking] = useState<BookingDetailData | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["dashboard-recent-bookings", userId],
@@ -213,7 +216,16 @@ export default function DashboardRecentBookings({ userId }: DashboardRecentBooki
         open={detailOpen}
         onOpenChange={setDetailOpen}
         booking={selectedBooking}
-        onEdit={() => {}}
+        onEdit={(b) => {
+          setEditBooking(b);
+          setEditOpen(true);
+        }}
+      />
+
+      <EditManualBookingDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        booking={editBooking}
       />
     </>
   );

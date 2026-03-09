@@ -10,6 +10,7 @@ import { fr } from "date-fns/locale";
 import { CalendarClock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BookingDetailDialog, type BookingDetailData } from "./BookingDetailDialog";
+import { EditManualBookingDialog } from "./EditManualBookingDialog";
 
 interface UpcomingBooking {
   id: string;
@@ -60,6 +61,8 @@ export default function DashboardUpcomingBookings({ userId }: DashboardUpcomingB
   const [selectedBooking, setSelectedBooking] = useState<BookingDetailData | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [editBooking, setEditBooking] = useState<BookingDetailData | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["dashboard-upcoming-bookings", userId],
@@ -246,7 +249,16 @@ export default function DashboardUpcomingBookings({ userId }: DashboardUpcomingB
         open={detailOpen}
         onOpenChange={setDetailOpen}
         booking={selectedBooking}
-        onEdit={() => {}}
+        onEdit={(b) => {
+          setEditBooking(b);
+          setEditOpen(true);
+        }}
+      />
+
+      <EditManualBookingDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        booking={editBooking}
       />
     </>
   );
