@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { selectByOwner, selectOne, insertRow, deleteById, upsertByOwner, withToast } from "@/lib/supabase-helpers";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,13 +33,12 @@ export function HostPaymentSettings() {
     queryKey: ["host-payment-schedules", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from("host_payment_schedules")
-        .select("*")
-        .eq("host_user_id", user.id)
-        .order("sort_order");
-      if (error) throw error;
-      return data as PaymentScheduleTemplate[];
+      const { data, error } = await selectByOwner<PaymentScheduleTemplate>(
+        "host_payment_schedules", "host_user_id", user.id,
+        { order: "sort_order", ascending: true }
+      );
+      if (error) throw new Error(error);
+      return data ?? [];
     },
     enabled: !!user?.id,
   });
@@ -47,41 +46,29 @@ export function HostPaymentSettings() {
   const handleAdd = async () => {
     if (!user?.id || !newLabel.trim() || !newPercentage) return;
     setSaving(true);
-    try {
-      const { error } = await supabase.from("host_payment_schedules").insert({
-        host_user_id: user.id,
-        label: newLabel.trim(),
-        percentage: parseFloat(newPercentage),
-        due_type: newDueType,
-        due_days: parseInt(newDueDays) || 0,
-        sort_order: templates.length,
-      });
-      if (error) throw error;
+    const success = await withToast(
+      () => insertRow("host_payment_schedules", {
+        host_user_id: user.id, label: newLabel.trim(),
+        percentage: parseFloat(newPercentage), due_type: newDueType,
+        due_days: parseInt(newDueDays) || 0, sort_order: templates.length,
+      }),
+      toast, "Échéance ajoutée"
+    );
+    if (success) {
       queryClient.invalidateQueries({ queryKey: ["host-payment-schedules"] });
-      setNewLabel("");
-      setNewPercentage("");
-      setNewDueType("on_booking");
-      setNewDueDays("0");
-      toast({ title: "Échéance ajoutée" });
-    } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
+      setNewLabel(""); setNewPercentage(""); setNewDueType("on_booking"); setNewDueDays("0");
     }
+    setSaving(false);
   };
 
   const handleDelete = async (id: string) => {
     setSaving(true);
-    try {
-      const { error } = await supabase.from("host_payment_schedules").delete().eq("id", id);
-      if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["host-payment-schedules"] });
-      toast({ title: "Échéance supprimée" });
-    } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
+    const success = await withToast(
+      () => deleteById("host_payment_schedules", id),
+      toast, "Échéance supprimée"
+    );
+    if (success) queryClient.invalidateQueries({ queryKey: ["host-payment-schedules"] });
+    setSaving(false);
   };
 
   const dueTypeLabels: Record<string, string> = {
@@ -189,12 +176,11 @@ function BeachCabinPeriodSettings() {
     queryKey: ["portal-settings-beach", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("portal_settings")
-        .select("beach_cabin_start_month, beach_cabin_start_day, beach_cabin_end_month, beach_cabin_end_day")
-        .eq("host_user_id", user.id)
-        .maybeSingle();
-      if (error) throw error;
+      const { data, error } = await selectOne(
+        "portal_settings", "host_user_id", user.id,
+        "beach_cabin_start_month, beach_cabin_start_day, beach_cabin_end_month, beach_cabin_end_day"
+      );
+      if (error) throw new Error(error);
       return data;
     },
     enabled: !!user?.id,
@@ -219,41 +205,19 @@ function BeachCabinPeriodSettings() {
   const handleSave = async () => {
     if (!user?.id) return;
     setSaving(true);
-    try {
-      const updateData = {
-        beach_cabin_start_month: parseInt(startMonth),
-        beach_cabin_start_day: parseInt(startDay),
-        beach_cabin_end_month: parseInt(endMonth),
-        beach_cabin_end_day: parseInt(endDay),
-      };
+    const updateData = {
+      beach_cabin_start_month: parseInt(startMonth),
+      beach_cabin_start_day: parseInt(startDay),
+      beach_cabin_end_month: parseInt(endMonth),
+      beach_cabin_end_day: parseInt(endDay),
+    };
 
-      // Check if settings exist
-      const { data: existing } = await supabase
-        .from("portal_settings")
-        .select("id")
-        .eq("host_user_id", user.id)
-        .maybeSingle();
-
-      if (existing) {
-        const { error } = await supabase
-          .from("portal_settings")
-          .update(updateData)
-          .eq("host_user_id", user.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("portal_settings")
-          .insert({ host_user_id: user.id, ...updateData });
-        if (error) throw error;
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["portal-settings-beach"] });
-      toast({ title: "Période cabine de plage enregistrée" });
-    } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
+    const success = await withToast(
+      () => upsertByOwner("portal_settings", "host_user_id", user.id, updateData),
+      toast, "Période cabine de plage enregistrée"
+    );
+    if (success) queryClient.invalidateQueries({ queryKey: ["portal-settings-beach"] });
+    setSaving(false);
   };
 
   return (

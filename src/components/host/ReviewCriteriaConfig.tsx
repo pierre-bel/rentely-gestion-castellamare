@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { selectByOwner, replaceAllForOwner, withToast } from "@/lib/supabase-helpers";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,35 +41,24 @@ export function ReviewCriteriaConfig() {
 
   const loadCriteria = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("host_review_criteria")
-      .select("*")
-      .eq("host_user_id", user!.id)
-      .order("sort_order");
+    const { data, error } = await selectByOwner<Criterion>(
+      "host_review_criteria", "host_user_id", user!.id,
+      { order: "sort_order", ascending: true }
+    );
 
     if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({ title: "Erreur", description: error, variant: "destructive" });
       setLoading(false);
       return;
     }
 
     if (!data || data.length === 0) {
-      // Initialize with defaults
-      const defaults: Criterion[] = DEFAULT_CRITERIA.map((d, i) => ({
-        ...d,
-        is_enabled: true,
-        sort_order: i,
-      }));
-      setCriteria(defaults);
+      setCriteria(DEFAULT_CRITERIA.map((d, i) => ({ ...d, is_enabled: true, sort_order: i })));
     } else {
-      setCriteria(data.map((d: any) => ({
-        id: d.id,
-        criterion_key: d.criterion_key,
-        label: d.label,
-        description: d.description || "",
-        is_enabled: d.is_enabled,
-        is_default: d.is_default,
-        sort_order: d.sort_order,
+      setCriteria(data.map((d) => ({
+        id: d.id, criterion_key: d.criterion_key, label: d.label,
+        description: d.description || "", is_enabled: d.is_enabled,
+        is_default: d.is_default, sort_order: d.sort_order,
       })));
     }
     setLoading(false);
@@ -103,7 +92,6 @@ export function ReviewCriteriaConfig() {
   const handleSave = async () => {
     if (!user) return;
     
-    // Validate
     const enabledCriteria = criteria.filter((c) => c.is_enabled);
     if (enabledCriteria.some((c) => !c.label.trim())) {
       toast({ title: "Veuillez remplir tous les noms de critères actifs", variant: "destructive" });
@@ -111,35 +99,19 @@ export function ReviewCriteriaConfig() {
     }
 
     setSaving(true);
-    try {
-      // Delete all existing then re-insert
-      await supabase
-        .from("host_review_criteria")
-        .delete()
-        .eq("host_user_id", user.id);
+    const rows = criteria.map((c, i) => ({
+      host_user_id: user.id, criterion_key: c.criterion_key,
+      label: c.label, description: c.description,
+      is_enabled: c.is_enabled, is_default: c.is_default, sort_order: i,
+    }));
 
-      const rows = criteria.map((c, i) => ({
-        host_user_id: user.id,
-        criterion_key: c.criterion_key,
-        label: c.label,
-        description: c.description,
-        is_enabled: c.is_enabled,
-        is_default: c.is_default,
-        sort_order: i,
-      }));
-
-      const { error } = await supabase
-        .from("host_review_criteria")
-        .insert(rows as any);
-
-      if (error) throw error;
-      toast({ title: "Configuration des avis sauvegardée" });
-      await loadCriteria();
-    } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
+    const success = await withToast(
+      () => replaceAllForOwner("host_review_criteria", "host_user_id", user.id, rows),
+      toast,
+      "Configuration des avis sauvegardée"
+    );
+    if (success) await loadCriteria();
+    setSaving(false);
   };
 
   if (loading) {
