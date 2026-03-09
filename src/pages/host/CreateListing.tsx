@@ -73,6 +73,9 @@ export type ListingFormData = {
   weekly_discount: number;
   monthly_discount: number;
   
+  // Rooms
+  rooms: RoomData[];
+  
   // Availability
   availability_rules: AvailabilityRule[];
 }
