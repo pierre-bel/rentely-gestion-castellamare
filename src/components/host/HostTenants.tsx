@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Search, Edit, Trash2, Users } from "lucide-react";
@@ -60,6 +61,27 @@ export default function HostTenants() {
         .order("first_name");
       if (error) throw error;
       return data as Tenant[];
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fetch booking counts per tenant to determine new vs returning
+  const { data: bookingCounts = {} } = useQuery({
+    queryKey: ["host-tenant-booking-counts", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return {};
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("pricing_breakdown, status")
+        .in("status", ["confirmed", "completed", "pending_payment"]);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const b of data || []) {
+        const pb = b.pricing_breakdown as any;
+        const tid = pb?.tenant_id;
+        if (tid) counts[tid] = (counts[tid] || 0) + 1;
+      }
+      return counts;
     },
     enabled: !!user?.id,
   });
@@ -126,6 +148,7 @@ export default function HostTenants() {
               <TableHeader>
                 <TableRow className="bg-background hover:bg-background">
                   <TableHead className="font-semibold">Nom</TableHead>
+                  <TableHead className="font-semibold">Statut</TableHead>
                   <TableHead className="font-semibold">Email</TableHead>
                   <TableHead className="font-semibold">Téléphone</TableHead>
                   <TableHead className="font-semibold">Sexe</TableHead>
@@ -137,6 +160,13 @@ export default function HostTenants() {
                 {filtered.map((tenant, i) => (
                   <TableRow key={tenant.id} className={i % 2 === 0 ? "bg-muted/30" : ""}>
                     <TableCell className="font-medium">{tenant.first_name} {tenant.last_name}</TableCell>
+                    <TableCell>
+                      {(bookingCounts[tenant.id] || 0) >= 1 ? (
+                        <Badge className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/10 text-[11px]">Habitué</Badge>
+                      ) : (
+                        <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Nouveau</Badge>
+                      )}
+                    </TableCell>
                     <TableCell>{tenant.email || "—"}</TableCell>
                     <TableCell>{tenant.phone || "—"}</TableCell>
                     <TableCell>{tenant.gender === "H" ? "Homme" : tenant.gender === "F" ? "Femme" : "—"}</TableCell>
