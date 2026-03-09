@@ -249,7 +249,16 @@ export default function DashboardUpcomingBookings({ userId }: DashboardUpcomingB
         open={detailOpen}
         onOpenChange={setDetailOpen}
         booking={selectedBooking}
-        onEdit={() => {}}
+        onEdit={(b) => {
+          setEditBooking(b);
+          setEditOpen(true);
+        }}
+      />
+
+      <EditManualBookingDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        booking={editBooking}
       />
     </>
   );
