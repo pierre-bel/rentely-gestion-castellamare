@@ -33,13 +33,12 @@ export function HostPaymentSettings() {
     queryKey: ["host-payment-schedules", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from("host_payment_schedules")
-        .select("*")
-        .eq("host_user_id", user.id)
-        .order("sort_order");
-      if (error) throw error;
-      return data as PaymentScheduleTemplate[];
+      const { data, error } = await selectByOwner<PaymentScheduleTemplate>(
+        "host_payment_schedules", "host_user_id", user.id,
+        { order: "sort_order", ascending: true }
+      );
+      if (error) throw new Error(error);
+      return data ?? [];
     },
     enabled: !!user?.id,
   });
