@@ -168,6 +168,8 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
       const { error } = await supabase.from("bookings").update({
         checkin_date: format(checkinDate, "yyyy-MM-dd"),
         checkout_date: format(checkoutDate, "yyyy-MM-dd"),
+        checkin_time: checkinTime || null,
+        checkout_time: checkoutTime || null,
         nights,
         guests: 1,
         subtotal: rentalNum,
