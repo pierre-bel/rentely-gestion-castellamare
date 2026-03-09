@@ -90,13 +90,12 @@ export default function HostEmailAutomations() {
   const { data: automations = [], isLoading } = useQuery({
     queryKey: ["email-automations", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("email_automations")
-        .select("*")
-        .eq("host_user_id", user!.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as unknown as EmailAutomation[];
+      const { data, error } = await selectByOwner<EmailAutomation>(
+        "email_automations", "host_user_id", user!.id,
+        { order: "created_at", ascending: false }
+      );
+      if (error) throw new Error(error);
+      return data ?? [];
     },
     enabled: !!user?.id,
   });
