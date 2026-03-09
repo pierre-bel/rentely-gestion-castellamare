@@ -261,6 +261,7 @@ export function HostCleaning() {
         : extractTenantFromNotes(slot.nextCheckinBooking.notes);
       const nextCheckin = format(parseISO(slot.nextCheckinBooking.checkin_date), "EEEE dd MMMM", { locale: fr });
       msg += `👤 Arrivée suivante : ${nextName || "Non renseigné"} — ${nextCheckin}`;
+      if (slot.nextCheckinTime) msg += ` — 🕐 ${slot.nextCheckinTime}`;
       if (slot.nextTenant?.phone) msg += ` — 📞 ${slot.nextTenant.phone}`;
       msg += "\n";
       if (slot.hoursAvailable !== null) {
