@@ -317,6 +317,7 @@ export function HostCleaning() {
       ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
       : extractTenantFromNotes(slot.checkoutBooking.notes);
     msg += `   ↗ Départ : ${tenantName || "Non renseigné"}`;
+    if (slot.checkoutTime) msg += ` — 🕐 ${slot.checkoutTime}`;
     if (slot.tenant?.phone) msg += ` — 📞 ${slot.tenant.phone}`;
     msg += ` (${slot.checkoutBooking.nights} nuit${slot.checkoutBooking.nights > 1 ? "s" : ""})\n`;
 
