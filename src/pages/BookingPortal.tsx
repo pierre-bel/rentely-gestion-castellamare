@@ -565,14 +565,14 @@ export default function BookingPortal() {
       <PortalReviewForm
         key="review"
         bookingId={data.booking_id}
-        listingId="" // will be fetched from booking
-        guestUserId={""} // anonymous portal, will be resolved server-side
+        listingId=""
+        guestUserId=""
+        hostUserId={hostUserId || undefined}
         existingReview={existingReview}
         onReviewSubmitted={() => {
-          // Refresh review
           supabase
             .from("reviews")
-            .select("id, rating, text, rating_cleanliness, rating_location, rating_communication, rating_value, rating_maintenance")
+            .select("id, rating, text, rating_cleanliness, rating_location, rating_communication, rating_value, rating_maintenance, custom_ratings")
             .eq("booking_id", data.booking_id)
             .maybeSingle()
             .then(({ data: r }) => { if (r) setExistingReview(r); });
