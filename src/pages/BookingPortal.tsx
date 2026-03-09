@@ -321,8 +321,66 @@ export default function BookingPortal() {
     );
   };
 
+  const [rooms, setRooms] = useState<any[]>([]);
+
   const renderAmenities = () => {
     if (!settings.show_amenities) return null;
+
+    // If we have detailed rooms, show them instead of simple badges
+    if (rooms.length > 0) {
+      return (
+        <Card key="amenities">
+          <CardContent className="pt-5 space-y-4">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Le logement</p>
+            {/* Summary badges */}
+            <div className="flex flex-wrap gap-3">
+              {data.bedrooms != null && (
+                <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
+                  <DoorOpen className="h-3.5 w-3.5" /> {data.bedrooms} chambre{(data.bedrooms ?? 0) > 1 ? "s" : ""}
+                </Badge>
+              )}
+              {data.beds != null && (
+                <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
+                  <Bed className="h-3.5 w-3.5" /> {data.beds} lit{(data.beds ?? 0) > 1 ? "s" : ""}
+                </Badge>
+              )}
+              {data.bathrooms != null && (
+                <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
+                  <Bath className="h-3.5 w-3.5" /> {data.bathrooms} sdb
+                </Badge>
+              )}
+            </div>
+            {/* Room details */}
+            <div className="space-y-2">
+              {rooms.sort((a: any, b: any) => a.sort_order - b.sort_order).map((room: any) => {
+                const typeLabels: Record<string, string> = { bedroom: "Chambre", bathroom: "Salle de bain", living_room: "Salon", kitchen: "Cuisine", other: "Autre" };
+                const bedLabels: Record<string, string> = { simple_90: "Lit simple (90 cm)", double_140: "Lit double (140 cm)", queen_160: "Lit Queen (160 cm)", king_180: "Lit King (180 cm)", bunk: "Lit superposé", sofa_bed: "Canapé-lit" };
+                const label = room.name || typeLabels[room.room_type] || "Pièce";
+                const beds = room.beds || [];
+                const features = room.features || [];
+                return (
+                  <div key={room.id} className="flex items-start gap-2.5 py-2">
+                    <Bed className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium">{label}</p>
+                      {room.room_type === "bedroom" && beds.length > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {beds.map((b: any) => `${b.count}× ${bedLabels[b.type] || b.type}`).join(", ")}
+                        </p>
+                      )}
+                      {room.room_type === "bathroom" && features.length > 0 && (
+                        <p className="text-xs text-muted-foreground">{features.join(", ")}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
     return (
       <Card key="amenities">
         <CardContent className="pt-5">
@@ -330,12 +388,12 @@ export default function BookingPortal() {
           <div className="flex flex-wrap gap-3">
             {data.bedrooms != null && (
               <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
-                <DoorOpen className="h-3.5 w-3.5" /> {data.bedrooms} chambre{data.bedrooms > 1 ? "s" : ""}
+                <DoorOpen className="h-3.5 w-3.5" /> {data.bedrooms} chambre{(data.bedrooms ?? 0) > 1 ? "s" : ""}
               </Badge>
             )}
             {data.beds != null && (
               <Badge variant="secondary" className="gap-1.5 py-1.5 px-3">
-                <Bed className="h-3.5 w-3.5" /> {data.beds} lit{data.beds > 1 ? "s" : ""}
+                <Bed className="h-3.5 w-3.5" /> {data.beds} lit{(data.beds ?? 0) > 1 ? "s" : ""}
               </Badge>
             )}
             {data.bathrooms != null && (
