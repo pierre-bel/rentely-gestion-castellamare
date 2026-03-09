@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { updateById, selectWhereIn } from "@/lib/supabase-helpers";
 import { useNavigate } from "react-router-dom";
 import { useDemoData } from "@/hooks/useDemoData";
 import { MoreVertical } from "lucide-react";
@@ -99,11 +100,8 @@ const AdminDashboardRecentListings = () => {
       refetch();
       toast({ title: "Success", description: `Listing ${newStatus === "blocked" ? "blocked" : "unblocked"} successfully` });
     } else {
-      // REAL MODE: Update Supabase
-      const { error } = await supabase
-        .from("listings")
-        .update({ status: newStatus })
-        .eq("id", listingId);
+      // REAL MODE: Update via helper
+      const { error } = await updateById("listings", listingId, { status: newStatus });
 
       if (error) {
         toast({

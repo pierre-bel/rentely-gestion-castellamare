@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { selectByOwner } from "@/lib/supabase-helpers";
 import { useAuth } from "@/hooks/useAuth";
 import { useDemoData } from "@/hooks/useDemoData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,12 +41,11 @@ export default function HostListings() {
       setListings(demoListings);
       setLoading(false);
     } else {
-      // REAL MODE: Fetch from Supabase
-      const { data, error } = await supabase
-        .from("listings")
-        .select("id, title, status, base_price, city, cover_image, rating_avg, rating_count")
-        .eq("host_user_id", user.id)
-        .order("created_at", { ascending: false });
+      // REAL MODE: Fetch via helper
+      const { data, error } = await selectByOwner<Listing>(
+        "listings", "host_user_id", user.id,
+        { select: "id, title, status, base_price, city, cover_image, rating_avg, rating_count", order: "created_at", ascending: false }
+      );
 
       if (!error && data) {
         setListings(data);

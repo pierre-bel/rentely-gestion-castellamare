@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Pencil, Trash2, Send, Mail } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { selectByOwner, deleteById, updateById } from "@/lib/supabase-helpers";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -89,13 +90,12 @@ export default function HostEmailAutomations() {
   const { data: automations = [], isLoading } = useQuery({
     queryKey: ["email-automations", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("email_automations")
-        .select("*")
-        .eq("host_user_id", user!.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as unknown as EmailAutomation[];
+      const { data, error } = await selectByOwner<EmailAutomation>(
+        "email_automations", "host_user_id", user!.id,
+        { order: "created_at", ascending: false }
+      );
+      if (error) throw new Error(error);
+      return data ?? [];
     },
     enabled: !!user?.id,
   });
@@ -103,13 +103,12 @@ export default function HostEmailAutomations() {
   const { data: listings = [] } = useQuery({
     queryKey: ["host-listings-simple", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("listings")
-        .select("id, title")
-        .eq("host_user_id", user!.id)
-        .order("title");
-      if (error) throw error;
-      return data as Listing[];
+      const { data, error } = await selectByOwner<Listing>(
+        "listings", "host_user_id", user!.id,
+        { select: "id, title", order: "title", ascending: true }
+      );
+      if (error) throw new Error(error);
+      return data ?? [];
     },
     enabled: !!user?.id,
   });
@@ -156,8 +155,8 @@ export default function HostEmailAutomations() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("email_automations").delete().eq("id", id);
-      if (error) throw error;
+      const { error } = await deleteById("email_automations", id);
+      if (error) throw new Error(error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["email-automations"] });
@@ -167,11 +166,8 @@ export default function HostEmailAutomations() {
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
-      const { error } = await supabase
-        .from("email_automations")
-        .update({ is_enabled: enabled })
-        .eq("id", id);
-      if (error) throw error;
+      const { error } = await updateById("email_automations", id, { is_enabled: enabled });
+      if (error) throw new Error(error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["email-automations"] });
