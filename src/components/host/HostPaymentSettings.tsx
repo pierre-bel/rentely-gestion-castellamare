@@ -179,7 +179,7 @@ function BankCredentialsSettings() {
       if (!user?.id) return null;
       const { data, error } = await selectOne(
         "portal_settings", "host_user_id", user.id,
-        "bank_beneficiary_name, bank_iban, bank_bic"
+        "bank_beneficiary_name, bank_iban, bank_bic, bank_transfer_reference_template"
       );
       if (error) throw new Error(error);
       return data;
