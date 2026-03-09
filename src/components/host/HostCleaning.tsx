@@ -107,7 +107,7 @@ export function HostCleaning() {
       const rangeEnd = format(addMonths(monthEnd, 1), "yyyy-MM-dd");
       const { data, error } = await supabase
         .from("bookings")
-        .select("id, listing_id, checkin_date, checkout_date, nights, notes, pricing_breakdown, status")
+        .select("id, listing_id, checkin_date, checkout_date, checkin_time, checkout_time, nights, notes, pricing_breakdown, status")
         .in("status", ["confirmed", "completed"])
         .gte("checkout_date", rangeStart)
         .lte("checkin_date", rangeEnd)
