@@ -150,6 +150,10 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
         return cn(base, "bg-[hsl(var(--warning)/0.8)] text-white font-semibold");
       case "blocked":
         return cn(base, "bg-[hsl(var(--calendar-blocked)/0.25)] text-[hsl(var(--calendar-blocked))] line-through");
+      case "owner-blocked":
+        return cn(base, "bg-[hsl(var(--calendar-owner-blocked)/0.7)] text-white font-semibold");
+      case "pre-reservation":
+        return cn(base, "bg-[hsl(var(--calendar-pre-reservation)/0.7)] text-white font-semibold");
       case "checkin-only":
       case "checkout-only":
       case "turnaround":
