@@ -42,6 +42,7 @@ export function HostPricing() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isDemoMode, demoUserId } = useDemoMode();
   const [selectedListingIds, setSelectedListingIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [weeksToGenerate, setWeeksToGenerate] = useState(12);
