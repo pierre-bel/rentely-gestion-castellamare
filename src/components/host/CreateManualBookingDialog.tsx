@@ -278,6 +278,8 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     setScheduleItems([]);
     setBeachCabin(false);
     setBlockName("");
+    setCheckinTime("");
+    setCheckoutTime("");
   };
 
   const handleSave = async () => {
