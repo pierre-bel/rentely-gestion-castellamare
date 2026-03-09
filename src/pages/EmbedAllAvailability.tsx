@@ -164,8 +164,45 @@ export default function EmbedAllAvailability() {
     const right = (endIdx + 1) * CELL_W - (endsInMonth ? halfCell : 0);
     const width = right - left - 2;
 
-    return { left, width };
-  };
+  return { left, width };
+};
+
+// Fonction pour fusionner les périodes de réservation adjacentes ou qui se chevauchent
+const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_date: string }>) => {
+  if (bookings.length === 0) return [];
+  
+  // Trier les réservations par date d'arrivée
+  const sortedBookings = [...bookings].sort((a, b) => 
+    parseISO(a.checkin_date).getTime() - parseISO(b.checkin_date).getTime()
+  );
+  
+  const merged: Array<{ checkin_date: string; checkout_date: string }> = [];
+  
+  for (const booking of sortedBookings) {
+    const checkinDate = parseISO(booking.checkin_date);
+    const checkoutDate = parseISO(booking.checkout_date);
+    
+    if (merged.length === 0) {
+      merged.push({ checkin_date: booking.checkin_date, checkout_date: booking.checkout_date });
+    } else {
+      const lastMerged = merged[merged.length - 1];
+      const lastCheckout = parseISO(lastMerged.checkout_date);
+      
+      // Si la réservation actuelle commence le jour même où la précédente se termine
+      // ou si elles se chevauchent, on les fusionne
+      if (checkinDate <= lastCheckout || differenceInDays(checkinDate, lastCheckout) === 0) {
+        // Étendre la période jusqu'à la fin la plus tardive
+        const newCheckout = checkoutDate > lastCheckout ? checkoutDate : lastCheckout;
+        lastMerged.checkout_date = format(newCheckout, 'yyyy-MM-dd');
+      } else {
+        // Sinon, ajouter une nouvelle période
+        merged.push({ checkin_date: booking.checkin_date, checkout_date: booking.checkout_date });
+      }
+    }
+  }
+  
+  return merged;
+};
 
   // Simulator: check availability for a listing
   const checkListingAvailability = (listingId: string): boolean => {
@@ -531,8 +568,8 @@ export default function EmbedAllAvailability() {
                     })}
 
                     {/* Booking bars */}
-                    {listingBookings.map((booking, idx) => {
-                      const { left, width } = getBarStyle(booking.checkin_date!, booking.checkout_date!);
+                    {mergeBookingPeriods(listingBookings).map((period, idx) => {
+                      const { left, width } = getBarStyle(period.checkin_date, period.checkout_date);
                       if (width <= 0) return null;
                       return (
                         <div
@@ -541,7 +578,7 @@ export default function EmbedAllAvailability() {
                           style={{ left: left + 2, width }}
                         >
                           <span className="text-[10px] font-medium truncate leading-none whitespace-nowrap">
-                            Réservé
+                            Loué
                           </span>
                         </div>
                       );
@@ -562,7 +599,7 @@ export default function EmbedAllAvailability() {
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-primary" />
-          <span className="text-muted-foreground">Réservé</span>
+          <span className="text-muted-foreground">Loué</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-[hsl(var(--calendar-blocked)/0.3)]" />
