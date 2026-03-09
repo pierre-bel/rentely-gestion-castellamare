@@ -583,6 +583,127 @@ export function HostPricing() {
           </CardContent>
         </Card>
       )}
+
+      {/* School holidays */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-primary" />
+                Vacances scolaires
+              </CardTitle>
+              <CardDescription className="mt-1">Périodes pendant lesquelles la location est uniquement du samedi au samedi</CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => {
+                setHolidayLabel("");
+                setHolidayStart(undefined);
+                setHolidayEnd(undefined);
+                setHolidayDialogOpen(true);
+              }}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Ajouter
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {schoolHolidays.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Aucune période de vacances scolaires définie</p>
+          ) : (
+            <div className="space-y-2">
+              {schoolHolidays.map((h) => (
+                <div key={h.id} className="flex items-center justify-between py-2 px-3 rounded-lg border border-border bg-card">
+                  <div>
+                    <span className="text-sm font-medium">{h.label}</span>
+                    <p className="text-xs text-muted-foreground">
+                      {format(parseISO(h.start_date), "d MMM yyyy", { locale: fr })} → {format(parseISO(h.end_date), "d MMM yyyy", { locale: fr })}
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDeleteHoliday(h.id)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* School holiday dialog */}
+      <Dialog open={holidayDialogOpen} onOpenChange={setHolidayDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ajouter une période de vacances scolaires</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Nom de la période</Label>
+              <Input
+                placeholder="Ex: Été 2026, Toussaint 2026..."
+                value={holidayLabel}
+                onChange={(e) => setHolidayLabel(e.target.value)}
+                className="mt-1.5"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-sm mb-1.5 block">Début</Label>
+                <Popover open={holidayStartOpen} onOpenChange={setHolidayStartOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal h-9", !holidayStart && "text-muted-foreground")}>
+                      <CalendarDays className="mr-2 h-4 w-4" />
+                      {holidayStart ? format(holidayStart, "d MMM yyyy", { locale: fr }) : "Sélectionner"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={holidayStart}
+                      onSelect={(d) => { setHolidayStart(d); setHolidayStartOpen(false); }}
+                      initialFocus
+                      locale={fr}
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <Label className="text-sm mb-1.5 block">Fin</Label>
+                <Popover open={holidayEndOpen} onOpenChange={setHolidayEndOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal h-9", !holidayEnd && "text-muted-foreground")}>
+                      <CalendarDays className="mr-2 h-4 w-4" />
+                      {holidayEnd ? format(holidayEnd, "d MMM yyyy", { locale: fr }) : "Sélectionner"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={holidayEnd}
+                      onSelect={(d) => { setHolidayEnd(d); setHolidayEndOpen(false); }}
+                      disabled={(d) => holidayStart ? d < holidayStart : false}
+                      initialFocus
+                      locale={fr}
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setHolidayDialogOpen(false)}>Annuler</Button>
+            <Button onClick={handleAddHoliday} disabled={!holidayLabel.trim() || !holidayStart || !holidayEnd}>
+              Ajouter
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
