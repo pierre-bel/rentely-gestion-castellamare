@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Download, Upload, FileSpreadsheet, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { format, parse, isValid, differenceInCalendarDays } from "date-fns";
+import { format, parse, isValid, differenceInCalendarDays, addDays, subWeeks } from "date-fns";
 import * as XLSX from "xlsx";
 
 interface Props {
