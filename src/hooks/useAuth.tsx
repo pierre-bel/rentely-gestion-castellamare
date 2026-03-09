@@ -3,6 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { clearDemoData } from "@/lib/demoSupabase";
+import { getDemoState, getDemoFakeUser, deactivateDemo, isDemoActive } from "@/lib/demoMode";
 
 interface AuthContextType {
   user: User | null;
@@ -20,16 +21,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check for active demo mode first
+    if (isDemoActive()) {
+      const fakeUser = getDemoFakeUser();
+      setUser(fakeUser as User);
+      setSession(null);
+      setLoading(false);
+      // Don't set up Supabase auth listeners in demo mode
+      return;
+    }
+
     // Set up auth state listener FIRST
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      // Update state synchronously first
+      // Skip if demo mode is active
+      if (isDemoActive()) return;
+
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
       
-      // Defer the suspended check with setTimeout
       if (event === 'SIGNED_IN' && session?.user) {
         setTimeout(async () => {
           const { data: profile } = await supabase
@@ -45,7 +57,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser(null);
             setLoading(false);
             navigate("/");
-            // Show error after navigation
             setTimeout(() => {
               const event = new CustomEvent('suspended-user-login');
               window.dispatchEvent(event);
@@ -57,6 +68,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (isDemoActive()) return;
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -67,7 +79,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // Clear demo snapshot if user was in demo mode (guest, host, or admin)
+      // If in demo mode, just clear demo state
+      if (isDemoActive()) {
+        const demoState = getDemoState();
+        if (demoState) {
+          const { demoStorage } = await import("@/lib/demoStorage");
+          demoStorage.clearSnapshot(demoState.userId);
+        }
+        deactivateDemo();
+        clearDemoData();
+        setSession(null);
+        setUser(null);
+        navigate("/");
+        return;
+      }
+
+      // Regular sign out
       const isDemoUser = user?.email === "guest@demo.com" || 
                          user?.email === "host@demo.com" || 
                          user?.email === "admin@demo.com";
@@ -75,17 +102,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (isDemoUser && user?.id) {
         const { demoStorage } = await import("@/lib/demoStorage");
         demoStorage.clearSnapshot(user.id);
-        console.log('🧹 Cleared demo snapshot for:', user.email);
       }
       
       await supabase.auth.signOut();
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // Clear demo data for demo users
       clearDemoData();
-      
-      // Always clear local state even if API call fails
+      deactivateDemo();
       setSession(null);
       setUser(null);
       navigate("/");
