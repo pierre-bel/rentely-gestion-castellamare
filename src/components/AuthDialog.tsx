@@ -161,14 +161,6 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
                 type="button"
                 variant="outline"
                 className="w-full border-2 border-border hover:bg-accent/50"
-                onClick={() => handleDemoLogin("guest", "/guest/dashboard")}
-              >
-                Démo Voyageur
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full border-2 border-border hover:bg-accent/50"
                 onClick={() => handleDemoLogin("host", "/host/dashboard")}
               >
                 Démo Hôte
@@ -181,6 +173,9 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
               >
                 Démo Admin
               </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Aucun e-mail ne sera envoyé. Les données sont fictives.
+              </p>
             </div>
           </TabsContent>
 

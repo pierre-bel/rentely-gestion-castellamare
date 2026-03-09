@@ -72,7 +72,8 @@ export default function AdminLayout() {
         navigationItems={adminNavigationItems}
         logoText="Rentely Admin"
       />
-      <div className="flex-1">
+      <div className="flex-1 flex flex-col">
+        <DemoBanner />
         <div className="container mx-auto pt-8">
           <AdminPageHeader 
             title={pageTitle}
