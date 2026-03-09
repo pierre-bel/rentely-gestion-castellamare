@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, ArrowLeft } from "lucide-react";
 import StepBasics from "@/components/listing/StepBasics";
 import StepPropertyType from "@/components/listing/StepPropertyType";
+import StepRooms from "@/components/listing/StepRooms";
 import StepDetails from "@/components/listing/StepDetails";
 import StepPhotos from "@/components/listing/StepPhotos";
 import StepRules from "@/components/listing/StepRules";
