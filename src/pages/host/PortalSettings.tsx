@@ -412,8 +412,7 @@ export default function PortalSettings() {
 
   return (
     <div className="container mx-auto px-4 pb-8 lg:px-8">
-      <HostPageHeader title="Portail client" />
-      <p className="text-sm text-muted-foreground -mt-4 mb-6">
+      <p className="text-sm text-muted-foreground mb-6">
         Personnalisez l'apparence, l'ordre et le contenu du portail partagé avec vos locataires
       </p>
 
