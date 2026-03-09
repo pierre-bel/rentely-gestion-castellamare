@@ -481,6 +481,45 @@ export default function HostEmailAutomations() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Template selector - only for new automations */}
+            {!editingAutomation && (
+              <div>
+                <Label>Partir d'un modèle</Label>
+                <Select
+                  value=""
+                  onValueChange={(value) => {
+                    const template = DEFAULT_EMAIL_TEMPLATES[parseInt(value)];
+                    if (template) {
+                      setFormName(template.name);
+                      setFormSubject(template.subject);
+                      setFormBody(template.body_html);
+                      setFormTrigger(template.trigger_type);
+                      setFormDays(template.trigger_days);
+                      setFormRecipientType(template.recipient_type);
+                      setFormSendIfLate(template.send_if_late);
+                      if (template.recipient_type === "host") {
+                        setFormRecipientEmail(user?.email || "");
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un modèle pré-configuré…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DEFAULT_EMAIL_TEMPLATES.map((t, i) => (
+                      <SelectItem key={i} value={String(i)}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Optionnel — pré-remplit le formulaire que vous pouvez ensuite personnaliser.
+                </p>
+              </div>
+            )}
+
             <div>
               <Label>Nom de l'automatisation *</Label>
               <Input
