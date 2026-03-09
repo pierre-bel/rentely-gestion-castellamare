@@ -117,7 +117,7 @@ const BookingActions = ({ booking, onCancelBooking, onContactSupport, onContactG
   </DropdownMenu>
 );
 
-export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSupport, onContactGuest, onEditBooking, onViewDetails }: BookingsTableProps) => {
+export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSupport, onContactGuest, onEditBooking, onViewDetails, onDeleteBooking }: BookingsTableProps) => {
   if (loading) {
     return (
       <div className="space-y-3">
