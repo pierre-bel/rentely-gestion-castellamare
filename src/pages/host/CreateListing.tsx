@@ -91,7 +91,13 @@ const CreateListing = () => {
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<ListingFormData>({
+  const duplicateData = location.state?.duplicateData as ListingFormData | undefined;
+
+  const [formData, setFormData] = useState<ListingFormData>(duplicateData ? {
+    ...duplicateData,
+    title: `${duplicateData.title} (copie)`,
+    availability_rules: [],
+  } : {
     address: "",
     city: "",
     state: "",

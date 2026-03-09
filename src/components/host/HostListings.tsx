@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { selectByOwner } from "@/lib/supabase-helpers";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useDemoData } from "@/hooks/useDemoData";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Home, Eye, Edit, Loader2, Plus } from "lucide-react";
+import { Home, Eye, Edit, Loader2, Plus, Copy } from "lucide-react";
+import type { ListingFormData } from "@/pages/host/CreateListing";
 
 interface Listing {
   id: string;
