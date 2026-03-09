@@ -62,6 +62,10 @@ const STATUS_CONFIG: Record<StatusValue, { variant: StatusVariant; label: string
   draft: { variant: "muted", label: "Brouillon" },
   closed: { variant: "muted", label: "Fermé" },
   
+  // Special booking states
+  owner_blocked: { variant: "purple", label: "Bloqué (perso)" },
+  pre_reservation: { variant: "orange", label: "Pré-réservation" },
+  
   // Types (for transactions)
   capture: { variant: "outline", label: "Encaissement" },
   refund: { variant: "outline", label: "Remboursement" },
