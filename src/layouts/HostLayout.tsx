@@ -92,7 +92,8 @@ const HostLayout = () => {
     return null;
   }
 
-  if (isGuest && !isHost) {
+  // Team members can access directly, skip the "become host" screen
+  if (isGuest && !isHost && !isTeamMember) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-primary/5">
         <Card className="max-w-md border-primary/20">
