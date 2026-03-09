@@ -26,7 +26,7 @@ interface Booking {
   nights: number;
   guests: number;
   host_payout_gross: number;
-  status: "confirmed" | "pending_payment" | "cancelled" | "completed" | "cancelled_guest" | "cancelled_host" | "expired";
+  status: "confirmed" | "pending_payment" | "cancelled" | "completed" | "cancelled_guest" | "cancelled_host" | "expired" | "owner_blocked" | "pre_reservation";
   created_at: string;
 }
 
@@ -38,6 +38,7 @@ interface BookingsTableProps {
   onContactGuest: (booking: Booking) => void;
   onEditBooking?: (booking: Booking) => void;
   onViewDetails?: (booking: Booking) => void;
+  onDeleteBooking?: (booking: Booking) => void;
 }
 
 const formatBookingDates = (checkin: string, checkout: string) => {
