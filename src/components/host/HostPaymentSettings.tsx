@@ -63,16 +63,12 @@ export function HostPaymentSettings() {
 
   const handleDelete = async (id: string) => {
     setSaving(true);
-    try {
-      const { error } = await supabase.from("host_payment_schedules").delete().eq("id", id);
-      if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["host-payment-schedules"] });
-      toast({ title: "Échéance supprimée" });
-    } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
+    const success = await withToast(
+      () => deleteById("host_payment_schedules", id),
+      toast, "Échéance supprimée"
+    );
+    if (success) queryClient.invalidateQueries({ queryKey: ["host-payment-schedules"] });
+    setSaving(false);
   };
 
   const dueTypeLabels: Record<string, string> = {

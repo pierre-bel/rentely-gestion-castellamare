@@ -92,7 +92,6 @@ export function ReviewCriteriaConfig() {
   const handleSave = async () => {
     if (!user) return;
     
-    // Validate
     const enabledCriteria = criteria.filter((c) => c.is_enabled);
     if (enabledCriteria.some((c) => !c.label.trim())) {
       toast({ title: "Veuillez remplir tous les noms de critères actifs", variant: "destructive" });
@@ -100,35 +99,19 @@ export function ReviewCriteriaConfig() {
     }
 
     setSaving(true);
-    try {
-      // Delete all existing then re-insert
-      await supabase
-        .from("host_review_criteria")
-        .delete()
-        .eq("host_user_id", user.id);
+    const rows = criteria.map((c, i) => ({
+      host_user_id: user.id, criterion_key: c.criterion_key,
+      label: c.label, description: c.description,
+      is_enabled: c.is_enabled, is_default: c.is_default, sort_order: i,
+    }));
 
-      const rows = criteria.map((c, i) => ({
-        host_user_id: user.id,
-        criterion_key: c.criterion_key,
-        label: c.label,
-        description: c.description,
-        is_enabled: c.is_enabled,
-        is_default: c.is_default,
-        sort_order: i,
-      }));
-
-      const { error } = await supabase
-        .from("host_review_criteria")
-        .insert(rows as any);
-
-      if (error) throw error;
-      toast({ title: "Configuration des avis sauvegardée" });
-      await loadCriteria();
-    } catch (e: any) {
-      toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
+    const success = await withToast(
+      () => replaceAllForOwner("host_review_criteria", "host_user_id", user.id, rows),
+      toast,
+      "Configuration des avis sauvegardée"
+    );
+    if (success) await loadCriteria();
+    setSaving(false);
   };
 
   if (loading) {
