@@ -45,9 +45,8 @@ export function HostPricing() {
   const [weeksToGenerate, setWeeksToGenerate] = useState(12);
   const [editedRows, setEditedRows] = useState<Record<string, Partial<WeeklyPricing>>>({});
 
-  // School holidays state
+  // School holidays state (for optimistic UI after add/delete)
   interface SchoolHoliday { id: string; label: string; start_date: string; end_date: string; }
-  const [schoolHolidays, setSchoolHolidays] = useState<SchoolHoliday[]>([]);
   const [holidayLabel, setHolidayLabel] = useState("");
   const [holidayStart, setHolidayStart] = useState<Date | undefined>();
   const [holidayEnd, setHolidayEnd] = useState<Date | undefined>();
