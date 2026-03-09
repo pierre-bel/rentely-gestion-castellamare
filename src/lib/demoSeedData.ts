@@ -1132,7 +1132,7 @@ const adminUsers = [
   },
 ];
 
-const adminListings = hostListings.map((l) => ({
+const adminListings = allHostListings.map((l) => ({
   ...l,
   host_name: "Demo Host",
   host_email: "host@demo.com",
