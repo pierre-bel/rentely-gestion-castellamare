@@ -78,6 +78,20 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
     enabled: !!tenantId && open,
   });
 
+  const { data: review } = useQuery({
+    queryKey: ["booking-review", booking?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("id, rating, text, rating_cleanliness, rating_location, rating_communication, rating_value, rating_maintenance, created_at, status")
+        .eq("booking_id", booking!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!booking?.id && open,
+  });
+
   if (!booking) return null;
 
   const checkin = parseISO(booking.checkin_date);
