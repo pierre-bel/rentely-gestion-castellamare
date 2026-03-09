@@ -23,12 +23,7 @@ interface AuthDialogProps {
 }
 
 export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
-  const [loadingStates, setLoadingStates] = useState({
-    regular: false,
-    guestDemo: false,
-    hostDemo: false,
-    adminDemo: false,
-  });
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
