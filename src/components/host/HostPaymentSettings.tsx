@@ -204,6 +204,7 @@ function BankCredentialsSettings() {
         bank_beneficiary_name: beneficiary.trim() || null,
         bank_iban: iban.replace(/\s/g, "").toUpperCase() || null,
         bank_bic: bic.replace(/\s/g, "").toUpperCase() || null,
+        bank_transfer_reference_template: referenceTemplate.trim() || null,
       }),
       toast, "Coordonnées bancaires enregistrées"
     );
