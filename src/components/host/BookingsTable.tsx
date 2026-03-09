@@ -228,6 +228,7 @@ export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSup
                     onContactGuest={onContactGuest}
                     onEditBooking={onEditBooking}
                     onViewDetails={onViewDetails}
+                    onDeleteBooking={onDeleteBooking}
                   />
                 </TableCell>
               </TableRow>
