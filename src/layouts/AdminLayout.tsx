@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { HostSidebar, NavigationItem } from "@/components/host/HostSidebar";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { LayoutDashboard, Home, Users, DollarSign, FileText, Loader2, Percent, Calendar, MessageSquare, AlertTriangle, FilePenLine } from "lucide-react";
+import { LayoutDashboard, Home, Users, DollarSign, FileText, Loader2, Percent, Calendar, MessageSquare, AlertTriangle, FilePenLine, Bug } from "lucide-react";
 import DemoBanner from "@/components/DemoBanner";
 
 const adminNavigationItems: NavigationItem[] = [
@@ -18,6 +18,7 @@ const adminNavigationItems: NavigationItem[] = [
   { name: "Commissions", href: "/admin/commissions", icon: Percent },
   { name: "Reports & Analytics", href: "/admin/reports", icon: FileText },
   { name: "Content", href: "/admin/content", icon: FilePenLine },
+  { name: "Debug", href: "/admin/debug", icon: Bug },
 ];
 
 // Map routes to page titles
@@ -33,6 +34,7 @@ const getPageTitle = (pathname: string): string => {
   if (pathname === "/admin/reports") return "Reports & Analytics";
   if (pathname === "/admin/support") return "Support Chat";
   if (pathname === "/admin/content") return "Content Management";
+  if (pathname === "/admin/debug") return "Debug & Santé";
   return "Admin Panel";
 };
 

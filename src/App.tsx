@@ -80,6 +80,7 @@ const AdminBookingsManagement = lazy(() => import("./pages/admin/BookingsManagem
 const AdminDisputesManagement = lazy(() => import("./pages/admin/DisputesManagement"));
 const AdminSupport = lazy(() => import("./pages/admin/Support"));
 const ContentManagementPage = lazy(() => import("./pages/admin/ContentManagement"));
+const AdminDebug = lazy(() => import("./pages/admin/Debug"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -170,6 +171,7 @@ const App = () => (
                 <Route path="reports" element={<Reports />} />
                 <Route path="support" element={<AdminSupport />} />
                 <Route path="content" element={<ContentManagementPage />} />
+                <Route path="debug" element={<AdminDebug />} />
               </Route>
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<><Navbar /><NotFound /></>} />
