@@ -3253,6 +3253,8 @@ export type Database = {
           country: string
           cover_image: string
           currency: string
+          guest_first_name: string
+          guest_last_name: string
           guests: number
           house_rules: string
           igloohome_code: string
