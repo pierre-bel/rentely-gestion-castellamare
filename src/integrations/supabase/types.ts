@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          debtor_iban: string | null
+          debtor_name: string | null
+          description: string | null
+          external_id: string | null
+          host_user_id: string
+          id: string
+          matched_at: string | null
+          matched_booking_id: string | null
+          matched_payment_item_id: string | null
+          transaction_date: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          debtor_iban?: string | null
+          debtor_name?: string | null
+          description?: string | null
+          external_id?: string | null
+          host_user_id: string
+          id?: string
+          matched_at?: string | null
+          matched_booking_id?: string | null
+          matched_payment_item_id?: string | null
+          transaction_date: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          debtor_iban?: string | null
+          debtor_name?: string | null
+          description?: string | null
+          external_id?: string | null
+          host_user_id?: string
+          id?: string
+          matched_at?: string | null
+          matched_booking_id?: string | null
+          matched_payment_item_id?: string | null
+          transaction_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_matched_booking_id_fkey"
+            columns: ["matched_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_matched_payment_item_id_fkey"
+            columns: ["matched_payment_item_id"]
+            isOneToOne: false
+            referencedRelation: "booking_payment_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_contracts: {
         Row: {
           booking_id: string
