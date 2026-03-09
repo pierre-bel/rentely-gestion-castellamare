@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useTeamAccess } from "@/hooks/useTeamAccess";
 import { HostSidebar } from "@/components/host/HostSidebar";
 import { HostPageHeader } from "@/components/host/HostPageHeader";
 import { Loader2, Home } from "lucide-react";
