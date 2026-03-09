@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Download } from "lucide-react";
+import { Search, Download, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -73,6 +73,8 @@ export default function HostBookings() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [bookingDetail, setBookingDetail] = useState<BookingDetailData | null>(null);
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
@@ -418,6 +420,43 @@ export default function HostBookings() {
     toast({ title: "Export réussi", description: `${rows.length} réservation(s) exportée(s).` });
   };
 
+  const handleDeleteAllBookings = async () => {
+    if (!user?.id) return;
+    setIsDeletingAll(true);
+    try {
+      // Get all booking IDs for this host's listings
+      const { data: hostListings } = await supabase
+        .from("listings")
+        .select("id")
+        .eq("host_user_id", user.id);
+
+      if (!hostListings || hostListings.length === 0) {
+        toast({ title: "Aucune réservation à supprimer" });
+        return;
+      }
+
+      const listingIds = hostListings.map((l) => l.id);
+
+      // Delete all bookings for these listings
+      const { error } = await supabase
+        .from("bookings")
+        .delete()
+        .in("listing_id", listingIds);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["host-calendar-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-recent-bookings"] });
+      toast({ title: "Toutes les réservations ont été supprimées" });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    } finally {
+      setIsDeletingAll(false);
+      setDeleteAllDialogOpen(false);
+    }
+  };
+
 
   return (
     <Card className="bg-card">
@@ -448,6 +487,10 @@ export default function HostBookings() {
             <Button variant="outline" size="sm" onClick={handleExportExcel}>
               <Download className="h-4 w-4 sm:mr-1.5" />
               <span className="hidden sm:inline">Exporter</span>
+            </Button>
+            <Button variant="destructive" size="sm" onClick={() => setDeleteAllDialogOpen(true)} disabled={bookings.length === 0}>
+              <Trash2 className="h-4 w-4 sm:mr-1.5" />
+              <span className="hidden sm:inline">Tout supprimer</span>
             </Button>
             <BookingsFiltersSheet
               statusFilter={statusFilter}
@@ -605,6 +648,36 @@ export default function HostBookings() {
           setEditBookingOpen(true);
         }}
       />
+      <AlertDialog open={deleteAllDialogOpen} onOpenChange={setDeleteAllDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer TOUTES les réservations ?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p className="text-destructive font-semibold">
+                ⚠️ Attention : cette action est irréversible !
+              </p>
+              <p>
+                Vous êtes sur le point de supprimer définitivement toutes vos réservations 
+                ({bookings.length} réservation{bookings.length > 1 ? "s" : ""}), 
+                ainsi que leurs échéances de paiement et contrats associés.
+              </p>
+              <p>
+                Cette action ne peut pas être annulée. Êtes-vous absolument sûr(e) ?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingAll}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAllBookings}
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={isDeletingAll}
+            >
+              {isDeletingAll ? "Suppression..." : "Oui, tout supprimer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
