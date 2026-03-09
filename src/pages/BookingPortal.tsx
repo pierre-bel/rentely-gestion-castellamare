@@ -58,6 +58,8 @@ interface PortalData {
   beds: number | null;
   bathrooms: number | null;
   amenities: string[] | null;
+  guest_first_name: string | null;
+  guest_last_name: string | null;
 }
 
 interface PaymentItem {
