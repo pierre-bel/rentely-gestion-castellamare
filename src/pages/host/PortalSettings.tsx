@@ -609,36 +609,55 @@ export default function PortalSettings() {
           </CardContent>
         </Card>
 
-  // School holidays CRUD
-  const handleAddHoliday = async () => {
-    if (!user?.id || !holidayLabel.trim() || !holidayStart || !holidayEnd) return;
-    const { data, error } = await supabase
-      .from("host_school_holidays")
-      .insert({
-        host_user_id: user.id,
-        label: holidayLabel.trim(),
-        start_date: format(holidayStart, "yyyy-MM-dd"),
-        end_date: format(holidayEnd, "yyyy-MM-dd"),
-      })
-      .select()
-      .single();
-    if (!error && data) {
-      const h = data as any;
-      setSchoolHolidays((prev) => [...prev, { id: h.id, label: h.label, start_date: h.start_date, end_date: h.end_date }].sort((a, b) => a.start_date.localeCompare(b.start_date)));
-      setHolidayLabel("");
-      setHolidayStart(undefined);
-      setHolidayEnd(undefined);
-      setHolidayDialogOpen(false);
-      toast({ title: "Période ajoutée" });
-    } else {
-      toast({ variant: "destructive", title: "Erreur", description: "Impossible d'ajouter la période." });
-    }
-  };
-
-  const handleDeleteHoliday = async (id: string) => {
-    await supabase.from("host_school_holidays").delete().eq("id", id);
-    setSchoolHolidays((prev) => prev.filter((h) => h.id !== id));
-  };
+        {/* School holidays */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-primary" />
+                  Vacances scolaires
+                </CardTitle>
+                <CardDescription className="mt-1">Définissez les périodes pendant lesquelles la location est uniquement du samedi au samedi</CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => {
+                  setHolidayLabel("");
+                  setHolidayStart(undefined);
+                  setHolidayEnd(undefined);
+                  setHolidayDialogOpen(true);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Ajouter
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {schoolHolidays.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Aucune période de vacances scolaires définie</p>
+            ) : (
+              <div className="space-y-2">
+                {schoolHolidays.map((h) => (
+                  <div key={h.id} className="flex items-center justify-between py-2 px-3 rounded-lg border border-border bg-card">
+                    <div>
+                      <span className="text-sm font-medium">{h.label}</span>
+                      <p className="text-xs text-muted-foreground">
+                        {format(parseISO(h.start_date), "d MMM yyyy", { locale: fr })} → {format(parseISO(h.end_date), "d MMM yyyy", { locale: fr })}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDeleteHoliday(h.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
