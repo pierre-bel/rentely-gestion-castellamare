@@ -148,6 +148,7 @@ export default function HostTenants() {
               <TableHeader>
                 <TableRow className="bg-background hover:bg-background">
                   <TableHead className="font-semibold">Nom</TableHead>
+                  <TableHead className="font-semibold">Statut</TableHead>
                   <TableHead className="font-semibold">Email</TableHead>
                   <TableHead className="font-semibold">Téléphone</TableHead>
                   <TableHead className="font-semibold">Sexe</TableHead>
