@@ -180,7 +180,7 @@ export default function BookingPortal() {
       // Check for existing review
       const { data: reviewData } = await supabase
         .from("reviews")
-        .select("id, rating, text, rating_cleanliness, rating_location, rating_communication, rating_value, rating_maintenance")
+        .select("id, rating, text, rating_cleanliness, rating_location, rating_communication, rating_value, rating_maintenance, custom_ratings")
         .eq("booking_id", bookingId)
         .maybeSingle();
       if (reviewData) setExistingReview(reviewData);
