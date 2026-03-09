@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { updateById, selectWhereIn } from "@/lib/supabase-helpers";
 import { useNavigate } from "react-router-dom";
 import { useDemoData } from "@/hooks/useDemoData";
 import { MoreVertical } from "lucide-react";
