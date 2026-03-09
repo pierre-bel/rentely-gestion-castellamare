@@ -7,10 +7,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Star, MessageSquare, Loader2 } from "lucide-react";
+import { Star, MessageSquare, Loader2, Settings2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { HostReviewResponseDialog } from "./HostReviewResponseDialog";
+import { ReviewCriteriaConfig } from "./ReviewCriteriaConfig";
+import { useHostReviewCriteria, DEFAULT_CRITERIA } from "@/hooks/useHostReviewCriteria";
 
 const CRITERIA_LABELS: Record<string, string> = {
   rating_cleanliness: "Propreté",
@@ -50,6 +52,8 @@ const HostReviews = () => {
   const [listingFilter, setListingFilter] = useState("all");
   const [ratingFilter, setRatingFilter] = useState("all");
   const [respondingReview, setRespondingReview] = useState<HostReview | null>(null);
+  const [showConfig, setShowConfig] = useState(false);
+  const { data: criteriaList } = useHostReviewCriteria(user?.id);
 
   const fetchReviews = async () => {
     if (!user) return;
@@ -97,6 +101,15 @@ const HostReviews = () => {
     return dist;
   }, [filtered]);
 
+  // Build criteria labels map from configured criteria
+  const criteriaLabels = useMemo(() => {
+    const map: Record<string, string> = {};
+    (criteriaList || DEFAULT_CRITERIA).forEach((c) => {
+      map[c.criterion_key] = c.label;
+    });
+    return map;
+  }, [criteriaList]);
+
   const handleRespond = async (response: string) => {
     if (!respondingReview) return;
     const { error } = await supabase
@@ -122,8 +135,24 @@ const HostReviews = () => {
     );
   }
 
+
   return (
     <div className="space-y-6">
+      {/* Config toggle */}
+      <div className="flex justify-end">
+        <Button
+          variant={showConfig ? "default" : "outline"}
+          size="sm"
+          className="gap-1.5"
+          onClick={() => setShowConfig(!showConfig)}
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+          Configurer les critères
+        </Button>
+      </div>
+
+      {showConfig && <ReviewCriteriaConfig />}
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
@@ -241,14 +270,14 @@ const HostReviews = () => {
                   {/* Criteria breakdown */}
                   {review.rating_cleanliness != null && (
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                      {(Object.keys(CRITERIA_LABELS) as (keyof typeof CRITERIA_LABELS)[]).map((key) => {
+                      {Object.entries(criteriaLabels).map(([key, label]) => {
                         const val = review[key as keyof HostReview] as number | null;
                         if (val == null) return null;
                         return (
                           <div key={key} className="flex items-center gap-1.5 text-xs bg-muted/50 rounded-md px-2 py-1.5">
                             <Star className="h-3 w-3 fill-primary text-primary flex-shrink-0" />
                             <span className="font-medium">{val}</span>
-                            <span className="text-muted-foreground truncate">{CRITERIA_LABELS[key]}</span>
+                            <span className="text-muted-foreground truncate">{label}</span>
                           </div>
                         );
                       })}

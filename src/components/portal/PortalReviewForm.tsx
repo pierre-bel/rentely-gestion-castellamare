@@ -2,24 +2,35 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Star, CheckCircle2, Sparkles } from "lucide-react";
+import { Star, CheckCircle2, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const CRITERIA = [
-  { key: "rating_cleanliness", label: "Propreté", description: "État de propreté du logement" },
-  { key: "rating_location", label: "Emplacement", description: "Localisation et accessibilité" },
-  { key: "rating_communication", label: "Communication", description: "Réactivité et clarté de l'hôte" },
-  { key: "rating_value", label: "Rapport qualité/prix", description: "Adéquation prix / prestation" },
-  { key: "rating_maintenance", label: "État du logement", description: "Travaux, équipements à réparer" },
-] as const;
+interface CriterionDef {
+  criterion_key: string;
+  label: string;
+  description: string;
+  sort_order: number;
+}
 
-type CriterionKey = typeof CRITERIA[number]["key"];
+const DEFAULT_CRITERIA: CriterionDef[] = [
+  { criterion_key: "rating_cleanliness", label: "Propreté", description: "État de propreté du logement", sort_order: 0 },
+  { criterion_key: "rating_location", label: "Emplacement", description: "Localisation et accessibilité", sort_order: 1 },
+  { criterion_key: "rating_communication", label: "Communication", description: "Réactivité et clarté de l'hôte", sort_order: 2 },
+  { criterion_key: "rating_value", label: "Rapport qualité/prix", description: "Adéquation prix / prestation", sort_order: 3 },
+  { criterion_key: "rating_maintenance", label: "État du logement", description: "Travaux, équipements à réparer", sort_order: 4 },
+];
+
+// Known DB columns for default criteria
+const DB_CRITERION_COLUMNS = [
+  "rating_cleanliness", "rating_location", "rating_communication", "rating_value", "rating_maintenance",
+];
 
 interface PortalReviewFormProps {
   bookingId: string;
   listingId: string;
   guestUserId: string;
+  hostUserId?: string;
   existingReview?: {
     id: string;
     rating: number;
@@ -29,6 +40,7 @@ interface PortalReviewFormProps {
     rating_communication: number | null;
     rating_value: number | null;
     rating_maintenance: number | null;
+    custom_ratings?: Record<string, number> | null;
   } | null;
   onReviewSubmitted?: () => void;
 }
@@ -72,6 +84,7 @@ export default function PortalReviewForm({
   bookingId,
   listingId: propListingId,
   guestUserId: propGuestUserId,
+  hostUserId: propHostUserId,
   existingReview,
   onReviewSubmitted,
 }: PortalReviewFormProps) {
@@ -80,39 +93,81 @@ export default function PortalReviewForm({
   const [submitted, setSubmitted] = useState(false);
   const [listingId, setListingId] = useState(propListingId);
   const [guestUserId, setGuestUserId] = useState(propGuestUserId);
+  const [criteria, setCriteria] = useState<CriterionDef[]>([]);
+  const [criteriaLoading, setCriteriaLoading] = useState(true);
 
-  // Resolve listing_id and guest_user_id from booking if not provided
+  // Resolve listing_id, guest_user_id, and host_user_id from booking if needed
   useEffect(() => {
-    if (listingId && guestUserId) return;
     (async () => {
-      const { data } = await supabase
-        .from("bookings")
-        .select("listing_id, guest_user_id")
-        .eq("id", bookingId)
-        .maybeSingle();
-      if (data) {
-        if (!listingId) setListingId(data.listing_id);
-        if (!guestUserId) setGuestUserId(data.guest_user_id);
-      }
-    })();
-  }, [bookingId, listingId, guestUserId]);
+      let hostId = propHostUserId;
 
-  const [ratings, setRatings] = useState<Record<CriterionKey, number>>({
-    rating_cleanliness: existingReview?.rating_cleanliness || 0,
-    rating_location: existingReview?.rating_location || 0,
-    rating_communication: existingReview?.rating_communication || 0,
-    rating_value: existingReview?.rating_value || 0,
-    rating_maintenance: existingReview?.rating_maintenance || 0,
+      if (!listingId || !guestUserId || !hostId) {
+        const { data } = await supabase
+          .from("bookings")
+          .select("listing_id, guest_user_id, listings(host_user_id)")
+          .eq("id", bookingId)
+          .maybeSingle();
+        if (data) {
+          if (!listingId) setListingId(data.listing_id);
+          if (!guestUserId) setGuestUserId(data.guest_user_id);
+          hostId = (data as any)?.listings?.host_user_id;
+        }
+      }
+
+      // Load host criteria
+      if (hostId) {
+        const { data: critData } = await supabase
+          .from("public_host_review_criteria")
+          .select("*")
+          .eq("host_user_id", hostId)
+          .order("sort_order");
+
+        if (critData && critData.length > 0) {
+          setCriteria(critData.map((d: any) => ({
+            criterion_key: d.criterion_key,
+            label: d.label,
+            description: d.description || "",
+            sort_order: d.sort_order,
+          })));
+        } else {
+          setCriteria(DEFAULT_CRITERIA);
+        }
+      } else {
+        setCriteria(DEFAULT_CRITERIA);
+      }
+      setCriteriaLoading(false);
+    })();
+  }, [bookingId, listingId, guestUserId, propHostUserId]);
+
+  // Ratings state - initialized from existing review
+  const [ratings, setRatings] = useState<Record<string, number>>(() => {
+    const init: Record<string, number> = {};
+    if (existingReview) {
+      DB_CRITERION_COLUMNS.forEach((key) => {
+        const val = (existingReview as any)[key];
+        if (val != null) init[key] = val;
+      });
+      if (existingReview.custom_ratings) {
+        Object.entries(existingReview.custom_ratings).forEach(([k, v]) => {
+          init[k] = v;
+        });
+      }
+    }
+    return init;
   });
+
   const [reviewText, setReviewText] = useState(existingReview?.text || "");
 
   const overallRating = (() => {
-    const filled = Object.values(ratings).filter((v) => v > 0);
+    const activeCriteria = criteria.length > 0 ? criteria : DEFAULT_CRITERIA;
+    const filled = activeCriteria.map((c) => ratings[c.criterion_key]).filter((v) => v && v > 0);
     if (filled.length === 0) return 0;
     return Math.round((filled.reduce((a, b) => a + b, 0) / filled.length) * 10) / 10;
   })();
 
-  const allRated = Object.values(ratings).every((v) => v > 0);
+  const allRated = criteria.length > 0
+    ? criteria.every((c) => (ratings[c.criterion_key] || 0) > 0)
+    : false;
 
   const handleSubmit = async () => {
     if (!allRated) {
@@ -121,10 +176,26 @@ export default function PortalReviewForm({
     }
     setSubmitting(true);
     try {
+      // Separate DB column ratings from custom ratings
+      const dbRatings: Record<string, number> = {};
+      const customRatings: Record<string, number> = {};
+
+      criteria.forEach((c) => {
+        const val = ratings[c.criterion_key];
+        if (val) {
+          if (DB_CRITERION_COLUMNS.includes(c.criterion_key)) {
+            dbRatings[c.criterion_key] = val;
+          } else {
+            customRatings[c.criterion_key] = val;
+          }
+        }
+      });
+
       const reviewData = {
         rating: overallRating,
         text: reviewText || null,
-        ...ratings,
+        ...dbRatings,
+        custom_ratings: Object.keys(customRatings).length > 0 ? customRatings : {},
       };
 
       if (existingReview) {
@@ -166,6 +237,16 @@ export default function PortalReviewForm({
     );
   }
 
+  if (criteriaLoading) {
+    return (
+      <Card key="review">
+        <CardContent className="pt-5 flex items-center justify-center py-10">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card key="review">
       <CardContent className="pt-5 space-y-5">
@@ -178,15 +259,17 @@ export default function PortalReviewForm({
 
         {/* Criteria grid */}
         <div className="space-y-4">
-          {CRITERIA.map((c) => (
-            <div key={c.key} className="flex items-center justify-between gap-4">
+          {criteria.map((c) => (
+            <div key={c.criterion_key} className="flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground">{c.label}</p>
-                <p className="text-xs text-muted-foreground">{c.description}</p>
+                {c.description && (
+                  <p className="text-xs text-muted-foreground">{c.description}</p>
+                )}
               </div>
               <StarRating
-                value={ratings[c.key]}
-                onChange={(v) => setRatings((prev) => ({ ...prev, [c.key]: v }))}
+                value={ratings[c.criterion_key] || 0}
+                onChange={(v) => setRatings((prev) => ({ ...prev, [c.criterion_key]: v }))}
               />
             </div>
           ))}

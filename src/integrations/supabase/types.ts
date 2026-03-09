@@ -847,6 +847,45 @@ export type Database = {
         }
         Relationships: []
       }
+      host_review_criteria: {
+        Row: {
+          created_at: string
+          criterion_key: string
+          description: string | null
+          host_user_id: string
+          id: string
+          is_default: boolean
+          is_enabled: boolean
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criterion_key: string
+          description?: string | null
+          host_user_id: string
+          id?: string
+          is_default?: boolean
+          is_enabled?: boolean
+          label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criterion_key?: string
+          description?: string | null
+          host_user_id?: string
+          id?: string
+          is_default?: boolean
+          is_enabled?: boolean
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       host_school_holidays: {
         Row: {
           created_at: string
@@ -1762,6 +1801,7 @@ export type Database = {
           author_user_id: string
           booking_id: string
           created_at: string
+          custom_ratings: Json | null
           host_response: string | null
           host_response_at: string | null
           id: string
@@ -1780,6 +1820,7 @@ export type Database = {
           author_user_id: string
           booking_id: string
           created_at?: string
+          custom_ratings?: Json | null
           host_response?: string | null
           host_response_at?: string | null
           id?: string
@@ -1798,6 +1839,7 @@ export type Database = {
           author_user_id?: string
           booking_id?: string
           created_at?: string
+          custom_ratings?: Json | null
           host_response?: string | null
           host_response_at?: string | null
           id?: string
@@ -2135,6 +2177,30 @@ export type Database = {
           contact_phone?: string | null
           contact_whatsapp?: string | null
           host_user_id?: string | null
+        }
+        Relationships: []
+      }
+      public_host_review_criteria: {
+        Row: {
+          criterion_key: string | null
+          description: string | null
+          host_user_id: string | null
+          label: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          criterion_key?: string | null
+          description?: string | null
+          host_user_id?: string | null
+          label?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          criterion_key?: string | null
+          description?: string | null
+          host_user_id?: string | null
+          label?: string | null
+          sort_order?: number | null
         }
         Relationships: []
       }

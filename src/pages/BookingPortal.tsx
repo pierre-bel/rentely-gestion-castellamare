@@ -121,6 +121,7 @@ export default function BookingPortal() {
   const [customSections, setCustomSections] = useState<CustomSectionData[]>([]);
   const [existingReview, setExistingReview] = useState<any>(null);
   const [reviewChecked, setReviewChecked] = useState(false);
+  const [hostUserId, setHostUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -147,8 +148,9 @@ export default function BookingPortal() {
         .eq("id", bookingId)
         .maybeSingle();
 
-      const hostUserId = (bookingRow as any)?.listings?.host_user_id;
-
+      const resolvedHostUserId = (bookingRow as any)?.listings?.host_user_id;
+      setHostUserId(resolvedHostUserId || null);
+      const hostUserId = resolvedHostUserId;
       const [paymentsRes, settingsRes, customRes] = await Promise.all([
         supabase.from("booking_payment_items").select("*").eq("booking_id", bookingId).order("sort_order"),
         hostUserId
@@ -178,7 +180,7 @@ export default function BookingPortal() {
       // Check for existing review
       const { data: reviewData } = await supabase
         .from("reviews")
-        .select("id, rating, text, rating_cleanliness, rating_location, rating_communication, rating_value, rating_maintenance")
+        .select("id, rating, text, rating_cleanliness, rating_location, rating_communication, rating_value, rating_maintenance, custom_ratings")
         .eq("booking_id", bookingId)
         .maybeSingle();
       if (reviewData) setExistingReview(reviewData);
@@ -563,14 +565,14 @@ export default function BookingPortal() {
       <PortalReviewForm
         key="review"
         bookingId={data.booking_id}
-        listingId="" // will be fetched from booking
-        guestUserId={""} // anonymous portal, will be resolved server-side
+        listingId=""
+        guestUserId=""
+        hostUserId={hostUserId || undefined}
         existingReview={existingReview}
         onReviewSubmitted={() => {
-          // Refresh review
           supabase
             .from("reviews")
-            .select("id, rating, text, rating_cleanliness, rating_location, rating_communication, rating_value, rating_maintenance")
+            .select("id, rating, text, rating_cleanliness, rating_location, rating_communication, rating_value, rating_maintenance, custom_ratings")
             .eq("booking_id", data.booking_id)
             .maybeSingle()
             .then(({ data: r }) => { if (r) setExistingReview(r); });
