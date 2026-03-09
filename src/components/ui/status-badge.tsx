@@ -18,7 +18,7 @@ export type StatusValue =
   // Dispute statuses
   | "open" | "in_progress" | "on_hold" | "resolved" | "resolved_approved" | "resolved_declined" | "closed" | "escalated" | "pending";
 
-export type StatusVariant = "success" | "primary" | "warning" | "destructive" | "muted" | "outline";
+export type StatusVariant = "success" | "primary" | "warning" | "destructive" | "muted" | "outline" | "purple" | "orange";
 
 interface StatusBadgeProps {
   status: StatusValue;
