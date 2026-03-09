@@ -175,7 +175,9 @@ export type Database = {
           beach_cabin: boolean
           cancellation_policy_snapshot: Json | null
           checkin_date: string
+          checkin_time: string | null
           checkout_date: string
+          checkout_time: string | null
           cleaning_fee: number | null
           created_at: string
           currency: string | null
@@ -206,7 +208,9 @@ export type Database = {
           beach_cabin?: boolean
           cancellation_policy_snapshot?: Json | null
           checkin_date: string
+          checkin_time?: string | null
           checkout_date: string
+          checkout_time?: string | null
           cleaning_fee?: number | null
           created_at?: string
           currency?: string | null
@@ -237,7 +241,9 @@ export type Database = {
           beach_cabin?: boolean
           cancellation_policy_snapshot?: Json | null
           checkin_date?: string
+          checkin_time?: string | null
           checkout_date?: string
+          checkout_time?: string | null
           cleaning_fee?: number | null
           created_at?: string
           currency?: string | null
