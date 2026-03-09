@@ -56,7 +56,6 @@ export const HostPageHeader = ({ title }: HostPageHeaderProps) => {
         <CreateManualBookingDialog
           open={createBookingOpen}
           onOpenChange={setCreateBookingOpen}
-          onSuccess={() => setCreateBookingOpen(false)}
         />
 
         {/* User Avatar with Dropdown */}
