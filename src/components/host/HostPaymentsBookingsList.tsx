@@ -230,12 +230,20 @@ export function HostPaymentsBookingsList() {
             <p className="text-lg md:text-2xl font-bold text-amber-600">{pendingTotal.toFixed(2)} €</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card
+          className={`cursor-pointer transition-all hover:ring-2 hover:ring-destructive/50 ${filterOverdue ? "ring-2 ring-destructive" : ""}`}
+          onClick={() => {
+            if (overdueTotal > 0) setFilterOverdue(prev => !prev);
+          }}
+        >
           <CardContent className="p-3 md:p-4">
             <p className="text-xs md:text-sm text-muted-foreground">En retard</p>
             <p className={`text-lg md:text-2xl font-bold ${overdueTotal > 0 ? "text-destructive animate-pulse" : "text-muted-foreground"}`}>
               {overdueTotal.toFixed(2)} €
             </p>
+            {filterOverdue && (
+              <p className="text-xs text-destructive mt-1">Filtre actif — cliquer pour retirer</p>
+            )}
           </CardContent>
         </Card>
       </div>
