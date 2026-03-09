@@ -163,6 +163,7 @@ export const BookingsTable = ({ bookings, loading, onCancelBooking, onContactSup
                 onContactGuest={onContactGuest}
                 onEditBooking={onEditBooking}
                 onViewDetails={onViewDetails}
+                onDeleteBooking={onDeleteBooking}
               />
             </div>
             <div className="flex items-center justify-between">
