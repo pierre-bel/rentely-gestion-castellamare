@@ -270,7 +270,14 @@ const EditListing = () => {
         weekly_discount: data.weekly_discount || 0,
         monthly_discount: data.monthly_discount || 0,
         availability_rules: availabilityRules,
-        rooms: [],
+        rooms: ((data as any).listing_rooms as any[] || []).map((r: any) => ({
+          id: r.id,
+          room_type: r.room_type || "bedroom",
+          name: r.name || "",
+          beds: r.beds || [],
+          features: r.features || [],
+          sort_order: r.sort_order || 0,
+        })),
       });
 
       setInitialLoading(false);
