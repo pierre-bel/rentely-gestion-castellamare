@@ -16,6 +16,7 @@ import { Loader2, Save, Eye, Globe, GripVertical, Plus, Trash2, Pencil, External
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { HostPageHeader } from "@/components/host/HostPageHeader";
 import {
   DndContext,
