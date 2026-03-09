@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquare } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -10,8 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { MobileHostSidebar } from "./HostSidebar";
-import { ChatSidebar } from "@/components/inbox/ChatSidebar";
-import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { CreateManualBookingDialog } from "./CreateManualBookingDialog";
 
 interface HostPageHeaderProps {
   title: string;
@@ -20,7 +19,7 @@ interface HostPageHeaderProps {
 export const HostPageHeader = ({ title }: HostPageHeaderProps) => {
   const { signOut, user } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const unreadCount = useUnreadMessages(user?.id, false);
+  const [createBookingOpen, setCreateBookingOpen] = useState(false);
 
   const handleLogout = async () => {
     setIsMenuOpen(false);
@@ -43,21 +42,20 @@ export const HostPageHeader = ({ title }: HostPageHeaderProps) => {
 
       {/* Right Side - Icons and Avatar */}
       <div className="flex items-center gap-3">
-        {/* Message Icon with Sidebar */}
-        <ChatSidebar
-          userRole="host"
-          trigger={
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full w-10 h-10 bg-white hover:bg-white/90 relative"
-            >
-              <MessageSquare className="h-5 w-5" />
-              {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 h-2 w-2 bg-destructive rounded-full" />
-              )}
-            </Button>
-          }
+        {/* Add Booking Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full w-10 h-10 bg-white hover:bg-white/90"
+          onClick={() => setCreateBookingOpen(true)}
+          title="Ajouter une réservation"
+        >
+          <Plus className="h-5 w-5" />
+        </Button>
+
+        <CreateManualBookingDialog
+          open={createBookingOpen}
+          onOpenChange={setCreateBookingOpen}
         />
 
         {/* User Avatar with Dropdown */}
