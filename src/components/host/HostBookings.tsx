@@ -385,6 +385,8 @@ export default function HostBookings() {
       cancelled_guest: "Annulée (locataire)",
       cancelled_host: "Annulée (hôte)",
       expired: "Expirée",
+      owner_blocked: "Bloqué (perso)",
+      pre_reservation: "Pré-réservation",
     };
 
     const rows = bookings.map((b) => ({
