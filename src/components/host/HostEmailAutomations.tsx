@@ -103,13 +103,12 @@ export default function HostEmailAutomations() {
   const { data: listings = [] } = useQuery({
     queryKey: ["host-listings-simple", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("listings")
-        .select("id, title")
-        .eq("host_user_id", user!.id)
-        .order("title");
-      if (error) throw error;
-      return data as Listing[];
+      const { data, error } = await selectByOwner<Listing>(
+        "listings", "host_user_id", user!.id,
+        { select: "id, title", order: "title", ascending: true }
+      );
+      if (error) throw new Error(error);
+      return data ?? [];
     },
     enabled: !!user?.id,
   });
