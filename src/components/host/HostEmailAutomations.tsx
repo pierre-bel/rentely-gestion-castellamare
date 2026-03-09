@@ -155,8 +155,8 @@ export default function HostEmailAutomations() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("email_automations").delete().eq("id", id);
-      if (error) throw error;
+      const { error } = await deleteById("email_automations", id);
+      if (error) throw new Error(error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["email-automations"] });

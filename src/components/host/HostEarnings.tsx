@@ -42,23 +42,22 @@ export default function HostEarnings() {
   const fetchEarnings = async () => {
     if (!user) return;
 
-    const { data: listings } = await supabase
-      .from("listings")
-      .select("id, title")
-      .eq("host_user_id", user.id);
+    const { data: listings } = await selectByOwner(
+      "listings", "host_user_id", user.id,
+      { select: "id, title" }
+    );
 
     if (!listings || listings.length === 0) {
       setLoading(false);
       return;
     }
 
-    const listingIds = listings.map(l => l.id);
+    const listingIds = listings.map((l: any) => l.id);
 
-    const { data: bookings } = await supabase
-      .from("bookings")
-      .select("*")
-      .in("listing_id", listingIds)
-      .order("checkin_date", { ascending: false });
+    const { data: bookings } = await selectWhereIn(
+      "bookings", "listing_id", listingIds,
+      { order: "checkin_date", ascending: false }
+    );
 
     if (bookings) {
       const now = new Date();
