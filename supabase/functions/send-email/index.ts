@@ -73,6 +73,53 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
     }
   }
 
+  // Fetch host's bank settings for QR generation
+  const listingHostId = listing ? (await supabase.from('listings').select('host_user_id').eq('id', booking.listing_id).single()).data?.host_user_id : null;
+  let qrPaiementHtml = '';
+  if (listingHostId) {
+    const serviceClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+    const { data: bankSettings } = await serviceClient
+      .from('portal_settings')
+      .select('bank_beneficiary_name, bank_iban, bank_bic, bank_transfer_reference_template')
+      .eq('host_user_id', listingHostId)
+      .maybeSingle();
+
+    if (bankSettings?.bank_beneficiary_name && bankSettings?.bank_iban && bankSettings?.bank_bic) {
+      const refTemplate = bankSettings.bank_transfer_reference_template || '{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}';
+      // Build reference from template
+      let ref = refTemplate;
+      const refVars: Record<string, string> = {
+        guest_last_name: tenantLastName || '',
+        guest_full_name: `${tenantFirstName} ${tenantLastName}`.trim(),
+        listing_title: listing?.title || '',
+        checkin_date: booking.checkin_date,
+        checkout_date: booking.checkout_date,
+      };
+      for (const [k, v] of Object.entries(refVars)) {
+        ref = ref.split(`{{${k}}}`).join(v);
+      }
+      ref = ref.substring(0, 140);
+
+      // Build EPC string and generate QR as base64
+      const epcLines = [
+        'BCD', '002', '1', 'SCT',
+        bankSettings.bank_bic.replace(/\s/g, '').toUpperCase(),
+        bankSettings.bank_beneficiary_name.substring(0, 70),
+        bankSettings.bank_iban.replace(/\s/g, '').toUpperCase(),
+        `EUR${Number(booking.total_price).toFixed(2)}`,
+        '', '', ref,
+      ];
+      const epcString = epcLines.join('\n');
+      
+      // Use a simple QR generation approach for edge functions
+      // We'll embed the EPC data as text since we can't use canvas in Deno
+      qrPaiementHtml = `<div style="text-align:center;margin:16px 0;padding:16px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb"><p style="font-size:13px;color:#374151;margin:0 0 8px">💳 Paiement par virement SEPA</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>Bénéficiaire :</strong> ${bankSettings.bank_beneficiary_name}</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>IBAN :</strong> ${bankSettings.bank_iban}</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>BIC :</strong> ${bankSettings.bank_bic}</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>Montant :</strong> ${Number(booking.total_price).toFixed(2)} €</p><p style="font-size:12px;color:#6b7280;margin:0"><strong>Communication :</strong> ${ref}</p></div>`;
+    }
+  }
+
   return {
     guest_first_name: tenantFirstName,
     guest_last_name: tenantLastName,
@@ -89,6 +136,7 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
     listing_city: listing?.city || '',
     listing_country: listing?.country || '',
     booking_id: booking.id,
+    qr_paiement: qrPaiementHtml,
   };
 }
 

@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { StatusBadge, type StatusValue } from "@/components/ui/status-badge";
 import { Badge } from "@/components/ui/badge";
 import PortalReviewForm from "@/components/portal/PortalReviewForm";
-import { PaymentQRCode } from "@/components/portal/PaymentQRCode";
+import { PaymentQRCode, buildTransferReference } from "@/components/portal/PaymentQRCode";
 
 const formatPrice = (price: number, currency = "EUR") =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(price);
@@ -58,6 +58,8 @@ interface PortalData {
   beds: number | null;
   bathrooms: number | null;
   amenities: string[] | null;
+  guest_first_name: string | null;
+  guest_last_name: string | null;
 }
 
 interface PaymentItem {
@@ -394,8 +396,20 @@ export default function BookingPortal() {
     beneficiary: (settings as any).bank_beneficiary_name as string | null,
     iban: (settings as any).bank_iban as string | null,
     bic: (settings as any).bank_bic as string | null,
+    referenceTemplate: (settings as any).bank_transfer_reference_template as string | null,
   };
   const hasBankInfo = !!(bankInfo.beneficiary && bankInfo.iban && bankInfo.bic);
+
+  const getPaymentReference = (paymentLabel: string) => {
+    const template = bankInfo.referenceTemplate || "{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}";
+    return buildTransferReference(template, {
+      guest_last_name: data.guest_last_name || "",
+      guest_full_name: `${data.guest_first_name || ""} ${data.guest_last_name || ""}`.trim(),
+      listing_title: data.listing_title,
+      checkin_date: format(checkin, "dd/MM/yyyy"),
+      checkout_date: format(checkout, "dd/MM/yyyy"),
+    });
+  };
 
   const renderPaymentSchedule = () => {
     if (!settings.show_payment_schedule || payments.length === 0) return null;
@@ -430,7 +444,7 @@ export default function BookingPortal() {
                     iban={bankInfo.iban!}
                     bic={bankInfo.bic!}
                     amount={p.amount}
-                    reference={`REF-${data.booking_id.substring(0, 8).toUpperCase()}-${p.label.substring(0, 20)}`}
+                    reference={getPaymentReference(p.label)}
                   />
                 )}
               </div>

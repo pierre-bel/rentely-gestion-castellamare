@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { generateQRDataUrl, buildTransferReference, type PaymentQRCodeProps } from "@/components/portal/PaymentQRCode";
 
 interface Template {
   id: string;
@@ -154,6 +155,45 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       "{{today_date}}": format(new Date(), "d MMMM yyyy", { locale: fr }),
       "{{booking_created_date}}": formatDate(booking.created_at),
     };
+
+    // Generate QR code if bank info available and template uses {{qr_paiement}}
+    if (template.body_html.includes("{{qr_paiement}}")) {
+      const { data: bankSettings } = await supabase
+        .from("portal_settings")
+        .select("bank_beneficiary_name, bank_iban, bank_bic, bank_transfer_reference_template")
+        .eq("host_user_id", user!.id)
+        .maybeSingle();
+
+      if (bankSettings?.bank_beneficiary_name && bankSettings?.bank_iban && bankSettings?.bank_bic) {
+        const refTemplate = bankSettings.bank_transfer_reference_template || "{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}";
+        const refVars: Record<string, string> = {
+          guest_last_name: guest?.last_name || "",
+          guest_full_name: `${guest?.first_name || ""} ${guest?.last_name || ""}`.trim(),
+          listing_title: listing?.title || "",
+          checkin_date: format(new Date(booking.checkin_date), "dd/MM/yyyy"),
+          checkout_date: format(new Date(booking.checkout_date), "dd/MM/yyyy"),
+        };
+        const reference = buildTransferReference(refTemplate, refVars);
+        const totalUnpaid = items.filter((i: any) => !i.is_paid).reduce((s: number, i: any) => s + Number(i.amount), 0);
+        const amount = totalUnpaid > 0 ? totalUnpaid : Number(booking.total_price);
+
+        try {
+          const qrDataUrl = await generateQRDataUrl({
+            beneficiary: bankSettings.bank_beneficiary_name,
+            iban: bankSettings.bank_iban,
+            bic: bankSettings.bank_bic,
+            amount,
+            reference,
+          });
+          replacements["{{qr_paiement}}"] = `<div style="text-align:center;margin:16px 0"><img src="${qrDataUrl}" width="200" height="200" alt="QR code de paiement SEPA" style="display:inline-block" /><br/><span style="font-size:11px;color:#666">Scannez pour payer par virement</span></div>`;
+        } catch (e) {
+          console.error("QR generation failed", e);
+          replacements["{{qr_paiement}}"] = "";
+        }
+      } else {
+        replacements["{{qr_paiement}}"] = "";
+      }
+    }
 
     Object.entries(replacements).forEach(([key, value]) => {
       html = html.split(key).join(value);

@@ -171,6 +171,7 @@ function BankCredentialsSettings() {
   const [beneficiary, setBeneficiary] = useState("");
   const [iban, setIban] = useState("");
   const [bic, setBic] = useState("");
+  const [referenceTemplate, setReferenceTemplate] = useState("{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}");
 
   const { data: settings } = useQuery({
     queryKey: ["portal-settings-bank", user?.id],
@@ -178,7 +179,7 @@ function BankCredentialsSettings() {
       if (!user?.id) return null;
       const { data, error } = await selectOne(
         "portal_settings", "host_user_id", user.id,
-        "bank_beneficiary_name, bank_iban, bank_bic"
+        "bank_beneficiary_name, bank_iban, bank_bic, bank_transfer_reference_template"
       );
       if (error) throw new Error(error);
       return data;
@@ -191,6 +192,7 @@ function BankCredentialsSettings() {
       setBeneficiary(settings.bank_beneficiary_name || "");
       setIban(settings.bank_iban || "");
       setBic(settings.bank_bic || "");
+      setReferenceTemplate(settings.bank_transfer_reference_template || "{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}");
     }
   }, [settings]);
 
@@ -202,6 +204,7 @@ function BankCredentialsSettings() {
         bank_beneficiary_name: beneficiary.trim() || null,
         bank_iban: iban.replace(/\s/g, "").toUpperCase() || null,
         bank_bic: bic.replace(/\s/g, "").toUpperCase() || null,
+        bank_transfer_reference_template: referenceTemplate.trim() || null,
       }),
       toast, "Coordonnées bancaires enregistrées"
     );
@@ -235,8 +238,15 @@ function BankCredentialsSettings() {
             <Input value={bic} onChange={e => setBic(e.target.value)} placeholder="BNPAFRPP" />
           </div>
         </div>
+        <div className="space-y-2">
+          <Label className="text-xs">Communication du virement</Label>
+          <Input value={referenceTemplate} onChange={e => setReferenceTemplate(e.target.value)} placeholder="{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}" />
+          <p className="text-xs text-muted-foreground">
+            Variables disponibles : <code className="text-[10px]">{"{{guest_last_name}}, {{guest_full_name}}, {{listing_title}}, {{checkin_date}}, {{checkout_date}}"}</code>
+          </p>
+        </div>
         <p className="text-xs text-muted-foreground">
-          Ces données ne sont jamais partagées directement — elles sont uniquement encodées dans le QR code affiché sur le portail.
+          Ces données sont uniquement encodées dans le QR code affiché sur le portail, dans les e-mails et les contrats.
         </p>
         <Button onClick={handleSave} disabled={saving} size="sm">
           {saving ? "Enregistrement..." : "Enregistrer"}

@@ -1735,6 +1735,7 @@ export type Database = {
           bank_beneficiary_name: string | null
           bank_bic: string | null
           bank_iban: string | null
+          bank_transfer_reference_template: string | null
           beach_cabin_end_day: number
           beach_cabin_end_month: number
           beach_cabin_start_day: number
@@ -1764,6 +1765,7 @@ export type Database = {
           bank_beneficiary_name?: string | null
           bank_bic?: string | null
           bank_iban?: string | null
+          bank_transfer_reference_template?: string | null
           beach_cabin_end_day?: number
           beach_cabin_end_month?: number
           beach_cabin_start_day?: number
@@ -1793,6 +1795,7 @@ export type Database = {
           bank_beneficiary_name?: string | null
           bank_bic?: string | null
           bank_iban?: string | null
+          bank_transfer_reference_template?: string | null
           beach_cabin_end_day?: number
           beach_cabin_end_month?: number
           beach_cabin_start_day?: number
@@ -2533,6 +2536,7 @@ export type Database = {
           bank_beneficiary_name: string | null
           bank_bic: string | null
           bank_iban: string | null
+          bank_transfer_reference_template: string | null
           contact_email: string | null
           contact_facebook_url: string | null
           contact_phone: string | null
@@ -2555,6 +2559,7 @@ export type Database = {
           bank_beneficiary_name?: string | null
           bank_bic?: string | null
           bank_iban?: string | null
+          bank_transfer_reference_template?: string | null
           contact_email?: string | null
           contact_facebook_url?: string | null
           contact_phone?: string | null
@@ -2577,6 +2582,7 @@ export type Database = {
           bank_beneficiary_name?: string | null
           bank_bic?: string | null
           bank_iban?: string | null
+          bank_transfer_reference_template?: string | null
           contact_email?: string | null
           contact_facebook_url?: string | null
           contact_phone?: string | null
@@ -3247,6 +3253,8 @@ export type Database = {
           country: string
           cover_image: string
           currency: string
+          guest_first_name: string
+          guest_last_name: string
           guests: number
           house_rules: string
           igloohome_code: string

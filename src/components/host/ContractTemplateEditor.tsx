@@ -70,6 +70,7 @@ const DYNAMIC_VARIABLES_GROUPS = [
       { key: "{{balance_due_date}}", label: "Échéance du solde" },
       { key: "{{balance_status}}", label: "Statut du solde" },
       { key: "{{payment_schedule}}", label: "Échéancier complet (tableau)" },
+      { key: "{{qr_paiement}}", label: "QR code de paiement SEPA (image)" },
     ],
   },
   {
