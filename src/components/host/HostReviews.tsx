@@ -7,10 +7,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Star, MessageSquare, Loader2 } from "lucide-react";
+import { Star, MessageSquare, Loader2, Settings2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { HostReviewResponseDialog } from "./HostReviewResponseDialog";
+import { ReviewCriteriaConfig } from "./ReviewCriteriaConfig";
+import { useHostReviewCriteria, DEFAULT_CRITERIA } from "@/hooks/useHostReviewCriteria";
 
 const CRITERIA_LABELS: Record<string, string> = {
   rating_cleanliness: "Propreté",
