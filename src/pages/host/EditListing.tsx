@@ -163,6 +163,7 @@ const EditListing = () => {
           weekly_discount: listing.weekly_discount || 0,
           monthly_discount: listing.monthly_discount || 0,
           availability_rules: availabilityRules,
+          rooms: [],
         });
         
         setInitialLoading(false);
