@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import DynamicVariablesPanel, { DYNAMIC_VARIABLES } from "./email/DynamicVariablesPanel";
 import EmailBodyEditor from "./email/EmailBodyEditor";
+import { DEFAULT_EMAIL_TEMPLATES } from "./email/defaultEmailTemplates";
 
 const TRIGGER_LABELS: Record<string, string> = {
   booking_confirmed: "À la confirmation de réservation",
