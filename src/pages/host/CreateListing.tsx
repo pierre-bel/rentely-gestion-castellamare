@@ -322,7 +322,26 @@ const CreateListing = () => {
         }
       }
 
-      setLoading(false);
+      // Phase 4: Handle rooms if they exist
+      if (formData.rooms && formData.rooms.length > 0) {
+        const roomRecords = formData.rooms.map((room, index) => ({
+          listing_id: createdListing.id,
+          room_type: room.room_type,
+          name: room.name,
+          beds: room.beds,
+          features: room.features,
+          sort_order: index,
+        }));
+
+        const { error: roomsError } = await supabase
+          .from("listing_rooms")
+          .insert(roomRecords);
+
+        if (roomsError) {
+          console.error("Error saving rooms:", roomsError);
+        }
+      }
+
       toast({
         title: "Succès !",
         description: "Votre annonce a été créée et publiée avec succès",
