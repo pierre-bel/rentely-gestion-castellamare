@@ -267,14 +267,14 @@ const HostReviews = () => {
                   {/* Criteria breakdown */}
                   {review.rating_cleanliness != null && (
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                      {(Object.keys(CRITERIA_LABELS) as (keyof typeof CRITERIA_LABELS)[]).map((key) => {
+                      {Object.entries(criteriaLabels).map(([key, label]) => {
                         const val = review[key as keyof HostReview] as number | null;
                         if (val == null) return null;
                         return (
                           <div key={key} className="flex items-center gap-1.5 text-xs bg-muted/50 rounded-md px-2 py-1.5">
                             <Star className="h-3 w-3 fill-primary text-primary flex-shrink-0" />
                             <span className="font-medium">{val}</span>
-                            <span className="text-muted-foreground truncate">{CRITERIA_LABELS[key]}</span>
+                            <span className="text-muted-foreground truncate">{label}</span>
                           </div>
                         );
                       })}
