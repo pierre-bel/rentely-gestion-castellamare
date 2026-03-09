@@ -50,6 +50,8 @@ const HostReviews = () => {
   const [listingFilter, setListingFilter] = useState("all");
   const [ratingFilter, setRatingFilter] = useState("all");
   const [respondingReview, setRespondingReview] = useState<HostReview | null>(null);
+  const [showConfig, setShowConfig] = useState(false);
+  const { data: criteriaList } = useHostReviewCriteria(user?.id);
 
   const fetchReviews = async () => {
     if (!user) return;
