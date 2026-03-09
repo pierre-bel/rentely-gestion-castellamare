@@ -17,8 +17,8 @@ const HostDashboard = () => {
   return (
     <div className="container mx-auto px-3 pb-8 sm:px-4 lg:px-8">
       {/* Aperçu des revenus */}
-      <Card className="bg-card">
-        <CardHeader className="border-b pb-4">
+      <Card className="bg-card overflow-hidden">
+        <CardHeader className="border-b pb-4 bg-gradient-to-r from-primary/5 via-transparent to-accent-cool/5">
           <CardTitle className="text-xl sm:text-2xl font-bold">Aperçu des revenus</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
             Indicateurs de performance sur toute la période

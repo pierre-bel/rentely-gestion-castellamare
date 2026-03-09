@@ -68,9 +68,9 @@ export const HostPageHeader = ({ title }: HostPageHeaderProps) => {
               size="icon"
               className="rounded-full w-10 h-10 p-0"
             >
-              <Avatar className="w-10 h-10">
+              <Avatar className="w-10 h-10 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
                 <AvatarImage src="" alt={user?.email || "Host"} />
-                <AvatarFallback className="bg-primary text-primary-foreground">
+                <AvatarFallback className="bg-gradient-to-br from-primary to-accent-cool text-primary-foreground">
                   {getInitials()}
                 </AvatarFallback>
               </Avatar>

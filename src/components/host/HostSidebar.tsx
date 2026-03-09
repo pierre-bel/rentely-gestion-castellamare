@@ -134,7 +134,7 @@ interface SidebarProps {
 
 export const HostSidebar = ({ navigationItems, logoText }: SidebarProps) => {
   return (
-    <aside className="hidden lg:flex lg:flex-col w-[275px] flex-shrink-0 h-screen border-r border-border bg-card p-7 sticky top-0">
+    <aside className="hidden lg:flex lg:flex-col w-[275px] flex-shrink-0 h-screen border-r border-border bg-gradient-to-b from-card to-card/95 p-7 sticky top-0">
       <SidebarContent 
         navigationItems={navigationItems}
         logoText={logoText}

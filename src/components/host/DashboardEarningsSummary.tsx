@@ -188,11 +188,11 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
         return (
           <Card 
             key={index} 
-            className="bg-card hover:shadow-md transition-shadow cursor-pointer"
+            className={`bg-card border transition-all cursor-pointer hover:shadow-md ${metric.borderColor}`}
             onClick={() => navigate(metric.href)}
           >
             <CardContent className="p-3 md:p-6">
-              <div className={`inline-flex p-2 md:p-3 rounded-lg ${metric.bgColor} mb-2 md:mb-4`}>
+              <div className={`inline-flex p-2 md:p-3 rounded-xl ${metric.bgColor} mb-2 md:mb-4`}>
                 <Icon className={`h-4 w-4 md:h-5 md:w-5 ${metric.iconColor}`} />
               </div>
               <p className="text-xs md:text-sm text-muted-foreground mb-0.5 md:mb-1">{metric.label}</p>
