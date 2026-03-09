@@ -192,6 +192,7 @@ function BankCredentialsSettings() {
       setBeneficiary(settings.bank_beneficiary_name || "");
       setIban(settings.bank_iban || "");
       setBic(settings.bank_bic || "");
+      setReferenceTemplate(settings.bank_transfer_reference_template || "{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}");
     }
   }, [settings]);
 
