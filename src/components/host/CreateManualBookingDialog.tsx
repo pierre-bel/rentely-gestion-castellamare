@@ -70,6 +70,8 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [beachCabin, setBeachCabin] = useState(false);
   const [blockName, setBlockName] = useState("");
+  const [checkinTime, setCheckinTime] = useState("");
+  const [checkoutTime, setCheckoutTime] = useState("");
 
   // Fetch host listings
   const { data: listings = [] } = useQuery({
