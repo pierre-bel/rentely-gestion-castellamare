@@ -148,8 +148,9 @@ export default function BookingPortal() {
         .eq("id", bookingId)
         .maybeSingle();
 
-      const hostUserId = (bookingRow as any)?.listings?.host_user_id;
-
+      const resolvedHostUserId = (bookingRow as any)?.listings?.host_user_id;
+      setHostUserId(resolvedHostUserId || null);
+      const hostUserId = resolvedHostUserId;
       const [paymentsRes, settingsRes, customRes] = await Promise.all([
         supabase.from("booking_payment_items").select("*").eq("booking_id", bookingId).order("sort_order"),
         hostUserId
