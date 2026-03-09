@@ -17,6 +17,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface BookingWithGuest {
   id: string;
@@ -63,12 +64,11 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function TimelineOverview({ listings, bookings, blockedDates, currentMonth, onBookingClick }: TimelineOverviewProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
   const days = useMemo(() => eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) }), [currentMonth]);
 
-  // Smaller cells on mobile
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-  const CELL_W = isMobile ? 30 : 38;
-  const LABEL_W = isMobile ? 100 : 140;
+  const CELL_W = isMobile ? 28 : 38;
+  const LABEL_W = isMobile ? 90 : 140;
 
   const getBookingsForListing = (listingId: string) => {
     if (!bookings) return [];
@@ -104,9 +104,10 @@ export default function TimelineOverview({ listings, bookings, blockedDates, cur
     return { left, width };
   };
 
-  const truncateName = (name: string, maxLen = 12) => {
-    if (name.length <= maxLen) return name;
-    return name.slice(0, maxLen) + "…";
+  const truncateName = (name: string, maxLen?: number) => {
+    const limit = maxLen ?? (isMobile ? 8 : 12);
+    if (name.length <= limit) return name;
+    return name.slice(0, limit) + "…";
   };
 
   return (
