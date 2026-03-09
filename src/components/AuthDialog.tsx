@@ -165,51 +165,27 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full bg-white border-2 border-gray-300 hover:bg-gray-50"
-                onClick={handleDemoGuestLogin}
-                disabled={loadingStates.guestDemo}
+                className="w-full border-2 border-border hover:bg-accent/50"
+                onClick={() => handleDemoLogin("guest", "/guest/dashboard")}
               >
-                {loadingStates.guestDemo ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Loading demo...
-                  </>
-                ) : (
-                  "Guest Demo Login"
-                )}
+                Démo Voyageur
               </Button>
               <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full bg-white border-2 border-gray-300 hover:bg-gray-50"
-                  onClick={handleDemoHostLogin}
-                  disabled={loadingStates.hostDemo}
-                >
-                  {loadingStates.hostDemo ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Loading demo...
-                    </>
-                  ) : (
-                    "Host Demo Login"
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full bg-white border-2 border-gray-300 hover:bg-gray-50"
-                  onClick={handleDemoAdminLogin}
-                  disabled={loadingStates.adminDemo}
-                >
-                  {loadingStates.adminDemo ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Loading demo...
-                    </>
-                  ) : (
-                    "Admin Demo Login"
-                  )}
-                </Button>
+                type="button"
+                variant="outline"
+                className="w-full border-2 border-border hover:bg-accent/50"
+                onClick={() => handleDemoLogin("host", "/host/dashboard")}
+              >
+                Démo Hôte
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-2 border-border hover:bg-accent/50"
+                onClick={() => handleDemoLogin("admin", "/admin")}
+              >
+                Démo Admin
+              </Button>
             </div>
           </TabsContent>
 
