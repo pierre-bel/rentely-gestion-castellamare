@@ -191,6 +191,14 @@ export default function HostListings() {
         >
           <Edit className="h-4 w-4" />
         </Button>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => handleDuplicateListing(listing.id)}
+          title="Dupliquer cette annonce"
+        >
+          <Copy className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
