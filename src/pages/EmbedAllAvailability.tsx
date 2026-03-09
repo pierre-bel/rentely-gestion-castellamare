@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, CalendarDays, Search, CheckCircle2, XCircle, Euro, Info, Mail, Phone } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Search, CheckCircle2, XCircle, Euro, Info, Mail, Phone, Send } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   format,
