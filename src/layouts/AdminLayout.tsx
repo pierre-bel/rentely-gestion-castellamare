@@ -5,6 +5,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { HostSidebar, NavigationItem } from "@/components/host/HostSidebar";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { LayoutDashboard, Home, Users, DollarSign, FileText, Loader2, Percent, Calendar, MessageSquare, AlertTriangle, FilePenLine } from "lucide-react";
+import DemoBanner from "@/components/DemoBanner";
 
 const adminNavigationItems: NavigationItem[] = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -71,7 +72,8 @@ export default function AdminLayout() {
         navigationItems={adminNavigationItems}
         logoText="Rentely Admin"
       />
-      <div className="flex-1">
+      <div className="flex-1 flex flex-col">
+        <DemoBanner />
         <div className="container mx-auto pt-8">
           <AdminPageHeader 
             title={pageTitle}

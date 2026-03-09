@@ -34,6 +34,9 @@ export function activateDemo(role: DemoRole): DemoState {
   const user = DEMO_USERS[role];
   _state = { active: true, role, userId: user.userId, email: user.email };
   localStorage.setItem(DEMO_STATE_KEY, JSON.stringify(_state));
+  // Clear any stale Supabase session to prevent refresh token errors
+  const sbKey = Object.keys(localStorage).find(k => k.startsWith("sb-") && k.endsWith("-auth-token"));
+  if (sbKey) localStorage.removeItem(sbKey);
   return _state;
 }
 

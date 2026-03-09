@@ -9,6 +9,7 @@ import { Loader2, Home } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import DemoBanner from "@/components/DemoBanner";
 
 // Map routes to page titles
 const getPageTitle = (pathname: string): string => {
@@ -129,7 +130,8 @@ const HostLayout = () => {
   return (
     <div className="flex min-h-screen bg-background w-full">
       <HostSidebar logoText="Rentely" />
-      <div className="flex-1">
+      <div className="flex-1 flex flex-col">
+        <DemoBanner />
         {!hideHeader && (
           <div className="container mx-auto px-4 pt-8 lg:px-8">
             <HostPageHeader 
