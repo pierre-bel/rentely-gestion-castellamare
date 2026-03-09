@@ -50,7 +50,7 @@ interface AvailabilityCalendarProps {
   currentMonth: Date;
 }
 
-type DayStatus = "available" | "booked" | "pending" | "blocked" | "checkin-only" | "checkout-only" | "turnaround";
+type DayStatus = "available" | "booked" | "pending" | "blocked" | "checkin-only" | "checkout-only" | "turnaround" | "owner-blocked" | "pre-reservation";
 
 const STATUS_LABELS: Record<string, string> = {
   confirmed: "Confirmée",
