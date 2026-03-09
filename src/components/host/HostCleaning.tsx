@@ -443,7 +443,7 @@ export function HostCleaning() {
         )}
       </div>
 
-      {/* Cleaning cards grouped by date */}
+      {/* Cleaning cards grouped by staff member, then chronologically */}
       {cleaningSlots.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
@@ -452,134 +452,150 @@ export function HostCleaning() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {(() => {
-            const grouped: { dateKey: string; date: Date; slots: typeof cleaningSlots }[] = [];
-            let current: typeof grouped[0] | null = null;
+            // Group slots by staff member (unassigned last)
+            const staffGroups = new Map<string, { staff: CleaningStaff | null; slots: CleaningSlot[] }>();
+            const unassignedKey = "__unassigned__";
+
             for (const slot of cleaningSlots) {
-              const dk = format(slot.cleaningDate, "yyyy-MM-dd");
-              if (!current || current.dateKey !== dk) {
-                current = { dateKey: dk, date: slot.cleaningDate, slots: [] };
-                grouped.push(current);
+              const key = slot.staffMember?.id || unassignedKey;
+              if (!staffGroups.has(key)) {
+                staffGroups.set(key, { staff: slot.staffMember, slots: [] });
               }
-              current.slots.push(slot);
+              staffGroups.get(key)!.slots.push(slot);
             }
-            return grouped.map(group => (
-              <div key={group.dateKey}>
-                <div className={`flex items-center gap-3 mb-3 ${
-                  isBefore(group.date, new Date()) && format(group.date, "yyyy-MM-dd") !== format(new Date(), "yyyy-MM-dd")
-                    ? "opacity-50" : ""
-                }`}>
+
+            // Sort each group's slots chronologically
+            for (const group of staffGroups.values()) {
+              group.slots.sort((a, b) => a.cleaningDate.getTime() - b.cleaningDate.getTime());
+            }
+
+            // Sort groups: named staff alphabetically, unassigned last
+            const sortedGroups = [...staffGroups.entries()].sort(([keyA, a], [keyB, b]) => {
+              if (keyA === unassignedKey) return 1;
+              if (keyB === unassignedKey) return -1;
+              return (a.staff?.name || "").localeCompare(b.staff?.name || "");
+            });
+
+            return sortedGroups.map(([key, group]) => (
+              <div key={key}>
+                {/* Staff header */}
+                <div className="flex items-center gap-3 mb-4">
                   <div className="h-px flex-1 bg-border" />
-                  <span className="text-sm font-bold uppercase tracking-wider text-primary capitalize">
-                    {format(group.date, "EEEE dd MMMM", { locale: fr })}
-                  </span>
-                  <Badge variant="outline" className="text-xs">{group.slots.length} ménage{group.slots.length > 1 ? "s" : ""}</Badge>
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-bold uppercase tracking-wider text-primary">
+                      {group.staff?.name || "Non attribué"}
+                    </span>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {group.slots.length} ménage{group.slots.length > 1 ? "s" : ""}
+                  </Badge>
                   <div className="h-px flex-1 bg-border" />
                 </div>
+
                 <div className="space-y-2">
-          {group.slots.map((slot, idx) => {
-            const tenantName = slot.tenant
-              ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
-              : extractTenantFromNotes(slot.checkoutBooking.notes);
-            const nextTenantName = slot.nextTenant
-              ? `${slot.nextTenant.first_name} ${slot.nextTenant.last_name || ""}`.trim()
-              : slot.nextCheckinBooking ? extractTenantFromNotes(slot.nextCheckinBooking.notes) : null;
+                  {group.slots.map((slot, idx) => {
+                    const tenantName = slot.tenant
+                      ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
+                      : extractTenantFromNotes(slot.checkoutBooking.notes);
+                    const nextTenantName = slot.nextTenant
+                      ? `${slot.nextTenant.first_name} ${slot.nextTenant.last_name || ""}`.trim()
+                      : slot.nextCheckinBooking ? extractTenantFromNotes(slot.nextCheckinBooking.notes) : null;
 
-            return (
-              <Card
-                key={slot.checkoutBooking.id + "-" + idx}
-                className={`transition-colors ${
-                  isPast(slot)
-                    ? "opacity-50"
-                    : isUrgent(slot)
-                      ? "border-destructive/50 bg-destructive/5"
-                      : isTight(slot)
-                        ? "border-accent/80 bg-accent/10"
-                        : ""
-                }`}
-              >
-                <CardContent className="py-4 px-5">
-                  <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-                    {/* Listing & staff */}
-                    <div className="flex-shrink-0 lg:w-[200px]">
-                      <div className="flex items-center gap-2 mb-1">
-                        <SprayCan className="h-4 w-4 text-primary" />
-                        <span className="font-semibold">{slot.listingTitle}</span>
-                      </div>
-                      {slot.staffMember && (
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <UserCheck className="h-3.5 w-3.5 text-primary" />
-                          <span className="text-xs font-medium">{slot.staffMember.name}</span>
-                        </div>
-                      )}
-                      {isUrgent(slot) && (
-                        <Badge variant="destructive" className="mt-1 text-xs">⚠️ Enchaînement immédiat</Badge>
-                      )}
-                      {isTight(slot) && (
-                        <Badge variant="outline" className="mt-1 text-xs">⏰ Enchaînement serré</Badge>
-                      )}
-                    </div>
-
-                    <Separator orientation="vertical" className="hidden lg:block h-auto self-stretch" />
-
-                    {/* Outgoing */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Départ</p>
-                      <div className="flex items-center gap-2 text-sm">
-                        <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                        <span className="font-medium">{tenantName || "Non renseigné"}</span>
-                      </div>
-                      {slot.tenant?.phone && (
-                        <div className="flex items-center gap-2 text-sm mt-0.5">
-                          <Phone className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                          <span>{slot.tenant.phone}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
-                        <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-                        <span>{format(parseISO(slot.checkoutBooking.checkin_date), "dd/MM")} → {format(parseISO(slot.checkoutBooking.checkout_date), "dd/MM")}</span>
-                        <Moon className="h-3.5 w-3.5 flex-shrink-0 ml-1" />
-                        <span>{slot.checkoutBooking.nights} nuit{slot.checkoutBooking.nights > 1 ? "s" : ""}</span>
-                      </div>
-                    </div>
-
-                    <Separator orientation="vertical" className="hidden lg:block h-auto self-stretch" />
-
-                    {/* Incoming */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Arrivée suivante</p>
-                      {slot.nextCheckinBooking ? (
-                        <>
-                          <div className="flex items-center gap-2 text-sm">
-                            <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                            <span className="font-medium">{nextTenantName || "Non renseigné"}</span>
-                          </div>
-                          {slot.nextTenant?.phone && (
-                            <div className="flex items-center gap-2 text-sm mt-0.5">
-                              <Phone className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                              <span>{slot.nextTenant.phone}</span>
+                    return (
+                      <Card
+                        key={slot.checkoutBooking.id + "-" + idx}
+                        className={`transition-colors ${
+                          isPast(slot)
+                            ? "opacity-50"
+                            : isUrgent(slot)
+                              ? "border-destructive/50 bg-destructive/5"
+                              : isTight(slot)
+                                ? "border-accent/80 bg-accent/10"
+                                : ""
+                        }`}
+                      >
+                        <CardContent className="py-4 px-5">
+                          <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                            {/* Listing & date */}
+                            <div className="flex-shrink-0 lg:w-[200px]">
+                              <div className="flex items-center gap-2 mb-1">
+                                <SprayCan className="h-4 w-4 text-primary" />
+                                <span className="font-semibold">{slot.listingTitle}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground capitalize">
+                                <Calendar className="h-3.5 w-3.5" />
+                                <span>{format(slot.cleaningDate, "EEEE dd MMMM", { locale: fr })}</span>
+                              </div>
+                              {isUrgent(slot) && (
+                                <Badge variant="destructive" className="mt-1 text-xs">⚠️ Enchaînement immédiat</Badge>
+                              )}
+                              {isTight(slot) && (
+                                <Badge variant="outline" className="mt-1 text-xs">⏰ Enchaînement serré</Badge>
+                              )}
                             </div>
-                          )}
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
-                            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-                            <span className="capitalize">{format(parseISO(slot.nextCheckinBooking.checkin_date), "EEEE dd/MM", { locale: fr })}</span>
+
+                            <Separator orientation="vertical" className="hidden lg:block h-auto self-stretch" />
+
+                            {/* Outgoing */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Départ</p>
+                              <div className="flex items-center gap-2 text-sm">
+                                <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                <span className="font-medium">{tenantName || "Non renseigné"}</span>
+                              </div>
+                              {slot.tenant?.phone && (
+                                <div className="flex items-center gap-2 text-sm mt-0.5">
+                                  <Phone className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                  <span>{slot.tenant.phone}</span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
+                                <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                                <span>{format(parseISO(slot.checkoutBooking.checkin_date), "dd/MM")} → {format(parseISO(slot.checkoutBooking.checkout_date), "dd/MM")}</span>
+                                <Moon className="h-3.5 w-3.5 flex-shrink-0 ml-1" />
+                                <span>{slot.checkoutBooking.nights} nuit{slot.checkoutBooking.nights > 1 ? "s" : ""}</span>
+                              </div>
+                            </div>
+
+                            <Separator orientation="vertical" className="hidden lg:block h-auto self-stretch" />
+
+                            {/* Incoming */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Arrivée suivante</p>
+                              {slot.nextCheckinBooking ? (
+                                <>
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                    <span className="font-medium">{nextTenantName || "Non renseigné"}</span>
+                                  </div>
+                                  {slot.nextTenant?.phone && (
+                                    <div className="flex items-center gap-2 text-sm mt-0.5">
+                                      <Phone className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                      <span>{slot.nextTenant.phone}</span>
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
+                                    <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                                    <span className="capitalize">{format(parseISO(slot.nextCheckinBooking.checkin_date), "EEEE dd/MM", { locale: fr })}</span>
+                                  </div>
+                                  {slot.hoursAvailable !== null && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      ⏱️ {Math.floor(slot.hoursAvailable / 24)} jour{Math.floor(slot.hoursAvailable / 24) > 1 ? "s" : ""} entre les deux
+                                    </p>
+                                  )}
+                                </>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">Pas de réservation suivante</p>
+                              )}
+                            </div>
                           </div>
-                          {slot.hoursAvailable !== null && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              ⏱️ {Math.floor(slot.hoursAvailable / 24)} jour{Math.floor(slot.hoursAvailable / 24) > 1 ? "s" : ""} entre les deux
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">Pas de réservation suivante</p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               </div>
             ));
