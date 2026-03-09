@@ -58,6 +58,8 @@ const STATUS_LABELS: Record<string, string> = {
   completed: "Terminée",
   cancelled: "Annulée",
   checked_in: "En cours",
+  owner_blocked: "Bloqué (perso)",
+  pre_reservation: "Pré-réservation",
 };
 
 export default function AvailabilityCalendar({ listings, bookings, blockedDates, currentMonth }: AvailabilityCalendarProps) {
