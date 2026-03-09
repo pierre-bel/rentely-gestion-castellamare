@@ -328,7 +328,7 @@ const CreateListing = () => {
           listing_id: createdListing.id,
           room_type: room.room_type,
           name: room.name,
-          beds: room.beds,
+          beds: room.beds as any,
           features: room.features,
           sort_order: index,
         }));
