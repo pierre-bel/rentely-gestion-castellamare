@@ -28,6 +28,8 @@ export const DemoProvider = ({ children }: { children: ReactNode }) => {
       if (state) {
         setIsDemoMode(true);
         setDemoUserId(state.userId);
+        // Seed demo data on first activation
+        seedDemoData(state.role, state.userId);
         // Demo mode is ready immediately - data comes from demoStorage
         setMigrationComplete(true);
       }
