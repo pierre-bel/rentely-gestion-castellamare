@@ -45,6 +45,16 @@ export function HostPricing() {
   const [weeksToGenerate, setWeeksToGenerate] = useState(12);
   const [editedRows, setEditedRows] = useState<Record<string, Partial<WeeklyPricing>>>({});
 
+  // School holidays state
+  interface SchoolHoliday { id: string; label: string; start_date: string; end_date: string; }
+  const [schoolHolidays, setSchoolHolidays] = useState<SchoolHoliday[]>([]);
+  const [holidayLabel, setHolidayLabel] = useState("");
+  const [holidayStart, setHolidayStart] = useState<Date | undefined>();
+  const [holidayEnd, setHolidayEnd] = useState<Date | undefined>();
+  const [holidayDialogOpen, setHolidayDialogOpen] = useState(false);
+  const [holidayStartOpen, setHolidayStartOpen] = useState(false);
+  const [holidayEndOpen, setHolidayEndOpen] = useState(false);
+
   // Fetch listings
   const { data: listings = [] } = useQuery({
     queryKey: ["host-listings-pricing", user?.id],
