@@ -100,11 +100,8 @@ const AdminDashboardRecentListings = () => {
       refetch();
       toast({ title: "Success", description: `Listing ${newStatus === "blocked" ? "blocked" : "unblocked"} successfully` });
     } else {
-      // REAL MODE: Update Supabase
-      const { error } = await supabase
-        .from("listings")
-        .update({ status: newStatus })
-        .eq("id", listingId);
+      // REAL MODE: Update via helper
+      const { error } = await updateById("listings", listingId, { status: newStatus });
 
       if (error) {
         toast({

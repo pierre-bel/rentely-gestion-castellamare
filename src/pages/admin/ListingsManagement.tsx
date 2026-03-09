@@ -173,11 +173,8 @@ const ListingsManagement = () => {
       await queryClient.invalidateQueries({ queryKey: ["admin-listings"] });
       toast({ title: "Success", description: "Listing unblocked successfully" });
     } else {
-      // REAL MODE: Update Supabase
-      const { error } = await supabase
-        .from("listings")
-        .update({ status: "pending" })
-        .eq("id", listingId);
+      // REAL MODE: Update via helper
+      const { error } = await updateById("listings", listingId, { status: "pending" });
 
       if (error) {
         toast({

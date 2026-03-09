@@ -166,11 +166,8 @@ export default function HostEmailAutomations() {
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
-      const { error } = await supabase
-        .from("email_automations")
-        .update({ is_enabled: enabled })
-        .eq("id", id);
-      if (error) throw error;
+      const { error } = await updateById("email_automations", id, { is_enabled: enabled });
+      if (error) throw new Error(error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["email-automations"] });
