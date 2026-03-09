@@ -874,6 +874,69 @@ export type Database = {
         }
         Relationships: []
       }
+      host_team_invitations: {
+        Row: {
+          accepted_at: string | null
+          access_level: Database["public"]["Enums"]["team_access_level"]
+          created_at: string
+          email: string
+          expires_at: string
+          host_user_id: string
+          id: string
+          status: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          access_level?: Database["public"]["Enums"]["team_access_level"]
+          created_at?: string
+          email: string
+          expires_at?: string
+          host_user_id: string
+          id?: string
+          status?: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          access_level?: Database["public"]["Enums"]["team_access_level"]
+          created_at?: string
+          email?: string
+          expires_at?: string
+          host_user_id?: string
+          id?: string
+          status?: string
+          token?: string
+        }
+        Relationships: []
+      }
+      host_team_members: {
+        Row: {
+          access_level: Database["public"]["Enums"]["team_access_level"]
+          created_at: string
+          host_user_id: string
+          id: string
+          member_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          access_level?: Database["public"]["Enums"]["team_access_level"]
+          created_at?: string
+          host_user_id: string
+          id?: string
+          member_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          access_level?: Database["public"]["Enums"]["team_access_level"]
+          created_at?: string
+          host_user_id?: string
+          id?: string
+          member_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inbox_emails: {
         Row: {
           attachments: Json | null
@@ -2400,6 +2463,10 @@ export type Database = {
       }
     }
     Functions: {
+      accept_team_invitation: {
+        Args: { invitation_token: string }
+        Returns: Json
+      }
       admin_delete_user_soft:
         | { Args: { p_user_id: string }; Returns: Json }
         | {
@@ -3152,6 +3219,16 @@ export type Database = {
           revpar: number
         }[]
       }
+      get_my_team_memberships: {
+        Args: never
+        Returns: {
+          access_level: Database["public"]["Enums"]["team_access_level"]
+          host_email: string
+          host_first_name: string
+          host_last_name: string
+          host_user_id: string
+        }[]
+      }
       get_or_create_support_thread: {
         Args: { p_user_id: string }
         Returns: string
@@ -3487,6 +3564,11 @@ export type Database = {
       payout_status_enum: "pending" | "completed" | "failed" | "cancelled"
       property_type: "apartment" | "villa" | "room" | "house" | "condo"
       review_status: "pending" | "approved" | "rejected" | "blocked"
+      team_access_level:
+        | "full_access"
+        | "read_only"
+        | "read_only_anonymous"
+        | "accounting_only"
       thread_type: "user_to_user" | "user_to_support"
       user_status: "active" | "inactive" | "suspended"
     }
@@ -3660,6 +3742,12 @@ export const Constants = {
       payout_status_enum: ["pending", "completed", "failed", "cancelled"],
       property_type: ["apartment", "villa", "room", "house", "condo"],
       review_status: ["pending", "approved", "rejected", "blocked"],
+      team_access_level: [
+        "full_access",
+        "read_only",
+        "read_only_anonymous",
+        "accounting_only",
+      ],
       thread_type: ["user_to_user", "user_to_support"],
       user_status: ["active", "inactive", "suspended"],
     },
