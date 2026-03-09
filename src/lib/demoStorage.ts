@@ -32,7 +32,7 @@ interface DemoSnapshot {
   disputes: any[];
   messageThreads: MessageThread[];
   messages: Message[];
-  profiles: Record<string, any>; // Store other users' profiles (hosts, etc.)
+  profiles: Record<string, any>;
   
   // Host-specific data
   listings: any[];
@@ -41,6 +41,11 @@ interface DemoSnapshot {
   listingAvailability: any[];
   hostTransactions: any[];
   moderationFeedback: any[];
+  tenants: any[];
+  cleaningStaff: any[];
+  cleaningStaffListings: any[];
+  weeklyPricing: any[];
+  schoolHolidays: any[];
   
   // Admin-specific data
   adminListings: any[];
