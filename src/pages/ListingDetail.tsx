@@ -85,6 +85,7 @@ const ListingDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [rooms, setRooms] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchListing = async () => {
