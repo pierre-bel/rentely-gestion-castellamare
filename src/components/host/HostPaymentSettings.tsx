@@ -171,6 +171,7 @@ function BankCredentialsSettings() {
   const [beneficiary, setBeneficiary] = useState("");
   const [iban, setIban] = useState("");
   const [bic, setBic] = useState("");
+  const [referenceTemplate, setReferenceTemplate] = useState("{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}");
 
   const { data: settings } = useQuery({
     queryKey: ["portal-settings-bank", user?.id],
