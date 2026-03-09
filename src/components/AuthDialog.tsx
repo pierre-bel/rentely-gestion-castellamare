@@ -88,7 +88,7 @@ export const AuthDialog = ({ open, onOpenChange }: AuthDialogProps) => {
       navigate("/host/dashboard");
     }
 
-    setLoadingStates(prev => ({ ...prev, regular: false }));
+    setLoading(false);
   };
 
   const handleDemoLogin = (role: DemoRole, redirectTo: string) => {
