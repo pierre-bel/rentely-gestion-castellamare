@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { HostSidebar, NavigationItem } from "@/components/host/HostSidebar";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { LayoutDashboard, Home, Users, DollarSign, FileText, Loader2, Percent, Calendar, MessageSquare, AlertTriangle, FilePenLine } from "lucide-react";
+import { LayoutDashboard, Home, Users, DollarSign, FileText, Loader2, Percent, Calendar, MessageSquare, AlertTriangle, FilePenLine, Bug } from "lucide-react";
 import DemoBanner from "@/components/DemoBanner";
 
 const adminNavigationItems: NavigationItem[] = [
