@@ -224,8 +224,7 @@ const ListingsManagement = () => {
       setListingToDelete(null);
     }
   };
-
-
+  const handleAvailabilityClick = async (listing: Listing) => {
     if (isDemoMode) {
       // DEMO MODE: Fetch from localStorage
       const availabilityRules = getAvailabilityRules(listing.id);
