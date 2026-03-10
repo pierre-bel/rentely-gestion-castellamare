@@ -57,6 +57,9 @@ const ListingsManagement = () => {
   const [maxPrice, setMaxPrice] = useState("");
   const [sortValue, setSortValue] = useState("created_at-desc");
   const { toast } = useToast();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
