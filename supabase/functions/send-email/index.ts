@@ -137,6 +137,7 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
     listing_country: listing?.country || '',
     booking_id: booking.id,
     qr_paiement: qrPaiementHtml,
+    portal_link: `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || ''}/booking/${booking.access_token}`,
   };
 }
 

@@ -25,6 +25,7 @@ export const DYNAMIC_VARIABLES = [
   { key: "listing_country", label: "Pays du bien" },
   { key: "booking_id", label: "ID de réservation" },
   { key: "qr_paiement", label: "QR code de paiement SEPA (image)" },
+  { key: "portal_link", label: "Lien vers le portail client" },
 ];
 
 export default function DynamicVariablesPanel() {
