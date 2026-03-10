@@ -8,12 +8,12 @@ const SearchPageFooter = () => {
   
   const navigationLinks = [
     { label: "Book Now", to: "/search" },
-    { label: "FAQ", to: "/faq" },
   ];
 
-  const supportLinks = [
-    { label: "Help Center", to: "/help-center" },
-    { label: "Support", to: "/support" },
+  const supportLinks: { label: string; to: string }[] = [
+    // Hidden for now
+    // { label: "Help Center", to: "/help-center" },
+    // { label: "Support", to: "/support" },
   ];
 
   return (

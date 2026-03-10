@@ -113,9 +113,11 @@ const App = () => (
               <Routes>
               <Route path="/" element={<><Navbar /><Home /></>} />
               <Route path="/search" element={<Search />} />
+              {/* Hidden for now - pages kept but not accessible
               <Route path="/faq" element={<><Navbar /><FAQ /></>} />
               <Route path="/help-center" element={<><Navbar /><HelpCenter /></>} />
               <Route path="/support" element={<><Navbar /><Support /></>} />
+              */}
               <Route path="/forgot-password" element={<><Navbar /><ForgotPassword /></>} />
               <Route path="/become-host" element={<><Navbar /><BecomeHost /></>} />
               <Route path="/features/calendar" element={<CalendarFeature />} />
