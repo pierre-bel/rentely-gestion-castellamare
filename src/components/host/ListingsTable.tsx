@@ -24,6 +24,7 @@ interface ListingsTableProps {
   onEditClick: (listingId: string) => void;
   onAvailabilityClick: (listing: Listing) => void;
   onDuplicateClick?: (listingId: string) => void;
+  onDeleteClick?: (listingId: string) => void;
 }
 
 const formatPrice = (price: number) => {
