@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Edit, Calendar } from "lucide-react";
+import { Edit, Calendar, Copy } from "lucide-react";
 
 interface Listing {
   id: string;
@@ -23,6 +23,7 @@ interface ListingsTableProps {
   loading: boolean;
   onEditClick: (listingId: string) => void;
   onAvailabilityClick: (listing: Listing) => void;
+  onDuplicateClick?: (listingId: string) => void;
 }
 
 const formatPrice = (price: number) => {
@@ -53,7 +54,7 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
   room: "Chambre",
 };
 
-export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityClick }: ListingsTableProps) => {
+export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityClick, onDuplicateClick }: ListingsTableProps) => {
   if (loading) {
     return (
       <div className="rounded-lg border overflow-hidden">
@@ -154,6 +155,16 @@ export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityCl
                     <Calendar className="h-4 w-4 mr-1" />
                     Disponibilités
                   </Button>
+                  {onDuplicateClick && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onDuplicateClick(listing.id)}
+                      title="Dupliquer cette annonce"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </TableCell>
             </TableRow>
