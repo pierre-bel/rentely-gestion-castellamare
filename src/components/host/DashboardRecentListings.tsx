@@ -4,7 +4,6 @@ import { useDemoData } from "@/hooks/useDemoData";
 import { useNavigate } from "react-router-dom";
 import { Edit, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
