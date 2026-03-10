@@ -207,10 +207,7 @@ const ListingsManagement = () => {
     if (!listingToDelete) return;
     setIsDeleting(true);
     try {
-      // Delete related data first, then the listing
-      await supabase.from("listing_availability").delete().eq("listing_id", listingToDelete);
-      await supabase.from("listing_rooms").delete().eq("listing_id", listingToDelete);
-
+      // CASCADE handles related data cleanup automatically
       const { error } = await supabase.from("listings").delete().eq("id", listingToDelete);
       if (error) throw error;
 
