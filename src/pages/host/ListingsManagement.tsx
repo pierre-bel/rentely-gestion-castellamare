@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, Plus, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -15,6 +15,7 @@ import StepAvailability from "@/components/listing/StepAvailability";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ListingsFiltersSheet } from "@/components/host/ListingsFiltersSheet";
 import { ListingsTable } from "@/components/host/ListingsTable";
+import type { ListingFormData } from "@/pages/host/CreateListing";
 
 interface Listing {
   id: string;
@@ -111,10 +112,77 @@ const ListingsManagement = () => {
     setMaxPrice("");
   };
 
+  const handleCreateListing = () => {
+    navigate("/host/create-listing", { state: { from: location.pathname } });
+  };
+
   const handleEditClick = (listingId: string) => {
     navigate(`/host/edit-listing/${listingId}`, { 
       state: { from: location.pathname } 
     });
+  };
+
+  const handleDuplicateListing = async (listingId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("listings")
+        .select(`*, listing_rooms(id, room_type, name, beds, features, sort_order)`)
+        .eq("id", listingId)
+        .single();
+
+      if (error || !data) {
+        toast({ title: "Erreur", description: "Impossible de charger l'annonce.", variant: "destructive" });
+        return;
+      }
+
+      const duplicateData: ListingFormData = {
+        address: data.address || "",
+        city: data.city || "",
+        state: data.state || "",
+        postal_code: data.postal_code || "",
+        country: data.country || "USA",
+        latitude: data.latitude || null,
+        longitude: data.longitude || null,
+        city_id: data.city_id || null,
+        state_region_id: data.state_region_id || null,
+        country_id: data.country_id || null,
+        title: data.title || "",
+        description: data.description || "",
+        type: data.type || "apartment",
+        guests_max: data.guests_max || 1,
+        bedrooms: data.bedrooms || 1,
+        beds: data.beds || 1,
+        bathrooms: data.bathrooms || 1,
+        square_feet: data.size_sqft || 0,
+        amenities: data.amenities || [],
+        cover_image: data.cover_image || "",
+        images: data.images || [],
+        check_in_time: data.checkin_from || "14:00",
+        check_out_time: data.checkout_until || "11:00",
+        min_nights: data.min_nights || 1,
+        max_nights: data.max_nights || 30,
+        house_rules: data.house_rules || "",
+        cancellation_policy_id: data.cancellation_policy_id || null,
+        cleaning_fee: data.cleaning_fee ?? null,
+        base_price: data.base_price || 0,
+        weekly_discount: data.weekly_discount || 0,
+        monthly_discount: data.monthly_discount || 0,
+        rooms: ((data as any).listing_rooms as any[] || []).map((r: any) => ({
+          id: crypto.randomUUID(),
+          room_type: r.room_type || "bedroom",
+          name: r.name || "",
+          beds: r.beds || [],
+          features: r.features || [],
+          sort_order: r.sort_order || 0,
+        })),
+        availability_rules: [],
+      };
+
+      navigate("/host/create-listing", { state: { from: location.pathname, duplicateData } });
+      toast({ title: "Annonce dupliquée", description: "Modifiez les informations puis enregistrez." });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    }
   };
 
   const handleAvailabilityClick = async (listing: Listing) => {
@@ -252,7 +320,7 @@ const ListingsManagement = () => {
               />
             </div>
 
-            {/* Filter and Sort - Right */}
+            {/* Filter, Sort and Create - Right */}
             <div className="flex items-center gap-2">
               <ListingsFiltersSheet
                 statusFilter={statusFilter}
@@ -277,6 +345,11 @@ const ListingsManagement = () => {
                   <SelectItem value="updated_at-asc">Mis à jour anciennement</SelectItem>
                 </SelectContent>
               </Select>
+
+              <Button onClick={handleCreateListing}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nouvelle annonce
+              </Button>
             </div>
           </div>
 
@@ -287,6 +360,7 @@ const ListingsManagement = () => {
               loading={isLoading}
               onEditClick={handleEditClick}
               onAvailabilityClick={handleAvailabilityClick}
+              onDuplicateClick={handleDuplicateListing}
             />
           </div>
 
@@ -345,6 +419,14 @@ const ListingsManagement = () => {
                       onClick={() => handleAvailabilityClick(listing)}
                     >
                       Disponibilités
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDuplicateListing(listing.id)}
+                      title="Dupliquer"
+                    >
+                      <Copy className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
