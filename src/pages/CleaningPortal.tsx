@@ -40,6 +40,8 @@ interface PortalListing {
 
 interface PortalData {
   staff_name: string;
+  portal_past_months: number;
+  portal_future_months: number;
   listings: PortalListing[];
 }
 
@@ -155,18 +157,29 @@ export default function CleaningPortal() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-8">
-        {/* Month navigation */}
-        <div className="flex items-center justify-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => setCurrentMonth(m => subMonths(m, 1))}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-lg font-semibold capitalize w-[200px] text-center">
-            {format(currentMonth, "MMMM yyyy", { locale: fr })}
-          </span>
-          <Button variant="outline" size="icon" onClick={() => setCurrentMonth(m => addMonths(m, 1))}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+        {/* Month navigation with limits */}
+        {(() => {
+          const now = new Date();
+          const pastMonths = portalData?.portal_past_months ?? 1;
+          const futureMonths = portalData?.portal_future_months ?? 3;
+          const minMonth = startOfMonth(subMonths(now, pastMonths));
+          const maxMonth = startOfMonth(addMonths(now, futureMonths));
+          const canGoPrev = startOfMonth(subMonths(currentMonth, 1)) >= minMonth;
+          const canGoNext = startOfMonth(addMonths(currentMonth, 1)) <= maxMonth;
+          return (
+            <div className="flex items-center justify-center gap-4">
+              <Button variant="outline" size="icon" disabled={!canGoPrev} onClick={() => setCurrentMonth(m => subMonths(m, 1))}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-lg font-semibold capitalize w-[200px] text-center">
+                {format(currentMonth, "MMMM yyyy", { locale: fr })}
+              </span>
+              <Button variant="outline" size="icon" disabled={!canGoNext} onClick={() => setCurrentMonth(m => addMonths(m, 1))}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          );
+        })()}
 
         {/* Calendars per listing */}
         {portalData.listings.map(listing => (

@@ -395,6 +395,8 @@ export type Database = {
           id: string
           name: string
           phone: string | null
+          portal_future_months: number
+          portal_past_months: number
           updated_at: string
         }
         Insert: {
@@ -404,6 +406,8 @@ export type Database = {
           id?: string
           name: string
           phone?: string | null
+          portal_future_months?: number
+          portal_past_months?: number
           updated_at?: string
         }
         Update: {
@@ -413,6 +417,8 @@ export type Database = {
           id?: string
           name?: string
           phone?: string | null
+          portal_future_months?: number
+          portal_past_months?: number
           updated_at?: string
         }
         Relationships: []
