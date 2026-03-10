@@ -155,7 +155,7 @@ export function BookingPaymentSection({ bookingId, totalPrice }: Props) {
           const isOverdue = !item.is_paid && item.due_date && item.due_date < today;
           return (
             <div key={item.id} className={`flex items-center gap-2 p-2.5 rounded-lg border ${isOverdue ? "border-destructive/50 bg-destructive/5" : "bg-card"}`}>
-              <Checkbox checked={item.is_paid} onCheckedChange={() => handleToggle(item)} disabled={saving} />
+              <Checkbox checked={item.is_paid} onCheckedChange={() => handleToggle(item)} />
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-medium ${item.is_paid ? "line-through text-muted-foreground" : ""}`}>
                   {item.label}
