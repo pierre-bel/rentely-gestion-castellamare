@@ -740,7 +740,7 @@ function CleaningStaffDialog({
           {staff.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">Aucune personne ajoutée.</p>
           ) : (
-            <div className="space-y-5">
+             <div className="space-y-5">
               {staff.map(s => (
                 <div key={s.id} className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -751,6 +751,40 @@ function CleaningStaffDialog({
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteStaff(s.id)}>
                       <Trash2 className="h-3.5 w-3.5 text-destructive" />
                     </Button>
+                  </div>
+                  {/* Visibility settings */}
+                  <div className="pl-2 flex items-center gap-3 text-xs text-muted-foreground">
+                    <span>Visibilité portail :</span>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={12}
+                        value={s.portal_past_months}
+                        onChange={async (e) => {
+                          const val = Math.max(0, Math.min(12, parseInt(e.target.value) || 0));
+                          await supabase.from("cleaning_staff").update({ portal_past_months: val }).eq("id", s.id);
+                          invalidate();
+                        }}
+                        className="w-14 h-7 text-xs text-center"
+                      />
+                      <span>mois passés</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={12}
+                        value={s.portal_future_months}
+                        onChange={async (e) => {
+                          const val = Math.max(1, Math.min(12, parseInt(e.target.value) || 1));
+                          await supabase.from("cleaning_staff").update({ portal_future_months: val }).eq("id", s.id);
+                          invalidate();
+                        }}
+                        className="w-14 h-7 text-xs text-center"
+                      />
+                      <span>mois futurs</span>
+                    </div>
                   </div>
                   <div className="pl-2 space-y-1.5">
                     {listings.map(l => {
