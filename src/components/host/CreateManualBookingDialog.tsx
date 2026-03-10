@@ -396,16 +396,15 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {bookingType === "normal" ? "Nouvelle réservation manuelle" : 
-               bookingType === "owner_blocked" ? "Bloquer le calendrier" : "Pré-réservation"}
+             <DialogTitle>
+              {bookingType === "normal" ? "Nouvelle réservation manuelle" : "Bloquer le calendrier"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {/* Booking Type Selector */}
             <div>
               <Label>Type</Label>
-              <div className="grid grid-cols-3 gap-2 mt-1">
+              <div className="grid grid-cols-2 gap-2 mt-1">
                 <Button
                   type="button"
                   variant={bookingType === "normal" ? "default" : "outline"}
@@ -419,19 +418,10 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
                   type="button"
                   variant={bookingType === "owner_blocked" ? "default" : "outline"}
                   size="sm"
-                  className={cn("text-xs", bookingType === "owner_blocked" && "bg-[hsl(var(--calendar-owner-blocked))] hover:bg-[hsl(var(--calendar-owner-blocked)/0.9)]")}
+                  className={cn("text-xs", bookingType === "owner_blocked" && "bg-[hsl(var(--calendar-blocked))] hover:bg-[hsl(var(--calendar-blocked)/0.9)]")}
                   onClick={() => setBookingType("owner_blocked")}
                 >
-                  Blocage perso
-                </Button>
-                <Button
-                  type="button"
-                  variant={bookingType === "pre_reservation" ? "default" : "outline"}
-                  size="sm"
-                  className={cn("text-xs", bookingType === "pre_reservation" && "bg-[hsl(var(--calendar-pre-reservation))] hover:bg-[hsl(var(--calendar-pre-reservation)/0.9)]")}
-                  onClick={() => setBookingType("pre_reservation")}
-                >
-                  Pré-réservation
+                  Blocage
                 </Button>
               </div>
             </div>
