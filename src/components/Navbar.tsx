@@ -57,12 +57,6 @@ const Navbar = () => {
                 Tableau de bord
               </Link>
             )}
-            <Link to="/faq" className="text-sm font-medium hover:text-primary transition-colors">
-              FAQ
-            </Link>
-            <Link to="/help-center" className="text-sm font-medium hover:text-primary transition-colors">
-              Aide
-            </Link>
           </div>
 
           <div className="flex md:hidden flex-1 justify-end items-center gap-1 sm:gap-2">
@@ -94,9 +88,6 @@ const Navbar = () => {
                 Tableau de bord
               </Link>
             )}
-            <Link to="/faq" className="text-[10px] sm:text-xs font-medium hover:text-primary transition-colors px-1">
-              FAQ
-            </Link>
           </div>
 
           <div className="flex items-center flex-shrink-0 ml-1 sm:ml-2">
