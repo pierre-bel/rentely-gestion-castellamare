@@ -40,6 +40,8 @@ interface PortalListing {
 
 interface PortalData {
   staff_name: string;
+  portal_past_months: number;
+  portal_future_months: number;
   listings: PortalListing[];
 }
 
