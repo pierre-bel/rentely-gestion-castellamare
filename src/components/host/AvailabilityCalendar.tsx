@@ -92,18 +92,14 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
       return { status: blocked ? "blocked" : "available", bookings: [] };
     }
 
-    // Check for owner_blocked or pre_reservation status
+    // Check for owner_blocked or pre_reservation status → treat as blocked or pending
     const ownerBlocked = dayBookings.find((b) => b.status === "owner_blocked");
     if (ownerBlocked) {
-      const ci = parseISO(ownerBlocked.checkin_date);
-      const co = parseISO(ownerBlocked.checkout_date);
-      if (day >= ci && day <= co) return { status: "owner-blocked", bookings: dayBookings };
+      return { status: "blocked", bookings: dayBookings };
     }
     const preRes = dayBookings.find((b) => b.status === "pre_reservation");
     if (preRes) {
-      const ci = parseISO(preRes.checkin_date);
-      const co = parseISO(preRes.checkout_date);
-      if (day >= ci && day <= co) return { status: "pre-reservation", bookings: dayBookings };
+      return { status: "pending", bookings: dayBookings };
     }
 
     const isCheckinFor = dayBookings.filter((b) => isSameDay(day, parseISO(b.checkin_date)));
