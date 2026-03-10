@@ -175,7 +175,6 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
                 <Checkbox
                   checked={item.is_paid}
                   onCheckedChange={() => handleTogglePaid(item)}
-                  disabled={saving}
                 />
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-medium ${item.is_paid ? "line-through text-muted-foreground" : ""}`}>
