@@ -373,51 +373,130 @@ export default function HostBookings() {
     }
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!bookings || bookings.length === 0) {
       toast({ title: "Aucune donnée", description: "Aucune réservation à exporter.", variant: "destructive" });
       return;
     }
 
-    const STATUS_LABELS: Record<string, string> = {
-      confirmed: "Confirmée",
-      pending_payment: "En attente de paiement",
-      cancelled: "Annulée",
-      completed: "Terminée",
-      cancelled_guest: "Annulée (locataire)",
-      cancelled_host: "Annulée (hôte)",
-      expired: "Expirée",
-      owner_blocked: "Bloqué",
-      pre_reservation: "En attente",
-    };
+    try {
+      // Fetch full booking details for all bookings
+      const bookingIds = bookings.map(b => b.id);
+      const { data: fullBookings } = await supabase
+        .from("bookings")
+        .select("id, listing_id, checkin_date, checkout_date, subtotal, cleaning_fee, status, igloohome_code, notes, created_at, pricing_breakdown")
+        .in("id", bookingIds);
 
-    const rows = bookings.map((b) => ({
-      "Logement": b.listing_title,
-      "Locataire": b.guest_name || "—",
-      "E-mail locataire": b.guest_email,
-      "Arrivée": b.checkin_date,
-      "Départ": b.checkout_date,
-      "Nuits": b.nights,
-      "Voyageurs": b.guests,
-      "Montant (€)": b.host_payout_gross ?? 0,
-      "Statut": STATUS_LABELS[b.status] || b.status,
-      "Créée le": new Date(b.created_at).toLocaleDateString("fr-FR"),
-    }));
+      // Fetch listing titles
+      const listingIds = [...new Set(bookings.map(b => b.listing_id))];
+      const { data: listingsData } = await supabase
+        .from("listings")
+        .select("id, title")
+        .in("id", listingIds);
+      const listingMap = new Map((listingsData || []).map(l => [l.id, l.title]));
 
-    const ws = XLSX.utils.json_to_sheet(rows);
-    // Auto-size columns
-    const colWidths = Object.keys(rows[0]).map((key) => ({
-      wch: Math.max(key.length, ...rows.map((r) => String((r as any)[key] ?? "").length)) + 2,
-    }));
-    ws["!cols"] = colWidths;
+      // Fetch payment items for all bookings
+      const { data: paymentItems } = await supabase
+        .from("booking_payment_items")
+        .select("booking_id, label, amount, is_paid")
+        .in("booking_id", bookingIds)
+        .order("sort_order");
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Réservations");
+      // Group payment items by booking
+      const paymentMap = new Map<string, typeof paymentItems>();
+      (paymentItems || []).forEach(pi => {
+        const arr = paymentMap.get(pi.booking_id) || [];
+        arr.push(pi);
+        paymentMap.set(pi.booking_id, arr);
+      });
 
-    const today = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(wb, `reservations-${today}.xlsx`);
+      // Collect tenant IDs from pricing_breakdown
+      const tenantIds: string[] = [];
+      (fullBookings || []).forEach(b => {
+        const pb = b.pricing_breakdown as any;
+        if (pb?.tenant_id) tenantIds.push(pb.tenant_id);
+      });
 
-    toast({ title: "Export réussi", description: `${rows.length} réservation(s) exportée(s).` });
+      // Fetch tenants
+      const { data: tenantsData } = tenantIds.length > 0
+        ? await supabase
+            .from("tenants")
+            .select("id, first_name, last_name, email, phone, gender, street, street_number, postal_code, city, country, notes")
+            .in("id", tenantIds)
+        : { data: [] };
+      const tenantMap = new Map((tenantsData || []).map(t => [t.id, t]));
+
+      const formatDateFR = (d: string) => {
+        if (!d) return "";
+        const [y, m, dd] = d.split("-");
+        return `${dd}/${m}/${y}`;
+      };
+
+      const formatCreatedAt = (iso: string) => {
+        if (!iso) return "";
+        const d = new Date(iso);
+        const yy = String(d.getFullYear()).slice(-2);
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        const hh = String(d.getHours()).padStart(2, "0");
+        const min = String(d.getMinutes()).padStart(2, "0");
+        return `${yy}-${mm}-${dd} ${hh}:${min}`;
+      };
+
+      const genderLabel = (g: string | null) => {
+        if (!g) return "";
+        return g === "male" ? "homme" : g === "female" ? "femme" : "";
+      };
+
+      const rows = (fullBookings || []).map(b => {
+        const pb = b.pricing_breakdown as any;
+        const tenant = pb?.tenant_id ? tenantMap.get(pb.tenant_id) : null;
+        const items = paymentMap.get(b.id) || [];
+        const deposit = items.find(i => i.label === "Acompte");
+        const balance = items.find(i => i.label === "Solde");
+
+        return {
+          "Nom du bien": listingMap.get(b.listing_id) || "",
+          "Date d'arrivée (JJ/MM/AAAA)": formatDateFR(b.checkin_date),
+          "Date de départ (JJ/MM/AAAA)": formatDateFR(b.checkout_date),
+          "Prix de location (€)": b.subtotal ?? 0,
+          "Frais de ménage (€)": b.cleaning_fee ?? 0,
+          "Statut": b.status || "",
+          "Code clé Igloohome": b.igloohome_code || "",
+          "Notes": b.notes || "",
+          "Date de création (AA-MM-JJ HH:mm)": formatCreatedAt(b.created_at),
+          "Prénom du locataire": tenant?.first_name || "",
+          "Nom du locataire": tenant?.last_name || "",
+          "E-mail du locataire": tenant?.email || "",
+          "Téléphone du locataire": tenant?.phone || "",
+          "Sexe (homme/femme)": genderLabel(tenant?.gender || null),
+          "Rue": tenant?.street || "",
+          "Numéro": tenant?.street_number || "",
+          "Code postal": tenant?.postal_code || "",
+          "Ville": tenant?.city || "",
+          "Pays": tenant?.country || "",
+          "Notes locataire": tenant?.notes || "",
+          "Montant acompte (€)": deposit?.amount ?? "",
+          "Acompte payé (oui/non)": deposit ? (deposit.is_paid ? "oui" : "non") : "",
+          "Solde payé (oui/non)": balance ? (balance.is_paid ? "oui" : "non") : "",
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = Object.keys(rows[0] || {}).map(key => ({
+        wch: Math.max(key.length, ...rows.map(r => String((r as any)[key] ?? "").length)) + 2,
+      }));
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Réservations");
+
+      const today = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `reservations-${today}.xlsx`);
+
+      toast({ title: "Export réussi", description: `${rows.length} réservation(s) exportée(s).` });
+    } catch (err: any) {
+      toast({ title: "Erreur d'export", description: err.message, variant: "destructive" });
+    }
   };
 
   const handleDeleteAllBookings = async () => {
