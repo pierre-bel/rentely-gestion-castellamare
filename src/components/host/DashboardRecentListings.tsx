@@ -54,9 +54,9 @@ const DashboardRecentListings = ({ userId }: DashboardRecentListingsProps) => {
   if (!listings || listings.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground mb-4">Aucune annonce</p>
+        <p className="text-muted-foreground mb-4">Aucun bien</p>
         <Button onClick={() => navigate("/host/create-listing", { state: { from: "/host/dashboard" } })}>
-          + Créer votre première annonce
+          + Créer votre premier bien
         </Button>
       </div>
     );
