@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Edit, Calendar, Copy } from "lucide-react";
+import { Edit, Calendar, Copy, Trash2 } from "lucide-react";
 
 interface Listing {
   id: string;
@@ -24,6 +24,7 @@ interface ListingsTableProps {
   onEditClick: (listingId: string) => void;
   onAvailabilityClick: (listing: Listing) => void;
   onDuplicateClick?: (listingId: string) => void;
+  onDeleteClick?: (listingId: string) => void;
 }
 
 const formatPrice = (price: number) => {
@@ -54,7 +55,7 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
   room: "Chambre",
 };
 
-export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityClick, onDuplicateClick }: ListingsTableProps) => {
+export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityClick, onDuplicateClick, onDeleteClick }: ListingsTableProps) => {
   if (loading) {
     return (
       <div className="rounded-lg border overflow-hidden">
@@ -163,6 +164,17 @@ export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityCl
                       title="Dupliquer cette annonce"
                     >
                       <Copy className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {onDeleteClick && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onDeleteClick(listing.id)}
+                      title="Supprimer ce bien"
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
                 </div>

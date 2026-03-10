@@ -7,7 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Copy } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Search, Plus, Copy, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -47,6 +57,9 @@ const ListingsManagement = () => {
   const [maxPrice, setMaxPrice] = useState("");
   const [sortValue, setSortValue] = useState("created_at-desc");
   const { toast } = useToast();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [listingToDelete, setListingToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
@@ -185,7 +198,34 @@ const ListingsManagement = () => {
     }
   };
 
-  const handleAvailabilityClick = async (listing: Listing) => {
+  const handleDeleteListing = (listingId: string) => {
+    setListingToDelete(listingId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!listingToDelete) return;
+    setIsDeleting(true);
+    try {
+      // Delete related data first, then the listing
+      await supabase.from("listing_availability").delete().eq("listing_id", listingToDelete);
+      await supabase.from("listing_rooms").delete().eq("listing_id", listingToDelete);
+
+      const { error } = await supabase.from("listings").delete().eq("id", listingToDelete);
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["host-listings"] });
+      toast({ title: "Bien supprimé", description: "Le bien a été supprimé avec succès." });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setListingToDelete(null);
+    }
+  };
+
+
     if (isDemoMode) {
       // DEMO MODE: Fetch from localStorage
       const availabilityRules = getAvailabilityRules(listing.id);
@@ -361,6 +401,7 @@ const ListingsManagement = () => {
               onEditClick={handleEditClick}
               onAvailabilityClick={handleAvailabilityClick}
               onDuplicateClick={handleDuplicateListing}
+              onDeleteClick={handleDeleteListing}
             />
           </div>
 
@@ -428,6 +469,15 @@ const ListingsManagement = () => {
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteListing(listing.id)}
+                      title="Supprimer"
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))
@@ -460,6 +510,28 @@ const ListingsManagement = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce bien ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Toutes les disponibilités associées seront également supprimées. Les réservations existantes ne seront pas affectées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Suppression..." : "Supprimer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
