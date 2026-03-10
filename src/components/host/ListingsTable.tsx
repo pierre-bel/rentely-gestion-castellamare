@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Edit, Calendar, Copy } from "lucide-react";
+import { Edit, Calendar, Copy, Trash2 } from "lucide-react";
 
 interface Listing {
   id: string;
