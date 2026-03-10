@@ -40,7 +40,7 @@ interface Booking {
 
 interface Listing { id: string; title: string; checkin_from: string | null; checkout_until: string | null; }
 interface Tenant { id: string; first_name: string; last_name: string | null; phone: string | null; }
-interface CleaningStaff { id: string; name: string; phone: string | null; access_token: string; }
+interface CleaningStaff { id: string; name: string; phone: string | null; access_token: string; portal_past_months: number; portal_future_months: number; }
 interface StaffAssignment { id: string; cleaning_staff_id: string; listing_id: string; }
 
 interface CleaningSlot {
