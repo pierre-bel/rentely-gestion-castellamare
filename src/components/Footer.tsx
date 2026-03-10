@@ -72,28 +72,7 @@ const Footer = () => {
                   </ul>
                 </div>
 
-                {/* Support */}
-                <div>
-                  <h3 className="font-bold text-base mb-2">Support</h3>
-                  <div className="w-12 h-1 bg-primary mb-4"></div>
-                  <ul className="space-y-2">
-                    <li>
-                      <Link to="/faq" className="text-foreground hover:text-primary transition-colors">
-                        FAQ
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/help-center" className="text-foreground hover:text-primary transition-colors">
-                        Centre d'aide
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/support" className="text-foreground hover:text-primary transition-colors">
-                        Contact
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
+                {/* Support - hidden for now */}
               </div>
             </div>
 
