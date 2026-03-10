@@ -198,7 +198,34 @@ const ListingsManagement = () => {
     }
   };
 
-  const handleAvailabilityClick = async (listing: Listing) => {
+  const handleDeleteListing = (listingId: string) => {
+    setListingToDelete(listingId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!listingToDelete) return;
+    setIsDeleting(true);
+    try {
+      // Delete related data first, then the listing
+      await supabase.from("listing_availability").delete().eq("listing_id", listingToDelete);
+      await supabase.from("listing_rooms").delete().eq("listing_id", listingToDelete);
+
+      const { error } = await supabase.from("listings").delete().eq("id", listingToDelete);
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["host-listings"] });
+      toast({ title: "Bien supprimé", description: "Le bien a été supprimé avec succès." });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setListingToDelete(null);
+    }
+  };
+
+
     if (isDemoMode) {
       // DEMO MODE: Fetch from localStorage
       const availabilityRules = getAvailabilityRules(listing.id);
