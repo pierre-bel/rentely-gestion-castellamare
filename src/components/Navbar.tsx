@@ -57,12 +57,6 @@ const Navbar = () => {
                 Tableau de bord
               </Link>
             )}
-            <Link to="/faq" className="text-sm font-medium hover:text-primary transition-colors">
-              FAQ
-            </Link>
-            <Link to="/help-center" className="text-sm font-medium hover:text-primary transition-colors">
-              Aide
-            </Link>
           </div>
 
           <div className="flex md:hidden flex-1 justify-end items-center gap-1 sm:gap-2">
