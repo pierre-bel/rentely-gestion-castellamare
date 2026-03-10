@@ -63,7 +63,7 @@ const STATUS_CONFIG: Record<StatusValue, { variant: StatusVariant; label: string
   closed: { variant: "muted", label: "Fermé" },
   
   // Special booking states
-  owner_blocked: { variant: "default", label: "Bloqué" },
+  owner_blocked: { variant: "muted", label: "Bloqué" },
   pre_reservation: { variant: "warning", label: "En attente" },
   
   // Types (for transactions)

@@ -663,13 +663,11 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
               onClick={handleSave}
               disabled={saving || !selectedListingId || !checkinDate || !checkoutDate || nights <= 0}
               className={cn(
-                bookingType === "owner_blocked" && "bg-[hsl(var(--calendar-owner-blocked))] hover:bg-[hsl(var(--calendar-owner-blocked)/0.9)]",
-                bookingType === "pre_reservation" && "bg-[hsl(var(--calendar-pre-reservation))] hover:bg-[hsl(var(--calendar-pre-reservation)/0.9)]"
+                bookingType === "owner_blocked" && "bg-[hsl(var(--calendar-blocked))] hover:bg-[hsl(var(--calendar-blocked)/0.9)]"
               )}
             >
               {saving ? "Création..." : 
                bookingType === "owner_blocked" ? "Bloquer" :
-               bookingType === "pre_reservation" ? "Pré-réserver" :
                "Créer la réservation"}
             </Button>
           </DialogFooter>
