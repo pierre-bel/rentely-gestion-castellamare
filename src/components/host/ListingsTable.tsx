@@ -1,13 +1,12 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { Edit, Calendar, Copy, Trash2 } from "lucide-react";
 
 interface Listing {
   id: string;
   title: string;
-  status: "approved" | "draft" | "pending" | "blocked" | "rejected";
+  status: string;
   type: string;
   city: string;
   state: string | null;
@@ -62,7 +61,6 @@ export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityCl
         <Table>
           <TableHeader>
             <TableRow className="bg-background hover:bg-background">
-              <TableHead className="font-semibold">Statut</TableHead>
               <TableHead className="font-semibold">Titre</TableHead>
               <TableHead className="font-semibold">Localisation</TableHead>
               <TableHead className="font-semibold">Type</TableHead>
@@ -74,7 +72,6 @@ export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityCl
           <TableBody>
             {[...Array(5)].map((_, i) => (
               <TableRow key={i} className={i % 2 === 0 ? "bg-[#F8FAFF]" : ""}>
-                <TableCell><Skeleton className="h-6 w-20" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-40" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-24" /></TableCell>
@@ -105,7 +102,6 @@ export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityCl
       <Table>
         <TableHeader>
           <TableRow className="bg-background hover:bg-background">
-            <TableHead className="font-semibold">Statut</TableHead>
             <TableHead className="font-semibold">Titre</TableHead>
             <TableHead className="font-semibold">Localisation</TableHead>
             <TableHead className="font-semibold">Type</TableHead>
@@ -120,9 +116,6 @@ export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityCl
               key={listing.id}
               className={index % 2 === 0 ? "bg-[#F8FAFF]" : ""}
             >
-              <TableCell>
-                <StatusBadge status={listing.status as any} />
-              </TableCell>
               <TableCell className="font-medium">{listing.title}</TableCell>
               <TableCell>{formatLocation(listing.city, listing.state, listing.country)}</TableCell>
               <TableCell className="capitalize">{PROPERTY_TYPE_LABELS[listing.type] || listing.type}</TableCell>
