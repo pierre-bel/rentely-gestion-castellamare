@@ -50,7 +50,7 @@ interface AvailabilityCalendarProps {
   currentMonth: Date;
 }
 
-type DayStatus = "available" | "booked" | "pending" | "blocked" | "checkin-only" | "checkout-only" | "turnaround" | "owner-blocked" | "pre-reservation";
+type DayStatus = "available" | "booked" | "pending" | "blocked" | "checkin-only" | "checkout-only" | "turnaround";
 
 const STATUS_LABELS: Record<string, string> = {
   confirmed: "Confirmée",
@@ -58,8 +58,8 @@ const STATUS_LABELS: Record<string, string> = {
   completed: "Terminée",
   cancelled: "Annulée",
   checked_in: "En cours",
-  owner_blocked: "Bloqué (perso)",
-  pre_reservation: "Pré-réservation",
+  owner_blocked: "Bloqué",
+  pre_reservation: "En attente",
 };
 
 export default function AvailabilityCalendar({ listings, bookings, blockedDates, currentMonth }: AvailabilityCalendarProps) {
@@ -92,18 +92,14 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
       return { status: blocked ? "blocked" : "available", bookings: [] };
     }
 
-    // Check for owner_blocked or pre_reservation status
+    // Check for owner_blocked or pre_reservation status → treat as blocked or pending
     const ownerBlocked = dayBookings.find((b) => b.status === "owner_blocked");
     if (ownerBlocked) {
-      const ci = parseISO(ownerBlocked.checkin_date);
-      const co = parseISO(ownerBlocked.checkout_date);
-      if (day >= ci && day <= co) return { status: "owner-blocked", bookings: dayBookings };
+      return { status: "blocked", bookings: dayBookings };
     }
     const preRes = dayBookings.find((b) => b.status === "pre_reservation");
     if (preRes) {
-      const ci = parseISO(preRes.checkin_date);
-      const co = parseISO(preRes.checkout_date);
-      if (day >= ci && day <= co) return { status: "pre-reservation", bookings: dayBookings };
+      return { status: "pending", bookings: dayBookings };
     }
 
     const isCheckinFor = dayBookings.filter((b) => isSameDay(day, parseISO(b.checkin_date)));
@@ -152,10 +148,6 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
         return cn(base, "bg-[hsl(var(--warning)/0.8)] text-white font-semibold");
       case "blocked":
         return cn(base, "bg-[hsl(var(--calendar-blocked)/0.25)] text-[hsl(var(--calendar-blocked))] line-through");
-      case "owner-blocked":
-        return cn(base, "bg-[hsl(var(--calendar-owner-blocked)/0.7)] text-white font-semibold");
-      case "pre-reservation":
-        return cn(base, "bg-[hsl(var(--calendar-pre-reservation)/0.7)] text-white font-semibold");
       case "checkin-only":
       case "checkout-only":
       case "turnaround":
@@ -241,8 +233,7 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
                       <TooltipContent side="bottom" className="max-w-[240px]">
                         <div className="space-y-1">
                           <p className="font-semibold text-sm">{booking.guest_name}</p>
-                          {status === "owner-blocked" && <p className="text-xs font-medium" style={{ color: "hsl(var(--calendar-owner-blocked))" }}>🔒 Blocage personnel</p>}
-                          {status === "pre-reservation" && <p className="text-xs font-medium" style={{ color: "hsl(var(--calendar-pre-reservation))" }}>⏳ Pré-réservation</p>}
+                          {status === "blocked" && booking?.status === "owner_blocked" && <p className="text-xs font-medium text-muted-foreground">🔒 Blocage</p>}
                           {status === "checkin-only" && <p className="text-xs text-primary font-medium">🔑 Arrivée</p>}
                           {status === "checkout-only" && <p className="text-xs text-primary font-medium">🚪 Départ</p>}
                           {status === "turnaround" && <p className="text-xs text-primary font-medium">🔄 Départ + Arrivée</p>}
@@ -277,7 +268,7 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
             </div>
 
             {/* Legend */}
-            <div className="grid grid-cols-4 sm:flex sm:items-center gap-2 sm:gap-4 mt-4">
+            <div className="grid grid-cols-3 sm:grid-cols-6 sm:flex sm:items-center gap-2 sm:gap-4 mt-4">
               <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
                 <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--calendar-available)/0.3)] flex-shrink-0" />
                 Disponible
@@ -289,14 +280,6 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
               <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
                 <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--warning)/0.8)] flex-shrink-0" />
                 En attente
-              </div>
-              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--calendar-owner-blocked)/0.7)] flex-shrink-0" />
-                Bloqué (perso)
-              </div>
-              <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--calendar-pre-reservation)/0.7)] flex-shrink-0" />
-                Pré-résa
               </div>
               <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
                 <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[hsl(var(--calendar-blocked)/0.25)] flex-shrink-0" />

@@ -57,7 +57,7 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
 
-  const [bookingType, setBookingType] = useState<"normal" | "owner_blocked" | "pre_reservation">("normal");
+  const [bookingType, setBookingType] = useState<"normal" | "owner_blocked">("normal");
   const [selectedListingId, setSelectedListingId] = useState("");
   const [selectedTenantId, setSelectedTenantId] = useState("");
   const [checkinDate, setCheckinDate] = useState<Date>();
@@ -296,10 +296,10 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     setSaving(true);
 
     try {
-      if (bookingType === "owner_blocked" || bookingType === "pre_reservation") {
-        // Simplified booking for blocked/pre-reservation
+      if (bookingType === "owner_blocked") {
+        // Simplified booking for blocked
         const noteParts = [];
-        if (blockName.trim()) noteParts.push(bookingType === "pre_reservation" ? `Pré-résa: ${blockName.trim()}` : `Blocage: ${blockName.trim()}`);
+        if (blockName.trim()) noteParts.push(`Blocage: ${blockName.trim()}`);
         if (notes.trim()) noteParts.push(notes.trim());
 
         const { error } = await supabase.from("bookings").insert({
@@ -316,15 +316,14 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
           total_price: 0,
           host_payout_gross: 0,
           host_payout_net: 0,
-          status: bookingType,
+          status: "owner_blocked",
           currency: "EUR",
           notes: noteParts.join(" | ") || null,
         } as any);
 
         if (error) throw error;
 
-        const label = bookingType === "owner_blocked" ? "Blocage" : "Pré-réservation";
-        toast({ title: `${label} créé(e)`, description: `${nights} nuit(s) bloquée(s) avec succès.` });
+        toast({ title: "Blocage créé", description: `${nights} nuit(s) bloquée(s) avec succès.` });
       } else {
         // Normal booking flow
         const tenant = tenants.find((t) => t.id === selectedTenantId);
@@ -397,16 +396,15 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {bookingType === "normal" ? "Nouvelle réservation manuelle" : 
-               bookingType === "owner_blocked" ? "Bloquer le calendrier" : "Pré-réservation"}
+             <DialogTitle>
+              {bookingType === "normal" ? "Nouvelle réservation manuelle" : "Bloquer le calendrier"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {/* Booking Type Selector */}
             <div>
               <Label>Type</Label>
-              <div className="grid grid-cols-3 gap-2 mt-1">
+              <div className="grid grid-cols-2 gap-2 mt-1">
                 <Button
                   type="button"
                   variant={bookingType === "normal" ? "default" : "outline"}
@@ -420,19 +418,10 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
                   type="button"
                   variant={bookingType === "owner_blocked" ? "default" : "outline"}
                   size="sm"
-                  className={cn("text-xs", bookingType === "owner_blocked" && "bg-[hsl(var(--calendar-owner-blocked))] hover:bg-[hsl(var(--calendar-owner-blocked)/0.9)]")}
+                  className={cn("text-xs", bookingType === "owner_blocked" && "bg-[hsl(var(--calendar-blocked))] hover:bg-[hsl(var(--calendar-blocked)/0.9)]")}
                   onClick={() => setBookingType("owner_blocked")}
                 >
-                  Blocage perso
-                </Button>
-                <Button
-                  type="button"
-                  variant={bookingType === "pre_reservation" ? "default" : "outline"}
-                  size="sm"
-                  className={cn("text-xs", bookingType === "pre_reservation" && "bg-[hsl(var(--calendar-pre-reservation))] hover:bg-[hsl(var(--calendar-pre-reservation)/0.9)]")}
-                  onClick={() => setBookingType("pre_reservation")}
-                >
-                  Pré-réservation
+                  Blocage
                 </Button>
               </div>
             </div>
@@ -481,14 +470,14 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
               </div>
             )}
 
-            {/* Name field for blocked/pre-reservation */}
+            {/* Name field for blocked */}
             {bookingType !== "normal" && (
               <div>
-                <Label>{bookingType === "pre_reservation" ? "Nom du demandeur" : "Raison / Nom"}</Label>
+                <Label>Raison / Nom</Label>
                 <Input
                   value={blockName}
                   onChange={(e) => setBlockName(e.target.value)}
-                  placeholder={bookingType === "pre_reservation" ? "Ex: M. Dupont" : "Ex: Séjour personnel"}
+                  placeholder="Ex: Séjour personnel"
                 />
               </div>
             )}
@@ -674,13 +663,11 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
               onClick={handleSave}
               disabled={saving || !selectedListingId || !checkinDate || !checkoutDate || nights <= 0}
               className={cn(
-                bookingType === "owner_blocked" && "bg-[hsl(var(--calendar-owner-blocked))] hover:bg-[hsl(var(--calendar-owner-blocked)/0.9)]",
-                bookingType === "pre_reservation" && "bg-[hsl(var(--calendar-pre-reservation))] hover:bg-[hsl(var(--calendar-pre-reservation)/0.9)]"
+                bookingType === "owner_blocked" && "bg-[hsl(var(--calendar-blocked))] hover:bg-[hsl(var(--calendar-blocked)/0.9)]"
               )}
             >
               {saving ? "Création..." : 
                bookingType === "owner_blocked" ? "Bloquer" :
-               bookingType === "pre_reservation" ? "Pré-réserver" :
                "Créer la réservation"}
             </Button>
           </DialogFooter>
