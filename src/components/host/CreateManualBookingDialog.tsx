@@ -296,10 +296,10 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     setSaving(true);
 
     try {
-      if (bookingType === "owner_blocked" || bookingType === "pre_reservation") {
-        // Simplified booking for blocked/pre-reservation
+      if (bookingType === "owner_blocked") {
+        // Simplified booking for blocked
         const noteParts = [];
-        if (blockName.trim()) noteParts.push(bookingType === "pre_reservation" ? `Pré-résa: ${blockName.trim()}` : `Blocage: ${blockName.trim()}`);
+        if (blockName.trim()) noteParts.push(`Blocage: ${blockName.trim()}`);
         if (notes.trim()) noteParts.push(notes.trim());
 
         const { error } = await supabase.from("bookings").insert({
@@ -316,15 +316,14 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
           total_price: 0,
           host_payout_gross: 0,
           host_payout_net: 0,
-          status: bookingType,
+          status: "owner_blocked",
           currency: "EUR",
           notes: noteParts.join(" | ") || null,
         } as any);
 
         if (error) throw error;
 
-        const label = bookingType === "owner_blocked" ? "Blocage" : "Pré-réservation";
-        toast({ title: `${label} créé(e)`, description: `${nights} nuit(s) bloquée(s) avec succès.` });
+        toast({ title: "Blocage créé", description: `${nights} nuit(s) bloquée(s) avec succès.` });
       } else {
         // Normal booking flow
         const tenant = tenants.find((t) => t.id === selectedTenantId);
