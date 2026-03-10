@@ -470,14 +470,14 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
               </div>
             )}
 
-            {/* Name field for blocked/pre-reservation */}
+            {/* Name field for blocked */}
             {bookingType !== "normal" && (
               <div>
-                <Label>{bookingType === "pre_reservation" ? "Nom du demandeur" : "Raison / Nom"}</Label>
+                <Label>Raison / Nom</Label>
                 <Input
                   value={blockName}
                   onChange={(e) => setBlockName(e.target.value)}
-                  placeholder={bookingType === "pre_reservation" ? "Ex: M. Dupont" : "Ex: Séjour personnel"}
+                  placeholder="Ex: Séjour personnel"
                 />
               </div>
             )}
