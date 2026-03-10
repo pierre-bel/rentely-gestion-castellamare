@@ -38,7 +38,9 @@ const DYNAMIC_VARIABLES_GROUPS = [
     vars: [
       { key: "{{booking_id}}", label: "ID réservation" },
       { key: "{{checkin_date}}", label: "Date d'arrivée" },
+      { key: "{{checkin_time}}", label: "Heure d'arrivée" },
       { key: "{{checkout_date}}", label: "Date de départ" },
+      { key: "{{checkout_time}}", label: "Heure de départ" },
       { key: "{{nights}}", label: "Nombre de nuits" },
       { key: "{{guests}}", label: "Nombre de voyageurs" },
       { key: "{{beach_cabin}}", label: "Cabine de plage (masqué si non)" },
