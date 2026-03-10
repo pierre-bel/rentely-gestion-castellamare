@@ -94,35 +94,6 @@ export const ListingsFiltersSheet = ({
         </SheetHeader>
 
         <div className="space-y-6 py-6">
-          <div className="space-y-3">
-            <Label className="text-base font-semibold">Statut</Label>
-            <RadioGroup value={pendingStatusFilter} onValueChange={setPendingStatusFilter}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="all" id="status-all" />
-                <Label htmlFor="status-all" className="font-normal cursor-pointer">Tous les statuts</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="approved" id="status-approved" />
-                <Label htmlFor="status-approved" className="font-normal cursor-pointer">Active</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="pending" id="status-pending" />
-                <Label htmlFor="status-pending" className="font-normal cursor-pointer">En attente</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="draft" id="status-draft" />
-                <Label htmlFor="status-draft" className="font-normal cursor-pointer">Brouillon</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="rejected" id="status-rejected" />
-                <Label htmlFor="status-rejected" className="font-normal cursor-pointer">Rejetée</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="blocked" id="status-blocked" />
-                <Label htmlFor="status-blocked" className="font-normal cursor-pointer">Bloquée</Label>
-              </div>
-            </RadioGroup>
-          </div>
 
           <div className="space-y-3">
             <Label className="text-base font-semibold">Fourchette de prix (par nuit)</Label>
