@@ -50,7 +50,7 @@ interface AvailabilityCalendarProps {
   currentMonth: Date;
 }
 
-type DayStatus = "available" | "booked" | "pending" | "blocked" | "checkin-only" | "checkout-only" | "turnaround" | "owner-blocked" | "pre-reservation";
+type DayStatus = "available" | "booked" | "pending" | "blocked" | "checkin-only" | "checkout-only" | "turnaround";
 
 const STATUS_LABELS: Record<string, string> = {
   confirmed: "Confirmée",
@@ -58,8 +58,8 @@ const STATUS_LABELS: Record<string, string> = {
   completed: "Terminée",
   cancelled: "Annulée",
   checked_in: "En cours",
-  owner_blocked: "Bloqué (perso)",
-  pre_reservation: "Pré-réservation",
+  owner_blocked: "Bloqué",
+  pre_reservation: "En attente",
 };
 
 export default function AvailabilityCalendar({ listings, bookings, blockedDates, currentMonth }: AvailabilityCalendarProps) {
