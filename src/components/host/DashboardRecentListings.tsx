@@ -4,7 +4,6 @@ import { useDemoData } from "@/hooks/useDemoData";
 import { useNavigate } from "react-router-dom";
 import { Edit, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -55,9 +54,9 @@ const DashboardRecentListings = ({ userId }: DashboardRecentListingsProps) => {
   if (!listings || listings.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground mb-4">Aucune annonce</p>
+        <p className="text-muted-foreground mb-4">Aucun bien</p>
         <Button onClick={() => navigate("/host/create-listing", { state: { from: "/host/dashboard" } })}>
-          + Créer votre première annonce
+          + Créer votre premier bien
         </Button>
       </div>
     );
@@ -71,7 +70,6 @@ const DashboardRecentListings = ({ userId }: DashboardRecentListingsProps) => {
           <div key={listing.id} className="p-3 border border-border rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <p className="font-medium text-sm truncate flex-1">{listing.title}</p>
-              <StatusBadge status={listing.status} />
             </div>
             <p className="text-xs text-muted-foreground mb-2">
               {listing.city}{listing.state ? `, ${listing.state}` : ""}
@@ -101,7 +99,6 @@ const DashboardRecentListings = ({ userId }: DashboardRecentListingsProps) => {
               <TableHead>Titre</TableHead>
               <TableHead>Localisation</TableHead>
               <TableHead>Note</TableHead>
-              <TableHead>Statut</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -119,9 +116,6 @@ const DashboardRecentListings = ({ userId }: DashboardRecentListingsProps) => {
                   ) : (
                     <span className="text-muted-foreground">Aucun avis</span>
                   )}
-                </TableCell>
-                <TableCell>
-                  <StatusBadge status={listing.status} />
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">

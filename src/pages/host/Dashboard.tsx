@@ -92,11 +92,11 @@ const HostDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Annonces récentes */}
+          {/* Mes biens */}
           <Card className="bg-card h-full flex flex-col">
             <CardHeader className="border-b pb-4">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-xl font-semibold">Annonces</CardTitle>
+                <CardTitle className="text-xl font-semibold">Mes biens</CardTitle>
                 <Button onClick={() => navigate("/host/create-listing", { state: { from: "/host/dashboard" } })}>
                   + Ajouter
                 </Button>
