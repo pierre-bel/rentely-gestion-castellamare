@@ -401,6 +401,7 @@ const ListingsManagement = () => {
               onEditClick={handleEditClick}
               onAvailabilityClick={handleAvailabilityClick}
               onDuplicateClick={handleDuplicateListing}
+              onDeleteClick={handleDeleteListing}
             />
           </div>
 
