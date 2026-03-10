@@ -166,6 +166,17 @@ export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityCl
                       <Copy className="h-4 w-4" />
                     </Button>
                   )}
+                  {onDeleteClick && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onDeleteClick(listing.id)}
+                      title="Supprimer ce bien"
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </TableCell>
             </TableRow>
