@@ -11,6 +11,7 @@ const VARIABLES = [
   "{{listing_title}}",
   "{{listing_address}}",
   "{{listing_city}}",
+  "{{portal_link}}",
 ];
 
 const AUTOMATIONS = [
