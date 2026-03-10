@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { formatEuro } from "@/lib/utils";
 
 interface DashboardPayout {
   id: string;
@@ -18,12 +19,7 @@ interface DashboardRecentPayoutsProps {
   userId: string;
 }
 
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-  }).format(price);
-};
+const formatPrice = formatEuro;
 
 const TransactionTypeBadge = ({ type }: { type: string }) => {
   const badgeConfig = {

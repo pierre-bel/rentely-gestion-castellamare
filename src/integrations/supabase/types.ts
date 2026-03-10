@@ -3791,6 +3791,7 @@ export type Database = {
         | "days_before_checkout"
         | "day_of_checkout"
         | "days_after_checkout"
+        | "payment_reminder"
       listing_status: "draft" | "pending" | "approved" | "rejected" | "blocked"
       payout_status_enum: "pending" | "completed" | "failed" | "cancelled"
       property_type: "apartment" | "villa" | "room" | "house" | "condo"
@@ -3970,6 +3971,7 @@ export const Constants = {
         "days_before_checkout",
         "day_of_checkout",
         "days_after_checkout",
+        "payment_reminder",
       ],
       listing_status: ["draft", "pending", "approved", "rejected", "blocked"],
       payout_status_enum: ["pending", "completed", "failed", "cancelled"],

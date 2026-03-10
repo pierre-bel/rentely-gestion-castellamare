@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { formatEuro } from "@/lib/utils";
 import type { PaymentItem } from "./HostPaymentsBookingsList";
 
 interface BookingInfo {
@@ -144,7 +145,7 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
           <p><span className="font-medium">Bien :</span> {booking.listing_title}</p>
           <p><span className="font-medium">Locataire :</span> {booking.tenant_name}</p>
           <p><span className="font-medium">Dates :</span> {format(new Date(booking.checkin_date), "dd/MM/yyyy")} → {format(new Date(booking.checkout_date), "dd/MM/yyyy")}</p>
-          <p><span className="font-medium">Total :</span> {booking.total_price.toFixed(2)} €</p>
+          <p><span className="font-medium">Total :</span> {formatEuro(booking.total_price)}</p>
         </div>
 
         <Separator />
@@ -152,11 +153,11 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <p className="text-muted-foreground">Encaissé</p>
-            <p className="text-lg font-bold text-green-600">{paidTotal.toFixed(2)} €</p>
+            <p className="text-lg font-bold text-green-600">{formatEuro(paidTotal)}</p>
           </div>
           <div>
             <p className="text-muted-foreground">Restant</p>
-            <p className="text-lg font-bold text-amber-600">{remaining.toFixed(2)} €</p>
+            <p className="text-lg font-bold text-amber-600">{formatEuro(remaining)}</p>
           </div>
         </div>
 
@@ -221,7 +222,7 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
                     </p>
                   )}
                 </div>
-                <p className="text-sm font-semibold whitespace-nowrap">{item.amount.toFixed(2)} €</p>
+                <p className="text-sm font-semibold whitespace-nowrap">{formatEuro(item.amount)}</p>
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteItem(item.id)} disabled={saving}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>

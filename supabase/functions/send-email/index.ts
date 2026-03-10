@@ -370,15 +370,43 @@ Deno.serve(async (req) => {
       const recipientEmail = variables.guest_email;
       if (!recipientEmail) throw new Error('Recipient email not found');
 
-      const reminderSubject = `Rappel de paiement – ${payment_label} – ${variables.listing_title}`;
-      const reminderHtml = buildReminderHtml(variables, payment_label, payment_amount, due_date);
+      // Add payment-specific variables
+      const formattedDueDate = new Date(due_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+      variables.payment_label = payment_label;
+      variables.payment_amount = `${Number(payment_amount).toFixed(2)} €`;
+      variables.payment_due_date = formattedDueDate;
 
-      // Get host reply-to email
-      const { data: hostProfile } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', userId)
-        .single();
+      // Try to find a payment_reminder automation template for this host
+      const { data: reminderAutomation } = await supabase
+        .from('email_automations')
+        .select('subject, body_html, reply_to_email')
+        .eq('host_user_id', userId)
+        .eq('trigger_type', 'payment_reminder')
+        .eq('is_enabled', true)
+        .limit(1)
+        .maybeSingle();
+
+      let reminderSubject: string;
+      let reminderHtml: string;
+      let replyToEmail: string | null = null;
+
+      if (reminderAutomation) {
+        // Use the host's custom template
+        reminderSubject = replacePlaceholders(reminderAutomation.subject, variables);
+        reminderHtml = replacePlaceholders(reminderAutomation.body_html, variables);
+        replyToEmail = reminderAutomation.reply_to_email;
+      } else {
+        // Fallback to hardcoded template
+        reminderSubject = `Rappel de paiement – ${payment_label} – ${variables.listing_title}`;
+        reminderHtml = buildReminderHtml(variables, payment_label, payment_amount, due_date);
+        // Get host reply-to email
+        const { data: hostProfile } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('id', userId)
+          .single();
+        replyToEmail = hostProfile?.email || null;
+      }
 
       const emailPayload: Record<string, unknown> = {
         from: 'Rentely <onboarding@resend.dev>',
@@ -386,8 +414,8 @@ Deno.serve(async (req) => {
         subject: reminderSubject,
         html: reminderHtml,
       };
-      if (hostProfile?.email) {
-        emailPayload.reply_to = hostProfile.email;
+      if (replyToEmail) {
+        emailPayload.reply_to = replyToEmail;
       }
 
       const resendRes = await fetch('https://api.resend.com/emails', {

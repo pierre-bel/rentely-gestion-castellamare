@@ -29,6 +29,7 @@ const TRIGGER_LABELS: Record<string, string> = {
   days_before_checkout: "X jours avant le départ",
   day_of_checkout: "Le jour du départ",
   days_after_checkout: "X jours après le départ",
+  payment_reminder: "Rappel de paiement (manuel)",
 };
 
 interface Listing {
