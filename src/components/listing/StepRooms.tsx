@@ -50,8 +50,8 @@ const BED_TYPES = [
 const BATHROOM_FEATURES = [
   "Douche",
   "Baignoire",
-  "WC séparé",
-  "Double vasque",
+  "WC",
+  "Évier",
   "Sèche-cheveux",
   "Lave-linge",
 ];
