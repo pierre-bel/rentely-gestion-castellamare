@@ -141,7 +141,7 @@ export function HostCleaning() {
         return (snapshot.cleaningStaff || []) as CleaningStaff[];
       }
       if (!user?.id) return [];
-      const { data, error } = await supabase.from("cleaning_staff").select("id, name, phone, access_token").eq("host_user_id", user.id).order("name");
+      const { data, error } = await supabase.from("cleaning_staff").select("id, name, phone, access_token, portal_past_months, portal_future_months").eq("host_user_id", user.id).order("name");
       if (error) throw error;
       return data as CleaningStaff[];
     },
