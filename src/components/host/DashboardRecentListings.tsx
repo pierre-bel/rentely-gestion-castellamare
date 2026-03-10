@@ -99,7 +99,6 @@ const DashboardRecentListings = ({ userId }: DashboardRecentListingsProps) => {
               <TableHead>Titre</TableHead>
               <TableHead>Localisation</TableHead>
               <TableHead>Note</TableHead>
-              <TableHead>Statut</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -117,9 +116,6 @@ const DashboardRecentListings = ({ userId }: DashboardRecentListingsProps) => {
                   ) : (
                     <span className="text-muted-foreground">Aucun avis</span>
                   )}
-                </TableCell>
-                <TableCell>
-                  <StatusBadge status={listing.status} />
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
