@@ -70,7 +70,6 @@ const DashboardRecentListings = ({ userId }: DashboardRecentListingsProps) => {
           <div key={listing.id} className="p-3 border border-border rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <p className="font-medium text-sm truncate flex-1">{listing.title}</p>
-              <StatusBadge status={listing.status} />
             </div>
             <p className="text-xs text-muted-foreground mb-2">
               {listing.city}{listing.state ? `, ${listing.state}` : ""}
