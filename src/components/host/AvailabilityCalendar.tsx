@@ -233,8 +233,7 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
                       <TooltipContent side="bottom" className="max-w-[240px]">
                         <div className="space-y-1">
                           <p className="font-semibold text-sm">{booking.guest_name}</p>
-                          {status === "owner-blocked" && <p className="text-xs font-medium" style={{ color: "hsl(var(--calendar-owner-blocked))" }}>🔒 Blocage personnel</p>}
-                          {status === "pre-reservation" && <p className="text-xs font-medium" style={{ color: "hsl(var(--calendar-pre-reservation))" }}>⏳ Pré-réservation</p>}
+                          {status === "blocked" && booking?.status === "owner_blocked" && <p className="text-xs font-medium text-muted-foreground">🔒 Blocage</p>}
                           {status === "checkin-only" && <p className="text-xs text-primary font-medium">🔑 Arrivée</p>}
                           {status === "checkout-only" && <p className="text-xs text-primary font-medium">🚪 Départ</p>}
                           {status === "turnaround" && <p className="text-xs text-primary font-medium">🔄 Départ + Arrivée</p>}
