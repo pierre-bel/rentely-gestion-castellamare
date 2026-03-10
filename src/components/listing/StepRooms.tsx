@@ -42,7 +42,7 @@ const BED_TYPES = [
   { value: "double_140", label: "Lit double (140 cm)" },
   { value: "queen_160", label: "Lit Queen (160 cm)" },
   { value: "king_180", label: "Lit King (180 cm)" },
-  { value: "bunk", label: "Lit superposé" },
+  { value: "bunk", label: "Lits superposés (2 couchages)" },
   { value: "sofa_bed", label: "Canapé-lit" },
   { value: "baby_crib", label: "Lit bébé" },
 ];
