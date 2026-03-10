@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, Search } from "lucide-react";
 import { format } from "date-fns";
+import { formatEuro } from "@/lib/utils";
 import { BookingPaymentDetailDialog } from "./BookingPaymentDetailDialog";
 import { OverduePaymentsList } from "./OverduePaymentsList";
 
@@ -215,19 +216,19 @@ export function HostPaymentsBookingsList() {
         <Card>
           <CardContent className="p-3 md:p-4">
             <p className="text-xs md:text-sm text-muted-foreground">Total attendu</p>
-            <p className="text-lg md:text-2xl font-bold">{totalRevenue.toFixed(2)} €</p>
+            <p className="text-lg md:text-2xl font-bold">{formatEuro(totalRevenue)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-3 md:p-4">
             <p className="text-xs md:text-sm text-muted-foreground">Encaissé</p>
-            <p className="text-lg md:text-2xl font-bold text-green-600">{paidTotal.toFixed(2)} €</p>
+            <p className="text-lg md:text-2xl font-bold text-green-600">{formatEuro(paidTotal)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-3 md:p-4">
             <p className="text-xs md:text-sm text-muted-foreground">En attente</p>
-            <p className="text-lg md:text-2xl font-bold text-amber-600">{pendingTotal.toFixed(2)} €</p>
+            <p className="text-lg md:text-2xl font-bold text-amber-600">{formatEuro(pendingTotal)}</p>
           </CardContent>
         </Card>
         <Card
@@ -239,7 +240,7 @@ export function HostPaymentsBookingsList() {
           <CardContent className="p-3 md:p-4">
             <p className="text-xs md:text-sm text-muted-foreground">En retard</p>
             <p className={`text-lg md:text-2xl font-bold ${overdueTotal > 0 ? "text-destructive animate-pulse" : "text-muted-foreground"}`}>
-              {overdueTotal.toFixed(2)} €
+              {formatEuro(overdueTotal)}
             </p>
             {filterOverdue && (
               <p className="text-xs text-destructive mt-1">Filtre actif — cliquer pour retirer</p>
@@ -281,7 +282,7 @@ export function HostPaymentsBookingsList() {
                 <span className="text-xs text-muted-foreground">
                   {format(new Date(booking.checkin_date), "dd/MM/yyyy")} - {format(new Date(booking.checkout_date), "dd/MM/yyyy")}
                 </span>
-                <span className="text-sm font-semibold">{booking.total_price.toFixed(2)} €</span>
+                <span className="text-sm font-semibold">{formatEuro(booking.total_price)}</span>
               </div>
             </div>
           );
@@ -322,7 +323,7 @@ export function HostPaymentsBookingsList() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-semibold">
-                        {booking.total_price.toFixed(2)} €
+                        {formatEuro(booking.total_price)}
                       </TableCell>
                       <TableCell>
                         <PaymentStatusBadge status={status} />

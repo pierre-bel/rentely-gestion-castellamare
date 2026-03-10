@@ -6,6 +6,7 @@ import { AlertTriangle, Mail, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { formatEuro } from "@/lib/utils";
 import type { PaymentItem } from "./HostPaymentsBookingsList";
 
 interface BookingWithPayments {
@@ -24,6 +25,7 @@ interface OverdueItem {
   listingTitle: string;
   tenantName: string;
   checkinDate: string;
+  checkoutDate: string;
   label: string;
   amount: number;
   dueDate: string;
@@ -45,6 +47,7 @@ function classifyOverdueItems(bookings: BookingWithPayments[]): OverdueItem[] {
           listingTitle: booking.listing_title,
           tenantName: booking.tenant_name,
           checkinDate: booking.checkin_date,
+          checkoutDate: booking.checkout_date,
           label: item.label,
           amount: item.amount,
           dueDate: item.due_date,
@@ -110,7 +113,7 @@ export function OverduePaymentsList({ bookings, onViewBooking }: Props) {
             {title}
             <Badge variant="outline" className={badgeColor}>{items.length}</Badge>
           </h4>
-          <span className="text-sm font-bold text-destructive">{total.toFixed(2)} €</span>
+          <span className="text-sm font-bold text-destructive">{formatEuro(total)}</span>
         </div>
         <div className="space-y-1.5">
           {items.map((item) => {
@@ -137,8 +140,13 @@ export function OverduePaymentsList({ bookings, onViewBooking }: Props) {
                       Dû le {format(new Date(item.dueDate), "dd/MM/yyyy")}
                     </span>
                   </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="text-xs text-muted-foreground">
+                      Séjour : {format(new Date(item.checkinDate), "dd/MM/yyyy")} → {format(new Date(item.checkoutDate), "dd/MM/yyyy")}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-sm font-bold text-destructive whitespace-nowrap">{item.amount.toFixed(2)} €</span>
+                <span className="text-sm font-bold text-destructive whitespace-nowrap">{formatEuro(item.amount)}</span>
                 <Button
                   variant="outline"
                   size="sm"

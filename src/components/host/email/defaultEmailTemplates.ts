@@ -187,4 +187,23 @@ export const DEFAULT_EMAIL_TEMPLATES: DefaultEmailTemplate[] = [
 <p>Pensez à vérifier les paiements et à préparer le logement.</p>
 <p>Bonne gestion !</p>`,
   },
+  {
+    name: "Rappel de paiement (personnalisable)",
+    subject: "Rappel de paiement – {{payment_label}} – {{listing_title}}",
+    trigger_type: "payment_reminder",
+    trigger_days: 0,
+    recipient_type: "tenant",
+    send_if_late: true,
+    body_html: `<p>{{guest_civility}} {{guest_last_name}},</p>
+<p>Nous nous permettons de vous rappeler que le paiement suivant pour votre séjour à <strong>{{listing_title}}</strong> est en retard :</p>
+<table style="border-collapse:collapse;width:100%;margin:16px 0">
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:600">Échéance</td><td style="padding:8px;border:1px solid #e5e7eb"><strong>{{payment_label}}</strong></td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:600">Montant</td><td style="padding:8px;border:1px solid #e5e7eb;color:#dc2626;font-weight:700">{{payment_amount}}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:600">Date d'échéance</td><td style="padding:8px;border:1px solid #e5e7eb;color:#dc2626">{{payment_due_date}}</td></tr>
+  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:600">Séjour</td><td style="padding:8px;border:1px solid #e5e7eb">{{checkin_date}} → {{checkout_date}}</td></tr>
+</table>
+{{qr_paiement}}
+<p>Merci de procéder au règlement dans les meilleurs délais. Si le paiement a déjà été effectué, veuillez ne pas tenir compte de ce rappel.</p>
+<p>Cordialement,<br/>L'équipe de gestion</p>`,
+  },
 ];

@@ -19,12 +19,7 @@ interface DashboardRecentPayoutsProps {
   userId: string;
 }
 
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-  }).format(price);
-};
+const formatPrice = formatEuro;
 
 const TransactionTypeBadge = ({ type }: { type: string }) => {
   const badgeConfig = {

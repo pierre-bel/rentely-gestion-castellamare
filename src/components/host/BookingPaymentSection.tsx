@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { formatEuro } from "@/lib/utils";
 
 interface Props {
   bookingId: string;
@@ -130,18 +131,18 @@ export function BookingPaymentSection({ bookingId, totalPrice }: Props) {
           <Badge className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100">Non payé</Badge>
         )}
         <span className="text-sm text-muted-foreground ml-auto">
-          {paidTotal.toFixed(2)} € / {totalPrice.toFixed(2)} €
+          {formatEuro(paidTotal)} / {formatEuro(totalPrice)}
         </span>
       </div>
 
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div className="p-2 rounded-md bg-green-50 dark:bg-green-950/20">
           <p className="text-xs text-muted-foreground">Encaissé</p>
-          <p className="font-bold text-green-600">{paidTotal.toFixed(2)} €</p>
+          <p className="font-bold text-green-600">{formatEuro(paidTotal)}</p>
         </div>
         <div className="p-2 rounded-md bg-amber-50 dark:bg-amber-950/20">
           <p className="text-xs text-muted-foreground">Restant</p>
-          <p className="font-bold text-amber-600">{remaining.toFixed(2)} €</p>
+          <p className="font-bold text-amber-600">{formatEuro(remaining)}</p>
         </div>
       </div>
 
@@ -178,7 +179,7 @@ export function BookingPaymentSection({ bookingId, totalPrice }: Props) {
                 )}
                 {item.is_paid && item.paid_at && <p className="text-xs text-green-600">Payé le {format(new Date(item.paid_at), "dd/MM/yyyy")}</p>}
               </div>
-              <p className="text-sm font-semibold whitespace-nowrap">{item.amount.toFixed(2)} €</p>
+              <p className="text-sm font-semibold whitespace-nowrap">{formatEuro(item.amount)}</p>
               <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => handleDelete(item.id)} disabled={saving}>
                 <Trash2 className="h-3 w-3" />
               </Button>
