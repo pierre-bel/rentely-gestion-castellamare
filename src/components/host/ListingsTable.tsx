@@ -55,7 +55,7 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
   room: "Chambre",
 };
 
-export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityClick, onDuplicateClick }: ListingsTableProps) => {
+export const ListingsTable = ({ listings, loading, onEditClick, onAvailabilityClick, onDuplicateClick, onDeleteClick }: ListingsTableProps) => {
   if (loading) {
     return (
       <div className="rounded-lg border overflow-hidden">
