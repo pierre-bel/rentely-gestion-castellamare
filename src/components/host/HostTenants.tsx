@@ -1,11 +1,13 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Search, Edit, Trash2, Users } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Search, Edit, Trash2, Users, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useDemoMode } from "@/contexts/DemoContext";
@@ -42,25 +44,29 @@ export interface Tenant {
   updated_at: string;
 }
 
-function TenantBadge({ stats }: { stats?: { total: number; future: number; past: number } }) {
+type TenantStatus = "nouveau" | "ponctuel" | "habitue" | "aucune";
+
+function getTenantStatus(stats?: { total: number; future: number; past: number }): TenantStatus {
   const total = stats?.total || 0;
   const future = stats?.future || 0;
   const past = stats?.past || 0;
+  if (total >= 2) return "habitue";
+  if (total === 1 && future === 1 && past === 0) return "nouveau";
+  if (total === 1 && past >= 1 && future === 0) return "ponctuel";
+  return "aucune";
+}
 
-  // Habitué: 2+ completed/confirmed stays
-  if (total >= 2) {
-    return <Badge className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/10 text-[11px]">Habitué</Badge>;
+function TenantBadge({ status }: { status: TenantStatus }) {
+  switch (status) {
+    case "habitue":
+      return <Badge className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/10 text-[11px]">Habitué</Badge>;
+    case "nouveau":
+      return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100 text-[11px]">Nouveau</Badge>;
+    case "ponctuel":
+      return <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Ponctuel</Badge>;
+    default:
+      return <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Aucune résa</Badge>;
   }
-  // Nouveau: exactly 1 booking and it's in the future (never stayed yet)
-  if (total === 1 && future === 1 && past === 0) {
-    return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100 text-[11px]">Nouveau</Badge>;
-  }
-  // Ponctuel: 1 past stay, no future booking
-  if (total === 1 && past >= 1 && future === 0) {
-    return <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Ponctuel</Badge>;
-  }
-  // No bookings at all
-  return <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Aucune résa</Badge>;
 }
 
 export default function HostTenants() {
@@ -69,6 +75,7 @@ export default function HostTenants() {
   const queryClient = useQueryClient();
   const { isDemoMode, demoUserId } = useDemoMode();
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -134,12 +141,46 @@ export default function HostTenants() {
     enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
-  const filtered = tenants.filter((t) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    const fullName = `${t.first_name} ${t.last_name || ""}`.toLowerCase();
-    return fullName.includes(q) || t.email?.toLowerCase().includes(q) || t.phone?.includes(q);
-  });
+  const filtered = useMemo(() => {
+    return tenants.filter((t) => {
+      // Status filter
+      if (statusFilter !== "all") {
+        const status = getTenantStatus(tenantStats[t.id]);
+        if (status !== statusFilter) return false;
+      }
+      // Search filter
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const fullName = `${t.first_name} ${t.last_name || ""}`.toLowerCase();
+        if (!fullName.includes(q) && !t.email?.toLowerCase().includes(q) && !t.phone?.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [tenants, tenantStats, searchQuery, statusFilter]);
+
+  const handleExportExcel = useCallback(() => {
+    const statusLabels: Record<TenantStatus, string> = {
+      nouveau: "Nouveau", ponctuel: "Ponctuel", habitue: "Habitué", aucune: "Aucune résa"
+    };
+    const rows = filtered.map(t => ({
+      "Prénom": t.first_name,
+      "Nom": t.last_name || "",
+      "Statut": statusLabels[getTenantStatus(tenantStats[t.id])],
+      "Email": t.email || "",
+      "Téléphone": t.phone || "",
+      "Sexe": t.gender === "H" ? "Homme" : t.gender === "F" ? "Femme" : "",
+      "Rue": t.street ? `${t.street_number || ""} ${t.street}`.trim() : "",
+      "Code postal": t.postal_code || "",
+      "Ville": t.city || "",
+      "Pays": t.country || "",
+      "Notes": t.notes || "",
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Locataires");
+    XLSX.writeFile(wb, "locataires.xlsx");
+    toast({ title: "Export terminé", description: `${rows.length} locataire(s) exporté(s)` });
+  }, [filtered, tenantStats, toast]);
 
   const handleDelete = async () => {
     if (!tenantToDelete) return;
@@ -159,21 +200,42 @@ export default function HostTenants() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Locataires</CardTitle>
-          <Button onClick={() => { setEditingTenant(null); setDialogOpen(true); }}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nouveau locataire
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExportExcel}>
+              <Download className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Exporter</span>
+            </Button>
+            <Button onClick={() => { setEditingTenant(null); setDialogOpen(true); }}>
+              <Plus className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Nouveau locataire</span>
+              <span className="sm:hidden">Ajouter</span>
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="relative max-w-md mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher un locataire..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un locataire..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Tous les statuts" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les statuts</SelectItem>
+              <SelectItem value="nouveau">Nouveau</SelectItem>
+              <SelectItem value="ponctuel">Ponctuel</SelectItem>
+              <SelectItem value="habitue">Habitué</SelectItem>
+              <SelectItem value="aucune">Aucune résa</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {isLoading ? (
@@ -211,7 +273,7 @@ export default function HostTenants() {
                     <TableRow key={tenant.id} className={i % 2 === 0 ? "bg-muted/30" : ""}>
                       <TableCell className="font-medium">{tenant.first_name} {tenant.last_name}</TableCell>
                       <TableCell>
-                        <TenantBadge stats={tenantStats[tenant.id]} />
+                        <TenantBadge status={getTenantStatus(tenantStats[tenant.id])} />
                       </TableCell>
                       <TableCell>{tenant.email || "—"}</TableCell>
                       <TableCell>{tenant.phone || "—"}</TableCell>
@@ -239,7 +301,7 @@ export default function HostTenants() {
                 <div key={tenant.id} className="rounded-lg border bg-card p-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="font-medium">{tenant.first_name} {tenant.last_name}</div>
-                    <TenantBadge stats={tenantStats[tenant.id]} />
+                    <TenantBadge status={getTenantStatus(tenantStats[tenant.id])} />
                   </div>
                   {tenant.email && <p className="text-sm text-muted-foreground truncate">{tenant.email}</p>}
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
