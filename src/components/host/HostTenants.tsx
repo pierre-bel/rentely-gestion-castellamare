@@ -218,11 +218,7 @@ export default function HostTenants() {
                 <div key={tenant.id} className="rounded-lg border bg-card p-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="font-medium">{tenant.first_name} {tenant.last_name}</div>
-                    {(bookingCounts[tenant.id] || 0) >= 1 ? (
-                      <Badge className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/10 text-[11px]">Habitué</Badge>
-                    ) : (
-                      <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Nouveau</Badge>
-                    )}
+                    <TenantBadge stats={tenantStats[tenant.id]} />
                   </div>
                   {tenant.email && <p className="text-sm text-muted-foreground truncate">{tenant.email}</p>}
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
