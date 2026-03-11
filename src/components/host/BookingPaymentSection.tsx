@@ -55,18 +55,18 @@ export function BookingPaymentSection({ bookingId, totalPrice }: Props) {
   const hasOverdue = items.some(i => !i.is_paid && i.due_date && i.due_date < today);
 
   const handleToggle = async (item: typeof items[0]) => {
-    setSaving(true);
+    const newIsPaid = !item.is_paid;
+    setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_paid: newIsPaid, paid_at: newIsPaid ? new Date().toISOString() : null } : i));
     try {
       await supabase
         .from("booking_payment_items")
-        .update({ is_paid: !item.is_paid, paid_at: !item.is_paid ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
+        .update({ is_paid: newIsPaid, paid_at: newIsPaid ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
         .eq("id", item.id);
       invalidate();
-      toast({ title: item.is_paid ? "Marqué comme non payé" : "Marqué comme payé" });
+      toast({ title: newIsPaid ? "Marqué comme payé" : "Marqué comme non payé" });
     } catch (e: any) {
+      setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_paid: item.is_paid, paid_at: item.paid_at } : i));
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
     }
   };
 
