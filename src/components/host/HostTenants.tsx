@@ -141,12 +141,46 @@ export default function HostTenants() {
     enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
-  const filtered = tenants.filter((t) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    const fullName = `${t.first_name} ${t.last_name || ""}`.toLowerCase();
-    return fullName.includes(q) || t.email?.toLowerCase().includes(q) || t.phone?.includes(q);
-  });
+  const filtered = useMemo(() => {
+    return tenants.filter((t) => {
+      // Status filter
+      if (statusFilter !== "all") {
+        const status = getTenantStatus(tenantStats[t.id]);
+        if (status !== statusFilter) return false;
+      }
+      // Search filter
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const fullName = `${t.first_name} ${t.last_name || ""}`.toLowerCase();
+        if (!fullName.includes(q) && !t.email?.toLowerCase().includes(q) && !t.phone?.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [tenants, tenantStats, searchQuery, statusFilter]);
+
+  const handleExportExcel = useCallback(() => {
+    const statusLabels: Record<TenantStatus, string> = {
+      nouveau: "Nouveau", ponctuel: "Ponctuel", habitue: "Habitué", aucune: "Aucune résa"
+    };
+    const rows = filtered.map(t => ({
+      "Prénom": t.first_name,
+      "Nom": t.last_name || "",
+      "Statut": statusLabels[getTenantStatus(tenantStats[t.id])],
+      "Email": t.email || "",
+      "Téléphone": t.phone || "",
+      "Sexe": t.gender === "H" ? "Homme" : t.gender === "F" ? "Femme" : "",
+      "Rue": t.street ? `${t.street_number || ""} ${t.street}`.trim() : "",
+      "Code postal": t.postal_code || "",
+      "Ville": t.city || "",
+      "Pays": t.country || "",
+      "Notes": t.notes || "",
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Locataires");
+    XLSX.writeFile(wb, "locataires.xlsx");
+    toast({ title: "Export terminé", description: `${rows.length} locataire(s) exporté(s)` });
+  }, [filtered, tenantStats, toast]);
 
   const handleDelete = async () => {
     if (!tenantToDelete) return;
