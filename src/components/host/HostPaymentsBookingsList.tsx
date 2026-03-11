@@ -172,6 +172,13 @@ export function HostPaymentsBookingsList() {
     });
   }, [bookings, search, filterOverdue]);
 
+  // Keep selectedBooking in sync after data refetch
+  const selectedId = selectedBooking?.id;
+  const syncedBooking = selectedId ? bookings.find(b => b.id === selectedId) ?? selectedBooking : selectedBooking;
+  if (syncedBooking !== selectedBooking && syncedBooking) {
+    setSelectedBooking(syncedBooking);
+  }
+
   const handleView = (booking: BookingWithPayments) => {
     setSelectedBooking(booking);
     setDialogOpen(true);

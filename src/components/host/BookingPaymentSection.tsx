@@ -92,15 +92,15 @@ export function BookingPaymentSection({ bookingId, totalPrice }: Props) {
   };
 
   const handleDelete = async (id: string) => {
-    setSaving(true);
+    const prev = items;
+    setItems(curr => curr.filter(i => i.id !== id));
     try {
       await supabase.from("booking_payment_items").delete().eq("id", id);
       invalidate();
       toast({ title: "Échéance supprimée" });
     } catch (e: any) {
+      setItems(prev);
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
     }
   };
 
