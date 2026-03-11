@@ -153,23 +153,25 @@ export function HostPaymentsBookingsList() {
   });
 
   const filteredAndSorted = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0];
     const q = search.toLowerCase().trim();
-    let filtered = q
-      ? bookings.filter(b =>
-          b.tenant_name.toLowerCase().includes(q) ||
-          b.listing_title.toLowerCase().includes(q)
-        )
-      : bookings;
+
+    // Only future bookings (checkin today or later)
+    let filtered = bookings.filter(b => b.checkin_date >= today);
+
+    if (q) {
+      filtered = filtered.filter(b =>
+        b.tenant_name.toLowerCase().includes(q) ||
+        b.listing_title.toLowerCase().includes(q)
+      );
+    }
 
     if (filterOverdue) {
       filtered = filtered.filter(b => getPaymentStatus(b.payment_items) === "overdue");
     }
 
-    return [...filtered].sort((a, b) => {
-      const sa = STATUS_ORDER[getPaymentStatus(a.payment_items)];
-      const sb = STATUS_ORDER[getPaymentStatus(b.payment_items)];
-      return sa - sb;
-    });
+    // Sort chronologically: nearest check-in first
+    return [...filtered].sort((a, b) => a.checkin_date.localeCompare(b.checkin_date));
   }, [bookings, search, filterOverdue]);
 
   // Keep selectedBooking in sync after data refetch
