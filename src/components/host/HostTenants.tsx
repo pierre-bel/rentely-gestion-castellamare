@@ -190,11 +190,7 @@ export default function HostTenants() {
                     <TableRow key={tenant.id} className={i % 2 === 0 ? "bg-muted/30" : ""}>
                       <TableCell className="font-medium">{tenant.first_name} {tenant.last_name}</TableCell>
                       <TableCell>
-                        {(bookingCounts[tenant.id] || 0) >= 1 ? (
-                          <Badge className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/10 text-[11px]">Habitué</Badge>
-                        ) : (
-                          <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Nouveau</Badge>
-                        )}
+                        <TenantBadge stats={tenantStats[tenant.id]} />
                       </TableCell>
                       <TableCell>{tenant.email || "—"}</TableCell>
                       <TableCell>{tenant.phone || "—"}</TableCell>
