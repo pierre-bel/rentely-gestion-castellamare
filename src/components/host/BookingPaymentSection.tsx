@@ -28,7 +28,7 @@ export function BookingPaymentSection({ bookingId, totalPrice }: Props) {
   const [editingDateId, setEditingDateId] = useState<string | null>(null);
   const [editDateValue, setEditDateValue] = useState("");
 
-  const { data: items = [], isLoading } = useQuery({
+  const { data: queryItems = [], isLoading } = useQuery({
     queryKey: ["booking-payment-items", bookingId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -40,6 +40,9 @@ export function BookingPaymentSection({ bookingId, totalPrice }: Props) {
       return data;
     },
   });
+
+  const [items, setItems] = useState(queryItems);
+  useEffect(() => { setItems(queryItems); }, [queryItems]);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["booking-payment-items", bookingId] });
