@@ -75,6 +75,7 @@ export default function HostTenants() {
   const queryClient = useQueryClient();
   const { isDemoMode, demoUserId } = useDemoMode();
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
