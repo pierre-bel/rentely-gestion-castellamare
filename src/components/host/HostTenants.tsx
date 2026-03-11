@@ -42,6 +42,27 @@ export interface Tenant {
   updated_at: string;
 }
 
+function TenantBadge({ stats }: { stats?: { total: number; future: number; past: number } }) {
+  const total = stats?.total || 0;
+  const future = stats?.future || 0;
+  const past = stats?.past || 0;
+
+  // Habitué: 2+ completed/confirmed stays
+  if (total >= 2) {
+    return <Badge className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/10 text-[11px]">Habitué</Badge>;
+  }
+  // Nouveau: exactly 1 booking and it's in the future (never stayed yet)
+  if (total === 1 && future === 1 && past === 0) {
+    return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100 text-[11px]">Nouveau</Badge>;
+  }
+  // Ponctuel: 1 past stay, no future booking
+  if (total === 1 && past >= 1 && future === 0) {
+    return <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Ponctuel</Badge>;
+  }
+  // No bookings at all
+  return <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Aucune résa</Badge>;
+}
+
 export default function HostTenants() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -72,33 +93,43 @@ export default function HostTenants() {
     enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
-  // Fetch booking counts per tenant to determine new vs returning
-  const { data: bookingCounts = {} } = useQuery({
-    queryKey: ["host-tenant-booking-counts", user?.id, isDemoMode],
+  // Fetch booking data per tenant to classify: nouveau / ponctuel / habitué
+  const { data: tenantStats = {} } = useQuery({
+    queryKey: ["host-tenant-booking-stats", user?.id, isDemoMode],
     queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+
       if (isDemoMode && demoUserId) {
         const snapshot = demoStorage.getSnapshot(demoUserId);
-        const counts: Record<string, number> = {};
+        const stats: Record<string, { total: number; future: number; past: number }> = {};
         for (const b of snapshot.hostBookings || []) {
           const pb = b.pricing_breakdown as any;
           const tid = pb?.tenant_id;
-          if (tid) counts[tid] = (counts[tid] || 0) + 1;
+          if (!tid) continue;
+          if (!stats[tid]) stats[tid] = { total: 0, future: 0, past: 0 };
+          stats[tid].total++;
+          if (b.checkin_date >= today) stats[tid].future++;
+          else stats[tid].past++;
         }
-        return counts;
+        return stats;
       }
       if (!user?.id) return {};
       const { data, error } = await supabase
         .from("bookings")
-        .select("pricing_breakdown, status")
+        .select("pricing_breakdown, status, checkin_date")
         .in("status", ["confirmed", "completed", "pending_payment"]);
       if (error) throw error;
-      const counts: Record<string, number> = {};
+      const stats: Record<string, { total: number; future: number; past: number }> = {};
       for (const b of data || []) {
         const pb = b.pricing_breakdown as any;
         const tid = pb?.tenant_id;
-        if (tid) counts[tid] = (counts[tid] || 0) + 1;
+        if (!tid) continue;
+        if (!stats[tid]) stats[tid] = { total: 0, future: 0, past: 0 };
+        stats[tid].total++;
+        if (b.checkin_date >= today) stats[tid].future++;
+        else stats[tid].past++;
       }
-      return counts;
+      return stats;
     },
     enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
@@ -180,11 +211,7 @@ export default function HostTenants() {
                     <TableRow key={tenant.id} className={i % 2 === 0 ? "bg-muted/30" : ""}>
                       <TableCell className="font-medium">{tenant.first_name} {tenant.last_name}</TableCell>
                       <TableCell>
-                        {(bookingCounts[tenant.id] || 0) >= 1 ? (
-                          <Badge className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/10 text-[11px]">Habitué</Badge>
-                        ) : (
-                          <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Nouveau</Badge>
-                        )}
+                        <TenantBadge stats={tenantStats[tenant.id]} />
                       </TableCell>
                       <TableCell>{tenant.email || "—"}</TableCell>
                       <TableCell>{tenant.phone || "—"}</TableCell>
@@ -212,11 +239,7 @@ export default function HostTenants() {
                 <div key={tenant.id} className="rounded-lg border bg-card p-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="font-medium">{tenant.first_name} {tenant.last_name}</div>
-                    {(bookingCounts[tenant.id] || 0) >= 1 ? (
-                      <Badge className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/10 text-[11px]">Habitué</Badge>
-                    ) : (
-                      <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Nouveau</Badge>
-                    )}
+                    <TenantBadge stats={tenantStats[tenant.id]} />
                   </div>
                   {tenant.email && <p className="text-sm text-muted-foreground truncate">{tenant.email}</p>}
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
