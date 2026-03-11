@@ -200,21 +200,42 @@ export default function HostTenants() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Locataires</CardTitle>
-          <Button onClick={() => { setEditingTenant(null); setDialogOpen(true); }}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nouveau locataire
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExportExcel}>
+              <Download className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Exporter</span>
+            </Button>
+            <Button onClick={() => { setEditingTenant(null); setDialogOpen(true); }}>
+              <Plus className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Nouveau locataire</span>
+              <span className="sm:hidden">Ajouter</span>
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="relative max-w-md mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher un locataire..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un locataire..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Tous les statuts" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les statuts</SelectItem>
+              <SelectItem value="nouveau">Nouveau</SelectItem>
+              <SelectItem value="ponctuel">Ponctuel</SelectItem>
+              <SelectItem value="habitue">Habitué</SelectItem>
+              <SelectItem value="aucune">Aucune résa</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {isLoading ? (
