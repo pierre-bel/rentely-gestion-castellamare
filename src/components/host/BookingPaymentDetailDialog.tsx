@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -39,57 +39,70 @@ interface Props {
 export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Props) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [saving, setSaving] = useState(false);
+  const [localItems, setLocalItems] = useState<PaymentItem[]>([]);
   const [newLabel, setNewLabel] = useState("");
   const [newAmount, setNewAmount] = useState("");
   const [newDueDate, setNewDueDate] = useState("");
   const [editingDateId, setEditingDateId] = useState<string | null>(null);
   const [editDateValue, setEditDateValue] = useState("");
 
+  // Sync local state from props
+  useEffect(() => {
+    if (booking) {
+      setLocalItems(booking.payment_items);
+    }
+  }, [booking]);
+
+  const invalidate = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
+    queryClient.invalidateQueries({ queryKey: ["booking-payment-items"] });
+  }, [queryClient]);
+
   if (!booking) return null;
 
-  const paidTotal = booking.payment_items.filter(i => i.is_paid).reduce((s, i) => s + i.amount, 0);
+  const paidTotal = localItems.filter(i => i.is_paid).reduce((s, i) => s + i.amount, 0);
   const remaining = booking.total_price - paidTotal;
   const today = new Date().toISOString().split("T")[0];
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
-    queryClient.invalidateQueries({ queryKey: ["booking-payment-items"] });
-  };
-
   const handleTogglePaid = async (item: PaymentItem) => {
-    setSaving(true);
+    const newIsPaid = !item.is_paid;
+    // Optimistic update
+    setLocalItems(prev => prev.map(i =>
+      i.id === item.id ? { ...i, is_paid: newIsPaid, paid_at: newIsPaid ? new Date().toISOString() : null } : i
+    ));
     try {
       const { error } = await supabase
         .from("booking_payment_items")
         .update({
-          is_paid: !item.is_paid,
-          paid_at: !item.is_paid ? new Date().toISOString() : null,
+          is_paid: newIsPaid,
+          paid_at: newIsPaid ? new Date().toISOString() : null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", item.id);
       if (error) throw error;
       invalidate();
-      toast({ title: item.is_paid ? "Marqué comme non payé" : "Marqué comme payé" });
+      toast({ title: newIsPaid ? "Marqué comme payé" : "Marqué comme non payé" });
     } catch (e: any) {
+      // Rollback
+      setLocalItems(prev => prev.map(i =>
+        i.id === item.id ? { ...i, is_paid: item.is_paid, paid_at: item.paid_at } : i
+      ));
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
     }
   };
 
   const handleAddItem = async () => {
     if (!newLabel.trim() || !newAmount) return;
-    setSaving(true);
     try {
-      const { error } = await supabase.from("booking_payment_items").insert({
+      const { data, error } = await supabase.from("booking_payment_items").insert({
         booking_id: booking.id,
         label: newLabel.trim(),
         amount: parseFloat(newAmount),
         due_date: newDueDate || null,
-        sort_order: booking.payment_items.length,
-      });
+        sort_order: localItems.length,
+      }).select().single();
       if (error) throw error;
+      setLocalItems(prev => [...prev, data as PaymentItem]);
       invalidate();
       setNewLabel("");
       setNewAmount("");
@@ -97,27 +110,28 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
       toast({ title: "Échéance ajoutée" });
     } catch (e: any) {
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
     }
   };
 
   const handleDeleteItem = async (itemId: string) => {
-    setSaving(true);
+    const prev = localItems;
+    // Optimistic removal
+    setLocalItems(items => items.filter(i => i.id !== itemId));
     try {
       const { error } = await supabase.from("booking_payment_items").delete().eq("id", itemId);
       if (error) throw error;
       invalidate();
       toast({ title: "Échéance supprimée" });
     } catch (e: any) {
+      setLocalItems(prev); // Rollback
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
     }
   };
 
   const handleSaveDueDate = async (itemId: string) => {
-    setSaving(true);
+    const oldItem = localItems.find(i => i.id === itemId);
+    setLocalItems(prev => prev.map(i => i.id === itemId ? { ...i, due_date: editDateValue || null } : i));
+    setEditingDateId(null);
     try {
       const { error } = await supabase
         .from("booking_payment_items")
@@ -125,12 +139,10 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
         .eq("id", itemId);
       if (error) throw error;
       invalidate();
-      setEditingDateId(null);
       toast({ title: "Date d'échéance modifiée" });
     } catch (e: any) {
+      if (oldItem) setLocalItems(prev => prev.map(i => i.id === itemId ? { ...i, due_date: oldItem.due_date } : i));
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -165,10 +177,10 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
 
         <div className="space-y-3">
           <p className="text-sm font-medium">Échéances de paiement</p>
-          {booking.payment_items.length === 0 && (
+          {localItems.length === 0 && (
             <p className="text-sm text-muted-foreground">Aucune échéance configurée</p>
           )}
-          {booking.payment_items.map(item => {
+          {localItems.map(item => {
             const isOverdue = !item.is_paid && item.due_date && item.due_date < today;
             return (
               <div key={item.id} className={`flex items-center gap-3 p-3 rounded-lg border bg-card ${isOverdue ? "border-destructive/50 bg-destructive/5" : ""}`}>
@@ -189,7 +201,7 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
                         onChange={e => setEditDateValue(e.target.value)}
                         className="h-7 text-xs w-36"
                       />
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleSaveDueDate(item.id)} disabled={saving}>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleSaveDueDate(item.id)}>
                         <Check className="h-3 w-3" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditingDateId(null)}>
@@ -222,7 +234,7 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
                   )}
                 </div>
                 <p className="text-sm font-semibold whitespace-nowrap">{formatEuro(item.amount)}</p>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteItem(item.id)} disabled={saving}>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteItem(item.id)}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -248,7 +260,7 @@ export function BookingPaymentDetailDialog({ booking, open, onOpenChange }: Prop
             <Label className="text-xs">Date d'échéance (optionnel)</Label>
             <Input type="date" value={newDueDate} onChange={e => setNewDueDate(e.target.value)} />
           </div>
-          <Button onClick={handleAddItem} disabled={saving || !newLabel.trim() || !newAmount} size="sm" className="w-full">
+          <Button onClick={handleAddItem} disabled={!newLabel.trim() || !newAmount} size="sm" className="w-full">
             <Plus className="h-4 w-4 mr-2" />
             Ajouter
           </Button>

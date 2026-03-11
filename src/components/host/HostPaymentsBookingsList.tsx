@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -171,6 +171,16 @@ export function HostPaymentsBookingsList() {
       return sa - sb;
     });
   }, [bookings, search, filterOverdue]);
+
+  // Keep selectedBooking in sync after data refetch
+  useEffect(() => {
+    if (selectedBooking) {
+      const updated = bookings.find(b => b.id === selectedBooking.id);
+      if (updated && updated !== selectedBooking) {
+        setSelectedBooking(updated);
+      }
+    }
+  }, [bookings]);
 
   const handleView = (booking: BookingWithPayments) => {
     setSelectedBooking(booking);

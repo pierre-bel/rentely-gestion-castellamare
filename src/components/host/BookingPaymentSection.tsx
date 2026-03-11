@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,7 +28,7 @@ export function BookingPaymentSection({ bookingId, totalPrice }: Props) {
   const [editingDateId, setEditingDateId] = useState<string | null>(null);
   const [editDateValue, setEditDateValue] = useState("");
 
-  const { data: items = [], isLoading } = useQuery({
+  const { data: queryItems = [], isLoading } = useQuery({
     queryKey: ["booking-payment-items", bookingId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -41,6 +41,9 @@ export function BookingPaymentSection({ bookingId, totalPrice }: Props) {
     },
   });
 
+  const [items, setItems] = useState(queryItems);
+  useEffect(() => { setItems(queryItems); }, [queryItems]);
+
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["booking-payment-items", bookingId] });
     queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
@@ -52,18 +55,18 @@ export function BookingPaymentSection({ bookingId, totalPrice }: Props) {
   const hasOverdue = items.some(i => !i.is_paid && i.due_date && i.due_date < today);
 
   const handleToggle = async (item: typeof items[0]) => {
-    setSaving(true);
+    const newIsPaid = !item.is_paid;
+    setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_paid: newIsPaid, paid_at: newIsPaid ? new Date().toISOString() : null } : i));
     try {
       await supabase
         .from("booking_payment_items")
-        .update({ is_paid: !item.is_paid, paid_at: !item.is_paid ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
+        .update({ is_paid: newIsPaid, paid_at: newIsPaid ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
         .eq("id", item.id);
       invalidate();
-      toast({ title: item.is_paid ? "Marqué comme non payé" : "Marqué comme payé" });
+      toast({ title: newIsPaid ? "Marqué comme payé" : "Marqué comme non payé" });
     } catch (e: any) {
+      setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_paid: item.is_paid, paid_at: item.paid_at } : i));
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -89,15 +92,15 @@ export function BookingPaymentSection({ bookingId, totalPrice }: Props) {
   };
 
   const handleDelete = async (id: string) => {
-    setSaving(true);
+    const prev = items;
+    setItems(curr => curr.filter(i => i.id !== id));
     try {
       await supabase.from("booking_payment_items").delete().eq("id", id);
       invalidate();
       toast({ title: "Échéance supprimée" });
     } catch (e: any) {
+      setItems(prev);
       toast({ title: "Erreur", description: e.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
     }
   };
 
