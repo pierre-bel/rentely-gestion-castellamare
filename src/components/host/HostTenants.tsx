@@ -300,7 +300,7 @@ export default function HostTenants() {
                 <div key={tenant.id} className="rounded-lg border bg-card p-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="font-medium">{tenant.first_name} {tenant.last_name}</div>
-                    <TenantBadge stats={tenantStats[tenant.id]} />
+                    <TenantBadge status={getTenantStatus(tenantStats[tenant.id])} />
                   </div>
                   {tenant.email && <p className="text-sm text-muted-foreground truncate">{tenant.email}</p>}
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
