@@ -72,33 +72,43 @@ export default function HostTenants() {
     enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
 
-  // Fetch booking counts per tenant to determine new vs returning
-  const { data: bookingCounts = {} } = useQuery({
-    queryKey: ["host-tenant-booking-counts", user?.id, isDemoMode],
+  // Fetch booking data per tenant to classify: nouveau / ponctuel / habitué
+  const { data: tenantStats = {} } = useQuery({
+    queryKey: ["host-tenant-booking-stats", user?.id, isDemoMode],
     queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+
       if (isDemoMode && demoUserId) {
         const snapshot = demoStorage.getSnapshot(demoUserId);
-        const counts: Record<string, number> = {};
+        const stats: Record<string, { total: number; future: number; past: number }> = {};
         for (const b of snapshot.hostBookings || []) {
           const pb = b.pricing_breakdown as any;
           const tid = pb?.tenant_id;
-          if (tid) counts[tid] = (counts[tid] || 0) + 1;
+          if (!tid) continue;
+          if (!stats[tid]) stats[tid] = { total: 0, future: 0, past: 0 };
+          stats[tid].total++;
+          if (b.checkin_date >= today) stats[tid].future++;
+          else stats[tid].past++;
         }
-        return counts;
+        return stats;
       }
       if (!user?.id) return {};
       const { data, error } = await supabase
         .from("bookings")
-        .select("pricing_breakdown, status")
+        .select("pricing_breakdown, status, checkin_date")
         .in("status", ["confirmed", "completed", "pending_payment"]);
       if (error) throw error;
-      const counts: Record<string, number> = {};
+      const stats: Record<string, { total: number; future: number; past: number }> = {};
       for (const b of data || []) {
         const pb = b.pricing_breakdown as any;
         const tid = pb?.tenant_id;
-        if (tid) counts[tid] = (counts[tid] || 0) + 1;
+        if (!tid) continue;
+        if (!stats[tid]) stats[tid] = { total: 0, future: 0, past: 0 };
+        stats[tid].total++;
+        if (b.checkin_date >= today) stats[tid].future++;
+        else stats[tid].past++;
       }
-      return counts;
+      return stats;
     },
     enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
