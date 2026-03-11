@@ -42,6 +42,27 @@ export interface Tenant {
   updated_at: string;
 }
 
+function TenantBadge({ stats }: { stats?: { total: number; future: number; past: number } }) {
+  const total = stats?.total || 0;
+  const future = stats?.future || 0;
+  const past = stats?.past || 0;
+
+  // Habitué: 2+ completed/confirmed stays
+  if (total >= 2) {
+    return <Badge className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/10 text-[11px]">Habitué</Badge>;
+  }
+  // Nouveau: exactly 1 booking and it's in the future (never stayed yet)
+  if (total === 1 && future === 1 && past === 0) {
+    return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100 text-[11px]">Nouveau</Badge>;
+  }
+  // Ponctuel: 1 past stay, no future booking
+  if (total === 1 && past >= 1 && future === 0) {
+    return <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Ponctuel</Badge>;
+  }
+  // No bookings at all
+  return <Badge className="bg-muted/50 text-muted-foreground border-muted-foreground/20 hover:bg-muted/50 text-[11px]">Aucune résa</Badge>;
+}
+
 export default function HostTenants() {
   const { user } = useAuth();
   const { toast } = useToast();
