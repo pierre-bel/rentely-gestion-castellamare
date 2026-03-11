@@ -274,6 +274,7 @@ export default function HostTenants() {
                       <TableCell className="font-medium">{tenant.first_name} {tenant.last_name}</TableCell>
                       <TableCell>
                         <TenantBadge status={getTenantStatus(tenantStats[tenant.id])} />
+                      </TableCell>
                       <TableCell>{tenant.email || "—"}</TableCell>
                       <TableCell>{tenant.phone || "—"}</TableCell>
                       <TableCell>{tenant.gender === "H" ? "Homme" : tenant.gender === "F" ? "Femme" : "—"}</TableCell>
