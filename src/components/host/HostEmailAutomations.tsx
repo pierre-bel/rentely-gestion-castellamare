@@ -96,7 +96,7 @@ export default function HostEmailAutomations() {
     if (!user?.id) return;
     setLoadingDefaults(true);
     try {
-      const rows = DEFAULT_EMAIL_TEMPLATES.map((t) => ({
+      const rows = DEFAULT_EMAIL_TEMPLATES.map((t, i) => ({
         host_user_id: user.id,
         name: t.name,
         subject: t.subject,
@@ -109,6 +109,7 @@ export default function HostEmailAutomations() {
         reply_to_email: user.email || null,
         send_if_late: t.send_if_late,
         listing_ids: [],
+        sort_order: i,
       }));
       const { error } = await supabase.from("email_automations").insert(rows as any);
       if (error) throw error;
