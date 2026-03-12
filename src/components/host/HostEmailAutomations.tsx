@@ -154,7 +154,7 @@ export default function HostEmailAutomations() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bookings")
-        .select("id, checkin_date, checkout_date, nights, guests, total_price, listing_id, pricing_breakdown")
+        .select("id, checkin_date, checkout_date, nights, guests, total_price, listing_id, pricing_breakdown, guest_user_id")
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
