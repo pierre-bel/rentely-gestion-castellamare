@@ -157,7 +157,33 @@ export default function HostEmailAutomations() {
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return data as unknown as BookingForTest[];
+      const bookings = data as unknown as BookingForTest[];
+
+      // Resolve tenant names from pricing_breakdown.tenant_id
+      for (const b of bookings) {
+        const tenantId = (b.pricing_breakdown as any)?.tenant_id;
+        if (tenantId) {
+          const { data: tenant } = await supabase
+            .from("tenants")
+            .select("first_name, last_name")
+            .eq("id", tenantId)
+            .single();
+          if (tenant) {
+            b.tenant_name = `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim();
+          }
+        }
+        if (!b.tenant_name) {
+          const { data: guest } = await supabase
+            .from("profiles")
+            .select("first_name, last_name")
+            .eq("id", (data as any[]).find(d => d.id === b.id)?.guest_user_id || '')
+            .maybeSingle();
+          if (guest) {
+            b.tenant_name = `${guest.first_name || ''} ${guest.last_name || ''}`.trim();
+          }
+        }
+      }
+      return bookings;
     },
     enabled: !!user?.id,
   });
