@@ -174,13 +174,16 @@ export default function HostEmailAutomations() {
           }
         }
         if (!b.tenant_name) {
-          const { data: guest } = await supabase
-            .from("profiles")
-            .select("first_name, last_name")
-            .eq("id", (data as any[]).find(d => d.id === b.id)?.guest_user_id || '')
-            .maybeSingle();
-          if (guest) {
-            b.tenant_name = `${guest.first_name || ''} ${guest.last_name || ''}`.trim();
+          const guestUserId = (b as any).guest_user_id;
+          if (guestUserId) {
+            const { data: guest } = await supabase
+              .from("profiles")
+              .select("first_name, last_name")
+              .eq("id", guestUserId)
+              .maybeSingle();
+            if (guest) {
+              b.tenant_name = `${guest.first_name || ''} ${guest.last_name || ''}`.trim();
+            }
           }
         }
       }
