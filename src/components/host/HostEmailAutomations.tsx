@@ -198,9 +198,10 @@ export default function HostEmailAutomations() {
           .eq("id", editingAutomation.id);
         if (error) throw error;
       } else {
+        const nextOrder = automations.length > 0 ? Math.max(...automations.map(a => a.sort_order)) + 1 : 0;
         const { error } = await supabase
           .from("email_automations")
-          .insert([{ ...automation, host_user_id: user!.id } as any]);
+          .insert([{ ...automation, host_user_id: user!.id, sort_order: nextOrder } as any]);
         if (error) throw error;
       }
     },
