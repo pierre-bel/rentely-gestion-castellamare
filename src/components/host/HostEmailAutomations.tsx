@@ -452,6 +452,7 @@ export default function HostEmailAutomations() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[60px]">Ordre</TableHead>
                     <TableHead>Nom</TableHead>
                     <TableHead>Bien(s)</TableHead>
                     <TableHead>Déclencheur</TableHead>
