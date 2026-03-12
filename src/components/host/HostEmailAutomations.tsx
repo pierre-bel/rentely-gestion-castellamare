@@ -400,7 +400,20 @@ export default function HostEmailAutomations() {
   const getBookingLabel = (b: BookingForTest) => {
     const listing = listings.find((l) => l.id === b.listing_id);
     const listingName = listing?.title || "—";
-    return `${listingName} — ${b.checkin_date} → ${b.checkout_date}`;
+    const tenantPart = b.tenant_name ? ` • ${b.tenant_name}` : "";
+    return `${listingName}${tenantPart} — ${b.checkin_date} → ${b.checkout_date}`;
+  };
+
+  const moveAutomation = async (index: number, direction: "up" | "down") => {
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= automations.length) return;
+    const a = automations[index];
+    const b = automations[swapIndex];
+    await Promise.all([
+      updateById("email_automations", a.id, { sort_order: b.sort_order }),
+      updateById("email_automations", b.id, { sort_order: a.sort_order }),
+    ]);
+    queryClient.invalidateQueries({ queryKey: ["email-automations"] });
   };
 
   return (
