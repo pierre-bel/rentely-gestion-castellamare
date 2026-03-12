@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Pencil, Trash2, Send, Mail, Sparkles } from "lucide-react";
+import { Plus, Pencil, Trash2, Send, Mail, Sparkles, ArrowUp, ArrowDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { selectByOwner, deleteById, updateById } from "@/lib/supabase-helpers";
@@ -51,6 +51,7 @@ interface EmailAutomation {
   recipient_email: string | null;
   send_if_late: boolean;
   created_at: string;
+  sort_order: number;
 }
 
 interface BookingForTest {
@@ -62,6 +63,7 @@ interface BookingForTest {
   total_price: number;
   listing_id: string;
   pricing_breakdown: Record<string, unknown> | null;
+  tenant_name?: string;
 }
 
 export default function HostEmailAutomations() {
@@ -94,7 +96,7 @@ export default function HostEmailAutomations() {
     if (!user?.id) return;
     setLoadingDefaults(true);
     try {
-      const rows = DEFAULT_EMAIL_TEMPLATES.map((t) => ({
+      const rows = DEFAULT_EMAIL_TEMPLATES.map((t, i) => ({
         host_user_id: user.id,
         name: t.name,
         subject: t.subject,
@@ -107,6 +109,7 @@ export default function HostEmailAutomations() {
         reply_to_email: user.email || null,
         send_if_late: t.send_if_late,
         listing_ids: [],
+        sort_order: i,
       }));
       const { error } = await supabase.from("email_automations").insert(rows as any);
       if (error) throw error;
@@ -124,7 +127,7 @@ export default function HostEmailAutomations() {
     queryFn: async () => {
       const { data, error } = await selectByOwner<EmailAutomation>(
         "email_automations", "host_user_id", user!.id,
-        { order: "created_at", ascending: false }
+        { order: "sort_order", ascending: true }
       );
       if (error) throw new Error(error);
       return data ?? [];
@@ -151,11 +154,40 @@ export default function HostEmailAutomations() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bookings")
-        .select("id, checkin_date, checkout_date, nights, guests, total_price, listing_id, pricing_breakdown")
+        .select("id, checkin_date, checkout_date, nights, guests, total_price, listing_id, pricing_breakdown, guest_user_id")
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return data as unknown as BookingForTest[];
+      const bookings = data as unknown as BookingForTest[];
+
+      // Resolve tenant names from pricing_breakdown.tenant_id
+      for (const b of bookings) {
+        const tenantId = (b.pricing_breakdown as any)?.tenant_id;
+        if (tenantId) {
+          const { data: tenant } = await supabase
+            .from("tenants")
+            .select("first_name, last_name")
+            .eq("id", tenantId)
+            .single();
+          if (tenant) {
+            b.tenant_name = `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim();
+          }
+        }
+        if (!b.tenant_name) {
+          const guestUserId = (b as any).guest_user_id;
+          if (guestUserId) {
+            const { data: guest } = await supabase
+              .from("profiles")
+              .select("first_name, last_name")
+              .eq("id", guestUserId)
+              .maybeSingle();
+            if (guest) {
+              b.tenant_name = `${guest.first_name || ''} ${guest.last_name || ''}`.trim();
+            }
+          }
+        }
+      }
+      return bookings;
     },
     enabled: !!user?.id,
   });
@@ -169,9 +201,10 @@ export default function HostEmailAutomations() {
           .eq("id", editingAutomation.id);
         if (error) throw error;
       } else {
+        const nextOrder = automations.length > 0 ? Math.max(...automations.map(a => a.sort_order)) + 1 : 0;
         const { error } = await supabase
           .from("email_automations")
-          .insert([{ ...automation, host_user_id: user!.id } as any]);
+          .insert([{ ...automation, host_user_id: user!.id, sort_order: nextOrder } as any]);
         if (error) throw error;
       }
     },
@@ -372,7 +405,20 @@ export default function HostEmailAutomations() {
   const getBookingLabel = (b: BookingForTest) => {
     const listing = listings.find((l) => l.id === b.listing_id);
     const listingName = listing?.title || "—";
-    return `${listingName} — ${b.checkin_date} → ${b.checkout_date}`;
+    const tenantPart = b.tenant_name ? ` • ${b.tenant_name}` : "";
+    return `${listingName}${tenantPart} — ${b.checkin_date} → ${b.checkout_date}`;
+  };
+
+  const moveAutomation = async (index: number, direction: "up" | "down") => {
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= automations.length) return;
+    const a = automations[index];
+    const b = automations[swapIndex];
+    await Promise.all([
+      updateById("email_automations", a.id, { sort_order: b.sort_order }),
+      updateById("email_automations", b.id, { sort_order: a.sort_order }),
+    ]);
+    queryClient.invalidateQueries({ queryKey: ["email-automations"] });
   };
 
   return (
@@ -411,6 +457,7 @@ export default function HostEmailAutomations() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[60px]">Ordre</TableHead>
                     <TableHead>Nom</TableHead>
                     <TableHead>Bien(s)</TableHead>
                     <TableHead>Déclencheur</TableHead>
@@ -420,8 +467,26 @@ export default function HostEmailAutomations() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {automations.map((auto) => (
+                  {automations.map((auto, idx) => (
                     <TableRow key={auto.id}>
+                      <TableCell>
+                        <div className="flex flex-col gap-0.5">
+                          <Button
+                            variant="ghost" size="icon" className="h-5 w-5"
+                            disabled={idx === 0}
+                            onClick={() => moveAutomation(idx, "up")}
+                          >
+                            <ArrowUp className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost" size="icon" className="h-5 w-5"
+                            disabled={idx === automations.length - 1}
+                            onClick={() => moveAutomation(idx, "down")}
+                          >
+                            <ArrowDown className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
                       <TableCell className="font-medium">{auto.name}</TableCell>
                       <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">
                         {getListingNames(auto.listing_ids)}
