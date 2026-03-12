@@ -63,6 +63,7 @@ interface BookingForTest {
   total_price: number;
   listing_id: string;
   pricing_breakdown: Record<string, unknown> | null;
+  tenant_name?: string;
 }
 
 export default function HostEmailAutomations() {
