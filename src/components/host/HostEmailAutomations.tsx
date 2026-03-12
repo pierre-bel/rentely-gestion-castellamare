@@ -51,6 +51,7 @@ interface EmailAutomation {
   recipient_email: string | null;
   send_if_late: boolean;
   created_at: string;
+  sort_order: number;
 }
 
 interface BookingForTest {
