@@ -462,8 +462,26 @@ export default function HostEmailAutomations() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {automations.map((auto) => (
+                  {automations.map((auto, idx) => (
                     <TableRow key={auto.id}>
+                      <TableCell>
+                        <div className="flex flex-col gap-0.5">
+                          <Button
+                            variant="ghost" size="icon" className="h-5 w-5"
+                            disabled={idx === 0}
+                            onClick={() => moveAutomation(idx, "up")}
+                          >
+                            <ArrowUp className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost" size="icon" className="h-5 w-5"
+                            disabled={idx === automations.length - 1}
+                            onClick={() => moveAutomation(idx, "down")}
+                          >
+                            <ArrowDown className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
                       <TableCell className="font-medium">{auto.name}</TableCell>
                       <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">
                         {getListingNames(auto.listing_ids)}
