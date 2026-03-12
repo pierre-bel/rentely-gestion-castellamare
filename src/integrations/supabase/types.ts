@@ -813,6 +813,45 @@ export type Database = {
         }
         Relationships: []
       }
+      gmail_tokens: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          gmail_email: string | null
+          host_id: string
+          id: string
+          last_history_id: string | null
+          last_sync_at: string | null
+          refresh_token: string
+          token_expiry: string
+          updated_at: string | null
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          gmail_email?: string | null
+          host_id: string
+          id?: string
+          last_history_id?: string | null
+          last_sync_at?: string | null
+          refresh_token: string
+          token_expiry: string
+          updated_at?: string | null
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          gmail_email?: string | null
+          host_id?: string
+          id?: string
+          last_history_id?: string | null
+          last_sync_at?: string | null
+          refresh_token?: string
+          token_expiry?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       guest_debts: {
         Row: {
           amount: number
@@ -1056,44 +1095,53 @@ export type Database = {
       }
       inbox_emails: {
         Row: {
+          ai_draft: string | null
           attachments: Json | null
           body_html: string | null
           body_text: string | null
           created_at: string
           from_email: string
           from_name: string | null
+          gmail_message_id: string | null
           host_id: string
           id: string
           read: boolean
           received_at: string
+          status: string
           subject: string | null
           to_email: string | null
         }
         Insert: {
+          ai_draft?: string | null
           attachments?: Json | null
           body_html?: string | null
           body_text?: string | null
           created_at?: string
           from_email: string
           from_name?: string | null
+          gmail_message_id?: string | null
           host_id: string
           id?: string
           read?: boolean
           received_at?: string
+          status?: string
           subject?: string | null
           to_email?: string | null
         }
         Update: {
+          ai_draft?: string | null
           attachments?: Json | null
           body_html?: string | null
           body_text?: string | null
           created_at?: string
           from_email?: string
           from_name?: string | null
+          gmail_message_id?: string | null
           host_id?: string
           id?: string
           read?: boolean
           received_at?: string
+          status?: string
           subject?: string | null
           to_email?: string | null
         }
