@@ -126,7 +126,7 @@ export default function HostEmailAutomations() {
     queryFn: async () => {
       const { data, error } = await selectByOwner<EmailAutomation>(
         "email_automations", "host_user_id", user!.id,
-        { order: "created_at", ascending: false }
+        { order: "sort_order", ascending: true }
       );
       if (error) throw new Error(error);
       return data ?? [];
