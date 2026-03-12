@@ -136,6 +136,7 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
     listing_city: listing?.city || '',
     listing_country: listing?.country || '',
     booking_id: booking.id,
+    igloohome_code: booking.igloohome_code || '',
     qr_paiement: qrPaiementHtml,
     portal_link: `https://gestioncastellamare.lovable.app/booking/${booking.access_token}`,
   };
