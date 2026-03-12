@@ -22,7 +22,7 @@ function getCivility(gender: string | null): string {
 async function buildVariablesFromBooking(supabase: any, bookingId: string): Promise<Record<string, string>> {
   const { data: booking } = await supabase
     .from('bookings')
-    .select('id, checkin_date, checkout_date, nights, guests, total_price, guest_user_id, listing_id, pricing_breakdown')
+    .select('id, checkin_date, checkout_date, nights, guests, total_price, guest_user_id, listing_id, pricing_breakdown, igloohome_code')
     .eq('id', bookingId)
     .single();
 
