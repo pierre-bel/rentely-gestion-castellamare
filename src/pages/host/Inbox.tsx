@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MessageSquare, Mail } from "lucide-react";
+import { ArrowLeft, MessageSquare, Mail, RefreshCw, Loader2, Link2, Unlink } from "lucide-react";
 
 const HostInbox = () => {
   const { user } = useAuth();
@@ -42,12 +42,21 @@ const HostInbox = () => {
     loading: emailsLoading,
     searchQuery: emailSearchQuery,
     setSearchQuery: setEmailSearchQuery,
+    statusFilter,
+    setStatusFilter,
     unreadCount: emailUnreadCount,
+    syncing,
+    syncGmail,
+    connectGmail,
+    disconnectGmail,
+    gmailConnected,
+    gmailEmail,
+    updateEmailStatus,
+    updateAiDraft,
   } = useInboxEmails(user?.id);
 
   const selectedThread = threads.find(t => t.thread_id === selectedThreadId);
 
-  // Pre-select thread if navigated with threadId in state
   useEffect(() => {
     if (preSelectedThreadId && threads.length > 0) {
       setSelectedThreadId(preSelectedThreadId);
@@ -139,7 +148,33 @@ const HostInbox = () => {
 
           {/* Emails Tab */}
           <TabsContent value="emails" className="mt-0">
-            <div className="flex gap-4 h-[calc(100vh-260px)] min-h-[600px]">
+            {/* Gmail toolbar */}
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              {gmailConnected === false && (
+                <Button variant="outline" size="sm" onClick={connectGmail} className="gap-1.5">
+                  <Link2 className="h-4 w-4" />
+                  Connecter Gmail
+                </Button>
+              )}
+              {gmailConnected && (
+                <>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1.5 rounded-md">
+                    <Mail className="h-3.5 w-3.5" />
+                    {gmailEmail || "Gmail connecté"}
+                  </div>
+                  <Button variant="outline" size="sm" onClick={syncGmail} disabled={syncing} className="gap-1.5">
+                    {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    {syncing ? "Synchronisation…" : "Synchroniser"}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={disconnectGmail} className="gap-1.5 text-muted-foreground">
+                    <Unlink className="h-3.5 w-3.5" />
+                    Déconnecter
+                  </Button>
+                </>
+              )}
+            </div>
+
+            <div className="flex gap-4 h-[calc(100vh-310px)] min-h-[600px]">
               <Card className={`bg-[#F8FAFF] md:w-[400px] overflow-hidden ${selectedEmailId ? 'hidden md:block' : 'w-full'}`}>
                 <CardContent className="p-0 h-full overflow-hidden">
                   <EmailList
@@ -149,6 +184,8 @@ const HostInbox = () => {
                     loading={emailsLoading}
                     searchQuery={emailSearchQuery}
                     setSearchQuery={setEmailSearchQuery}
+                    statusFilter={statusFilter}
+                    setStatusFilter={setStatusFilter}
                   />
                 </CardContent>
               </Card>
@@ -159,6 +196,8 @@ const HostInbox = () => {
                     email={selectedEmail}
                     onBack={handleBackToEmailList}
                     showBackButton={!!selectedEmailId}
+                    onStatusChange={updateEmailStatus}
+                    onDraftSave={updateAiDraft}
                   />
                 </CardContent>
               </Card>

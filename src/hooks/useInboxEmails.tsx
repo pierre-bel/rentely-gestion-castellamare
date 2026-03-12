@@ -16,6 +16,9 @@ export interface InboxEmail {
   read: boolean;
   received_at: string;
   created_at: string;
+  status: string;
+  ai_draft: string | null;
+  gmail_message_id: string | null;
 }
 
 export const useInboxEmails = (userId: string | undefined) => {
@@ -23,9 +26,29 @@ export const useInboxEmails = (userId: string | undefined) => {
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [syncing, setSyncing] = useState(false);
+  const [gmailConnected, setGmailConnected] = useState<boolean | null>(null);
+  const [gmailEmail, setGmailEmail] = useState<string | null>(null);
   const { toast } = useToast();
 
   const debouncedSearch = useDebounce(searchQuery, 500);
+
+  const checkGmailConnection = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const { data, error } = await supabase
+        .from("gmail_tokens")
+        .select("gmail_email")
+        .eq("host_id", userId)
+        .maybeSingle();
+      if (error) throw error;
+      setGmailConnected(!!data);
+      setGmailEmail(data?.gmail_email || null);
+    } catch {
+      setGmailConnected(false);
+    }
+  }, [userId]);
 
   const fetchEmails = useCallback(async () => {
     if (!userId) return;
@@ -42,6 +65,10 @@ export const useInboxEmails = (userId: string | undefined) => {
         );
       }
 
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       setEmails((data as InboxEmail[]) || []);
@@ -51,7 +78,7 @@ export const useInboxEmails = (userId: string | undefined) => {
     } finally {
       setLoading(false);
     }
-  }, [userId, debouncedSearch, toast]);
+  }, [userId, debouncedSearch, statusFilter, toast]);
 
   const markAsRead = useCallback(async (emailId: string) => {
     if (!userId) return;
@@ -63,17 +90,93 @@ export const useInboxEmails = (userId: string | undefined) => {
     }
   }, [userId]);
 
+  const updateEmailStatus = useCallback(async (emailId: string, status: string) => {
+    if (!userId) return;
+    try {
+      await supabase.from("inbox_emails").update({ status }).eq("id", emailId).eq("host_id", userId);
+      setEmails((prev) => prev.map((e) => (e.id === emailId ? { ...e, status } : e)));
+    } catch (error) {
+      console.error("Error updating email status:", error);
+      toast({ title: "Erreur", description: "Impossible de mettre à jour le statut", variant: "destructive" });
+    }
+  }, [userId, toast]);
+
+  const updateAiDraft = useCallback(async (emailId: string, aiDraft: string) => {
+    if (!userId) return;
+    try {
+      await supabase.from("inbox_emails").update({ ai_draft: aiDraft }).eq("id", emailId).eq("host_id", userId);
+      setEmails((prev) => prev.map((e) => (e.id === emailId ? { ...e, ai_draft: aiDraft } : e)));
+    } catch (error) {
+      console.error("Error saving AI draft:", error);
+    }
+  }, [userId]);
+
   const selectEmail = useCallback((emailId: string | null) => {
     setSelectedEmailId(emailId);
     if (emailId) markAsRead(emailId);
   }, [markAsRead]);
 
+  const syncGmail = useCallback(async () => {
+    if (!userId) return;
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-gmail-inbox");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Synchronisation terminée", description: data?.message || "Emails synchronisés" });
+      await fetchEmails();
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err?.message || "Impossible de synchroniser Gmail", variant: "destructive" });
+    } finally {
+      setSyncing(false);
+    }
+  }, [userId, fetchEmails, toast]);
+
+  const connectGmail = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("gmail-oauth-start");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.url) {
+        const popup = window.open(data.url, "gmail-oauth", "width=500,height=700");
+        const handleMessage = (event: MessageEvent) => {
+          if (event.data?.type === "gmail-oauth-success") {
+            window.removeEventListener("message", handleMessage);
+            toast({ title: "Gmail connecté", description: "Votre compte Gmail a été connecté avec succès" });
+            checkGmailConnection();
+          } else if (event.data?.type === "gmail-oauth-error") {
+            window.removeEventListener("message", handleMessage);
+            toast({ title: "Erreur", description: event.data.message, variant: "destructive" });
+          }
+        };
+        window.addEventListener("message", handleMessage);
+      }
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err?.message || "Impossible de connecter Gmail", variant: "destructive" });
+    }
+  }, [toast, checkGmailConnection]);
+
+  const disconnectGmail = useCallback(async () => {
+    if (!userId) return;
+    try {
+      await supabase.from("gmail_tokens").delete().eq("host_id", userId);
+      setGmailConnected(false);
+      setGmailEmail(null);
+      toast({ title: "Gmail déconnecté" });
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de déconnecter Gmail", variant: "destructive" });
+    }
+  }, [userId, toast]);
+
   const unreadCount = emails.filter((e) => !e.read).length;
   const selectedEmail = emails.find((e) => e.id === selectedEmailId) || null;
 
   useEffect(() => {
-    if (userId) fetchEmails();
-  }, [userId, fetchEmails]);
+    if (userId) {
+      fetchEmails();
+      checkGmailConnection();
+    }
+  }, [userId, fetchEmails, checkGmailConnection]);
 
   // Realtime subscription
   useEffect(() => {
@@ -98,6 +201,16 @@ export const useInboxEmails = (userId: string | undefined) => {
     loading,
     searchQuery,
     setSearchQuery,
+    statusFilter,
+    setStatusFilter,
     unreadCount,
+    syncing,
+    syncGmail,
+    connectGmail,
+    disconnectGmail,
+    gmailConnected,
+    gmailEmail,
+    updateEmailStatus,
+    updateAiDraft,
   };
 };
