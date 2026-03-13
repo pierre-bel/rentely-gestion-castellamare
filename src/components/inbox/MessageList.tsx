@@ -73,6 +73,7 @@ export const MessageList = ({
           key={message.id}
           message={message}
           isOutgoing={message.from_user_id === currentUserId}
+          onDelete={onDeleteMessage}
         />
       ))}
       <div ref={messagesEndRef} />
