@@ -304,6 +304,11 @@ export const useInbox = (userId: string | undefined) => {
     };
   }, [selectedThreadId, userId, isDemoMode]);
 
+  // Hide message from UI (soft delete)
+  const hideMessage = (messageId: string) => {
+    setMessages(prev => prev.filter(m => m.id !== messageId));
+  };
+
   return {
     threads,
     selectedThreadId,
@@ -314,6 +319,7 @@ export const useInbox = (userId: string | undefined) => {
     sendMessage,
     uploadImage,
     fetchThreads,
+    hideMessage,
     searchQuery,
     setSearchQuery,
     sortBy,

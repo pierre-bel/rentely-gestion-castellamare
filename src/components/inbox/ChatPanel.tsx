@@ -11,6 +11,7 @@ interface ChatPanelProps {
   messagesLoading: boolean;
   onSendMessage: (threadId: string, toUserId: string, body: string, attachmentUrl?: string, attachmentType?: string) => Promise<void>;
   onUploadImage: (file: File) => Promise<string | null>;
+  onDeleteMessage?: (messageId: string) => void;
 }
 
 export const ChatPanel = ({
@@ -19,7 +20,8 @@ export const ChatPanel = ({
   currentUserId,
   messagesLoading,
   onSendMessage,
-  onUploadImage
+  onUploadImage,
+  onDeleteMessage
 }: ChatPanelProps) => {
   if (!thread) {
     return (
@@ -48,6 +50,7 @@ export const ChatPanel = ({
         messages={messages}
         currentUserId={currentUserId}
         loading={messagesLoading}
+        onDeleteMessage={onDeleteMessage}
       />
       <MessageInput
         onSendMessage={handleSend}

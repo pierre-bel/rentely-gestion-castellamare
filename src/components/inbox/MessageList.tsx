@@ -7,12 +7,14 @@ interface MessageListProps {
   messages: Message[];
   currentUserId: string;
   loading: boolean;
+  onDeleteMessage?: (messageId: string) => void;
 }
 
 export const MessageList = ({
   messages,
   currentUserId,
-  loading
+  loading,
+  onDeleteMessage
 }: MessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevMessagesLengthRef = useRef<number>(0);
@@ -71,6 +73,7 @@ export const MessageList = ({
           key={message.id}
           message={message}
           isOutgoing={message.from_user_id === currentUserId}
+          onDelete={onDeleteMessage}
         />
       ))}
       <div ref={messagesEndRef} />
