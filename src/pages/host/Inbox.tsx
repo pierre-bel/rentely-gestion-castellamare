@@ -127,6 +127,7 @@ const HostInbox = () => {
                   </Button>
                 </>
               )}
+              {user && <AiReplySettingsDialog hostId={user.id} />}
             </div>
 
             <div className="flex gap-4 h-[calc(100vh-310px)] min-h-[600px]">

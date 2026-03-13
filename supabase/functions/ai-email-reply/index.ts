@@ -26,14 +26,25 @@ serve(async (req) => {
     const { emailId } = await req.json();
     if (!emailId) throw new Error("Missing emailId");
 
-    // Fetch the email
-    const { data: email, error: emailError } = await supabase
-      .from("inbox_emails")
-      .select("*")
-      .eq("id", emailId)
-      .eq("host_id", user.id)
-      .single();
-    if (emailError || !email) throw new Error("Email not found");
+    // Fetch the email and AI settings in parallel
+    const [emailRes, settingsRes] = await Promise.all([
+      supabase
+        .from("inbox_emails")
+        .select("*")
+        .eq("id", emailId)
+        .eq("host_id", user.id)
+        .single(),
+      supabase
+        .from("host_ai_settings")
+        .select("*")
+        .eq("host_user_id", user.id)
+        .maybeSingle(),
+    ]);
+
+    const email = emailRes.data;
+    if (emailRes.error || !email) throw new Error("Email not found");
+
+    const aiSettings = settingsRes.data;
 
     // Fetch host's listings
     const { data: listings } = await supabase
@@ -112,7 +123,24 @@ serve(async (req) => {
 
     const emailContent = email.body_text || email.body_html?.replace(/<[^>]*>/g, " ") || "";
 
-    const systemPrompt = `Tu es l'assistant IA d'un propriétaire de locations saisonnières. Tu dois analyser l'email reçu et préparer un brouillon de réponse professionnel et chaleureux en français.
+    // Build tone and language instructions from settings
+    const toneValue = aiSettings?.tone || "professionnel et chaleureux";
+    const langValue = aiSettings?.language || "fr";
+    const customPrompt = aiSettings?.custom_prompt || "";
+    const additionalInstructions = aiSettings?.additional_instructions || "";
+    const signatureText = aiSettings?.signature || "";
+
+    const languageInstruction = langValue === "auto"
+      ? "Réponds dans la même langue que l'email reçu."
+      : `Réponds en ${langValue === "fr" ? "français" : langValue === "en" ? "anglais" : langValue === "nl" ? "néerlandais" : langValue === "de" ? "allemand" : "français"}.`;
+
+    const systemPrompt = `Tu es l'assistant IA d'un propriétaire de locations saisonnières. Tu dois analyser l'email reçu et préparer un brouillon de réponse.
+
+Ton et style : Adopte un ton ${toneValue}.
+${languageInstruction}
+
+${customPrompt ? `Contexte fourni par le propriétaire :\n${customPrompt}\n` : ""}
+${additionalInstructions ? `Instructions supplémentaires du propriétaire :\n${additionalInstructions}\n` : ""}
 
 Voici les logements du propriétaire et leurs disponibilités/tarifs :
 ${JSON.stringify(listingsContext, null, 2)}
@@ -124,10 +152,10 @@ Instructions :
 - Vérifie la disponibilité en croisant les périodes disponibles et les réservations existantes
 - Si des dates sont mentionnées, indique clairement si le logement est disponible ou non
 - Si disponible, mentionne le tarif applicable (utilise les tarifs hebdomadaires si disponibles, sinon le prix de base)
-- Sois poli, professionnel et chaleureux
 - Rédige une réponse prête à envoyer (le propriétaire pourra la modifier avant envoi)
 - Si l'email ne concerne pas une demande de réservation, réponds de manière appropriée
-- N'invente pas d'informations que tu n'as pas`;
+- N'invente pas d'informations que tu n'as pas
+${signatureText ? `- Termine le message avec cette signature : ${signatureText}` : ""}`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
