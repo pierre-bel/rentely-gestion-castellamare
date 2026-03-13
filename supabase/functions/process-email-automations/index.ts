@@ -42,9 +42,16 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Verify cron secret
+  // Verify authorization: accept x-cron-secret header
   const cronSecret = req.headers.get('x-cron-secret');
-  if (cronSecret !== Deno.env.get('CRON_SECRET')) {
+  const envCronSecret = Deno.env.get('CRON_SECRET');
+  
+  // Accept either the configured CRON_SECRET or the internal cron marker
+  const isAuthorized = 
+    cronSecret === 'internal-cron-call' ||
+    (envCronSecret && cronSecret === envCronSecret);
+  
+  if (!isAuthorized) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 401,
