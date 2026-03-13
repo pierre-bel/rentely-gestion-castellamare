@@ -13,7 +13,8 @@ interface MessageListProps {
 export const MessageList = ({
   messages,
   currentUserId,
-  loading
+  loading,
+  onDeleteMessage
 }: MessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevMessagesLengthRef = useRef<number>(0);
