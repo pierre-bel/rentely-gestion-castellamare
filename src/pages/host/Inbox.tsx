@@ -28,6 +28,7 @@ const HostInbox = () => {
     messagesLoading,
     sendMessage,
     uploadImage,
+    hideMessage,
     searchQuery,
     setSearchQuery,
     sortBy,
