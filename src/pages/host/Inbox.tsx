@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MessageSquare, Mail, RefreshCw, Loader2, Link2, Unlink } from "lucide-react";
+import { AiReplySettingsDialog } from "@/components/inbox/AiReplySettingsDialog";
 
 const HostInbox = () => {
   const { user } = useAuth();
