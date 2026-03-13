@@ -82,12 +82,8 @@ const HostInbox = () => {
   return (
     <div className="container mx-auto px-4 pb-8 lg:px-8">
       <div className="bg-white rounded-lg p-4 border border-border">
-        <Tabs defaultValue="messages" className="w-full">
+        <Tabs defaultValue="emails" className="w-full">
           <TabsList className="mb-4">
-            <TabsTrigger value="messages" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Messages
-            </TabsTrigger>
             <TabsTrigger value="emails" className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
               Emails
