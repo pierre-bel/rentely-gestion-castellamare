@@ -7,6 +7,7 @@ interface MessageListProps {
   messages: Message[];
   currentUserId: string;
   loading: boolean;
+  onDeleteMessage?: (messageId: string) => void;
 }
 
 export const MessageList = ({
