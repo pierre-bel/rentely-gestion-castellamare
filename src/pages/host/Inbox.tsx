@@ -93,6 +93,10 @@ const HostInbox = () => {
                 </Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="messages" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Messages
+            </TabsTrigger>
           </TabsList>
 
           {/* Messages Tab */}
