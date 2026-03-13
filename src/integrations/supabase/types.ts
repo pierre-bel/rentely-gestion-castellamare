@@ -928,6 +928,42 @@ export type Database = {
           },
         ]
       }
+      host_ai_settings: {
+        Row: {
+          additional_instructions: string | null
+          created_at: string
+          custom_prompt: string | null
+          host_user_id: string
+          id: string
+          language: string | null
+          signature: string | null
+          tone: string | null
+          updated_at: string
+        }
+        Insert: {
+          additional_instructions?: string | null
+          created_at?: string
+          custom_prompt?: string | null
+          host_user_id: string
+          id?: string
+          language?: string | null
+          signature?: string | null
+          tone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          additional_instructions?: string | null
+          created_at?: string
+          custom_prompt?: string | null
+          host_user_id?: string
+          id?: string
+          language?: string | null
+          signature?: string | null
+          tone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       host_payment_schedules: {
         Row: {
           created_at: string
