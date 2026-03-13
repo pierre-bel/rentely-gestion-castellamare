@@ -199,6 +199,7 @@ const HostInbox = () => {
                     messagesLoading={messagesLoading}
                     onSendMessage={sendMessage}
                     onUploadImage={uploadImage}
+                    onDeleteMessage={hideMessage}
                   />
                 </CardContent>
               </Card>
