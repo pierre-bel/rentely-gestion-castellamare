@@ -99,53 +99,6 @@ const HostInbox = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Messages Tab */}
-          <TabsContent value="messages" className="mt-0">
-            <div className="flex gap-4 h-[calc(100vh-260px)] min-h-[600px]">
-              <Card className={`bg-[#F8FAFF] md:w-[400px] overflow-hidden ${selectedThreadId ? 'hidden md:block' : 'w-full'}`}>
-                <CardContent className="p-0 h-full overflow-hidden flex flex-col">
-                  <InboxControlBar
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    sortBy={sortBy}
-                    setSortBy={setSortBy}
-                  />
-                  <div className="flex-1 overflow-hidden">
-                    <ConversationList
-                      threads={threads}
-                      selectedThreadId={selectedThreadId}
-                      onSelectThread={handleSelectThread}
-                      loading={loading}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className={`bg-white flex-1 overflow-hidden ${!selectedThreadId ? 'hidden md:block' : 'w-full'}`}>
-                <CardContent className="p-0 h-full w-full flex flex-col relative overflow-hidden">
-                  {selectedThreadId && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="md:hidden absolute top-4 left-4 z-20"
-                      onClick={handleBackToList}
-                    >
-                      <ArrowLeft className="h-5 w-5" />
-                    </Button>
-                  )}
-                  <ChatPanel
-                    thread={selectedThread || null}
-                    messages={messages}
-                    currentUserId={user.id}
-                    messagesLoading={messagesLoading}
-                    onSendMessage={sendMessage}
-                    onUploadImage={uploadImage}
-                  />
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
           {/* Emails Tab */}
           <TabsContent value="emails" className="mt-0">
             {/* Gmail toolbar */}
@@ -198,6 +151,53 @@ const HostInbox = () => {
                     showBackButton={!!selectedEmailId}
                     onStatusChange={updateEmailStatus}
                     onDraftSave={updateAiDraft}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Messages Tab */}
+          <TabsContent value="messages" className="mt-0">
+            <div className="flex gap-4 h-[calc(100vh-260px)] min-h-[600px]">
+              <Card className={`bg-[#F8FAFF] md:w-[400px] overflow-hidden ${selectedThreadId ? 'hidden md:block' : 'w-full'}`}>
+                <CardContent className="p-0 h-full overflow-hidden flex flex-col">
+                  <InboxControlBar
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    sortBy={sortBy}
+                    setSortBy={setSortBy}
+                  />
+                  <div className="flex-1 overflow-hidden">
+                    <ConversationList
+                      threads={threads}
+                      selectedThreadId={selectedThreadId}
+                      onSelectThread={handleSelectThread}
+                      loading={loading}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className={`bg-white flex-1 overflow-hidden ${!selectedThreadId ? 'hidden md:block' : 'w-full'}`}>
+                <CardContent className="p-0 h-full w-full flex flex-col relative overflow-hidden">
+                  {selectedThreadId && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="md:hidden absolute top-4 left-4 z-20"
+                      onClick={handleBackToList}
+                    >
+                      <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                  )}
+                  <ChatPanel
+                    thread={selectedThread || null}
+                    messages={messages}
+                    currentUserId={user.id}
+                    messagesLoading={messagesLoading}
+                    onSendMessage={sendMessage}
+                    onUploadImage={uploadImage}
                   />
                 </CardContent>
               </Card>
