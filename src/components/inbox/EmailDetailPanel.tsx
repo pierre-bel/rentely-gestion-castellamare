@@ -195,12 +195,19 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
               {aiLoading ? "Analyse…" : showDraft ? "Regénérer" : "Générer"}
             </Button>
           </div>
+          <Textarea
+            value={specificInstructions}
+            onChange={(e) => setSpecificInstructions(e.target.value)}
+            placeholder="Instructions spécifiques pour ce message (ex: proposer une réduction, mentionner un événement local…)"
+            className="min-h-[50px] sm:min-h-[60px] resize-none text-xs sm:text-sm bg-background"
+            rows={2}
+          />
           {showDraft && (
             <Input
               value={draftSubject}
               onChange={(e) => setDraftSubject(e.target.value)}
               placeholder="Objet de la réponse"
-              className="h-7 sm:h-8 text-xs sm:text-sm"
+              className="h-7 sm:h-8 text-xs sm:text-sm mt-2"
             />
           )}
         </div>

@@ -155,7 +155,7 @@ Instructions :
 - Rédige une réponse prête à envoyer (le propriétaire pourra la modifier avant envoi)
 - Si l'email ne concerne pas une demande de réservation, réponds de manière appropriée
 - N'invente pas d'informations que tu n'as pas
-${signatureText ? `- Termine le message avec cette signature : ${signatureText}` : ""}`;
+${specificInstructions ? `\nINSTRUCTIONS SPÉCIFIQUES POUR CE MESSAGE :\n${specificInstructions}\n` : ""}${signatureText ? `- Termine le message avec cette signature : ${signatureText}` : ""}`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
