@@ -31,6 +31,7 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
   const [draftText, setDraftText] = useState("");
   const [copied, setCopied] = useState(false);
   const [showDraft, setShowDraft] = useState(false);
+  const [specificInstructions, setSpecificInstructions] = useState("");
   const { toast } = useToast();
 
   const handleGenerateAiReply = async () => {
