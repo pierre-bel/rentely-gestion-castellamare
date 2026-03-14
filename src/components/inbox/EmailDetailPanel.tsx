@@ -100,25 +100,25 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
   const attachments = Array.isArray(email.attachments) ? email.attachments : [];
 
   return (
-    <div className="flex flex-col lg:flex-row h-full">
-      {/* Left: Original Email */}
-      <div className="flex flex-col flex-1 min-w-0 border-r border-border">
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Email Content */}
+      <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
         {/* Header */}
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="p-3 sm:p-4 border-b border-border">
+          <div className="flex items-center gap-2 mb-2 sm:mb-3">
             {showBackButton && (
-              <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0">
-                <ArrowLeft className="h-5 w-5" />
+              <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0 h-8 w-8 sm:h-9 sm:w-9">
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             )}
-            <h2 className="text-lg font-semibold text-foreground truncate flex-1">
+            <h2 className="text-sm sm:text-lg font-semibold text-foreground truncate flex-1">
               {email.subject || "(Sans objet)"}
             </h2>
             <Select
               value={email.status || "new"}
               onValueChange={(val) => onStatusChange?.(email.id, val)}
             >
-              <SelectTrigger className="w-[120px] h-8 text-xs">
+              <SelectTrigger className="w-[100px] sm:w-[120px] h-7 sm:h-8 text-[10px] sm:text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -128,14 +128,14 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm gap-0.5">
+            <div className="min-w-0 truncate">
               <span className="font-medium text-foreground">{email.from_name || email.from_email}</span>
               {email.from_name && (
-                <span className="text-muted-foreground ml-2">&lt;{email.from_email}&gt;</span>
+                <span className="text-muted-foreground ml-1 sm:ml-2 hidden sm:inline">&lt;{email.from_email}&gt;</span>
               )}
             </div>
-            <span className="text-muted-foreground shrink-0">
+            <span className="text-muted-foreground shrink-0 text-[10px] sm:text-sm">
               {format(new Date(email.received_at), "dd MMM yyyy à HH:mm")}
             </span>
           </div>
