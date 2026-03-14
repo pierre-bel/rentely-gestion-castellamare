@@ -250,10 +250,19 @@ function extractBody(payload: any): { textBody: string | null; htmlBody: string 
 
   if (!payload) return { textBody, htmlBody };
 
+  function decodeBase64Utf8(base64: string): string {
+    const binary = atob(base64.replace(/-/g, "+").replace(/_/g, "/"));
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return new TextDecoder("utf-8").decode(bytes);
+  }
+
   function processPartBody(part: any) {
     const mimeType = part.mimeType || "";
     if (part.body?.data) {
-      const decoded = atob(part.body.data.replace(/-/g, "+").replace(/_/g, "/"));
+      const decoded = decodeBase64Utf8(part.body.data);
       if (mimeType === "text/plain" && !textBody) textBody = decoded;
       if (mimeType === "text/html" && !htmlBody) htmlBody = decoded;
     }
