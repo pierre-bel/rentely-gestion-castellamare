@@ -82,12 +82,12 @@ const HostInbox = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 pb-8 lg:px-8">
-      <div className="bg-white rounded-lg p-4 border border-border">
+    <div className="container mx-auto px-2 sm:px-4 pb-8 lg:px-8">
+      <div className="bg-white rounded-lg p-2 sm:p-4 border border-border">
         <Tabs defaultValue="emails" className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="emails" className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
+          <TabsList className="mb-3 sm:mb-4 w-full sm:w-auto">
+            <TabsTrigger value="emails" className="flex items-center gap-1.5 text-xs sm:text-sm sm:gap-2 flex-1 sm:flex-none">
+              <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Emails
               {emailUnreadCount > 0 && (
                 <Badge variant="destructive" className="ml-1 h-5 min-w-[20px] px-1.5 text-xs">
