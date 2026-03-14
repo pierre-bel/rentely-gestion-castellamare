@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MessageSquare, Mail, RefreshCw, Loader2, Link2, Unlink } from "lucide-react";
 import { AiReplySettingsDialog } from "@/components/inbox/AiReplySettingsDialog";
 
+// Host Inbox page
 const HostInbox = () => {
   const { user } = useAuth();
   const location = useLocation();
