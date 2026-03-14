@@ -104,33 +104,35 @@ const HostInbox = () => {
           {/* Emails Tab */}
           <TabsContent value="emails" className="mt-0">
             {/* Gmail toolbar */}
-            <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 flex-wrap">
               {gmailConnected === false && (
-                <Button variant="outline" size="sm" onClick={connectGmail} className="gap-1.5">
-                  <Link2 className="h-4 w-4" />
-                  Connecter Gmail
+                <Button variant="outline" size="sm" onClick={connectGmail} className="gap-1 sm:gap-1.5 text-xs sm:text-sm">
+                  <Link2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Connecter Gmail</span>
+                  <span className="sm:hidden">Gmail</span>
                 </Button>
               )}
               {gmailConnected && (
                 <>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1.5 rounded-md">
-                    <Mail className="h-3.5 w-3.5" />
-                    {gmailEmail || "Gmail connecté"}
+                  <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground bg-muted px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-md truncate max-w-[140px] sm:max-w-none">
+                    <Mail className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
+                    <span className="truncate">{gmailEmail || "Gmail connecté"}</span>
                   </div>
-                  <Button variant="outline" size="sm" onClick={syncGmail} disabled={syncing} className="gap-1.5">
-                    {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                    {syncing ? "Synchronisation…" : "Synchroniser"}
+                  <Button variant="outline" size="sm" onClick={syncGmail} disabled={syncing} className="gap-1 sm:gap-1.5 text-xs sm:text-sm">
+                    {syncing ? <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" /> : <RefreshCw className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
+                    <span className="hidden sm:inline">{syncing ? "Synchronisation…" : "Synchroniser"}</span>
+                    <span className="sm:hidden">{syncing ? "Sync…" : "Sync"}</span>
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={disconnectGmail} className="gap-1.5 text-muted-foreground">
-                    <Unlink className="h-3.5 w-3.5" />
-                    Déconnecter
+                  <Button variant="ghost" size="sm" onClick={disconnectGmail} className="gap-1 sm:gap-1.5 text-muted-foreground text-xs sm:text-sm">
+                    <Unlink className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    <span className="hidden sm:inline">Déconnecter</span>
                   </Button>
                 </>
               )}
               {user && <AiReplySettingsDialog hostId={user.id} />}
             </div>
 
-            <div className="flex gap-4 h-[calc(100vh-310px)] min-h-[600px]">
+            <div className="flex gap-2 sm:gap-4 h-[calc(100vh-320px)] sm:h-[calc(100vh-310px)] min-h-[400px] sm:min-h-[600px]">
               <Card className={`bg-[#F8FAFF] md:w-[400px] overflow-hidden ${selectedEmailId ? 'hidden md:block' : 'w-full'}`}>
                 <CardContent className="p-0 h-full overflow-hidden">
                   <EmailList
