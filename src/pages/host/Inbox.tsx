@@ -95,8 +95,8 @@ const HostInbox = () => {
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="messages" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
+            <TabsTrigger value="messages" className="flex items-center gap-1.5 text-xs sm:text-sm sm:gap-2 flex-1 sm:flex-none">
+              <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Messages
             </TabsTrigger>
           </TabsList>
