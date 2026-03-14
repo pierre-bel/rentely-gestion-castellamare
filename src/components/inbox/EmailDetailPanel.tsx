@@ -39,7 +39,7 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
     setAiLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("ai-email-reply", {
-        body: { emailId: email.id },
+        body: { emailId: email.id, specificInstructions: specificInstructions.trim() || undefined },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
