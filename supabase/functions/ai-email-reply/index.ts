@@ -23,7 +23,7 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) throw new Error("Unauthorized");
 
-    const { emailId } = await req.json();
+    const { emailId, specificInstructions } = await req.json();
     if (!emailId) throw new Error("Missing emailId");
 
     // Fetch the email and AI settings in parallel
