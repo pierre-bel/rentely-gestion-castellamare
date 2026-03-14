@@ -31,6 +31,7 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
   const [draftText, setDraftText] = useState("");
   const [copied, setCopied] = useState(false);
   const [showDraft, setShowDraft] = useState(false);
+  const [specificInstructions, setSpecificInstructions] = useState("");
   const { toast } = useToast();
 
   const handleGenerateAiReply = async () => {
@@ -38,7 +39,7 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
     setAiLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("ai-email-reply", {
-        body: { emailId: email.id },
+        body: { emailId: email.id, specificInstructions: specificInstructions.trim() || undefined },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -194,12 +195,19 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
               {aiLoading ? "Analyse…" : showDraft ? "Regénérer" : "Générer"}
             </Button>
           </div>
+          <Textarea
+            value={specificInstructions}
+            onChange={(e) => setSpecificInstructions(e.target.value)}
+            placeholder="Instructions spécifiques pour ce message (ex: proposer une réduction, mentionner un événement local…)"
+            className="min-h-[50px] sm:min-h-[60px] resize-none text-xs sm:text-sm bg-background"
+            rows={2}
+          />
           {showDraft && (
             <Input
               value={draftSubject}
               onChange={(e) => setDraftSubject(e.target.value)}
               placeholder="Objet de la réponse"
-              className="h-7 sm:h-8 text-xs sm:text-sm"
+              className="h-7 sm:h-8 text-xs sm:text-sm mt-2"
             />
           )}
         </div>
