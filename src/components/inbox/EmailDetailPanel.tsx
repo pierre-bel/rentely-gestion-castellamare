@@ -100,25 +100,25 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
   const attachments = Array.isArray(email.attachments) ? email.attachments : [];
 
   return (
-    <div className="flex flex-col lg:flex-row h-full">
-      {/* Left: Original Email */}
-      <div className="flex flex-col flex-1 min-w-0 border-r border-border">
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Email Content */}
+      <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
         {/* Header */}
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="p-3 sm:p-4 border-b border-border">
+          <div className="flex items-center gap-2 mb-2 sm:mb-3">
             {showBackButton && (
-              <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0">
-                <ArrowLeft className="h-5 w-5" />
+              <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0 h-8 w-8 sm:h-9 sm:w-9">
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             )}
-            <h2 className="text-lg font-semibold text-foreground truncate flex-1">
+            <h2 className="text-sm sm:text-lg font-semibold text-foreground truncate flex-1">
               {email.subject || "(Sans objet)"}
             </h2>
             <Select
               value={email.status || "new"}
               onValueChange={(val) => onStatusChange?.(email.id, val)}
             >
-              <SelectTrigger className="w-[120px] h-8 text-xs">
+              <SelectTrigger className="w-[100px] sm:w-[120px] h-7 sm:h-8 text-[10px] sm:text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -128,14 +128,14 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm gap-0.5">
+            <div className="min-w-0 truncate">
               <span className="font-medium text-foreground">{email.from_name || email.from_email}</span>
               {email.from_name && (
-                <span className="text-muted-foreground ml-2">&lt;{email.from_email}&gt;</span>
+                <span className="text-muted-foreground ml-1 sm:ml-2 hidden sm:inline">&lt;{email.from_email}&gt;</span>
               )}
             </div>
-            <span className="text-muted-foreground shrink-0">
+            <span className="text-muted-foreground shrink-0 text-[10px] sm:text-sm">
               {format(new Date(email.received_at), "dd MMM yyyy à HH:mm")}
             </span>
           </div>
@@ -155,26 +155,26 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
         </div>
 
         {/* Body */}
-        <ScrollArea className="flex-1 p-4">
+        <ScrollArea className="flex-1 p-3 sm:p-4">
           {email.body_html ? (
             <div
-              className="prose prose-sm max-w-none"
+              className="prose prose-sm max-w-none text-xs sm:text-sm"
               dangerouslySetInnerHTML={{ __html: email.body_html }}
             />
           ) : (
-            <pre className="text-sm text-foreground whitespace-pre-wrap font-sans">
+            <pre className="text-xs sm:text-sm text-foreground whitespace-pre-wrap font-sans">
               {email.body_text || "Aucun contenu"}
             </pre>
           )}
         </ScrollArea>
       </div>
 
-      {/* Right: AI Draft Panel */}
-      <div className="flex flex-col w-full lg:w-[400px] xl:w-[480px] shrink-0 bg-muted/30">
-        <div className="p-4 border-b border-border">
+      {/* AI Draft Panel - collapsible on mobile */}
+      <div className="flex flex-col shrink-0 bg-muted/30 border-t border-border">
+        <div className="p-3 sm:p-4 border-b border-border">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-primary" />
+            <h3 className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
               Réponse IA
             </h3>
             <Button
@@ -182,14 +182,14 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
               size="sm"
               onClick={handleGenerateAiReply}
               disabled={aiLoading}
-              className="gap-1.5"
+              className="gap-1 sm:gap-1.5 text-xs sm:text-sm h-7 sm:h-8"
             >
               {aiLoading ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" />
               ) : showDraft ? (
-                <RefreshCw className="h-3.5 w-3.5" />
+                <RefreshCw className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               ) : (
-                <Sparkles className="h-3.5 w-3.5" />
+                <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               )}
               {aiLoading ? "Analyse…" : showDraft ? "Regénérer" : "Générer"}
             </Button>
@@ -199,47 +199,49 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
               value={draftSubject}
               onChange={(e) => setDraftSubject(e.target.value)}
               placeholder="Objet de la réponse"
-              className="h-8 text-sm"
+              className="h-7 sm:h-8 text-xs sm:text-sm"
             />
           )}
         </div>
 
         {showDraft ? (
           <>
-            <div className="flex-1 p-4 overflow-hidden">
+            <div className="p-3 sm:p-4 overflow-hidden">
               <Textarea
                 value={draftText}
                 onChange={(e) => {
                   setDraftText(e.target.value);
                   onDraftSave?.(email.id, e.target.value);
                 }}
-                className="h-full min-h-[300px] resize-none text-sm bg-background"
+                className="min-h-[120px] sm:min-h-[200px] resize-none text-xs sm:text-sm bg-background"
                 placeholder="Le brouillon apparaîtra ici…"
               />
             </div>
-            <div className="p-4 border-t border-border flex gap-2">
-              <Button onClick={handleCopyDraft} className="gap-1.5 flex-1" size="sm">
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copied ? "Copié !" : "Copier la réponse"}
+            <div className="p-3 sm:p-4 border-t border-border flex gap-2">
+              <Button onClick={handleCopyDraft} className="gap-1 sm:gap-1.5 flex-1 text-xs sm:text-sm h-8" size="sm">
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? "Copié !" : "Copier"}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onStatusChange?.(email.id, "handled")}
+                className="text-xs sm:text-sm h-8"
               >
-                Marquer traité
+                Traité
               </Button>
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-            <Sparkles className="h-10 w-10 text-muted-foreground/40 mb-3" />
-            <p className="text-sm text-muted-foreground mb-1">
-              Cliquez sur « Générer » pour obtenir un brouillon de réponse IA
-            </p>
-            <p className="text-xs text-muted-foreground">
-              basé sur vos disponibilités et tarifs
-            </p>
+          <div className="flex items-center justify-center p-4 sm:p-6 text-center">
+            <div>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-0.5">
+                Cliquez sur « Générer » pour un brouillon IA
+              </p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
+                basé sur vos disponibilités et tarifs
+              </p>
+            </div>
           </div>
         )}
       </div>
