@@ -164,7 +164,7 @@ const HostInbox = () => {
 
           {/* Messages Tab */}
           <TabsContent value="messages" className="mt-0">
-            <div className="flex gap-4 h-[calc(100vh-260px)] min-h-[600px]">
+            <div className="flex gap-2 sm:gap-4 h-[calc(100vh-260px)] min-h-[400px] sm:min-h-[600px]">
               <Card className={`bg-[#F8FAFF] md:w-[400px] overflow-hidden ${selectedThreadId ? 'hidden md:block' : 'w-full'}`}>
                 <CardContent className="p-0 h-full overflow-hidden flex flex-col">
                   <InboxControlBar
