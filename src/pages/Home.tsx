@@ -17,13 +17,13 @@ import TestimonialSection from "@/components/home/TestimonialSection";
 
 const HIGHLIGHTS = [
   "Calendrier multi-logements synchronisé",
+  "Assistant IA pour répondre aux e-mails",
+  "Synchronisation Gmail intégrée",
   "Contrats avec signature électronique",
-  "E-mails automatiques personnalisables",
-  "Tarification semaine/week-end par période",
-  "Portail client pour chaque réservation",
-  "Suivi complet des paiements et échéances",
-  "Portail ménage avec accès sécurisé",
-  "Statistiques et rapports de revenus",
+  "Rapprochement bancaire automatique",
+  "Portail client avec QR code de paiement",
+  "Gestion d'équipe multi-niveaux",
+  "Statistiques, rapports et exports Excel",
 ];
 
 const Home = () => {
