@@ -174,6 +174,8 @@ function BankCredentialsSettings() {
   const [iban, setIban] = useState("");
   const [bic, setBic] = useState("");
   const [referenceTemplate, setReferenceTemplate] = useState("{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}");
+  const [testQrSvg, setTestQrSvg] = useState<string | null>(null);
+  const [testingQr, setTestingQr] = useState(false);
 
   const { data: settings } = useQuery({
     queryKey: ["portal-settings-bank", user?.id],
@@ -214,6 +216,34 @@ function BankCredentialsSettings() {
     setSaving(false);
   };
 
+  const handleTestQr = async () => {
+    if (!beneficiary.trim() || !iban.trim() || !bic.trim()) {
+      toast({ title: "Remplissez le bénéficiaire, IBAN et BIC pour tester", variant: "destructive" });
+      return;
+    }
+    setTestingQr(true);
+    setTestQrSvg(null);
+    try {
+      const epcString = buildEpcString({
+        beneficiary: beneficiary.trim(),
+        iban: iban.replace(/\s/g, "").toUpperCase(),
+        bic: bic.replace(/\s/g, "").toUpperCase(),
+        amount: 150,
+        reference: "Test - Location Exemple - 01/07 au 08/07",
+      });
+      const svg = await QRCode.toString(epcString, { type: "svg", margin: 2, width: 200 });
+      setTestQrSvg(svg);
+      toast({ title: "QR code généré avec succès !" });
+    } catch (e) {
+      console.error("QR test failed:", e);
+      toast({ title: "Erreur lors de la génération du QR code", description: String(e), variant: "destructive" });
+    } finally {
+      setTestingQr(false);
+    }
+  };
+
+  const canTest = !!(beneficiary.trim() && iban.trim() && bic.trim());
+
   return (
     <Card>
       <CardHeader>
@@ -250,9 +280,25 @@ function BankCredentialsSettings() {
         <p className="text-xs text-muted-foreground">
           Ces données sont uniquement encodées dans le QR code affiché sur le portail, dans les e-mails et les contrats.
         </p>
-        <Button onClick={handleSave} disabled={saving} size="sm">
-          {saving ? "Enregistrement..." : "Enregistrer"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={handleSave} disabled={saving} size="sm">
+            {saving ? "Enregistrement..." : "Enregistrer"}
+          </Button>
+          <Button onClick={handleTestQr} disabled={testingQr || !canTest} variant="outline" size="sm" className="gap-1.5">
+            {testingQr ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <QrCode className="h-3.5 w-3.5" />}
+            Tester le QR code
+          </Button>
+        </div>
+
+        {testQrSvg && (
+          <div className="border rounded-lg p-4 bg-muted/30 space-y-2">
+            <p className="text-xs font-medium text-center">Aperçu du QR code (montant test : 150,00 €)</p>
+            <div dangerouslySetInnerHTML={{ __html: testQrSvg }} className="flex justify-center" />
+            <p className="text-[10px] text-muted-foreground text-center max-w-[250px] mx-auto">
+              Scannez ce QR code avec votre application bancaire pour vérifier que les informations sont correctes.
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
