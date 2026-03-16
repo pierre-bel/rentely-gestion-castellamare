@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { InboxEmail } from "@/hooks/useInboxEmails";
 import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { Mail, ArrowLeft, Paperclip, Sparkles, Loader2, Copy, Check, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -137,7 +138,7 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
               )}
             </div>
             <span className="text-muted-foreground shrink-0 text-[10px] sm:text-sm">
-              {format(new Date(email.received_at), "dd MMM yyyy à HH:mm")}
+              {format(new Date(email.received_at), "dd MMM yyyy 'à' HH:mm", { locale: fr })}
             </span>
           </div>
           {email.to_email && (

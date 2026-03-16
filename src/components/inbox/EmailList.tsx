@@ -1,5 +1,6 @@
 import { InboxEmail } from "@/hooks/useInboxEmails";
 import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { Mail, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -86,7 +87,7 @@ export const EmailList = ({
                         {email.from_name || email.from_email}
                       </h4>
                       <span className="text-xs text-muted-foreground ml-2 shrink-0">
-                        {format(new Date(email.received_at), "dd MMM")}
+                        {format(new Date(email.received_at), "dd MMM", { locale: fr })}
                       </span>
                     </div>
                     <p className={`text-sm truncate mb-1 ${!email.read ? "text-foreground font-medium" : "text-muted-foreground"}`}>
