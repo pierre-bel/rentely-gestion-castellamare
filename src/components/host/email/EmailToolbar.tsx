@@ -60,10 +60,10 @@ export default function EmailToolbar({ editor }: EmailToolbarProps) {
   return (
     <div className="flex flex-wrap items-center gap-0.5 p-1.5 border-b bg-muted/30">
       {/* Undo / Redo */}
-      <ToolBtn onClick={() => editor.chain().focus().undo().run()} title="Annuler">
+      <ToolBtn onClick={() => (editor as any).chain().focus().undo().run()} title="Annuler">
         <Undo className="h-4 w-4" />
       </ToolBtn>
-      <ToolBtn onClick={() => editor.chain().focus().redo().run()} title="Rétablir">
+      <ToolBtn onClick={() => (editor as any).chain().focus().redo().run()} title="Rétablir">
         <Redo className="h-4 w-4" />
       </ToolBtn>
 

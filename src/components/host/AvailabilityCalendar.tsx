@@ -135,7 +135,7 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
   };
 
   const getDayClasses = (status: DayStatus, inMonth: boolean, today: boolean): string => {
-    const base = "relative flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-full text-xs sm:text-sm transition-all cursor-default select-none mx-auto";
+    const base = "relative flex flex-col items-center justify-start h-10 sm:h-14 md:h-16 rounded-lg text-xs sm:text-sm transition-all cursor-default select-none mx-auto w-full p-0.5 sm:p-1 overflow-hidden";
 
     if (!inMonth) return cn(base, "opacity-20 text-muted-foreground");
 
@@ -191,12 +191,28 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
               ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-y-1">
+            <div className="grid grid-cols-7 gap-0.5">
               {calendarDays.map((day) => {
                 const inMonth = isSameMonth(day, currentMonth);
                 const today = isToday(day);
                 const { status, bookings: dayBookings } = getDayStatus(day, listing.id);
                 const booking = dayBookings[0];
+                const guestFirstName = booking?.guest_name?.split(" ")[0] || "";
+                const guestFullName = booking?.guest_name || "";
+
+                const renderNameLabel = (textColor: string = "text-primary-foreground") => {
+                  if (!booking || status === "available" || status === "blocked") return null;
+                  return (
+                    <span className={cn(
+                      "block w-full text-center leading-tight truncate",
+                      "text-[7px] sm:text-[9px] md:text-[10px]",
+                      textColor
+                    )}>
+                      <span className="hidden md:inline">{guestFullName}</span>
+                      <span className="md:hidden">{guestFirstName}</span>
+                    </span>
+                  );
+                };
 
                 return (
                   <Tooltip key={day.toISOString()}>
@@ -204,27 +220,39 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
                       <div className="flex items-center justify-center">
                         {(status === "checkin-only" || status === "checkout-only" || status === "turnaround") ? (
                           <div className={cn(
-                            "relative flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-full text-xs sm:text-sm font-medium cursor-default select-none mx-auto overflow-hidden",
+                            "relative flex flex-col items-center justify-start h-10 sm:h-14 md:h-16 rounded-lg text-xs sm:text-sm font-medium cursor-default select-none mx-auto overflow-hidden w-full p-0.5 sm:p-1",
                             !inMonth && "opacity-20",
                             today && "ring-2 ring-primary",
                           )}>
                             {(status === "checkout-only" || status === "turnaround") && (
-                              <div className="absolute inset-0 w-1/2 bg-primary/70 rounded-l-full" />
+                              <div className="absolute inset-0 w-1/2 bg-primary/70 rounded-l-lg" />
                             )}
                             {(status === "checkin-only" || status === "turnaround") && (
-                              <div className="absolute right-0 inset-y-0 w-1/2 bg-primary/70 rounded-r-full" />
+                              <div className="absolute right-0 inset-y-0 w-1/2 bg-primary/70 rounded-r-lg" />
                             )}
                             {status === "checkin-only" && (
-                              <div className="absolute inset-0 w-1/2 bg-[hsl(var(--calendar-available)/0.25)] rounded-l-full" />
+                              <div className="absolute inset-0 w-1/2 bg-[hsl(var(--calendar-available)/0.25)] rounded-l-lg" />
                             )}
                             {status === "checkout-only" && (
-                              <div className="absolute right-0 inset-y-0 w-1/2 bg-[hsl(var(--calendar-available)/0.25)] rounded-r-full" />
+                              <div className="absolute right-0 inset-y-0 w-1/2 bg-[hsl(var(--calendar-available)/0.25)] rounded-r-lg" />
                             )}
-                            <span className="relative z-10 text-foreground mix-blend-normal">{format(day, "d")}</span>
+                            <span className="relative z-10 text-foreground mix-blend-normal text-xs sm:text-sm">{format(day, "d")}</span>
+                            <span className={cn(
+                              "relative z-10 block w-full text-center leading-tight truncate",
+                              "text-[7px] sm:text-[9px] md:text-[10px] text-primary-foreground"
+                            )}>
+                              <span className="hidden md:inline">{guestFullName}</span>
+                              <span className="md:hidden">{guestFirstName}</span>
+                            </span>
                           </div>
                         ) : (
                           <div className={getDayClasses(status, inMonth, today)}>
-                            {format(day, "d")}
+                            <span className="text-xs sm:text-sm">{format(day, "d")}</span>
+                            {renderNameLabel(
+                              status === "booked" ? "text-primary-foreground" :
+                              status === "pending" ? "text-white/90" :
+                              "text-foreground"
+                            )}
                           </div>
                         )}
                       </div>
