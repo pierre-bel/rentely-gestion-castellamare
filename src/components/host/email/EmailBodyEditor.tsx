@@ -46,7 +46,18 @@ export default function EmailBodyEditor({ value, onChange }: EmailBodyEditorProp
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      Document,
+      Paragraph,
+      Text,
+      Heading.configure({ levels: [1, 2, 3] }),
+      Bold,
+      Italic,
+      Strike,
+      BulletList,
+      OrderedList,
+      ListItem,
+      History,
+      HardBreak,
       TextStyle,
       Color,
       Highlight.configure({ multicolor: true }),
