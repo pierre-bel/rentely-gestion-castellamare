@@ -1,5 +1,6 @@
 import { InboxEmail } from "@/hooks/useInboxEmails";
 import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { Mail, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
