@@ -95,18 +95,30 @@ serve(async (req) => {
 });
 
 function redirectHtml(message: string, success: boolean): string {
+  const escapedMessage = message.replace(/'/g, "\\'").replace(/"/g, "&quot;");
   return `<!DOCTYPE html>
 <html>
-<head><title>Gmail OAuth</title></head>
-<body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f8faff;">
-  <div style="text-align:center;padding:2rem;border-radius:12px;background:white;box-shadow:0 2px 12px rgba(0,0,0,0.1);max-width:400px;">
-    <div style="font-size:48px;margin-bottom:16px;">${success ? "✅" : "❌"}</div>
-    <p style="font-size:16px;color:#333;">${message}</p>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connexion Gmail</title>
+</head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:linear-gradient(135deg,#f0fdf4 0%,#f8faff 100%);">
+  <div style="text-align:center;padding:2.5rem;border-radius:16px;background:white;box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:420px;width:90%;">
+    <div style="width:64px;height:64px;border-radius:50%;background:${success ? '#dcfce7' : '#fee2e2'};display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+      <span style="font-size:32px;">${success ? '✅' : '❌'}</span>
+    </div>
+    <h2 style="margin:0 0 8px;font-size:20px;color:#111;">${success ? 'Connexion réussie !' : 'Échec de la connexion'}</h2>
+    <p style="font-size:15px;color:#555;margin:0 0 24px;line-height:1.5;">${message}</p>
+    ${success ? '<p style="font-size:13px;color:#999;">Cette fenêtre va se fermer automatiquement…</p>' : ''}
+    <button onclick="window.close()" style="margin-top:16px;padding:10px 24px;border:1px solid #ddd;border-radius:8px;background:#f9fafb;color:#333;font-size:14px;cursor:pointer;">Fermer cette fenêtre</button>
     <script>
-      if (window.opener) {
-        window.opener.postMessage({ type: "gmail-oauth-${success ? "success" : "error"}", message: "${message}" }, "*");
-        setTimeout(() => window.close(), 2000);
-      }
+      try {
+        if (window.opener) {
+          window.opener.postMessage({ type: '${success ? 'gmail-oauth-success' : 'gmail-oauth-error'}', message: '${escapedMessage}' }, '*');
+          ${success ? 'setTimeout(function() { window.close(); }, 3000);' : ''}
+        }
+      } catch(e) {}
     </script>
   </div>
 </body>

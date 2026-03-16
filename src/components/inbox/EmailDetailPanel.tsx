@@ -138,7 +138,7 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
               )}
             </div>
             <span className="text-muted-foreground shrink-0 text-[10px] sm:text-sm">
-              {format(new Date(email.received_at), "dd MMM yyyy à HH:mm")}
+              {format(new Date(email.received_at), "dd MMM yyyy 'à' HH:mm", { locale: fr })}
             </span>
           </div>
           {email.to_email && (

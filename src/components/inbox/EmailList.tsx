@@ -87,7 +87,7 @@ export const EmailList = ({
                         {email.from_name || email.from_email}
                       </h4>
                       <span className="text-xs text-muted-foreground ml-2 shrink-0">
-                        {format(new Date(email.received_at), "dd MMM")}
+                        {format(new Date(email.received_at), "dd MMM", { locale: fr })}
                       </span>
                     </div>
                     <p className={`text-sm truncate mb-1 ${!email.read ? "text-foreground font-medium" : "text-muted-foreground"}`}>
