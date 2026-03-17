@@ -207,6 +207,12 @@ export default function HostTenants() {
               <Download className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Exporter</span>
             </Button>
+            {tenants.length >= 2 && (
+              <Button variant="outline" size="sm" onClick={() => setMergeDialogOpen(true)}>
+                <Merge className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Fusionner</span>
+              </Button>
+            )}
             <Button onClick={() => { setEditingTenant(null); setDialogOpen(true); }}>
               <Plus className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Nouveau locataire</span>
