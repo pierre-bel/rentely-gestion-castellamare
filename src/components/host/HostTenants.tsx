@@ -337,6 +337,12 @@ export default function HostTenants() {
         tenant={editingTenant}
       />
 
+      <MergeTenantsDialog
+        open={mergeDialogOpen}
+        onOpenChange={setMergeDialogOpen}
+        tenants={tenants}
+      />
+
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
