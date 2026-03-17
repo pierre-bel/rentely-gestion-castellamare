@@ -15,6 +15,7 @@ import { demoStorage } from "@/lib/demoStorage";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { CreateEditTenantDialog } from "./CreateEditTenantDialog";
+import { MergeTenantsDialog } from "./MergeTenantsDialog";
 import {
   AlertDialog,
   AlertDialogAction,
