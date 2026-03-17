@@ -3746,6 +3746,10 @@ export type Database = {
           }
       make_user_admin: { Args: { target_user_id: string }; Returns: undefined }
       mark_past_bookings_completed: { Args: never; Returns: undefined }
+      merge_tenants: {
+        Args: { p_absorb_id: string; p_keep_id: string; p_merged_data: Json }
+        Returns: undefined
+      }
       process_guest_debt_payment:
         | {
             Args: { p_approved_amount: number; p_dispute_id: string }

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Edit, Trash2, Users, Download } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Users, Download, Merge } from "lucide-react";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import { demoStorage } from "@/lib/demoStorage";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { CreateEditTenantDialog } from "./CreateEditTenantDialog";
+import { MergeTenantsDialog } from "./MergeTenantsDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -80,6 +81,7 @@ export default function HostTenants() {
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
+  const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
 
   const { data: tenants = [], isLoading } = useQuery({
     queryKey: ["host-tenants", user?.id, isDemoMode],
@@ -205,6 +207,12 @@ export default function HostTenants() {
               <Download className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Exporter</span>
             </Button>
+            {tenants.length >= 2 && (
+              <Button variant="outline" size="sm" onClick={() => setMergeDialogOpen(true)}>
+                <Merge className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Fusionner</span>
+              </Button>
+            )}
             <Button onClick={() => { setEditingTenant(null); setDialogOpen(true); }}>
               <Plus className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Nouveau locataire</span>
@@ -327,6 +335,12 @@ export default function HostTenants() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         tenant={editingTenant}
+      />
+
+      <MergeTenantsDialog
+        open={mergeDialogOpen}
+        onOpenChange={setMergeDialogOpen}
+        tenants={tenants}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
