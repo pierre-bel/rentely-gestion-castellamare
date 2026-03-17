@@ -81,6 +81,7 @@ export default function HostTenants() {
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
+  const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
 
   const { data: tenants = [], isLoading } = useQuery({
     queryKey: ["host-tenants", user?.id, isDemoMode],
