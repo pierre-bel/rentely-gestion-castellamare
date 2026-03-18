@@ -2,7 +2,7 @@ import { useState } from "react";
 import { InboxEmail } from "@/hooks/useInboxEmails";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Mail, ArrowLeft, Paperclip, Sparkles, Loader2, Copy, Check, RefreshCw } from "lucide-react";
+import { Mail, ArrowLeft, Paperclip, Sparkles, Loader2, Copy, Check, RefreshCw, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
