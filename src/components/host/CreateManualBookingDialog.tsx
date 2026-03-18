@@ -41,6 +41,7 @@ interface Listing {
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  prefillData?: import("@/types/booking-prefill").BookingPrefillData | null;
 }
 
 interface ScheduleItem {
