@@ -292,6 +292,26 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
     setCheckoutTime("");
   };
 
+  // Apply prefill data when dialog opens with prefillData
+  useEffect(() => {
+    if (open && prefillData) {
+      if (prefillData.listingId) setSelectedListingId(prefillData.listingId);
+      if (prefillData.checkinDate) setCheckinDate(prefillData.checkinDate);
+      if (prefillData.checkoutDate) setCheckoutDate(prefillData.checkoutDate);
+      if (prefillData.notes) setNotes(prefillData.notes);
+
+      // Try to match tenant by email
+      if (prefillData.email && tenants.length > 0) {
+        const match = tenants.find(
+          (t) => t.email?.toLowerCase() === prefillData.email?.toLowerCase()
+        );
+        if (match) {
+          setSelectedTenantId(match.id);
+        }
+      }
+    }
+  }, [open, prefillData, tenants]);
+
   const handleSave = async () => {
     if (!user || !selectedListingId || !checkinDate || !checkoutDate || nights <= 0) return;
     setSaving(true);
