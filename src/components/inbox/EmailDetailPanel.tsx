@@ -18,6 +18,8 @@ interface EmailDetailPanelProps {
   showBackButton?: boolean;
   onStatusChange?: (emailId: string, status: string) => void;
   onDraftSave?: (emailId: string, draft: string) => void;
+  onCreateBooking?: () => void;
+  extractingBooking?: boolean;
 }
 
 const statusOptions = [
