@@ -36,7 +36,7 @@ interface Props {
   prefillData?: TenantPrefill;
 }
 
-export function CreateEditTenantDialog({ open, onOpenChange, tenant }: Props) {
+export function CreateEditTenantDialog({ open, onOpenChange, tenant, prefillData }: Props) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
