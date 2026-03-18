@@ -699,6 +699,17 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
         open={newTenantDialogOpen}
         onOpenChange={setNewTenantDialogOpen}
         tenant={null}
+        prefillData={prefillData ? {
+          firstName: prefillData.firstName,
+          lastName: prefillData.lastName,
+          email: prefillData.email,
+          phone: prefillData.phone,
+          street: prefillData.street,
+          streetNumber: prefillData.streetNumber,
+          postalCode: prefillData.postalCode,
+          city: prefillData.city,
+          country: prefillData.country,
+        } : undefined}
       />
     </>
   );
