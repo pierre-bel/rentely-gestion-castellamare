@@ -17,10 +17,23 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { Tenant } from "./HostTenants";
 
+interface TenantPrefill {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  street?: string;
+  streetNumber?: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   tenant: Tenant | null;
+  prefillData?: TenantPrefill;
 }
 
 export function CreateEditTenantDialog({ open, onOpenChange, tenant }: Props) {
