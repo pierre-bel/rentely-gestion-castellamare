@@ -28,7 +28,7 @@ const statusOptions = [
   { value: "handled", label: "Traité" },
 ];
 
-export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange, onDraftSave }: EmailDetailPanelProps) => {
+export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange, onDraftSave, onCreateBooking, extractingBooking }: EmailDetailPanelProps) => {
   const [aiLoading, setAiLoading] = useState(false);
   const [draftSubject, setDraftSubject] = useState("");
   const [draftText, setDraftText] = useState("");
