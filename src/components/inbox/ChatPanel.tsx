@@ -12,6 +12,8 @@ interface ChatPanelProps {
   onSendMessage: (threadId: string, toUserId: string, body: string, attachmentUrl?: string, attachmentType?: string) => Promise<void>;
   onUploadImage: (file: File) => Promise<string | null>;
   onDeleteMessage?: (messageId: string) => void;
+  onCreateBooking?: () => void;
+  extracting?: boolean;
 }
 
 export const ChatPanel = ({
@@ -21,14 +23,16 @@ export const ChatPanel = ({
   messagesLoading,
   onSendMessage,
   onUploadImage,
-  onDeleteMessage
+  onDeleteMessage,
+  onCreateBooking,
+  extracting,
 }: ChatPanelProps) => {
   if (!thread) {
     return (
       <div className="flex-1 w-full flex flex-col items-center justify-center">
-        <MessageSquare className="h-16 w-16 text-[#94A3B8] mb-4" />
+        <MessageSquare className="h-16 w-16 text-muted-foreground mb-4" />
         <h3 className="text-lg font-semibold text-foreground mb-2">Select a conversation</h3>
-        <p className="text-sm text-[#64748B]">
+        <p className="text-sm text-muted-foreground">
           Choose a conversation from the list to start messaging
         </p>
       </div>
@@ -45,6 +49,8 @@ export const ChatPanel = ({
         userName={thread.other_user_name}
         listingTitle={thread.listing_title}
         listingAddress={thread.listing_address}
+        onCreateBooking={onCreateBooking}
+        extracting={extracting}
       />
       <MessageList
         messages={messages}
