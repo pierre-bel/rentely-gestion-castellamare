@@ -52,7 +52,7 @@ interface ScheduleItem {
 
 const DEPOSIT_PERCENTAGE = 30;
 
-export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
+export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: Props) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
