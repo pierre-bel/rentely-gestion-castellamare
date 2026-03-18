@@ -41,6 +41,7 @@ interface Listing {
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  prefillData?: import("@/types/booking-prefill").BookingPrefillData | null;
 }
 
 interface ScheduleItem {
@@ -51,7 +52,7 @@ interface ScheduleItem {
 
 const DEPOSIT_PERCENTAGE = 30;
 
-export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
+export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: Props) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -290,6 +291,26 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
     setCheckinTime("");
     setCheckoutTime("");
   };
+
+  // Apply prefill data when dialog opens with prefillData
+  useEffect(() => {
+    if (open && prefillData) {
+      if (prefillData.listingId) setSelectedListingId(prefillData.listingId);
+      if (prefillData.checkinDate) setCheckinDate(prefillData.checkinDate);
+      if (prefillData.checkoutDate) setCheckoutDate(prefillData.checkoutDate);
+      if (prefillData.notes) setNotes(prefillData.notes);
+
+      // Try to match tenant by email
+      if (prefillData.email && tenants.length > 0) {
+        const match = tenants.find(
+          (t) => t.email?.toLowerCase() === prefillData.email?.toLowerCase()
+        );
+        if (match) {
+          setSelectedTenantId(match.id);
+        }
+      }
+    }
+  }, [open, prefillData, tenants]);
 
   const handleSave = async () => {
     if (!user || !selectedListingId || !checkinDate || !checkoutDate || nights <= 0) return;
@@ -678,6 +699,17 @@ export function CreateManualBookingDialog({ open, onOpenChange }: Props) {
         open={newTenantDialogOpen}
         onOpenChange={setNewTenantDialogOpen}
         tenant={null}
+        prefillData={prefillData ? {
+          firstName: prefillData.firstName,
+          lastName: prefillData.lastName,
+          email: prefillData.email,
+          phone: prefillData.phone,
+          street: prefillData.street,
+          streetNumber: prefillData.streetNumber,
+          postalCode: prefillData.postalCode,
+          city: prefillData.city,
+          country: prefillData.country,
+        } : undefined}
       />
     </>
   );

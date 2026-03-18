@@ -2,7 +2,7 @@ import { useState } from "react";
 import { InboxEmail } from "@/hooks/useInboxEmails";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Mail, ArrowLeft, Paperclip, Sparkles, Loader2, Copy, Check, RefreshCw } from "lucide-react";
+import { Mail, ArrowLeft, Paperclip, Sparkles, Loader2, Copy, Check, RefreshCw, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,8 @@ interface EmailDetailPanelProps {
   showBackButton?: boolean;
   onStatusChange?: (emailId: string, status: string) => void;
   onDraftSave?: (emailId: string, draft: string) => void;
+  onCreateBooking?: () => void;
+  extractingBooking?: boolean;
 }
 
 const statusOptions = [
@@ -26,7 +28,7 @@ const statusOptions = [
   { value: "handled", label: "Traité" },
 ];
 
-export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange, onDraftSave }: EmailDetailPanelProps) => {
+export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange, onDraftSave, onCreateBooking, extractingBooking }: EmailDetailPanelProps) => {
   const [aiLoading, setAiLoading] = useState(false);
   const [draftSubject, setDraftSubject] = useState("");
   const [draftText, setDraftText] = useState("");
@@ -129,6 +131,22 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
                 ))}
               </SelectContent>
             </Select>
+            {onCreateBooking && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onCreateBooking}
+                disabled={extractingBooking}
+                className="gap-1 sm:gap-1.5 shrink-0 h-7 sm:h-8 text-[10px] sm:text-xs"
+              >
+                {extractingBooking ? (
+                  <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" />
+                ) : (
+                  <CalendarPlus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                )}
+                <span className="hidden sm:inline">{extractingBooking ? "Extraction…" : "Réservation"}</span>
+              </Button>
+            )}
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm gap-0.5">
             <div className="min-w-0 truncate">

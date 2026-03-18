@@ -17,13 +17,26 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { Tenant } from "./HostTenants";
 
+interface TenantPrefill {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  street?: string;
+  streetNumber?: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   tenant: Tenant | null;
+  prefillData?: TenantPrefill;
 }
 
-export function CreateEditTenantDialog({ open, onOpenChange, tenant }: Props) {
+export function CreateEditTenantDialog({ open, onOpenChange, tenant, prefillData }: Props) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -43,19 +56,21 @@ export function CreateEditTenantDialog({ open, onOpenChange, tenant }: Props) {
 
   useEffect(() => {
     if (open) {
-      setFirstName(tenant?.first_name || "");
-      setLastName(tenant?.last_name || "");
-      setEmail(tenant?.email || "");
-      setPhone(tenant?.phone || "");
-      setGender(tenant?.gender || "");
-      setStreet(tenant?.street || "");
-      setStreetNumber(tenant?.street_number || "");
-      setPostalCode(tenant?.postal_code || "");
-      setCity(tenant?.city || "");
-      setCountry(tenant?.country || "");
-      setNotes(tenant?.notes || "");
+      const src = tenant || {} as any;
+      const pre = (!tenant && prefillData) ? prefillData : {} as any;
+      setFirstName(src.first_name || pre.firstName || "");
+      setLastName(src.last_name || pre.lastName || "");
+      setEmail(src.email || pre.email || "");
+      setPhone(src.phone || pre.phone || "");
+      setGender(src.gender || "");
+      setStreet(src.street || pre.street || "");
+      setStreetNumber(src.street_number || pre.streetNumber || "");
+      setPostalCode(src.postal_code || pre.postalCode || "");
+      setCity(src.city || pre.city || "");
+      setCountry(src.country || pre.country || "");
+      setNotes(src.notes || "");
     }
-  }, [open, tenant]);
+  }, [open, tenant, prefillData]);
 
   const canSave = firstName.trim() && lastName.trim() && email.trim();
 

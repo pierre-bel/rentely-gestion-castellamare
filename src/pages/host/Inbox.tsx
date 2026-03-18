@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useLocation } from "react-router-dom";
 import { ConversationList } from "@/components/inbox/ConversationList";
@@ -14,11 +14,16 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MessageSquare, Mail, RefreshCw, Loader2, Link2, Unlink } from "lucide-react";
 import { AiReplySettingsDialog } from "@/components/inbox/AiReplySettingsDialog";
+import { CreateManualBookingDialog } from "@/components/host/CreateManualBookingDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import type { BookingPrefillData } from "@/types/booking-prefill";
 
 // Host Inbox page
 const HostInbox = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const { toast } = useToast();
   const preSelectedThreadId = location.state?.threadId;
   
   const {
@@ -60,6 +65,11 @@ const HostInbox = () => {
 
   const selectedThread = threads.find(t => t.thread_id === selectedThreadId);
 
+  // Booking extraction state
+  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
+  const [bookingPrefill, setBookingPrefill] = useState<BookingPrefillData | null>(null);
+  const [extracting, setExtracting] = useState(false);
+
   useEffect(() => {
     if (preSelectedThreadId && threads.length > 0) {
       setSelectedThreadId(preSelectedThreadId);
@@ -69,6 +79,66 @@ const HostInbox = () => {
   if (!user) {
     return <Navigate to="/" replace />;
   }
+
+  const fetchListingsForExtraction = async () => {
+    const { data } = await supabase
+      .from("listings")
+      .select("id, title")
+      .eq("host_user_id", user.id)
+      .order("title");
+    return data || [];
+  };
+
+  const extractAndOpenBooking = async (text: string) => {
+    setExtracting(true);
+    try {
+      const listings = await fetchListingsForExtraction();
+      const { data, error } = await supabase.functions.invoke("extract-booking-info", {
+        body: { text, listings: listings.map(l => ({ id: l.id, title: l.title })) },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const prefill: BookingPrefillData = {
+        listingId: data.listing_id || undefined,
+        firstName: data.first_name || undefined,
+        lastName: data.last_name || undefined,
+        email: data.email || undefined,
+        phone: data.phone || undefined,
+        checkinDate: data.checkin_date ? new Date(data.checkin_date) : undefined,
+        checkoutDate: data.checkout_date ? new Date(data.checkout_date) : undefined,
+        street: data.street || undefined,
+        streetNumber: data.street_number || undefined,
+        postalCode: data.postal_code || undefined,
+        city: data.city || undefined,
+        country: data.country || undefined,
+        notes: data.notes || undefined,
+      };
+
+      setBookingPrefill(prefill);
+      setBookingDialogOpen(true);
+    } catch (err: any) {
+      toast({
+        title: "Erreur d'extraction",
+        description: err?.message || "Impossible d'extraire les informations",
+        variant: "destructive",
+      });
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  const handleEmailCreateBooking = () => {
+    if (!selectedEmail) return;
+    const text = selectedEmail.body_text || selectedEmail.subject || "";
+    extractAndOpenBooking(text);
+  };
+
+  const handleMessageCreateBooking = () => {
+    if (!messages.length) return;
+    const text = messages.map(m => m.body).join("\n\n");
+    extractAndOpenBooking(text);
+  };
 
   const handleSelectThread = (threadId: string) => {
     setSelectedThreadId(threadId);
@@ -157,6 +227,8 @@ const HostInbox = () => {
                     showBackButton={!!selectedEmailId}
                     onStatusChange={updateEmailStatus}
                     onDraftSave={updateAiDraft}
+                    onCreateBooking={selectedEmail ? handleEmailCreateBooking : undefined}
+                    extractingBooking={extracting}
                   />
                 </CardContent>
               </Card>
@@ -205,6 +277,8 @@ const HostInbox = () => {
                     onSendMessage={sendMessage}
                     onUploadImage={uploadImage}
                     onDeleteMessage={hideMessage}
+                    onCreateBooking={selectedThread ? handleMessageCreateBooking : undefined}
+                    extracting={extracting}
                   />
                 </CardContent>
               </Card>
@@ -212,6 +286,15 @@ const HostInbox = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <CreateManualBookingDialog
+        open={bookingDialogOpen}
+        onOpenChange={(open) => {
+          setBookingDialogOpen(open);
+          if (!open) setBookingPrefill(null);
+        }}
+        prefillData={bookingPrefill}
+      />
     </div>
   );
 };
