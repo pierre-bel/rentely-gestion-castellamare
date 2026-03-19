@@ -29,7 +29,6 @@ serve(async (req) => {
     }
     const userId = claimsData.claims.sub as string;
 
-    // Use service role to read gmail_tokens (RLS would work too but simpler)
     const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -87,10 +86,8 @@ serve(async (req) => {
         .eq("host_id", userId);
     }
 
-    // Fetch messages from Gmail API
     const gmailHeaders = { Authorization: `Bearer ${accessToken}` };
 
-    // Use history API if we have a history ID, otherwise list recent messages
     let messageIds: string[] = [];
 
     if (gmailToken.last_history_id) {
@@ -111,7 +108,6 @@ serve(async (req) => {
           }
         }
 
-        // Update history ID
         if (historyData.historyId) {
           await serviceClient
             .from("gmail_tokens")
@@ -130,7 +126,6 @@ serve(async (req) => {
       messageIds = await fetchRecentMessageIds(gmailHeaders);
     }
 
-    // Deduplicate: check which gmail_message_ids already exist
     if (messageIds.length === 0) {
       return new Response(JSON.stringify({ synced: 0, message: "Aucun nouveau message" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -147,8 +142,8 @@ serve(async (req) => {
     const newMessageIds = messageIds.filter((id) => !existingIds.has(id));
 
     let synced = 0;
+    let skipped = 0;
 
-    // Fetch and insert each new message (limit to 20 per sync to avoid timeouts)
     for (const msgId of newMessageIds.slice(0, 20)) {
       try {
         const msgRes = await fetch(
@@ -156,6 +151,13 @@ serve(async (req) => {
           { headers: gmailHeaders }
         );
         const msgData = await msgRes.json();
+
+        // Skip draft, sent, or chat messages
+        const labels: string[] = msgData.labelIds || [];
+        if (labels.includes("DRAFT") || labels.includes("SENT") || labels.includes("CHAT")) {
+          skipped++;
+          continue;
+        }
 
         const headers = msgData.payload?.headers || [];
         const getHeader = (name: string) => headers.find((h: any) => h.name.toLowerCase() === name.toLowerCase())?.value || null;
@@ -170,10 +172,14 @@ serve(async (req) => {
         const dateStr = getHeader("Date");
         const receivedAt = dateStr ? new Date(dateStr).toISOString() : new Date().toISOString();
 
-        // Extract body
         const { textBody, htmlBody } = extractBody(msgData.payload);
 
-        // Extract attachments info
+        // Skip emails with no meaningful content
+        if (!textBody && !htmlBody && !subject) {
+          skipped++;
+          continue;
+        }
+
         const attachments = extractAttachments(msgData.payload);
 
         const { error: insertErr } = await serviceClient
@@ -203,7 +209,7 @@ serve(async (req) => {
       }
     }
 
-    // Update history ID from the latest profile
+    // Update history ID
     try {
       const profileRes = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
         headers: gmailHeaders,
@@ -223,7 +229,7 @@ serve(async (req) => {
       console.error("Profile fetch error:", e);
     }
 
-    return new Response(JSON.stringify({ synced, message: `${synced} email(s) synchronisé(s)` }), {
+    return new Response(JSON.stringify({ synced, skipped, message: `${synced} email(s) synchronisé(s)${skipped > 0 ? `, ${skipped} ignoré(s)` : ''}` }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
