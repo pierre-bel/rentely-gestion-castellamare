@@ -16,6 +16,7 @@ interface EmailListProps {
   setSearchQuery: (q: string) => void;
   statusFilter: string;
   setStatusFilter: (s: string) => void;
+  onDeleteEmail?: (emailId: string) => void;
 }
 
 const statusLabels: Record<string, { label: string; color: string }> = {
