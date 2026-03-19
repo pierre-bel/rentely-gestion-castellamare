@@ -6,20 +6,22 @@ import { ChatPanel } from "@/components/inbox/ChatPanel";
 import { InboxControlBar } from "@/components/inbox/InboxControlBar";
 import { EmailList } from "@/components/inbox/EmailList";
 import { EmailDetailPanel } from "@/components/inbox/EmailDetailPanel";
+import { PasteMessagePanel } from "@/components/inbox/PasteMessagePanel";
+import { NotesPanel } from "@/components/inbox/NotesPanel";
 import { useInbox } from "@/hooks/useInbox";
 import { useInboxEmails } from "@/hooks/useInboxEmails";
+import { useHostNotes } from "@/hooks/useHostNotes";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MessageSquare, Mail, RefreshCw, Loader2, Link2, Unlink } from "lucide-react";
+import { ArrowLeft, MessageSquare, Mail, RefreshCw, Loader2, Link2, Unlink, StickyNote, ClipboardPaste } from "lucide-react";
 import { AiReplySettingsDialog } from "@/components/inbox/AiReplySettingsDialog";
 import { CreateManualBookingDialog } from "@/components/host/CreateManualBookingDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { BookingPrefillData } from "@/types/booking-prefill";
 
-// Host Inbox page
 const HostInbox = () => {
   const { user } = useAuth();
   const location = useLocation();
@@ -61,7 +63,10 @@ const HostInbox = () => {
     gmailEmail,
     updateEmailStatus,
     updateAiDraft,
+    hideEmail,
   } = useInboxEmails(user?.id);
+
+  const { notes, loading: notesLoading, createNote, updateNote, deleteNote } = useHostNotes(user?.id);
 
   const selectedThread = threads.find(t => t.thread_id === selectedThreadId);
 
@@ -170,6 +175,14 @@ const HostInbox = () => {
               <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Messages
             </TabsTrigger>
+            <TabsTrigger value="paste" className="flex items-center gap-1.5 text-xs sm:text-sm sm:gap-2 flex-1 sm:flex-none">
+              <ClipboardPaste className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Coller</span>
+            </TabsTrigger>
+            <TabsTrigger value="notes" className="flex items-center gap-1.5 text-xs sm:text-sm sm:gap-2 flex-1 sm:flex-none">
+              <StickyNote className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              Notes
+            </TabsTrigger>
           </TabsList>
 
           {/* Emails Tab */}
@@ -215,6 +228,7 @@ const HostInbox = () => {
                     setSearchQuery={setEmailSearchQuery}
                     statusFilter={statusFilter}
                     setStatusFilter={setStatusFilter}
+                    onDeleteEmail={hideEmail}
                   />
                 </CardContent>
               </Card>
@@ -229,6 +243,7 @@ const HostInbox = () => {
                     onDraftSave={updateAiDraft}
                     onCreateBooking={selectedEmail ? handleEmailCreateBooking : undefined}
                     extractingBooking={extracting}
+                    onDeleteEmail={hideEmail}
                   />
                 </CardContent>
               </Card>
@@ -283,6 +298,32 @@ const HostInbox = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Paste Tab */}
+          <TabsContent value="paste" className="mt-0">
+            <div className="h-[calc(100vh-260px)] min-h-[400px] sm:min-h-[600px]">
+              <Card className="bg-white h-full overflow-auto">
+                <CardContent className="p-0 h-full">
+                  <PasteMessagePanel
+                    hostId={user.id}
+                    onCreateBooking={extractAndOpenBooking}
+                    extractingBooking={extracting}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Notes Tab */}
+          <TabsContent value="notes" className="mt-0">
+            <NotesPanel
+              notes={notes}
+              loading={notesLoading}
+              onCreateNote={createNote}
+              onUpdateNote={updateNote}
+              onDeleteNote={deleteNote}
+            />
           </TabsContent>
         </Tabs>
       </div>

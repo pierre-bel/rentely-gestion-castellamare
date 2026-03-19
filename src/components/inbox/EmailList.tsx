@@ -1,7 +1,7 @@
 import { InboxEmail } from "@/hooks/useInboxEmails";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Mail, Loader2 } from "lucide-react";
+import { Mail, Loader2, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ interface EmailListProps {
   setSearchQuery: (q: string) => void;
   statusFilter: string;
   setStatusFilter: (s: string) => void;
+  onDeleteEmail?: (emailId: string) => void;
 }
 
 const statusLabels: Record<string, { label: string; color: string }> = {
@@ -33,6 +34,7 @@ export const EmailList = ({
   setSearchQuery,
   statusFilter,
   setStatusFilter,
+  onDeleteEmail,
 }: EmailListProps) => {
   if (loading) {
     return (
@@ -75,7 +77,7 @@ export const EmailList = ({
             return (
               <div
                 key={email.id}
-                className={`p-3 cursor-pointer border-b border-border transition-colors hover:bg-[#F8FAFF] ${
+                className={`p-3 cursor-pointer border-b border-border transition-colors hover:bg-[#F8FAFF] group ${
                   selectedEmailId === email.id ? "bg-[#F8FAFF] border-l-[3px] border-l-[#45CE99]" : ""
                 }`}
                 onClick={() => onSelectEmail(email.id)}
@@ -102,6 +104,15 @@ export const EmailList = ({
                       </p>
                       {!email.read && (
                         <div className="w-2 h-2 rounded-full bg-[#45CE99] shrink-0" />
+                      )}
+                      {onDeleteEmail && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onDeleteEmail(email.id); }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10 text-destructive shrink-0"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
                       )}
                     </div>
                   </div>

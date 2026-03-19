@@ -23,28 +23,49 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) throw new Error("Unauthorized");
 
-    const { emailId, specificInstructions } = await req.json();
-    if (!emailId) throw new Error("Missing emailId");
+    const { emailId, specificInstructions, rawText, hostId } = await req.json();
+    
+    // Support two modes: emailId-based (from inbox) or rawText-based (from paste)
+    let email: any = null;
+    let aiSettings: any = null;
+    const effectiveUserId = user.id;
 
-    // Fetch the email and AI settings in parallel
-    const [emailRes, settingsRes] = await Promise.all([
-      supabase
-        .from("inbox_emails")
-        .select("*")
-        .eq("id", emailId)
-        .eq("host_id", user.id)
-        .single(),
-      supabase
+    if (rawText) {
+      // Paste mode: no email, just raw text
+      const settingsRes = await supabase
         .from("host_ai_settings")
         .select("*")
-        .eq("host_user_id", user.id)
-        .maybeSingle(),
-    ]);
+        .eq("host_user_id", effectiveUserId)
+        .maybeSingle();
+      aiSettings = settingsRes.data;
+      email = {
+        from_name: null,
+        from_email: "message collé",
+        subject: null,
+        body_text: rawText,
+        body_html: null,
+      };
+    } else {
+      if (!emailId) throw new Error("Missing emailId or rawText");
 
-    const email = emailRes.data;
-    if (emailRes.error || !email) throw new Error("Email not found");
+      const [emailRes, settingsRes] = await Promise.all([
+        supabase
+          .from("inbox_emails")
+          .select("*")
+          .eq("id", emailId)
+          .eq("host_id", effectiveUserId)
+          .single(),
+        supabase
+          .from("host_ai_settings")
+          .select("*")
+          .eq("host_user_id", effectiveUserId)
+          .maybeSingle(),
+      ]);
 
-    const aiSettings = settingsRes.data;
+      email = emailRes.data;
+      if (emailRes.error || !email) throw new Error("Email not found");
+      aiSettings = settingsRes.data;
+    }
 
     // Fetch host's listings
     const { data: listings } = await supabase

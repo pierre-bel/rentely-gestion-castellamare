@@ -19,6 +19,7 @@ export interface InboxEmail {
   status: string;
   ai_draft: string | null;
   gmail_message_id: string | null;
+  hidden: boolean;
 }
 
 export const useInboxEmails = (userId: string | undefined) => {
@@ -57,6 +58,7 @@ export const useInboxEmails = (userId: string | undefined) => {
         .from("inbox_emails")
         .select("*")
         .eq("host_id", userId)
+        .eq("hidden", false)
         .order("received_at", { ascending: false });
 
       if (debouncedSearch) {
@@ -110,6 +112,19 @@ export const useInboxEmails = (userId: string | undefined) => {
       console.error("Error saving AI draft:", error);
     }
   }, [userId]);
+
+  const hideEmail = useCallback(async (emailId: string) => {
+    if (!userId) return;
+    try {
+      await supabase.from("inbox_emails").update({ hidden: true }).eq("id", emailId).eq("host_id", userId);
+      setEmails((prev) => prev.filter((e) => e.id !== emailId));
+      if (selectedEmailId === emailId) setSelectedEmailId(null);
+      toast({ title: "Email supprimé", description: "L'email a été retiré de votre boîte de réception" });
+    } catch (error) {
+      console.error("Error hiding email:", error);
+      toast({ title: "Erreur", description: "Impossible de supprimer l'email", variant: "destructive" });
+    }
+  }, [userId, selectedEmailId, toast]);
 
   const selectEmail = useCallback((emailId: string | null) => {
     setSelectedEmailId(emailId);
@@ -185,7 +200,7 @@ export const useInboxEmails = (userId: string | undefined) => {
       .channel("inbox-emails-realtime")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "inbox_emails" }, (payload) => {
         const newEmail = payload.new as InboxEmail;
-        if (newEmail.host_id === userId) {
+        if (newEmail.host_id === userId && !newEmail.hidden) {
           setEmails((prev) => [newEmail, ...prev]);
         }
       })
@@ -212,5 +227,6 @@ export const useInboxEmails = (userId: string | undefined) => {
     gmailEmail,
     updateEmailStatus,
     updateAiDraft,
+    hideEmail,
   };
 };

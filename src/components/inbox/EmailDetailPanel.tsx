@@ -2,7 +2,7 @@ import { useState } from "react";
 import { InboxEmail } from "@/hooks/useInboxEmails";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Mail, ArrowLeft, Paperclip, Sparkles, Loader2, Copy, Check, RefreshCw, CalendarPlus } from "lucide-react";
+import { Mail, ArrowLeft, Paperclip, Sparkles, Loader2, Copy, Check, RefreshCw, CalendarPlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ interface EmailDetailPanelProps {
   onDraftSave?: (emailId: string, draft: string) => void;
   onCreateBooking?: () => void;
   extractingBooking?: boolean;
+  onDeleteEmail?: (emailId: string) => void;
 }
 
 const statusOptions = [
@@ -28,7 +29,7 @@ const statusOptions = [
   { value: "handled", label: "Traité" },
 ];
 
-export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange, onDraftSave, onCreateBooking, extractingBooking }: EmailDetailPanelProps) => {
+export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange, onDraftSave, onCreateBooking, extractingBooking, onDeleteEmail }: EmailDetailPanelProps) => {
   const [aiLoading, setAiLoading] = useState(false);
   const [draftSubject, setDraftSubject] = useState("");
   const [draftText, setDraftText] = useState("");
@@ -145,6 +146,16 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
                   <CalendarPlus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 )}
                 <span className="hidden sm:inline">{extractingBooking ? "Extraction…" : "Réservation"}</span>
+              </Button>
+            )}
+            {onDeleteEmail && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDeleteEmail(email.id)}
+                className="shrink-0 h-7 sm:h-8 text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               </Button>
             )}
           </div>
