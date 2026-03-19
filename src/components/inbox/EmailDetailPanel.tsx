@@ -191,7 +191,7 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
           {email.body_html ? (
             <div
               className="prose prose-sm max-w-none text-xs sm:text-sm"
-              dangerouslySetInnerHTML={{ __html: email.body_html }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(email.body_html) }}
             />
           ) : (
             <pre className="text-xs sm:text-sm text-foreground whitespace-pre-wrap font-sans">
