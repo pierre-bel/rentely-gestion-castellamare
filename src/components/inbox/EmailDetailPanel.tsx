@@ -20,6 +20,7 @@ interface EmailDetailPanelProps {
   onDraftSave?: (emailId: string, draft: string) => void;
   onCreateBooking?: () => void;
   extractingBooking?: boolean;
+  onDeleteEmail?: (emailId: string) => void;
 }
 
 const statusOptions = [
