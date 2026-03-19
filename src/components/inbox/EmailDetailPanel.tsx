@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DOMPurify from "dompurify";
 import { InboxEmail } from "@/hooks/useInboxEmails";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -190,7 +191,7 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
           {email.body_html ? (
             <div
               className="prose prose-sm max-w-none text-xs sm:text-sm"
-              dangerouslySetInnerHTML={{ __html: email.body_html }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(email.body_html) }}
             />
           ) : (
             <pre className="text-xs sm:text-sm text-foreground whitespace-pre-wrap font-sans">

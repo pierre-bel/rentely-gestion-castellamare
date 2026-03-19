@@ -1,0 +1,1 @@
+DROP POLICY "Anon can view bookings for approved listings" ON public.bookings;
