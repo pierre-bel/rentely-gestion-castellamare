@@ -105,6 +105,15 @@ export const EmailList = ({
                       {!email.read && (
                         <div className="w-2 h-2 rounded-full bg-[#45CE99] shrink-0" />
                       )}
+                      {onDeleteEmail && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onDeleteEmail(email.id); }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10 text-destructive shrink-0"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
