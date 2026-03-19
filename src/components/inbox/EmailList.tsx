@@ -77,7 +77,7 @@ export const EmailList = ({
             return (
               <div
                 key={email.id}
-                className={`p-3 cursor-pointer border-b border-border transition-colors hover:bg-[#F8FAFF] ${
+                className={`p-3 cursor-pointer border-b border-border transition-colors hover:bg-[#F8FAFF] group ${
                   selectedEmailId === email.id ? "bg-[#F8FAFF] border-l-[3px] border-l-[#45CE99]" : ""
                 }`}
                 onClick={() => onSelectEmail(email.id)}

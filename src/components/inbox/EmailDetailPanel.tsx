@@ -148,6 +148,16 @@ export const EmailDetailPanel = ({ email, onBack, showBackButton, onStatusChange
                 <span className="hidden sm:inline">{extractingBooking ? "Extraction…" : "Réservation"}</span>
               </Button>
             )}
+            {onDeleteEmail && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDeleteEmail(email.id)}
+                className="shrink-0 h-7 sm:h-8 text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              </Button>
+            )}
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm gap-0.5">
             <div className="min-w-0 truncate">
