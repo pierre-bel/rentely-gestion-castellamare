@@ -34,6 +34,7 @@ export const EmailList = ({
   setSearchQuery,
   statusFilter,
   setStatusFilter,
+  onDeleteEmail,
 }: EmailListProps) => {
   if (loading) {
     return (
