@@ -964,6 +964,33 @@ export type Database = {
         }
         Relationships: []
       }
+      host_notes: {
+        Row: {
+          content: string
+          created_at: string
+          host_user_id: string
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          host_user_id: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          host_user_id?: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       host_payment_schedules: {
         Row: {
           created_at: string
@@ -1139,6 +1166,7 @@ export type Database = {
           from_email: string
           from_name: string | null
           gmail_message_id: string | null
+          hidden: boolean
           host_id: string
           id: string
           read: boolean
@@ -1156,6 +1184,7 @@ export type Database = {
           from_email: string
           from_name?: string | null
           gmail_message_id?: string | null
+          hidden?: boolean
           host_id: string
           id?: string
           read?: boolean
@@ -1173,6 +1202,7 @@ export type Database = {
           from_email?: string
           from_name?: string | null
           gmail_message_id?: string | null
+          hidden?: boolean
           host_id?: string
           id?: string
           read?: boolean
