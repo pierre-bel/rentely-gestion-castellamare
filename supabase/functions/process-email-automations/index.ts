@@ -440,6 +440,12 @@ async function buildVariablesForBooking(
     booking_id: booking.id,
     igloohome_code: booking.igloohome_code || '',
     payment_amount: paymentAmount,
+    payment_label: paymentLabel,
+    payment_due_date: paymentDueDate,
+    deposit_amount: depositAmount,
+    deposit_due_date: depositDueDate,
+    balance_amount: balanceAmount,
+    balance_due_date: balanceDueDate,
     qr_paiement: qrPaiementHtml,
     portal_link: `https://gestioncastellamare.lovable.app/booking/${booking.access_token || ''}`,
   };

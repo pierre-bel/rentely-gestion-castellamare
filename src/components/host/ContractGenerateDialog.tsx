@@ -154,6 +154,12 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       // Dates
       "{{today_date}}": format(new Date(), "d MMMM yyyy", { locale: fr }),
       "{{booking_created_date}}": formatDate(booking.created_at),
+      // Times (booking-specific or listing default)
+      "{{checkin_time}}": booking.checkin_time || listing?.checkin_from || "",
+      "{{checkout_time}}": booking.checkout_time || listing?.checkout_until || "",
+      // Portal & misc
+      "{{portal_link}}": `https://gestioncastellamare.lovable.app/booking/${booking.access_token || ""}`,
+      "{{igloohome_code}}": booking.igloohome_code || "",
     };
 
     // Generate QR code if bank info available and template uses {{qr_paiement}}
