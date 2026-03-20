@@ -120,13 +120,13 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
 
     let html = template.body_html;
     const replacements: Record<string, string> = {
-      // Guest
-      "{{guest_name}}": `${guest?.first_name || ""} ${guest?.last_name || ""}`.trim() || "N/A",
-      "{{guest_first_name}}": guest?.first_name || "N/A",
-      "{{guest_last_name}}": guest?.last_name || "N/A",
-      "{{guest_email}}": guest?.email || "N/A",
-      "{{guest_phone}}": guest?.phone || "N/A",
-      "{{guest_civility}}": getCivility(tenantGender),
+      // Guest (escape to prevent XSS)
+      "{{guest_name}}": escapeHtml(`${guest?.first_name || ""} ${guest?.last_name || ""}`.trim() || "N/A"),
+      "{{guest_first_name}}": escapeHtml(guest?.first_name || "N/A"),
+      "{{guest_last_name}}": escapeHtml(guest?.last_name || "N/A"),
+      "{{guest_email}}": escapeHtml(guest?.email || "N/A"),
+      "{{guest_phone}}": escapeHtml(guest?.phone || "N/A"),
+      "{{guest_civility}}": escapeHtml(getCivility(tenantGender)),
       // Booking
       "{{booking_id}}": booking.id,
       "{{checkin_date}}": formatDate(booking.checkin_date),
