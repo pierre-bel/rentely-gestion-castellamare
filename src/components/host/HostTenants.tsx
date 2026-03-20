@@ -291,10 +291,10 @@ export default function HostTenants() {
                       <TableCell>{tenant.city || "—"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => { setEditingTenant(tenant); setDialogOpen(true); }}>
+                          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingTenant(tenant); setDialogOpen(true); }}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => { setTenantToDelete(tenant); setDeleteDialogOpen(true); }}>
+                          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setTenantToDelete(tenant); setDeleteDialogOpen(true); }}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
