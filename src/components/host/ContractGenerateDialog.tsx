@@ -38,7 +38,7 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       setLoadingBookings(true);
       supabase
         .from("bookings")
-        .select("id, checkin_date, checkout_date, nights, total_price, subtotal, cleaning_fee, service_fee, taxes, guests, listing_id, guest_user_id, beach_cabin, created_at, listings(title, address, city, country, type, security_deposit), profiles:guest_user_id(first_name, last_name, email, phone)")
+        .select("id, checkin_date, checkout_date, checkin_time, checkout_time, nights, total_price, subtotal, cleaning_fee, service_fee, taxes, guests, listing_id, guest_user_id, beach_cabin, created_at, pricing_breakdown, igloohome_code, access_token, listings(title, address, city, country, type, security_deposit, checkin_from, checkout_until), profiles:guest_user_id(first_name, last_name, email, phone)")
         .in("status", ["confirmed", "pending_payment"])
         .order("checkin_date", { ascending: false })
         .limit(50)
