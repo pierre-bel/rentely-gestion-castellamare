@@ -11,6 +11,9 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { generateQRDataUrl, buildTransferReference, type PaymentQRCodeProps } from "@/components/portal/PaymentQRCode";
 
+const escapeHtml = (str: string): string =>
+  str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 interface Template {
   id: string;
   name: string;
