@@ -171,7 +171,14 @@ Deno.serve(async (req) => {
         // Calculate scheduled date
         let scheduledDate: Date | null = null;
         if (auto.trigger_type === 'booking_confirmed') {
-          // Instant trigger — only at booking creation, skip in cron
+          if (!instantBookingId) {
+            // Skip in cron mode — only process in instant mode
+            continue;
+          }
+          // In instant mode, treat as due now
+          scheduledDate = today;
+        } else if (instantBookingId) {
+          // In instant mode, only process booking_confirmed triggers
           continue;
         } else if (auto.trigger_type === 'days_before_checkin') {
           scheduledDate = addDays(checkin, -auto.trigger_days);
