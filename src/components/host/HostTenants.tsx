@@ -308,7 +308,7 @@ export default function HostTenants() {
             {/* Mobile cards */}
             <div className="md:hidden space-y-3">
               {filtered.map((tenant) => (
-                <div key={tenant.id} className="rounded-lg border bg-card p-4 space-y-2">
+                <div key={tenant.id} className="rounded-lg border bg-card p-4 space-y-2 cursor-pointer" onClick={() => setDetailTenant(tenant)}>
                   <div className="flex items-center justify-between">
                     <div className="font-medium">{tenant.first_name} {tenant.last_name}</div>
                     <TenantBadge status={getTenantStatus(tenantStats[tenant.id])} />
