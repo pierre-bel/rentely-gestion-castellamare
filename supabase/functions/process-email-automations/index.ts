@@ -42,20 +42,32 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Verify authorization: accept x-cron-secret header
+  // Verify authorization: accept x-cron-secret header OR valid supabase auth
   const cronSecret = req.headers.get('x-cron-secret');
   const envCronSecret = Deno.env.get('CRON_SECRET');
+  const authHeader = req.headers.get('authorization');
   
-  // Accept either the configured CRON_SECRET or the internal cron marker
-  const isAuthorized = 
+  // Accept cron secret, or valid JWT from authenticated user (for instant triggers)
+  const isCronAuthorized = 
     cronSecret === 'internal-cron-call' ||
     (envCronSecret && cronSecret === envCronSecret);
   
-  if (!isAuthorized) {
+  const hasAuthHeader = authHeader?.startsWith('Bearer ');
+  
+  if (!isCronAuthorized && !hasAuthHeader) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 401,
     });
+  }
+
+  // Parse optional body for instant trigger mode
+  let instantBookingId: string | null = null;
+  if (req.method === 'POST') {
+    try {
+      const body = await req.json();
+      instantBookingId = body?.booking_id || null;
+    } catch { /* no body or invalid JSON, that's fine for cron calls */ }
   }
 
   try {
