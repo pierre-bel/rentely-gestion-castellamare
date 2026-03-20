@@ -398,10 +398,26 @@ async function buildVariablesForBooking(
     qrPaiementHtml = `<div style="text-align:center;margin:16px 0;padding:16px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb"><p style="font-size:13px;color:#374151;margin:0 0 8px">💳 Paiement par virement SEPA</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>Bénéficiaire :</strong> ${bankSettings.bank_beneficiary_name}</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>IBAN :</strong> ${bankSettings.bank_iban}</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>BIC :</strong> ${bankSettings.bank_bic}</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>Montant :</strong> ${Number(booking.total_price).toFixed(2)} €</p><p style="font-size:12px;color:#6b7280;margin:0"><strong>Communication :</strong> ${ref}</p></div>`;
   }
 
-  // Next unpaid payment
-  const nextUnpaid = (paymentItems || []).find((p: any) => !p.is_paid);
+  // Deposit & balance
+  const items = paymentItems || [];
+  const depositItem = items.find((i: any) => i.label?.toLowerCase().includes("acompte")) || items[0];
+  const balanceItem = items.find((i: any) => i.label?.toLowerCase().includes("solde") || i.label?.toLowerCase().includes("décompte")) || items[items.length - 1];
+
+  if (depositItem) {
+    depositAmount = `${Number(depositItem.amount).toFixed(2)} €`;
+    depositDueDate = depositItem.due_date || '';
+  }
+  if (balanceItem && balanceItem !== depositItem) {
+    balanceAmount = `${Number(balanceItem.amount).toFixed(2)} €`;
+    balanceDueDate = balanceItem.due_date || '';
+  }
+
+  // Next unpaid payment (for payment_reminder variables)
+  const nextUnpaid = items.find((p: any) => !p.is_paid);
   if (nextUnpaid) {
     paymentAmount = `${Number(nextUnpaid.amount).toFixed(2)} €`;
+    paymentLabel = nextUnpaid.label || '';
+    paymentDueDate = nextUnpaid.due_date || '';
   }
 
   return {
