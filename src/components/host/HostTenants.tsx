@@ -280,7 +280,7 @@ export default function HostTenants() {
                 </TableHeader>
                 <TableBody>
                   {filtered.map((tenant, i) => (
-                    <TableRow key={tenant.id} className={i % 2 === 0 ? "bg-muted/30" : ""}>
+                    <TableRow key={tenant.id} className={cn(i % 2 === 0 ? "bg-muted/30" : "", "cursor-pointer")} onClick={() => setDetailTenant(tenant)}>
                       <TableCell className="font-medium">{tenant.first_name} {tenant.last_name}</TableCell>
                       <TableCell>
                         <TenantBadge status={getTenantStatus(tenantStats[tenant.id])} />
