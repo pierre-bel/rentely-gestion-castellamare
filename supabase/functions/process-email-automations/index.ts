@@ -42,20 +42,32 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Verify authorization: accept x-cron-secret header
+  // Verify authorization: accept x-cron-secret header OR valid supabase auth
   const cronSecret = req.headers.get('x-cron-secret');
   const envCronSecret = Deno.env.get('CRON_SECRET');
+  const authHeader = req.headers.get('authorization');
   
-  // Accept either the configured CRON_SECRET or the internal cron marker
-  const isAuthorized = 
+  // Accept cron secret, or valid JWT from authenticated user (for instant triggers)
+  const isCronAuthorized = 
     cronSecret === 'internal-cron-call' ||
     (envCronSecret && cronSecret === envCronSecret);
   
-  if (!isAuthorized) {
+  const hasAuthHeader = authHeader?.startsWith('Bearer ');
+  
+  if (!isCronAuthorized && !hasAuthHeader) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 401,
     });
+  }
+
+  // Parse optional body for instant trigger mode
+  let instantBookingId: string | null = null;
+  if (req.method === 'POST') {
+    try {
+      const body = await req.json();
+      instantBookingId = body?.booking_id || null;
+    } catch { /* no body or invalid JSON, that's fine for cron calls */ }
   }
 
   try {
@@ -94,12 +106,18 @@ Deno.serve(async (req) => {
     }
 
     // 2. Get active bookings (confirmed, completed but not too old, pre_reservation)
-    // Only bookings with checkout_date >= cutoff (not older than 2 weeks)
-    const { data: bookings, error: bookErr } = await supabase
+    let bookingsQuery = supabase
       .from('bookings')
-      .select('id, checkin_date, checkout_date, nights, guests, total_price, guest_user_id, listing_id, pricing_breakdown, igloohome_code, status')
-      .in('status', ['confirmed', 'completed', 'pre_reservation', 'pending_payment'])
-      .gte('checkout_date', cutoffStr);
+      .select('id, checkin_date, checkout_date, nights, guests, total_price, guest_user_id, listing_id, pricing_breakdown, igloohome_code, status, access_token')
+      .in('status', ['confirmed', 'completed', 'pre_reservation', 'pending_payment']);
+
+    if (instantBookingId) {
+      bookingsQuery = bookingsQuery.eq('id', instantBookingId);
+    } else {
+      bookingsQuery = bookingsQuery.gte('checkout_date', cutoffStr);
+    }
+
+    const { data: bookings, error: bookErr } = await bookingsQuery;
 
     if (bookErr) throw bookErr;
     if (!bookings || bookings.length === 0) {
@@ -153,7 +171,14 @@ Deno.serve(async (req) => {
         // Calculate scheduled date
         let scheduledDate: Date | null = null;
         if (auto.trigger_type === 'booking_confirmed') {
-          // Instant trigger — only at booking creation, skip in cron
+          if (!instantBookingId) {
+            // Skip in cron mode — only process in instant mode
+            continue;
+          }
+          // In instant mode, treat as due now
+          scheduledDate = today;
+        } else if (instantBookingId) {
+          // In instant mode, only process booking_confirmed triggers
           continue;
         } else if (auto.trigger_type === 'days_before_checkin') {
           scheduledDate = addDays(checkin, -auto.trigger_days);

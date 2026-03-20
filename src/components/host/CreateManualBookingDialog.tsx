@@ -397,6 +397,13 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
           }
         }
 
+        // Trigger instant email automations (booking_confirmed)
+        if (bookingData) {
+          supabase.functions.invoke("process-email-automations", {
+            body: { booking_id: bookingData.id },
+          }).catch((err) => console.error("Email automation trigger failed:", err));
+        }
+
         toast({ title: "Réservation créée", description: `${nights} nuit(s) ajoutée(s) avec succès.` });
       }
 

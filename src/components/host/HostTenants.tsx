@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Edit, Trash2, Users, Download, Merge } from "lucide-react";
+import { cn } from "@/lib/utils";
 import * as XLSX from "xlsx";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { CreateEditTenantDialog } from "./CreateEditTenantDialog";
 import { MergeTenantsDialog } from "./MergeTenantsDialog";
+import { TenantDetailDialog } from "./TenantDetailDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -82,6 +84,7 @@ export default function HostTenants() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
+  const [detailTenant, setDetailTenant] = useState<Tenant | null>(null);
 
   const { data: tenants = [], isLoading } = useQuery({
     queryKey: ["host-tenants", user?.id, isDemoMode],
@@ -278,7 +281,7 @@ export default function HostTenants() {
                 </TableHeader>
                 <TableBody>
                   {filtered.map((tenant, i) => (
-                    <TableRow key={tenant.id} className={i % 2 === 0 ? "bg-muted/30" : ""}>
+                    <TableRow key={tenant.id} className={cn(i % 2 === 0 ? "bg-muted/30" : "", "cursor-pointer")} onClick={() => setDetailTenant(tenant)}>
                       <TableCell className="font-medium">{tenant.first_name} {tenant.last_name}</TableCell>
                       <TableCell>
                         <TenantBadge status={getTenantStatus(tenantStats[tenant.id])} />
@@ -289,10 +292,10 @@ export default function HostTenants() {
                       <TableCell>{tenant.city || "—"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => { setEditingTenant(tenant); setDialogOpen(true); }}>
+                          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setEditingTenant(tenant); setDialogOpen(true); }}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => { setTenantToDelete(tenant); setDeleteDialogOpen(true); }}>
+                          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setTenantToDelete(tenant); setDeleteDialogOpen(true); }}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
@@ -306,7 +309,7 @@ export default function HostTenants() {
             {/* Mobile cards */}
             <div className="md:hidden space-y-3">
               {filtered.map((tenant) => (
-                <div key={tenant.id} className="rounded-lg border bg-card p-4 space-y-2">
+                <div key={tenant.id} className="rounded-lg border bg-card p-4 space-y-2 cursor-pointer" onClick={() => setDetailTenant(tenant)}>
                   <div className="flex items-center justify-between">
                     <div className="font-medium">{tenant.first_name} {tenant.last_name}</div>
                     <TenantBadge status={getTenantStatus(tenantStats[tenant.id])} />
@@ -317,10 +320,10 @@ export default function HostTenants() {
                     <span>{tenant.city || "—"}</span>
                   </div>
                   <div className="flex justify-end gap-1 pt-1">
-                    <Button variant="ghost" size="sm" onClick={() => { setEditingTenant(tenant); setDialogOpen(true); }}>
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setEditingTenant(tenant); setDialogOpen(true); }}>
                       <Edit className="h-4 w-4 mr-1" /> Modifier
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => { setTenantToDelete(tenant); setDeleteDialogOpen(true); }}>
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setTenantToDelete(tenant); setDeleteDialogOpen(true); }}>
                       <Trash2 className="h-4 w-4 mr-1 text-destructive" /> Supprimer
                     </Button>
                   </div>
@@ -341,6 +344,12 @@ export default function HostTenants() {
         open={mergeDialogOpen}
         onOpenChange={setMergeDialogOpen}
         tenants={tenants}
+      />
+
+      <TenantDetailDialog
+        open={!!detailTenant}
+        onOpenChange={(open) => { if (!open) setDetailTenant(null); }}
+        tenant={detailTenant}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
