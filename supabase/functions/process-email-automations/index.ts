@@ -106,12 +106,18 @@ Deno.serve(async (req) => {
     }
 
     // 2. Get active bookings (confirmed, completed but not too old, pre_reservation)
-    // Only bookings with checkout_date >= cutoff (not older than 2 weeks)
-    const { data: bookings, error: bookErr } = await supabase
+    let bookingsQuery = supabase
       .from('bookings')
-      .select('id, checkin_date, checkout_date, nights, guests, total_price, guest_user_id, listing_id, pricing_breakdown, igloohome_code, status')
-      .in('status', ['confirmed', 'completed', 'pre_reservation', 'pending_payment'])
-      .gte('checkout_date', cutoffStr);
+      .select('id, checkin_date, checkout_date, nights, guests, total_price, guest_user_id, listing_id, pricing_breakdown, igloohome_code, status, access_token')
+      .in('status', ['confirmed', 'completed', 'pre_reservation', 'pending_payment']);
+
+    if (instantBookingId) {
+      bookingsQuery = bookingsQuery.eq('id', instantBookingId);
+    } else {
+      bookingsQuery = bookingsQuery.gte('checkout_date', cutoffStr);
+    }
+
+    const { data: bookings, error: bookErr } = await bookingsQuery;
 
     if (bookErr) throw bookErr;
     if (!bookings || bookings.length === 0) {
