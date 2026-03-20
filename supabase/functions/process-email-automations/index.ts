@@ -344,18 +344,32 @@ async function buildVariablesForBooking(
     .order('sort_order', { ascending: true });
 
   let paymentAmount = '';
+  let paymentLabel = '';
+  let paymentDueDate = '';
+  let depositAmount = '';
+  let depositDueDate = '';
+  let balanceAmount = '';
+  let balanceDueDate = '';
+
+  // Use booking-specific times, fall back to listing defaults
   let checkinTime = '';
   let checkoutTime = '';
-
-  // Get listing times
-  const { data: fullListing } = await supabase
-    .from('listings')
-    .select('checkin_from, checkout_until')
-    .eq('id', booking.listing_id)
-    .single();
-  if (fullListing) {
-    checkinTime = fullListing.checkin_from || '';
-    checkoutTime = fullListing.checkout_until || '';
+  if (booking.checkin_time) {
+    checkinTime = booking.checkin_time;
+  }
+  if (booking.checkout_time) {
+    checkoutTime = booking.checkout_time;
+  }
+  if (!checkinTime || !checkoutTime) {
+    const { data: fullListing } = await supabase
+      .from('listings')
+      .select('checkin_from, checkout_until')
+      .eq('id', booking.listing_id)
+      .single();
+    if (fullListing) {
+      if (!checkinTime) checkinTime = fullListing.checkin_from || '';
+      if (!checkoutTime) checkoutTime = fullListing.checkout_until || '';
+    }
   }
 
   // Bank QR info
