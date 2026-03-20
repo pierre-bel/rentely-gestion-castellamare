@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     // 2. Get active bookings (confirmed, completed but not too old, pre_reservation)
     let bookingsQuery = supabase
       .from('bookings')
-      .select('id, checkin_date, checkout_date, nights, guests, total_price, guest_user_id, listing_id, pricing_breakdown, igloohome_code, status, access_token')
+      .select('id, checkin_date, checkout_date, checkin_time, checkout_time, nights, guests, total_price, guest_user_id, listing_id, pricing_breakdown, igloohome_code, status, access_token')
       .in('status', ['confirmed', 'completed', 'pre_reservation', 'pending_payment']);
 
     if (instantBookingId) {
