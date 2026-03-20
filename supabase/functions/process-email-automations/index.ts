@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     // 2. Get active bookings (confirmed, completed but not too old, pre_reservation)
     let bookingsQuery = supabase
       .from('bookings')
-      .select('id, checkin_date, checkout_date, nights, guests, total_price, guest_user_id, listing_id, pricing_breakdown, igloohome_code, status, access_token')
+      .select('id, checkin_date, checkout_date, checkin_time, checkout_time, nights, guests, total_price, guest_user_id, listing_id, pricing_breakdown, igloohome_code, status, access_token')
       .in('status', ['confirmed', 'completed', 'pre_reservation', 'pending_payment']);
 
     if (instantBookingId) {
@@ -344,18 +344,32 @@ async function buildVariablesForBooking(
     .order('sort_order', { ascending: true });
 
   let paymentAmount = '';
+  let paymentLabel = '';
+  let paymentDueDate = '';
+  let depositAmount = '';
+  let depositDueDate = '';
+  let balanceAmount = '';
+  let balanceDueDate = '';
+
+  // Use booking-specific times, fall back to listing defaults
   let checkinTime = '';
   let checkoutTime = '';
-
-  // Get listing times
-  const { data: fullListing } = await supabase
-    .from('listings')
-    .select('checkin_from, checkout_until')
-    .eq('id', booking.listing_id)
-    .single();
-  if (fullListing) {
-    checkinTime = fullListing.checkin_from || '';
-    checkoutTime = fullListing.checkout_until || '';
+  if (booking.checkin_time) {
+    checkinTime = booking.checkin_time;
+  }
+  if (booking.checkout_time) {
+    checkoutTime = booking.checkout_time;
+  }
+  if (!checkinTime || !checkoutTime) {
+    const { data: fullListing } = await supabase
+      .from('listings')
+      .select('checkin_from, checkout_until')
+      .eq('id', booking.listing_id)
+      .single();
+    if (fullListing) {
+      if (!checkinTime) checkinTime = fullListing.checkin_from || '';
+      if (!checkoutTime) checkoutTime = fullListing.checkout_until || '';
+    }
   }
 
   // Bank QR info
@@ -384,10 +398,26 @@ async function buildVariablesForBooking(
     qrPaiementHtml = `<div style="text-align:center;margin:16px 0;padding:16px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb"><p style="font-size:13px;color:#374151;margin:0 0 8px">💳 Paiement par virement SEPA</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>Bénéficiaire :</strong> ${bankSettings.bank_beneficiary_name}</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>IBAN :</strong> ${bankSettings.bank_iban}</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>BIC :</strong> ${bankSettings.bank_bic}</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>Montant :</strong> ${Number(booking.total_price).toFixed(2)} €</p><p style="font-size:12px;color:#6b7280;margin:0"><strong>Communication :</strong> ${ref}</p></div>`;
   }
 
-  // Next unpaid payment
-  const nextUnpaid = (paymentItems || []).find((p: any) => !p.is_paid);
+  // Deposit & balance
+  const items = paymentItems || [];
+  const depositItem = items.find((i: any) => i.label?.toLowerCase().includes("acompte")) || items[0];
+  const balanceItem = items.find((i: any) => i.label?.toLowerCase().includes("solde") || i.label?.toLowerCase().includes("décompte")) || items[items.length - 1];
+
+  if (depositItem) {
+    depositAmount = `${Number(depositItem.amount).toFixed(2)} €`;
+    depositDueDate = depositItem.due_date || '';
+  }
+  if (balanceItem && balanceItem !== depositItem) {
+    balanceAmount = `${Number(balanceItem.amount).toFixed(2)} €`;
+    balanceDueDate = balanceItem.due_date || '';
+  }
+
+  // Next unpaid payment (for payment_reminder variables)
+  const nextUnpaid = items.find((p: any) => !p.is_paid);
   if (nextUnpaid) {
     paymentAmount = `${Number(nextUnpaid.amount).toFixed(2)} €`;
+    paymentLabel = nextUnpaid.label || '';
+    paymentDueDate = nextUnpaid.due_date || '';
   }
 
   return {
@@ -410,6 +440,12 @@ async function buildVariablesForBooking(
     booking_id: booking.id,
     igloohome_code: booking.igloohome_code || '',
     payment_amount: paymentAmount,
+    payment_label: paymentLabel,
+    payment_due_date: paymentDueDate,
+    deposit_amount: depositAmount,
+    deposit_due_date: depositDueDate,
+    balance_amount: balanceAmount,
+    balance_due_date: balanceDueDate,
     qr_paiement: qrPaiementHtml,
     portal_link: `https://gestioncastellamare.lovable.app/booking/${booking.access_token || ''}`,
   };
