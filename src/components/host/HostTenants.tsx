@@ -345,6 +345,12 @@ export default function HostTenants() {
         tenants={tenants}
       />
 
+      <TenantDetailDialog
+        open={!!detailTenant}
+        onOpenChange={(open) => { if (!open) setDetailTenant(null); }}
+        tenant={detailTenant}
+      />
+
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
