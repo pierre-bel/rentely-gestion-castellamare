@@ -39,16 +39,45 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
   useEffect(() => {
     if (open && user) {
       setLoadingBookings(true);
-      supabase
-        .from("bookings")
-        .select("id, checkin_date, checkout_date, checkin_time, checkout_time, nights, total_price, subtotal, cleaning_fee, service_fee, taxes, guests, listing_id, guest_user_id, beach_cabin, created_at, pricing_breakdown, igloohome_code, access_token, listings(title, address, city, country, type, security_deposit, checkin_from, checkout_until), profiles:guest_user_id(first_name, last_name, email, phone)")
-        .in("status", ["confirmed", "pending_payment"])
-        .order("checkin_date", { ascending: false })
-        .limit(50)
-        .then(({ data }) => {
-          setBookings(data || []);
+      const fetchBookings = async () => {
+        const { data: bookingsData, error } = await supabase
+          .from("bookings")
+          .select("id, checkin_date, checkout_date, checkin_time, checkout_time, nights, total_price, subtotal, cleaning_fee, service_fee, taxes, guests, listing_id, guest_user_id, beach_cabin, created_at, pricing_breakdown, igloohome_code, access_token, listings(title, address, city, country, type, security_deposit, checkin_from, checkout_until)")
+          .in("status", ["confirmed", "pending_payment"])
+          .order("checkin_date", { ascending: false })
+          .limit(50);
+
+        if (error) {
+          console.error("Error fetching bookings:", error);
+          setBookings([]);
           setLoadingBookings(false);
-        });
+          return;
+        }
+
+        const items = bookingsData || [];
+        if (items.length === 0) {
+          setBookings([]);
+          setLoadingBookings(false);
+          return;
+        }
+
+        // Fetch profiles separately since there's no direct FK from bookings to profiles
+        const guestIds = [...new Set(items.map((b: any) => b.guest_user_id))];
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, first_name, last_name, email, phone")
+          .in("id", guestIds);
+
+        const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+        const enriched = items.map((b: any) => ({
+          ...b,
+          profiles: profileMap.get(b.guest_user_id) || null,
+        }));
+
+        setBookings(enriched);
+        setLoadingBookings(false);
+      };
+      fetchBookings();
     }
   }, [open, user]);
 
