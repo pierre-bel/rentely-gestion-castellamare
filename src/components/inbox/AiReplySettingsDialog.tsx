@@ -39,6 +39,7 @@ export const AiReplySettingsDialog = ({ hostId }: AiReplySettingsDialogProps) =>
   const [language, setLanguage] = useState("fr");
   const [signature, setSignature] = useState("");
   const [additionalInstructions, setAdditionalInstructions] = useState("");
+  const [pricingExplanation, setPricingExplanation] = useState("");
 
   useEffect(() => {
     if (!open) return;
