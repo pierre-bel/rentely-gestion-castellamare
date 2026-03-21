@@ -936,6 +936,7 @@ export type Database = {
           host_user_id: string
           id: string
           language: string | null
+          pricing_explanation: string | null
           signature: string | null
           tone: string | null
           updated_at: string
@@ -947,6 +948,7 @@ export type Database = {
           host_user_id: string
           id?: string
           language?: string | null
+          pricing_explanation?: string | null
           signature?: string | null
           tone?: string | null
           updated_at?: string
@@ -958,6 +960,7 @@ export type Database = {
           host_user_id?: string
           id?: string
           language?: string | null
+          pricing_explanation?: string | null
           signature?: string | null
           tone?: string | null
           updated_at?: string

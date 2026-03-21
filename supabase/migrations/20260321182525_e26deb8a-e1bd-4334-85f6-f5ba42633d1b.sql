@@ -1,0 +1,1 @@
+ALTER TABLE public.host_ai_settings ADD COLUMN pricing_explanation text DEFAULT '';
