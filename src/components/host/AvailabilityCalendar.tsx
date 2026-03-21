@@ -197,8 +197,10 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
                 const today = isToday(day);
                 const { status, bookings: dayBookings } = getDayStatus(day, listing.id);
                 const booking = dayBookings[0];
-                const guestFirstName = booking?.guest_name?.split(" ")[0] || "";
-                const guestFullName = booking?.guest_name || "";
+                const isBlocked = booking?.status === "owner_blocked";
+                const blockReason = isBlocked ? (booking?.notes?.split(" | ")[0] || "Bloqué") : "";
+                const guestFirstName = isBlocked ? blockReason : (booking?.guest_name?.split(" ")[0] || "");
+                const guestFullName = isBlocked ? blockReason : (booking?.guest_name || "");
 
                 const renderNameLabel = (textColor: string = "text-primary-foreground") => {
                   if (!booking || status === "available" || status === "blocked") return null;
@@ -260,9 +262,9 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
                     {booking ? (
                       <TooltipContent side="bottom" className="max-w-[240px]">
                         <div className="space-y-1">
-                          <p className="font-semibold text-sm">{booking.guest_name}</p>
-                          {status === "blocked" && booking?.status === "owner_blocked" && <p className="text-xs font-medium text-muted-foreground">🔒 Blocage</p>}
-                          {status === "checkin-only" && <p className="text-xs text-primary font-medium">🔑 Arrivée</p>}
+                          <p className="font-semibold text-sm">{isBlocked ? "🔒 Blocage" : booking.guest_name}</p>
+                          {isBlocked && blockReason && <p className="text-xs text-muted-foreground">{blockReason}</p>}
+                          {!isBlocked && status === "blocked" && <p className="text-xs font-medium text-muted-foreground">🔒 Blocage</p>}
                           {status === "checkout-only" && <p className="text-xs text-primary font-medium">🚪 Départ</p>}
                           {status === "turnaround" && <p className="text-xs text-primary font-medium">🔄 Départ + Arrivée</p>}
                           {booking.guest_email && (

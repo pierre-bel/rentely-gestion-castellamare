@@ -208,7 +208,8 @@ export default function TimelineOverview({ listings, bookings, blockedDates, cur
                       if (width <= 0) return null;
 
                       const colorClass = STATUS_COLORS[booking.status] || "bg-primary";
-                      const displayName = booking.guest_name;
+                      const isBlocked = booking.status === "owner_blocked";
+                      const displayName = isBlocked ? (booking.notes?.split(" | ")[0] || "Bloqué") : booking.guest_name;
 
                       return (
                         <Tooltip key={booking.id}>
@@ -229,7 +230,8 @@ export default function TimelineOverview({ listings, bookings, blockedDates, cur
                           </TooltipTrigger>
                           <TooltipContent side="bottom" className="max-w-[220px]">
                             <div className="space-y-1">
-                              <p className="font-semibold text-sm">{booking.guest_name}</p>
+                              <p className="font-semibold text-sm">{isBlocked ? "🔒 Blocage" : booking.guest_name}</p>
+                              {isBlocked && displayName !== "Bloqué" && <p className="text-xs text-muted-foreground">{displayName}</p>}
                               <p className="text-xs text-muted-foreground">
                                 {format(checkin, "d MMM", { locale: fr })} → {format(checkout, "d MMM", { locale: fr })}
                               </p>
