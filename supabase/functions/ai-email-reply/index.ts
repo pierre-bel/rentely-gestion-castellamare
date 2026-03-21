@@ -150,6 +150,7 @@ serve(async (req) => {
     const customPrompt = aiSettings?.custom_prompt || "";
     const additionalInstructions = aiSettings?.additional_instructions || "";
     const signatureText = aiSettings?.signature || "";
+    const pricingExplanation = aiSettings?.pricing_explanation || "";
 
     const languageInstruction = langValue === "auto"
       ? "Réponds dans la même langue que l'email reçu."
@@ -161,6 +162,7 @@ Ton et style : Adopte un ton ${toneValue}.
 ${languageInstruction}
 
 ${customPrompt ? `Contexte fourni par le propriétaire :\n${customPrompt}\n` : ""}
+${pricingExplanation ? `Règles tarifaires du propriétaire (utilise ces informations pour expliquer les prix) :\n${pricingExplanation}\n` : ""}
 ${additionalInstructions ? `Instructions supplémentaires du propriétaire :\n${additionalInstructions}\n` : ""}
 
 Voici les logements du propriétaire et leurs disponibilités/tarifs :
