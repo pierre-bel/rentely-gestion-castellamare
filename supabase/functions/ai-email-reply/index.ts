@@ -150,6 +150,7 @@ serve(async (req) => {
     const customPrompt = aiSettings?.custom_prompt || "";
     const additionalInstructions = aiSettings?.additional_instructions || "";
     const signatureText = aiSettings?.signature || "";
+    const pricingExplanation = aiSettings?.pricing_explanation || "";
 
     const languageInstruction = langValue === "auto"
       ? "Réponds dans la même langue que l'email reçu."
