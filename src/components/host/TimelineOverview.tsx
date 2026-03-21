@@ -208,7 +208,7 @@ export default function TimelineOverview({ listings, bookings, blockedDates, cur
                       if (width <= 0) return null;
 
                       const colorClass = STATUS_COLORS[booking.status] || "bg-primary";
-                      const displayName = truncateName(booking.guest_name);
+                      const displayName = booking.guest_name;
 
                       return (
                         <Tooltip key={booking.id}>
