@@ -57,6 +57,7 @@ export const AiReplySettingsDialog = ({ hostId }: AiReplySettingsDialogProps) =>
         setLanguage(data.language || "fr");
         setSignature(data.signature || "");
         setAdditionalInstructions(data.additional_instructions || "");
+        setPricingExplanation((data as any).pricing_explanation || "");
       }
       setLoading(false);
     };
