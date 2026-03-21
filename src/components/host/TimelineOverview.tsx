@@ -208,7 +208,8 @@ export default function TimelineOverview({ listings, bookings, blockedDates, cur
                       if (width <= 0) return null;
 
                       const colorClass = STATUS_COLORS[booking.status] || "bg-primary";
-                      const displayName = booking.guest_name;
+                      const isBlocked = booking.status === "owner_blocked";
+                      const displayName = isBlocked ? (booking.notes?.split(" | ")[0] || "Bloqué") : booking.guest_name;
 
                       return (
                         <Tooltip key={booking.id}>
