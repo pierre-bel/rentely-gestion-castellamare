@@ -274,7 +274,23 @@ export default function BookingPortal() {
   const isFullyPaid = payments.length === 0 || payments.every((p) => p.is_paid);
 
   const renderAccessCode = () => {
-    if (!settings.show_access_code || !data.igloohome_code) return null;
+    if (!settings.show_access_code) return null;
+    // Always show the section, but hide code if not fully paid
+    if (!data.igloohome_code) {
+      return (
+        <Card key="access_code" className="border-muted">
+          <CardContent className="pt-5">
+            <div className="flex items-center gap-3">
+              <KeyRound className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Code d'accès</p>
+                <p className="text-sm text-muted-foreground mt-1">Le code d'accès vous sera communiqué avant votre arrivée.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
     // If host requires full payment, hide code until fully paid
     if (settings.require_full_payment_for_access_code && !isFullyPaid) {
       return (
@@ -363,8 +379,8 @@ export default function BookingPortal() {
             {/* Room details */}
             <div className="space-y-2">
               {rooms.sort((a: any, b: any) => a.sort_order - b.sort_order).map((room: any) => {
-                const typeLabels: Record<string, string> = { bedroom: "Chambre", bathroom: "Salle de bain", living_room: "Salon", kitchen: "Cuisine", other: "Autre" };
-                const bedLabels: Record<string, string> = { simple_90: "Lit simple (90 cm)", double_140: "Lit double (140 cm)", queen_160: "Lit Queen (160 cm)", king_180: "Lit King (180 cm)", bunk: "Lit superposé", sofa_bed: "Canapé-lit" };
+                const typeLabels: Record<string, string> = { bedroom: "Chambre", bathroom: "Salle de bain", wc: "WC", living_room: "Living", kitchen: "Cuisine", entrance_hall: "Hall d'entrée", night_hall: "Hall de nuit", other: "Autre" };
+                const bedLabels: Record<string, string> = { simple_90: "Lit simple (90 cm)", double_140: "Lit double (140 cm)", queen_160: "Lit Queen (160 cm)", king_180: "Lit King (180 cm)", bunk: "Lits superposés (2 couchages)", sofa_bed: "Canapé-lit", baby_crib: "Lit bébé" };
                 const label = room.name || typeLabels[room.room_type] || "Pièce";
                 const beds = room.beds || [];
                 const features = room.features || [];
