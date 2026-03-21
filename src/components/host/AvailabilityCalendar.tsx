@@ -197,8 +197,10 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
                 const today = isToday(day);
                 const { status, bookings: dayBookings } = getDayStatus(day, listing.id);
                 const booking = dayBookings[0];
-                const guestFirstName = booking?.guest_name?.split(" ")[0] || "";
-                const guestFullName = booking?.guest_name || "";
+                const isBlocked = booking?.status === "owner_blocked";
+                const blockReason = isBlocked ? (booking?.notes?.split(" | ")[0] || "Bloqué") : "";
+                const guestFirstName = isBlocked ? blockReason : (booking?.guest_name?.split(" ")[0] || "");
+                const guestFullName = isBlocked ? blockReason : (booking?.guest_name || "");
 
                 const renderNameLabel = (textColor: string = "text-primary-foreground") => {
                   if (!booking || status === "available" || status === "blocked") return null;
