@@ -104,11 +104,6 @@ export default function TimelineOverview({ listings, bookings, blockedDates, cur
     return { left, width };
   };
 
-  const truncateName = (name: string, maxLen?: number) => {
-    const limit = maxLen ?? (isMobile ? 8 : 12);
-    if (name.length <= limit) return name;
-    return name.slice(0, limit) + "…";
-  };
 
   return (
     <Card className="overflow-hidden">
@@ -213,7 +208,7 @@ export default function TimelineOverview({ listings, bookings, blockedDates, cur
                       if (width <= 0) return null;
 
                       const colorClass = STATUS_COLORS[booking.status] || "bg-primary";
-                      const displayName = truncateName(booking.guest_name);
+                      const displayName = booking.guest_name;
 
                       return (
                         <Tooltip key={booking.id}>
