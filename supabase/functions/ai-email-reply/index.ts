@@ -162,6 +162,7 @@ Ton et style : Adopte un ton ${toneValue}.
 ${languageInstruction}
 
 ${customPrompt ? `Contexte fourni par le propriétaire :\n${customPrompt}\n` : ""}
+${pricingExplanation ? `Règles tarifaires du propriétaire (utilise ces informations pour expliquer les prix) :\n${pricingExplanation}\n` : ""}
 ${additionalInstructions ? `Instructions supplémentaires du propriétaire :\n${additionalInstructions}\n` : ""}
 
 Voici les logements du propriétaire et leurs disponibilités/tarifs :

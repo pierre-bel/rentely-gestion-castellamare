@@ -172,6 +172,20 @@ export const AiReplySettingsDialog = ({ hostId }: AiReplySettingsDialogProps) =>
               </p>
             </div>
 
+            {/* Pricing explanation */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">💰 Explication tarif</Label>
+              <Textarea
+                value={pricingExplanation}
+                onChange={(e) => setPricingExplanation(e.target.value)}
+                placeholder="Ex: Tarif semaine du samedi au samedi. Week-end = vendredi + samedi soir. Réduction de 10% pour les séjours de 2 semaines ou plus. Frais de ménage de 80€ en supplément..."
+                rows={4}
+              />
+              <p className="text-xs text-muted-foreground">
+                Décrivez vos règles tarifaires pour que l'IA puisse expliquer correctement vos prix aux clients.
+              </p>
+            </div>
+
             {/* Signature */}
             <div className="space-y-2">
               <Label>Signature</Label>
