@@ -73,6 +73,7 @@ export const AiReplySettingsDialog = ({ hostId }: AiReplySettingsDialogProps) =>
       language,
       signature,
       additional_instructions: additionalInstructions,
+      pricing_explanation: pricingExplanation,
       updated_at: new Date().toISOString(),
     };
 
