@@ -9,7 +9,6 @@ import { EmailDetailPanel } from "@/components/inbox/EmailDetailPanel";
 import { PasteMessagePanel } from "@/components/inbox/PasteMessagePanel";
 import { useInbox } from "@/hooks/useInbox";
 import { useInboxEmails } from "@/hooks/useInboxEmails";
-import { useHostNotes } from "@/hooks/useHostNotes";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
