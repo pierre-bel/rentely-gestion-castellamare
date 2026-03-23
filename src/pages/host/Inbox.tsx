@@ -309,16 +309,6 @@ const HostInbox = () => {
             </div>
           </TabsContent>
 
-          {/* Notes Tab */}
-          <TabsContent value="notes" className="mt-0">
-            <NotesPanel
-              notes={notes}
-              loading={notesLoading}
-              onCreateNote={createNote}
-              onUpdateNote={updateNote}
-              onDeleteNote={deleteNote}
-            />
-          </TabsContent>
         </Tabs>
       </div>
 
