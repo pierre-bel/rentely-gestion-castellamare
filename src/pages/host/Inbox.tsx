@@ -64,7 +64,7 @@ const HostInbox = () => {
     hideEmail,
   } = useInboxEmails(user?.id);
 
-  const { notes, loading: notesLoading, createNote, updateNote, deleteNote } = useHostNotes(user?.id);
+  
 
   const selectedThread = threads.find(t => t.thread_id === selectedThreadId);
 
