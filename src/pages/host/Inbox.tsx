@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MessageSquare, Mail, RefreshCw, Loader2, Link2, Unlink, StickyNote, ClipboardPaste } from "lucide-react";
+import { ArrowLeft, MessageSquare, Mail, RefreshCw, Loader2, Link2, Unlink, ClipboardPaste } from "lucide-react";
 import { AiReplySettingsDialog } from "@/components/inbox/AiReplySettingsDialog";
 import { CreateManualBookingDialog } from "@/components/host/CreateManualBookingDialog";
 import { supabase } from "@/integrations/supabase/client";
