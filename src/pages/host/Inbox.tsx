@@ -177,10 +177,6 @@ const HostInbox = () => {
               <ClipboardPaste className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Coller</span>
             </TabsTrigger>
-            <TabsTrigger value="notes" className="flex items-center gap-1.5 text-xs sm:text-sm sm:gap-2 flex-1 sm:flex-none">
-              <StickyNote className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              Notes
-            </TabsTrigger>
           </TabsList>
 
           {/* Emails Tab */}
