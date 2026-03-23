@@ -7,7 +7,6 @@ import { InboxControlBar } from "@/components/inbox/InboxControlBar";
 import { EmailList } from "@/components/inbox/EmailList";
 import { EmailDetailPanel } from "@/components/inbox/EmailDetailPanel";
 import { PasteMessagePanel } from "@/components/inbox/PasteMessagePanel";
-import { NotesPanel } from "@/components/inbox/NotesPanel";
 import { useInbox } from "@/hooks/useInbox";
 import { useInboxEmails } from "@/hooks/useInboxEmails";
 import { useHostNotes } from "@/hooks/useHostNotes";
