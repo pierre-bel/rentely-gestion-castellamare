@@ -44,7 +44,7 @@ export default function PublicAvailability() {
     },
   });
 
-  // Fetch bookings to know which dates are taken (only confirmed/checked_in)
+  // Fetch bookings to know which dates are taken (using public view for RLS-free access)
   const { data: bookedRanges, isLoading: bookingsLoading } = useQuery({
     queryKey: ["public-booked-ranges", format(currentMonth, "yyyy-MM")],
     queryFn: async () => {
@@ -52,18 +52,17 @@ export default function PublicAvailability() {
       const rangeEnd = format(endOfMonth(addMonths(currentMonth, 2)), "yyyy-MM-dd");
 
       const { data, error } = await supabase
-        .from("bookings")
-        .select("listing_id, checkin_date, checkout_date, status")
+        .from("public_booking_dates")
+        .select("listing_id, checkin_date, checkout_date")
         .gte("checkout_date", rangeStart)
-        .lte("checkin_date", rangeEnd)
-        .in("status", ["confirmed", "pending_payment"]);
+        .lte("checkin_date", rangeEnd);
 
       if (error) throw error;
       return data || [];
     },
   });
 
-  // Fetch blocked dates
+  // Fetch blocked dates (using public view for RLS-free access)
   const { data: blockedDates } = useQuery({
     queryKey: ["public-blocked-dates", format(currentMonth, "yyyy-MM")],
     queryFn: async () => {
@@ -71,7 +70,7 @@ export default function PublicAvailability() {
       const rangeEnd = format(endOfMonth(addMonths(currentMonth, 2)), "yyyy-MM-dd");
 
       const { data, error } = await supabase
-        .from("listing_availability")
+        .from("public_listing_availability")
         .select("listing_id, start_date, end_date")
         .gte("end_date", rangeStart)
         .lte("start_date", rangeEnd);
