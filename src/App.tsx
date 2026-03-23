@@ -59,6 +59,7 @@ const HostCleaningPage = lazy(() => import("./pages/host/Cleaning"));
 const EmailAutomations = lazy(() => import("./pages/host/EmailAutomations"));
 const PortalSettings = lazy(() => import("./pages/host/PortalSettings"));
 const HostInbox = lazy(() => import("./pages/host/Inbox"));
+const HostNotes = lazy(() => import("./pages/host/Notes"));
 
 // Guest pages
 const GuestDashboard = lazy(() => import("./pages/guest/Dashboard"));
@@ -144,6 +145,7 @@ const App = () => (
                 <Route path="statistics" element={<Navigate to="/host/earnings-report" replace />} />
                 <Route path="contracts" element={<HostContracts />} />
                 <Route path="inbox" element={<HostInbox />} />
+                <Route path="notes" element={<HostNotes />} />
                 <Route path="email-automations" element={<EmailAutomations />} />
                 <Route path="portal-settings" element={<PortalSettings />} />
                 <Route path="create-listing" element={<CreateListing />} />

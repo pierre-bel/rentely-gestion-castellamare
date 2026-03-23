@@ -7,15 +7,13 @@ import { InboxControlBar } from "@/components/inbox/InboxControlBar";
 import { EmailList } from "@/components/inbox/EmailList";
 import { EmailDetailPanel } from "@/components/inbox/EmailDetailPanel";
 import { PasteMessagePanel } from "@/components/inbox/PasteMessagePanel";
-import { NotesPanel } from "@/components/inbox/NotesPanel";
 import { useInbox } from "@/hooks/useInbox";
 import { useInboxEmails } from "@/hooks/useInboxEmails";
-import { useHostNotes } from "@/hooks/useHostNotes";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MessageSquare, Mail, RefreshCw, Loader2, Link2, Unlink, StickyNote, ClipboardPaste } from "lucide-react";
+import { ArrowLeft, MessageSquare, Mail, RefreshCw, Loader2, Link2, Unlink, ClipboardPaste } from "lucide-react";
 import { AiReplySettingsDialog } from "@/components/inbox/AiReplySettingsDialog";
 import { CreateManualBookingDialog } from "@/components/host/CreateManualBookingDialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,7 +64,7 @@ const HostInbox = () => {
     hideEmail,
   } = useInboxEmails(user?.id);
 
-  const { notes, loading: notesLoading, createNote, updateNote, deleteNote } = useHostNotes(user?.id);
+  
 
   const selectedThread = threads.find(t => t.thread_id === selectedThreadId);
 
@@ -178,10 +176,6 @@ const HostInbox = () => {
             <TabsTrigger value="paste" className="flex items-center gap-1.5 text-xs sm:text-sm sm:gap-2 flex-1 sm:flex-none">
               <ClipboardPaste className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Coller</span>
-            </TabsTrigger>
-            <TabsTrigger value="notes" className="flex items-center gap-1.5 text-xs sm:text-sm sm:gap-2 flex-1 sm:flex-none">
-              <StickyNote className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              Notes
             </TabsTrigger>
           </TabsList>
 
@@ -315,16 +309,6 @@ const HostInbox = () => {
             </div>
           </TabsContent>
 
-          {/* Notes Tab */}
-          <TabsContent value="notes" className="mt-0">
-            <NotesPanel
-              notes={notes}
-              loading={notesLoading}
-              onCreateNote={createNote}
-              onUpdateNote={updateNote}
-              onDeleteNote={deleteNote}
-            />
-          </TabsContent>
         </Tabs>
       </div>
 
