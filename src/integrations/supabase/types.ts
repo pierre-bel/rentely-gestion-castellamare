@@ -661,6 +661,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "disputes_resolved_by_admin_id_fkey"
+            columns: ["resolved_by_admin_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "disputes_support_thread_id_fkey"
             columns: ["support_thread_id"]
             isOneToOne: false
@@ -1312,6 +1319,13 @@ export type Database = {
             columns: ["admin_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_moderation_feedback_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -2808,6 +2822,22 @@ export type Database = {
           first_name: string | null
           id: string | null
           last_name: string | null
+        }
+        Insert: {
+          about?: string | null
+          avatar_url?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
+        }
+        Update: {
+          about?: string | null
+          avatar_url?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
         }
         Relationships: []
       }
