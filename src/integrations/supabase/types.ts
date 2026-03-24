@@ -2614,6 +2614,7 @@ export type Database = {
           currency: string | null
           description: string | null
           guests_max: number | null
+          host_user_id: string | null
           id: string | null
           images: string[] | null
           latitude: number | null
@@ -2643,6 +2644,7 @@ export type Database = {
           currency?: string | null
           description?: string | null
           guests_max?: number | null
+          host_user_id?: string | null
           id?: string | null
           images?: string[] | null
           latitude?: number | null
@@ -2672,6 +2674,7 @@ export type Database = {
           currency?: string | null
           description?: string | null
           guests_max?: number | null
+          host_user_id?: string | null
           id?: string | null
           images?: string[] | null
           latitude?: number | null
