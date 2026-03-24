@@ -1,43 +1,49 @@
 
 
-# Plan : Corriger les e-mails automatiques, le portail client et ajouter le détail locataire
+## Plan: Corriger le calendrier partagé, la simulation tarifaire et l'envoi de messages
 
-## Problème 1 : E-mail "à la réservation" jamais envoyé
+### Problèmes identifiés
 
-**Cause racine** : Le trigger `booking_confirmed` est explicitement ignoré dans le cron (`continue` à la ligne 156 de `process-email-automations`). Le commentaire dit "Instant trigger — only at booking creation, skip in cron", mais **aucun code ne déclenche réellement l'envoi à la création de la réservation**. Il manque l'appel dans `CreateManualBookingDialog.tsx` après l'insertion du booking.
+1. **Page `/disponibilites` (PublicAvailability)** — C'est un calendrier basique sans simulateur de prix, sans formulaire de contact, et sans calcul tarifaire. Toutes ces fonctionnalités existent déjà dans `EmbedAllAvailability.tsx` mais n'ont jamais été portées sur la page publique.
 
-**Correction** :
-- Dans `CreateManualBookingDialog.tsx`, après la création réussie d'un booking normal (après l'insertion des `booking_payment_items`), appeler la Edge Function `process-email-automations` en passant le `booking_id` nouvellement créé, ou mieux, créer un mécanisme dédié qui :
-  1. Récupère les automations de type `booking_confirmed` pour ce host
-  2. Appelle la Edge Function `send-email` ou envoie directement via Resend pour chaque automation applicable
-- **Approche retenue** : Ajouter un paramètre optionnel `booking_id` à `process-email-automations` qui, s'il est fourni, traite uniquement ce booking et inclut les automations `booking_confirmed` (au lieu de les `continue`). Le front-end appelle cette fonction après la création.
+2. **Tarification weekend** — La logique dans `pricingUtils.ts` est correcte : une réservation Ven+Sam applique bien le `weekend_rate`. Aucun bug ici.
 
-## Problème 2 : Lien portail client (`{{portal_link}}`) ne fonctionne pas dans les e-mails
+3. **Envoi de messages (formulaire de demande)** — Le formulaire `BookingInquiryForm` et l'edge function `send-booking-inquiry` sont fonctionnels. Mais ils ne sont accessibles que depuis l'embed (`/embed/availability/all/:hostId`), pas depuis la page publique `/disponibilites`.
 
-**Cause racine** : Le champ `access_token` n'est **pas inclus dans le SELECT** de la requête bookings (ligne 100 de `process-email-automations`). Donc `booking.access_token` est `undefined` et le lien généré est `https://gestioncastellamare.lovable.app/booking/`.
+4. **Page publique ne connaît pas le `hostId`** — Sans hostId, impossible de charger les tarifs hebdomadaires, les vacances scolaires, ou d'envoyer une demande de contact.
 
-**Correction** :
-- Ajouter `access_token` au SELECT de la requête bookings dans `process-email-automations/index.ts`.
+### Solution
 
-## Problème 3 : Voir les réservations d'un locataire
+Refondre `PublicAvailability.tsx` pour y intégrer les mêmes fonctionnalités que `EmbedAllAvailability.tsx` :
 
-**Correction** :
-- Créer un composant `TenantDetailDialog.tsx` qui s'ouvre au clic sur une ligne de locataire dans `HostTenants.tsx`.
-- Ce dialog affiche les infos du locataire + la liste de toutes ses réservations (passées et futures) récupérées via `pricing_breakdown->>'tenant_id'`.
-- Chaque réservation affiche : bien, dates, statut, montant.
+#### Étape 1 : Ajouter le simulateur de disponibilité et tarif
+- Ajouter les sélecteurs de dates (arrivée/départ) avec calcul automatique du prix
+- Récupérer les tarifs hebdomadaires via `public_listing_weekly_pricing`
+- Appliquer la même logique de pricing (semaine complète, weekend, prorata)
+- Gérer les modes : prix affiché (samedi-samedi), vacances scolaires, contact requis
 
-## Fichiers impactés
+#### Étape 2 : Ajouter le formulaire de demande de réservation
+- Intégrer `BookingInquiryForm` pour chaque listing disponible
+- Bouton "Demande" qui ouvre le formulaire inline
+- L'envoi passe par l'edge function `send-booking-inquiry` existante
 
-1. **`supabase/functions/process-email-automations/index.ts`**
-   - Ajouter `access_token` au SELECT des bookings
-   - Ajouter support d'un paramètre `booking_id` dans le body pour traiter un booking spécifique avec les automations `booking_confirmed`
+#### Étape 3 : Récupérer le hostId dynamiquement
+- Puisque `/disponibilites` n'a pas de hostId dans l'URL, le récupérer depuis le premier listing (via une vue ou une requête jointe)
+- Alternative : modifier la vue `public_listings` pour inclure le `host_user_id`
 
-2. **`src/components/host/CreateManualBookingDialog.tsx`**
-   - Après création réussie d'un booking, appeler `supabase.functions.invoke("process-email-automations", { body: { booking_id: ... } })` pour déclencher les e-mails de confirmation
+#### Étape 4 : Ajouter les infos de contact et vacances scolaires
+- Charger `public_host_contact` et `public_host_school_holidays` pour afficher les coordonnées et gérer la règle "samedi-samedi en vacances"
 
-3. **`src/components/host/TenantDetailDialog.tsx`** (nouveau)
-   - Dialog affichant les infos du locataire et la liste de ses réservations
+### Détails techniques
 
-4. **`src/components/host/HostTenants.tsx`**
-   - Ajouter un état pour le locataire sélectionné et ouvrir le dialog au clic sur une ligne
+**Fichiers modifiés :**
+- `src/pages/PublicAvailability.tsx` — Refonte complète avec simulateur, pricing, formulaire de contact
+
+**Fichier potentiellement modifié :**
+- Migration SQL si `public_listings` ne contient pas `host_user_id` (nécessaire pour charger les tarifs et envoyer le formulaire)
+
+**Aucune modification nécessaire sur :**
+- `pricingUtils.ts` (logique correcte)
+- `BookingInquiryForm.tsx` (composant fonctionnel)
+- `send-booking-inquiry/index.ts` (edge function fonctionnelle)
 
