@@ -28,6 +28,10 @@ interface BookingContract {
   signed_at: string | null;
   signature_data: string | null;
   created_at: string;
+  booking_guest_name?: string;
+  booking_listing_title?: string;
+  booking_checkin?: string;
+  booking_checkout?: string;
 }
 
 const HostContracts = () => {
