@@ -650,8 +650,8 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
           </div>
 
           {/* Scrollable timeline */}
-          <div className="overflow-x-auto flex-1" ref={scrollRef}>
-            <div style={{ minWidth: days.length * CELL_W }}>
+          <div className="overflow-x-auto sm:overflow-x-visible flex-1" ref={scrollRef}>
+            <div style={{ minWidth: isMobile ? days.length * CELL_W : undefined }}>
               {/* Day headers */}
               <div className="flex h-9 border-b border-border">
                 {days.map((day) => {
