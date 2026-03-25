@@ -27,6 +27,7 @@ import { CreateManualBookingDialog } from "./CreateManualBookingDialog";
 import { EditManualBookingDialog } from "./EditManualBookingDialog";
 import { BookingDetailDialog, type BookingDetailData } from "./BookingDetailDialog";
 import { ImportBookingsDialog } from "./ImportBookingsDialog";
+import { ContractGenerateDialog } from "./ContractGenerateDialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
@@ -75,8 +76,19 @@ export default function HostBookings() {
   const [bookingDetail, setBookingDetail] = useState<BookingDetailData | null>(null);
   const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [contractDialogOpen, setContractDialogOpen] = useState(false);
+  const [contractPreselectedBookingId, setContractPreselectedBookingId] = useState<string | null>(null);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
+
+  const { data: contractTemplates = [] } = useQuery({
+    queryKey: ["contract-templates", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("contract_templates").select("id, name, body_html").eq("host_user_id", user!.id);
+      return data || [];
+    },
+    enabled: !!user,
+  });
 
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: [
@@ -728,6 +740,20 @@ export default function HostBookings() {
           setBookingToEdit({ ...b, listing_title: b.listing_title });
           setEditBookingOpen(true);
         }}
+        onGenerateContract={contractTemplates.length > 0 ? (bookingId) => {
+          setContractPreselectedBookingId(bookingId);
+          setContractDialogOpen(true);
+        } : undefined}
+      />
+      <ContractGenerateDialog
+        open={contractDialogOpen}
+        onOpenChange={setContractDialogOpen}
+        templates={contractTemplates as any}
+        onGenerated={() => {
+          setContractPreselectedBookingId(null);
+          toast({ title: "Contrat généré avec succès" });
+        }}
+        preselectedBookingId={contractPreselectedBookingId}
       />
       <AlertDialog open={deleteAllDialogOpen} onOpenChange={setDeleteAllDialogOpen}>
         <AlertDialogContent>

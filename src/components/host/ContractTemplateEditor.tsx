@@ -10,12 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import Document from "@tiptap/extension-document";
-import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import Heading from "@tiptap/extension-heading";
 import Bold from "@tiptap/extension-bold";
 import Italic from "@tiptap/extension-italic";
 import Strike from "@tiptap/extension-strike";
+import Blockquote from "@tiptap/extension-blockquote";
 import BulletList from "@tiptap/extension-bullet-list";
 import OrderedList from "@tiptap/extension-ordered-list";
 import ListItem from "@tiptap/extension-list-item";
@@ -31,6 +31,7 @@ import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
+import { IndentParagraph, FontSize } from "@/lib/tiptap-extensions";
 import ContractToolbar from "./ContractToolbar";
 
 const DYNAMIC_VARIABLES_GROUPS = [
@@ -111,12 +112,13 @@ export const ContractTemplateEditor = ({ template, onSave, onCancel }: ContractT
   const editor = useEditor({
     extensions: [
       Document,
-      Paragraph,
+      IndentParagraph,
       Text,
       Heading.configure({ levels: [1, 2, 3] }),
       Bold,
       Italic,
       Strike,
+      Blockquote,
       BulletList,
       OrderedList,
       ListItem,
@@ -124,6 +126,7 @@ export const ContractTemplateEditor = ({ template, onSave, onCancel }: ContractT
       HardBreak,
       TextStyle,
       Color,
+      FontSize,
       Highlight.configure({ multicolor: true }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Underline,
@@ -195,7 +198,7 @@ export const ContractTemplateEditor = ({ template, onSave, onCancel }: ContractT
               <ContractToolbar editor={editor} />
               <EditorContent
                 editor={editor}
-                className="prose prose-sm max-w-none p-4 min-h-[400px] focus-within:outline-none [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[380px] [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_table]:w-full [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-border [&_.ProseMirror_td]:p-2 [&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-border [&_.ProseMirror_th]:p-2 [&_.ProseMirror_th]:bg-muted/50 [&_.ProseMirror_th]:font-semibold"
+                className="prose prose-sm max-w-none p-4 min-h-[400px] focus-within:outline-none [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[380px] [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_table]:w-full [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-border [&_.ProseMirror_td]:p-2 [&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-border [&_.ProseMirror_th]:p-2 [&_.ProseMirror_th]:bg-muted/50 [&_.ProseMirror_th]:font-semibold [&_.ProseMirror_blockquote]:border-l-4 [&_.ProseMirror_blockquote]:border-primary/30 [&_.ProseMirror_blockquote]:pl-4 [&_.ProseMirror_blockquote]:py-2 [&_.ProseMirror_blockquote]:bg-muted/20 [&_.ProseMirror_blockquote]:rounded-r"
               />
             </div>
             <p className="text-xs text-muted-foreground mt-1.5">
