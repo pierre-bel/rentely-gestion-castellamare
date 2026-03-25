@@ -360,7 +360,7 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
   }
 
   return (
-    <div className="p-3 font-sans bg-background text-foreground max-w-6xl mx-auto space-y-4">
+    <div className="p-3 pb-2 font-sans bg-background text-foreground max-w-6xl mx-auto space-y-4 min-h-0">
       {/* Simulator Section */}
       <Card className="border-accent-cool/30 bg-gradient-to-r from-accent-cool/5 to-transparent">
         <CardContent className="p-4">
