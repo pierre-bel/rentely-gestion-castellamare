@@ -81,6 +81,15 @@ export default function HostBookings() {
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
+  const { data: contractTemplates = [] } = useQuery({
+    queryKey: ["contract-templates", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("contract_templates").select("id, name, body_html").eq("host_user_id", user!.id);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: [
       "host-bookings",
