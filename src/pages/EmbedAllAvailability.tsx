@@ -625,24 +625,17 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
         <div className="flex">
           {/* Listing labels column (fixed) */}
           <div className="flex-shrink-0 border-r border-border bg-card z-10" style={{ width: LABEL_W }}>
-            <div className="h-9 border-b border-border flex items-center px-3">
+            <div className="h-8 border-b border-border flex items-center px-2">
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Appartements</span>
             </div>
             {listings.map((listing) => (
-              <div key={listing.id} className="h-14 border-b border-border flex items-center gap-2 px-3">
-                {listing.cover_image && (
-                  <img
-                    src={listing.cover_image}
-                    alt=""
-                    className="w-8 h-8 rounded object-cover flex-shrink-0"
-                  />
-                )}
+              <div key={listing.id} className="h-12 border-b border-border flex items-center px-2">
                 <div className="min-w-0 flex-1">
-                  <span className="text-xs font-medium block leading-tight" title={listing.title}>
+                  <span className="text-[11px] font-medium block leading-tight truncate" title={listing.title}>
                     {listing.title}
                   </span>
                   {listing.city && (
-                    <span className="text-[10px] text-muted-foreground block leading-tight">{listing.city}</span>
+                    <span className="text-[9px] text-muted-foreground block leading-tight">{listing.city}</span>
                   )}
                 </div>
               </div>
