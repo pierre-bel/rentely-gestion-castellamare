@@ -1,49 +1,65 @@
 
 
-## Plan: Corriger le calendrier partagé, la simulation tarifaire et l'envoi de messages
+## Plan : Amélioration complète du système de contrats
 
-### Problèmes identifiés
+### Contexte
 
-1. **Page `/disponibilites` (PublicAvailability)** — C'est un calendrier basique sans simulateur de prix, sans formulaire de contact, et sans calcul tarifaire. Toutes ces fonctionnalités existent déjà dans `EmbedAllAvailability.tsx` mais n'ont jamais été portées sur la page publique.
+Le PDF fourni montre un contrat professionnel avec : un bloc d'adresse décalé (style Word), des encadrés, des espacements contrôlés, du gras, des tableaux, et une mise en page soignée. L'éditeur actuel TipTap manque de fonctionnalités de mise en page avancée (indentation/blocs décalés, encadrés, espacements). De plus, la liste de réservations dans le dialog de génération affiche le nom du propriétaire au lieu du locataire, et il n'y a pas de bouton "Générer contrat" depuis les réservations ni d'export PDF/Word.
 
-2. **Tarification weekend** — La logique dans `pricingUtils.ts` est correcte : une réservation Ven+Sam applique bien le `weekend_rate`. Aucun bug ici.
+### Changements prévus
 
-3. **Envoi de messages (formulaire de demande)** — Le formulaire `BookingInquiryForm` et l'edge function `send-booking-inquiry` sont fonctionnels. Mais ils ne sont accessibles que depuis l'embed (`/embed/availability/all/:hostId`), pas depuis la page publique `/disponibilites`.
+#### 1. Enrichir l'éditeur de contrats (ContractTemplateEditor + ContractToolbar)
 
-4. **Page publique ne connaît pas le `hostId`** — Sans hostId, impossible de charger les tarifs hebdomadaires, les vacances scolaires, ou d'envoyer une demande de contact.
+Ajouter les extensions TipTap suivantes :
+- **Indent / Text Indent** — possibilité de décaler un bloc vers la droite (pour les adresses comme dans le PDF)
+- **Blockquote** — pour les encadrés avec bordure
+- **Spacer** — bouton pour insérer un espace vertical (paragraphe vide ou `<br>`)  
+- **Font size** — sélecteur de taille de police
+- Vérifier que **gras, tableaux, listes numérotées** fonctionnent déjà correctement dans le rendu final
 
-### Solution
+Nouveaux boutons dans la toolbar :
+- Indentation gauche/droite (augmenter/diminuer le retrait)
+- Encadré (blockquote stylé avec bordure)
+- Espace vertical
+- Taille de police
 
-Refondre `PublicAvailability.tsx` pour y intégrer les mêmes fonctionnalités que `EmbedAllAvailability.tsx` :
+#### 2. Corriger l'affichage des réservations dans ContractGenerateDialog
 
-#### Étape 1 : Ajouter le simulateur de disponibilité et tarif
-- Ajouter les sélecteurs de dates (arrivée/départ) avec calcul automatique du prix
-- Récupérer les tarifs hebdomadaires via `public_listing_weekly_pricing`
-- Appliquer la même logique de pricing (semaine complète, weekend, prorata)
-- Gérer les modes : prix affiché (samedi-samedi), vacances scolaires, contact requis
+Actuellement le `SelectItem` affiche correctement `guest.first_name guest.last_name — listing.title (date)` (le code est bon mais les profils ne se chargent peut-être pas). Vérifier et s'assurer que l'affichage montre :
+- **Nom du locataire** (pas du propriétaire)
+- **Dates du séjour** (checkin → checkout)
+- **Nom de l'appartement**
 
-#### Étape 2 : Ajouter le formulaire de demande de réservation
-- Intégrer `BookingInquiryForm` pour chaque listing disponible
-- Bouton "Demande" qui ouvre le formulaire inline
-- L'envoi passe par l'edge function `send-booking-inquiry` existante
+#### 3. Bouton "Générer contrat" sur chaque réservation
 
-#### Étape 3 : Récupérer le hostId dynamiquement
-- Puisque `/disponibilites` n'a pas de hostId dans l'URL, le récupérer depuis le premier listing (via une vue ou une requête jointe)
-- Alternative : modifier la vue `public_listings` pour inclure le `host_user_id`
+Ajouter dans `BookingDetailDialog` un bouton "Générer contrat" qui :
+- Ouvre le `ContractGenerateDialog` pré-rempli avec la réservation sélectionnée
+- Ou génère directement le contrat avec le premier/seul template disponible
 
-#### Étape 4 : Ajouter les infos de contact et vacances scolaires
-- Charger `public_host_contact` et `public_host_school_holidays` pour afficher les coordonnées et gérer la règle "samedi-samedi en vacances"
+#### 4. Export PDF et Word du contrat généré
+
+Dans `ContractPreviewDialog`, ajouter deux boutons :
+- **Télécharger en PDF** — utiliser `html2canvas` + `jsPDF` pour convertir le HTML en PDF
+- **Télécharger en Word** — utiliser `html-docx-js` ou `docx` pour générer un `.docx` depuis le HTML
+
+#### 5. Améliorer le rendu des contrats générés
+
+S'assurer que les styles inline dans le HTML généré (indentation, encadrés, tableaux) sont correctement rendus dans :
+- L'aperçu du dialogue
+- L'export PDF
+- L'export Word
 
 ### Détails techniques
 
 **Fichiers modifiés :**
-- `src/pages/PublicAvailability.tsx` — Refonte complète avec simulateur, pricing, formulaire de contact
+- `src/components/host/ContractToolbar.tsx` — Ajout boutons indent, blockquote, spacer, font size
+- `src/components/host/ContractTemplateEditor.tsx` — Ajout extensions TipTap (Blockquote, Indent)
+- `src/components/host/ContractGenerateDialog.tsx` — Corriger affichage réservations, ajouter prop pour pré-sélection
+- `src/components/host/ContractPreviewDialog.tsx` — Ajout boutons export PDF et Word
+- `src/components/host/BookingDetailDialog.tsx` — Ajout bouton "Générer contrat"
+- `src/components/host/HostContracts.tsx` — Enrichir l'affichage des contrats (nom locataire, appartement)
 
-**Fichier potentiellement modifié :**
-- Migration SQL si `public_listings` ne contient pas `host_user_id` (nécessaire pour charger les tarifs et envoyer le formulaire)
-
-**Aucune modification nécessaire sur :**
-- `pricingUtils.ts` (logique correcte)
-- `BookingInquiryForm.tsx` (composant fonctionnel)
-- `send-booking-inquiry/index.ts` (edge function fonctionnelle)
+**Dépendances à installer :**
+- `jspdf` + `html2canvas` pour export PDF
+- `html-docx-js` ou approche alternative pour export Word
 
