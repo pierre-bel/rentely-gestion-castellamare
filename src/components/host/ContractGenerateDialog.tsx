@@ -226,7 +226,7 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
     if (booking.beach_cabin) {
       html = html.split("{{beach_cabin}}").join("Cabine de plage");
     } else {
-      html = html.replace(/<(p|li|tr|div|span)[^>]*>(?:[^<]*|\s)*\{\{beach_cabin\}\}(?:[^<]*|\s)*<\/\1>/gi, "");
+      html = html.replace(/<(p|li|tr|div|span)[^>]*>[^<]*\{\{beach_cabin\}\}[^<]*<\/\1>/gi, "");
       html = html.split("{{beach_cabin}}").join("");
     }
 
