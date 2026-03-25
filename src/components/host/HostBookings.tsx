@@ -740,6 +740,20 @@ export default function HostBookings() {
           setBookingToEdit({ ...b, listing_title: b.listing_title });
           setEditBookingOpen(true);
         }}
+        onGenerateContract={contractTemplates.length > 0 ? (bookingId) => {
+          setContractPreselectedBookingId(bookingId);
+          setContractDialogOpen(true);
+        } : undefined}
+      />
+      <ContractGenerateDialog
+        open={contractDialogOpen}
+        onOpenChange={setContractDialogOpen}
+        templates={contractTemplates as any}
+        onGenerated={() => {
+          setContractPreselectedBookingId(null);
+          toast({ title: "Contrat généré avec succès" });
+        }}
+        preselectedBookingId={contractPreselectedBookingId}
       />
       <AlertDialog open={deleteAllDialogOpen} onOpenChange={setDeleteAllDialogOpen}>
         <AlertDialogContent>
