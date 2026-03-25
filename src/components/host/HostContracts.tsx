@@ -197,10 +197,12 @@ const HostContracts = () => {
                       <FileText className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <p className="font-medium text-foreground">
-                          Contrat — {format(new Date(c.created_at), "d MMM yyyy", { locale: fr })}
+                          {c.booking_guest_name || "Locataire inconnu"} — {c.booking_listing_title || "Bien"}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Réservation : {c.booking_id.slice(0, 8)}...
+                          {c.booking_checkin && c.booking_checkout
+                            ? `${format(new Date(c.booking_checkin), "d MMM yyyy", { locale: fr })} → ${format(new Date(c.booking_checkout), "d MMM yyyy", { locale: fr })}`
+                            : `Créé le ${format(new Date(c.created_at), "d MMM yyyy", { locale: fr })}`}
                         </p>
                       </div>
                       {c.signed_at ? (
