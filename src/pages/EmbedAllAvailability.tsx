@@ -177,8 +177,16 @@ export default function EmbedAllAvailability() {
   );
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-  const CELL_W = isMobile ? 28 : 36;
-  const LABEL_W = isMobile ? 140 : 220; // Increased width for full names
+  const LABEL_W = isMobile ? 120 : 170;
+  // Calculate cell width so full month fits without scrolling on desktop
+  const CELL_W = useMemo(() => {
+    if (isMobile) return 28;
+    // Approximate available width: max-w-6xl = 1152px, minus label, minus border/padding
+    const availableWidth = 1152 - LABEL_W - 20;
+    const daysInMonth = days.length;
+    const calculated = Math.floor(availableWidth / daysInMonth);
+    return Math.max(24, Math.min(36, calculated));
+  }, [days.length, isMobile, LABEL_W]);
 
   const getBarStyle = (checkinStr: string, checkoutStr: string) => {
     const checkin = parseISO(checkinStr);
