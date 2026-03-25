@@ -646,7 +646,7 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
           <div className="overflow-x-auto sm:overflow-x-visible flex-1" ref={scrollRef}>
             <div style={{ minWidth: isMobile ? days.length * CELL_W : undefined }}>
               {/* Day headers */}
-              <div className="flex h-9 border-b border-border">
+              <div className="flex h-8 border-b border-border">
                 {days.map((day) => {
                   const todayDay = isToday(day);
                   const weekend = isWeekend(day);
@@ -677,7 +677,7 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
                 const listingBlocked = blockedDates.filter((bd) => bd.listing_id === listing.id);
 
                 return (
-                  <div key={listing.id} className="relative h-14 border-b border-border">
+                  <div key={listing.id} className="relative h-12 border-b border-border">
                     {/* Background grid */}
                     <div className="absolute inset-0 flex">
                       {days.map((day) => {
