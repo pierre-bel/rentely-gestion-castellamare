@@ -306,15 +306,19 @@ export default function PublicAvailability() {
             <div
               key={day.toISOString()}
               className={cn(
-                "h-10 flex items-center justify-center text-sm bg-card transition-colors",
+                "h-10 flex flex-col items-center justify-center text-sm bg-card transition-colors",
                 !inMonth && "opacity-30",
                 isToday(day) && "font-bold",
-                unavailable && inMonth && "bg-destructive/10 text-muted-foreground",
+                booked && inMonth && "bg-destructive/10 text-muted-foreground",
+                blocked && !booked && inMonth && "bg-muted text-muted-foreground",
                 !unavailable && inMonth && "bg-success/10 text-foreground font-medium",
                 isPast && inMonth && "opacity-50"
               )}
             >
-              {format(day, "d")}
+              <span>{format(day, "d")}</span>
+              {booked && inMonth && !isPast && (
+                <span className="text-[9px] leading-none text-destructive font-medium">Loué</span>
+              )}
             </div>
           );
         })}
