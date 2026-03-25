@@ -177,8 +177,16 @@ export default function EmbedAllAvailability() {
   );
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-  const CELL_W = isMobile ? 28 : 36;
-  const LABEL_W = isMobile ? 140 : 220; // Increased width for full names
+  const LABEL_W = isMobile ? 120 : 170;
+  // Calculate cell width so full month fits without scrolling on desktop
+  const CELL_W = useMemo(() => {
+    if (isMobile) return 28;
+    // Approximate available width: max-w-6xl = 1152px, minus label, minus border/padding
+    const availableWidth = 1152 - LABEL_W - 20;
+    const daysInMonth = days.length;
+    const calculated = Math.floor(availableWidth / daysInMonth);
+    return Math.max(24, Math.min(36, calculated));
+  }, [days.length, isMobile, LABEL_W]);
 
   const getBarStyle = (checkinStr: string, checkoutStr: string) => {
     const checkin = parseISO(checkinStr);
@@ -352,7 +360,7 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
   }
 
   return (
-    <div className="p-3 font-sans bg-background text-foreground max-w-6xl mx-auto space-y-4">
+    <div className="p-3 pb-2 font-sans bg-background text-foreground max-w-6xl mx-auto space-y-4 min-h-0">
       {/* Simulator Section */}
       <Card className="border-accent-cool/30 bg-gradient-to-r from-accent-cool/5 to-transparent">
         <CardContent className="p-4">
@@ -617,24 +625,17 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
         <div className="flex">
           {/* Listing labels column (fixed) */}
           <div className="flex-shrink-0 border-r border-border bg-card z-10" style={{ width: LABEL_W }}>
-            <div className="h-9 border-b border-border flex items-center px-3">
+            <div className="h-8 border-b border-border flex items-center px-2">
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Appartements</span>
             </div>
             {listings.map((listing) => (
-              <div key={listing.id} className="h-14 border-b border-border flex items-center gap-2 px-3">
-                {listing.cover_image && (
-                  <img
-                    src={listing.cover_image}
-                    alt=""
-                    className="w-8 h-8 rounded object-cover flex-shrink-0"
-                  />
-                )}
+              <div key={listing.id} className="h-12 border-b border-border flex items-center px-2">
                 <div className="min-w-0 flex-1">
-                  <span className="text-xs font-medium block leading-tight" title={listing.title}>
+                  <span className="text-[11px] font-medium block leading-tight truncate" title={listing.title}>
                     {listing.title}
                   </span>
                   {listing.city && (
-                    <span className="text-[10px] text-muted-foreground block leading-tight">{listing.city}</span>
+                    <span className="text-[9px] text-muted-foreground block leading-tight">{listing.city}</span>
                   )}
                 </div>
               </div>
@@ -642,10 +643,10 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
           </div>
 
           {/* Scrollable timeline */}
-          <div className="overflow-x-auto flex-1" ref={scrollRef}>
-            <div style={{ minWidth: days.length * CELL_W }}>
+          <div className="overflow-x-auto sm:overflow-x-visible flex-1" ref={scrollRef}>
+            <div style={{ minWidth: isMobile ? days.length * CELL_W : undefined }}>
               {/* Day headers */}
-              <div className="flex h-9 border-b border-border">
+              <div className="flex h-8 border-b border-border">
                 {days.map((day) => {
                   const todayDay = isToday(day);
                   const weekend = isWeekend(day);
@@ -676,7 +677,7 @@ const mergeBookingPeriods = (bookings: Array<{ checkin_date: string; checkout_da
                 const listingBlocked = blockedDates.filter((bd) => bd.listing_id === listing.id);
 
                 return (
-                  <div key={listing.id} className="relative h-14 border-b border-border">
+                  <div key={listing.id} className="relative h-12 border-b border-border">
                     {/* Background grid */}
                     <div className="absolute inset-0 flex">
                       {days.map((day) => {
