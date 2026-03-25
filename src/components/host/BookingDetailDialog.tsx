@@ -1,10 +1,6 @@
 import { useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type StatusValue } from "@/components/ui/status-badge";
@@ -45,6 +41,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   booking: BookingDetailData | null;
   onEdit: (booking: BookingDetailData) => void;
+  onGenerateContract?: (bookingId: string) => void;
 }
 
 const formatPrice = (price: number) =>
@@ -60,7 +57,7 @@ const STATUS_LABELS: Record<string, string> = {
   expired: "Expirée",
 };
 
-export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Props) {
+export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGenerateContract }: Props) {
   const [linkCopied, setLinkCopied] = useState(false);
   
   const tenantId = booking?.pricing_breakdown?.tenant_id;
@@ -105,53 +102,37 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
   const canEdit = booking.status === "confirmed" || booking.status === "pending_payment";
 
   const cleanNotes = booking.notes
-    ? booking.notes
-        .split(" | ")
-        .filter((p) => !p.startsWith("Locataire:") && !p.startsWith("Acompte:"))
-        .join(" | ")
-        .trim()
+    ? booking.notes.split(" | ").filter((p) => !p.startsWith("Locataire:") && !p.startsWith("Acompte:")).join(" | ").trim()
     : null;
 
   const tenantAddress = tenant
-    ? [tenant.street_number, tenant.street, tenant.postal_code, tenant.city, tenant.country]
-        .filter(Boolean)
-        .join(", ")
+    ? [tenant.street_number, tenant.street, tenant.postal_code, tenant.city, tenant.country].filter(Boolean).join(", ")
     : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            Détails de la réservation
-          </DialogTitle>
+          <DialogTitle className="flex items-center gap-2">Détails de la réservation</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="details">
           <TabsList className="w-full">
             <TabsTrigger value="details" className="flex-1">Détails</TabsTrigger>
             <TabsTrigger value="payments" className="flex-1 gap-1.5">
-              <CreditCard className="h-3.5 w-3.5" />
-              Paiements
+              <CreditCard className="h-3.5 w-3.5" /> Paiements
             </TabsTrigger>
             <TabsTrigger value="emails" className="flex-1 gap-1.5">
-              <Mail className="h-3.5 w-3.5" />
-              E-mails
+              <Mail className="h-3.5 w-3.5" /> E-mails
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="space-y-4 mt-4">
-            {/* Status */}
             <div className="flex items-center justify-between">
               <StatusBadge status={booking.status as StatusValue} />
-              <span className="text-xs text-muted-foreground font-mono">
-                {booking.id.slice(0, 8)}
-              </span>
+              <span className="text-xs text-muted-foreground font-mono">{booking.id.slice(0, 8)}</span>
             </div>
-
             <Separator />
-
-            {/* Property */}
             <div className="flex items-start gap-3">
               <Home className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
               <div>
@@ -159,98 +140,54 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
                 <p className="text-sm font-medium">{booking.listing_title}</p>
               </div>
             </div>
-
-            {/* Guest / Tenant */}
             <div className="flex items-start gap-3">
               <Users className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Locataire</p>
                 <p className="text-sm font-medium">{booking.guest_name}</p>
-                {(tenant?.email || booking.guest_email) && (
-                  <p className="text-xs text-muted-foreground">{tenant?.email || booking.guest_email}</p>
-                )}
+                {(tenant?.email || booking.guest_email) && <p className="text-xs text-muted-foreground">{tenant?.email || booking.guest_email}</p>}
                 {(tenant?.phone || booking.guest_phone) && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Phone className="h-3 w-3" />
-                    {tenant?.phone || booking.guest_phone}
-                  </p>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" />{tenant?.phone || booking.guest_phone}</p>
                 )}
-                {tenant?.gender && (
-                  <p className="text-xs text-muted-foreground">
-                    {tenant.gender === "male" ? "Homme" : tenant.gender === "female" ? "Femme" : tenant.gender}
-                  </p>
-                )}
-                {tenantAddress && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    {tenantAddress}
-                  </p>
-                )}
+                {tenant?.gender && <p className="text-xs text-muted-foreground">{tenant.gender === "male" ? "Homme" : tenant.gender === "female" ? "Femme" : tenant.gender}</p>}
+                {tenantAddress && <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{tenantAddress}</p>}
               </div>
             </div>
-
-            {/* Dates */}
             <div className="flex items-start gap-3">
               <CalendarDays className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
               <div>
                 <p className="text-xs text-muted-foreground">Dates</p>
-                <p className="text-sm font-medium">
-                  {format(checkin, "d MMMM yyyy", { locale: fr })} → {format(checkout, "d MMMM yyyy", { locale: fr })}
-                </p>
+                <p className="text-sm font-medium">{format(checkin, "d MMMM yyyy", { locale: fr })} → {format(checkout, "d MMMM yyyy", { locale: fr })}</p>
                 <p className="text-xs text-muted-foreground">{nights} nuit{nights > 1 ? "s" : ""}</p>
               </div>
             </div>
-
-            {/* Pricing */}
             <div className="flex items-start gap-3">
               <Euro className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
               <div className="w-full">
                 <p className="text-xs text-muted-foreground">Tarification</p>
                 <div className="space-y-1 mt-1">
                   {bd?.rental_price != null && (
-                    <div className="flex justify-between text-sm">
-                      <span>Prix de location</span>
-                      <span>{formatPrice(bd.rental_price)}</span>
-                    </div>
+                    <div className="flex justify-between text-sm"><span>Prix de location</span><span>{formatPrice(bd.rental_price)}</span></div>
                   )}
                   {booking.cleaning_fee != null && booking.cleaning_fee > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span>Frais de ménage</span>
-                      <span>{formatPrice(booking.cleaning_fee)}</span>
-                    </div>
+                    <div className="flex justify-between text-sm"><span>Frais de ménage</span><span>{formatPrice(booking.cleaning_fee)}</span></div>
                   )}
-                  <div className="flex justify-between text-sm font-semibold border-t pt-1">
-                    <span>Prix total</span>
-                    <span>{formatPrice(booking.total_price)}</span>
-                  </div>
+                  <div className="flex justify-between text-sm font-semibold border-t pt-1"><span>Prix total</span><span>{formatPrice(booking.total_price)}</span></div>
                   {deposit != null && (
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Acompte ({bd?.deposit_percentage || 30}%)</span>
-                      <span>{formatPrice(deposit)}</span>
-                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground"><span>Acompte ({bd?.deposit_percentage || 30}%)</span><span>{formatPrice(deposit)}</span></div>
                   )}
                   {remaining != null && (
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Solde restant</span>
-                      <span>{formatPrice(remaining)}</span>
-                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground"><span>Solde restant</span><span>{formatPrice(remaining)}</span></div>
                   )}
                 </div>
               </div>
             </div>
-
-            {/* Notes */}
             {cleanNotes && (
               <div className="flex items-start gap-3">
                 <FileText className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Notes</p>
-                  <p className="text-sm">{cleanNotes}</p>
-                </div>
+                <div><p className="text-xs text-muted-foreground">Notes</p><p className="text-sm">{cleanNotes}</p></div>
               </div>
             )}
-
-            {/* Review */}
             {review && (
               <>
                 <Separator />
@@ -259,10 +196,7 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
                   <div className="w-full space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Avis du locataire</p>
-                      <div className="flex items-center gap-1.5">
-                        <Star className="h-4 w-4 fill-primary text-primary" />
-                        <span className="text-sm font-bold text-primary">{review.rating?.toFixed(1)}</span>
-                      </div>
+                      <div className="flex items-center gap-1.5"><Star className="h-4 w-4 fill-primary text-primary" /><span className="text-sm font-bold text-primary">{review.rating?.toFixed(1)}</span></div>
                     </div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
                       {[
@@ -274,21 +208,12 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
                       ].map((c) => c.value != null && (
                         <div key={c.label} className="flex items-center justify-between text-xs">
                           <span className="text-muted-foreground">{c.label}</span>
-                          <div className="flex items-center gap-1">
-                            <Star className="h-3 w-3 fill-primary text-primary" />
-                            <span className="font-medium">{c.value}</span>
-                          </div>
+                          <div className="flex items-center gap-1"><Star className="h-3 w-3 fill-primary text-primary" /><span className="font-medium">{c.value}</span></div>
                         </div>
                       ))}
                     </div>
-                    {review.text && (
-                      <p className="text-sm text-foreground/90 italic border-l-2 border-primary/30 pl-3">
-                        "{review.text}"
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {format(parseISO(review.created_at), "d MMMM yyyy", { locale: fr })}
-                    </p>
+                    {review.text && <p className="text-sm text-foreground/90 italic border-l-2 border-primary/30 pl-3">"{review.text}"</p>}
+                    <p className="text-xs text-muted-foreground">{format(parseISO(review.created_at), "d MMMM yyyy", { locale: fr })}</p>
                   </div>
                 </div>
               </>
@@ -300,21 +225,28 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
           </TabsContent>
 
           <TabsContent value="emails" className="mt-4">
-            <BookingEmailsTab
-              bookingId={booking.id}
-              checkinDate={booking.checkin_date}
-              checkoutDate={booking.checkout_date}
-              listingId={booking.listing_id}
-            />
+            <BookingEmailsTab bookingId={booking.id} checkinDate={booking.checkin_date} checkoutDate={booking.checkout_date} listingId={booking.listing_id} />
           </TabsContent>
         </Tabs>
 
         <DialogFooter className="gap-2 sm:gap-0 flex-wrap">
-          {booking.access_token && (
+          {onGenerateContract && (
             <Button
               variant="outline"
               size="sm"
               className="gap-1.5"
+              onClick={() => {
+                onOpenChange(false);
+                onGenerateContract(booking.id);
+              }}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Générer contrat
+            </Button>
+          )}
+          {booking.access_token && (
+            <Button
+              variant="outline" size="sm" className="gap-1.5"
               onClick={() => {
                 const url = `${window.location.origin}/portal/${booking.access_token}`;
                 navigator.clipboard.writeText(url);
@@ -327,19 +259,10 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit }: Pro
               {linkCopied ? "Copié" : "Portail client"}
             </Button>
           )}
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Fermer
-          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
           {canEdit && (
-            <Button
-              onClick={() => {
-                onOpenChange(false);
-                onEdit(booking);
-              }}
-              className="gap-1.5"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              Modifier
+            <Button onClick={() => { onOpenChange(false); onEdit(booking); }} className="gap-1.5">
+              <Pencil className="h-3.5 w-3.5" /> Modifier
             </Button>
           )}
         </DialogFooter>

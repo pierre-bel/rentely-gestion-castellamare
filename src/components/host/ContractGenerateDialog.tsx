@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { generateQRDataUrl, buildTransferReference, type PaymentQRCodeProps } from "@/components/portal/PaymentQRCode";
+import { generateQRDataUrl, buildTransferReference } from "@/components/portal/PaymentQRCode";
 
 const escapeHtml = (str: string): string =>
   str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -25,9 +25,10 @@ interface ContractGenerateDialogProps {
   onOpenChange: (open: boolean) => void;
   templates: Template[];
   onGenerated: () => void;
+  preselectedBookingId?: string | null;
 }
 
-export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenerated }: ContractGenerateDialogProps) => {
+export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenerated, preselectedBookingId }: ContractGenerateDialogProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [bookings, setBookings] = useState<any[]>([]);
@@ -39,6 +40,9 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
   useEffect(() => {
     if (open && user) {
       setLoadingBookings(true);
+      if (preselectedBookingId) setSelectedBooking(preselectedBookingId);
+      if (templates.length === 1) setSelectedTemplate(templates[0].id);
+
       const fetchBookings = async () => {
         const { data: bookingsData, error } = await supabase
           .from("bookings")
@@ -55,13 +59,8 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
         }
 
         const items = bookingsData || [];
-        if (items.length === 0) {
-          setBookings([]);
-          setLoadingBookings(false);
-          return;
-        }
+        if (items.length === 0) { setBookings([]); setLoadingBookings(false); return; }
 
-        // Fetch profiles separately since there's no direct FK from bookings to profiles
         const guestIds = [...new Set(items.map((b: any) => b.guest_user_id))];
         const { data: profiles } = await supabase
           .from("profiles")
@@ -69,10 +68,27 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
           .in("id", guestIds);
 
         const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
-        const enriched = items.map((b: any) => ({
-          ...b,
-          profiles: profileMap.get(b.guest_user_id) || null,
-        }));
+
+        // Also fetch tenant info from tenants table
+        const tenantIds = [...new Set(items.map((b: any) => (b.pricing_breakdown as any)?.tenant_id).filter(Boolean))];
+        let tenantMap = new Map();
+        if (tenantIds.length > 0) {
+          const { data: tenants } = await supabase
+            .from("tenants" as any)
+            .select("id, first_name, last_name, email, phone, gender")
+            .in("id", tenantIds);
+          tenantMap = new Map((tenants || []).map((t: any) => [t.id, t]));
+        }
+
+        const enriched = items.map((b: any) => {
+          const tenantId = (b.pricing_breakdown as any)?.tenant_id;
+          const tenant = tenantId ? tenantMap.get(tenantId) : null;
+          return {
+            ...b,
+            profiles: profileMap.get(b.guest_user_id) || null,
+            tenant,
+          };
+        });
 
         setBookings(enriched);
         setLoadingBookings(false);
@@ -91,23 +107,8 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
 
     const listing = booking.listings as any;
     const guest = booking.profiles as any;
+    const tenant = booking.tenant as any;
 
-    // Fetch tenant info from pricing_breakdown.tenant_id
-    let tenantGender: string | null = null;
-    const pricingBreakdown = booking.pricing_breakdown as any;
-    const tenantId = pricingBreakdown?.tenant_id;
-    if (tenantId) {
-      const { data: tenantData } = await supabase
-        .from("tenants" as any)
-        .select("gender, first_name, last_name")
-        .eq("id", tenantId)
-        .maybeSingle();
-      if (tenantData) {
-        tenantGender = (tenantData as any).gender;
-      }
-    }
-
-    // Resolve civility from tenant gender
     const getCivility = (gender: string | null): string => {
       if (!gender) return "Madame, Monsieur";
       const g = gender.toLowerCase().trim();
@@ -116,7 +117,6 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       return "Madame, Monsieur";
     };
 
-    // Fetch payment items for this booking
     const { data: paymentItems } = await supabase
       .from("booking_payment_items")
       .select("*")
@@ -129,12 +129,8 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
 
     const formatCurrency = (val: number | null) => val != null ? `${Number(val).toFixed(2)} €` : "N/A";
     const formatDate = (d: string | null) => d ? format(new Date(d), "d MMMM yyyy", { locale: fr }) : "N/A";
-    const formatStatus = (item: any) => {
-      if (!item) return "N/A";
-      return item.is_paid ? "Payé" : "Non payé";
-    };
+    const formatStatus = (item: any) => item ? (item.is_paid ? "Payé" : "Non payé") : "N/A";
 
-    // Build payment schedule table HTML
     const scheduleRows = items.map((item: any) =>
       `<tr><td style="border:1px solid #ddd;padding:6px">${item.label}</td><td style="border:1px solid #ddd;padding:6px">${formatCurrency(item.amount)}</td><td style="border:1px solid #ddd;padding:6px">${item.due_date ? formatDate(item.due_date) : "—"}</td><td style="border:1px solid #ddd;padding:6px">${formatStatus(item)}</td></tr>`
     ).join("");
@@ -147,35 +143,35 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       studio: "Studio", loft: "Loft", room: "Chambre", other: "Autre",
     };
 
+    // Use tenant info when available, fallback to guest profile
+    const guestName = tenant
+      ? `${tenant.first_name || ""} ${tenant.last_name || ""}`.trim()
+      : `${guest?.first_name || ""} ${guest?.last_name || ""}`.trim();
+
     let html = template.body_html;
     const replacements: Record<string, string> = {
-      // Guest (escape to prevent XSS)
-      "{{guest_name}}": escapeHtml(`${guest?.first_name || ""} ${guest?.last_name || ""}`.trim() || "N/A"),
-      "{{guest_first_name}}": escapeHtml(guest?.first_name || "N/A"),
-      "{{guest_last_name}}": escapeHtml(guest?.last_name || "N/A"),
-      "{{guest_email}}": escapeHtml(guest?.email || "N/A"),
-      "{{guest_phone}}": escapeHtml(guest?.phone || "N/A"),
-      "{{guest_civility}}": escapeHtml(getCivility(tenantGender)),
-      // Booking
+      "{{guest_name}}": escapeHtml(guestName || "N/A"),
+      "{{guest_first_name}}": escapeHtml(tenant?.first_name || guest?.first_name || "N/A"),
+      "{{guest_last_name}}": escapeHtml(tenant?.last_name || guest?.last_name || "N/A"),
+      "{{guest_email}}": escapeHtml(tenant?.email || guest?.email || "N/A"),
+      "{{guest_phone}}": escapeHtml(tenant?.phone || guest?.phone || "N/A"),
+      "{{guest_civility}}": escapeHtml(getCivility(tenant?.gender || null)),
       "{{booking_id}}": booking.id,
       "{{checkin_date}}": formatDate(booking.checkin_date),
       "{{checkout_date}}": formatDate(booking.checkout_date),
       "{{nights}}": String(booking.nights),
       "{{guests}}": String(booking.guests),
-      // Listing
       "{{listing_title}}": listing?.title || "N/A",
       "{{listing_address}}": listing?.address || "N/A",
       "{{listing_city}}": listing?.city || "N/A",
       "{{listing_country}}": listing?.country || "N/A",
       "{{listing_type}}": propertyTypeLabels[listing?.type] || listing?.type || "N/A",
-      // Pricing
       "{{total_price}}": formatCurrency(booking.total_price),
       "{{subtotal}}": formatCurrency(booking.subtotal),
       "{{cleaning_fee}}": formatCurrency(booking.cleaning_fee),
       "{{service_fee}}": formatCurrency(booking.service_fee),
       "{{taxes}}": formatCurrency(booking.taxes),
       "{{security_deposit}}": formatCurrency(listing?.security_deposit),
-      // Payment schedule
       "{{deposit_amount}}": deposit ? formatCurrency(deposit.amount) : "N/A",
       "{{deposit_due_date}}": deposit?.due_date ? formatDate(deposit.due_date) : "N/A",
       "{{deposit_status}}": formatStatus(deposit),
@@ -183,18 +179,14 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       "{{balance_due_date}}": balance?.due_date ? formatDate(balance.due_date) : "N/A",
       "{{balance_status}}": balance ? formatStatus(balance) : "N/A",
       "{{payment_schedule}}": scheduleTable,
-      // Dates
       "{{today_date}}": format(new Date(), "d MMMM yyyy", { locale: fr }),
       "{{booking_created_date}}": formatDate(booking.created_at),
-      // Times (booking-specific or listing default)
       "{{checkin_time}}": booking.checkin_time || listing?.checkin_from || "",
       "{{checkout_time}}": booking.checkout_time || listing?.checkout_until || "",
-      // Portal & misc
-      "{{portal_link}}": `https://gestioncastellamare.lovable.app/booking/${booking.access_token || ""}`,
+      "{{portal_link}}": `https://gestioncastellamare.lovable.app/portal/${booking.access_token || ""}`,
       "{{igloohome_code}}": booking.igloohome_code || "",
     };
 
-    // Generate QR code if bank info available and template uses {{qr_paiement}}
     if (template.body_html.includes("{{qr_paiement}}")) {
       const { data: bankSettings } = await supabase
         .from("portal_settings")
@@ -205,8 +197,8 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       if (bankSettings?.bank_beneficiary_name && bankSettings?.bank_iban && bankSettings?.bank_bic) {
         const refTemplate = bankSettings.bank_transfer_reference_template || "{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}";
         const refVars: Record<string, string> = {
-          guest_last_name: guest?.last_name || "",
-          guest_full_name: `${guest?.first_name || ""} ${guest?.last_name || ""}`.trim(),
+          guest_last_name: tenant?.last_name || guest?.last_name || "",
+          guest_full_name: guestName,
           listing_title: listing?.title || "",
           checkin_date: format(new Date(booking.checkin_date), "dd/MM/yyyy"),
           checkout_date: format(new Date(booking.checkout_date), "dd/MM/yyyy"),
@@ -216,13 +208,7 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
         const amount = totalUnpaid > 0 ? totalUnpaid : Number(booking.total_price);
 
         try {
-          const qrDataUrl = await generateQRDataUrl({
-            beneficiary: bankSettings.bank_beneficiary_name,
-            iban: bankSettings.bank_iban,
-            bic: bankSettings.bank_bic,
-            amount,
-            reference,
-          });
+          const qrDataUrl = await generateQRDataUrl({ beneficiary: bankSettings.bank_beneficiary_name, iban: bankSettings.bank_iban, bic: bankSettings.bank_bic, amount, reference });
           replacements["{{qr_paiement}}"] = `<div style="text-align:center;margin:16px 0"><img src="${qrDataUrl}" width="200" height="200" alt="QR code de paiement SEPA" style="display:inline-block" /><br/><span style="font-size:11px;color:#666">Scannez pour payer par virement</span></div>`;
         } catch (e) {
           console.error("QR generation failed", e);
@@ -237,7 +223,6 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       html = html.split(key).join(value);
     });
 
-    // Handle beach_cabin
     if (booking.beach_cabin) {
       html = html.split("{{beach_cabin}}").join("Cabine de plage");
     } else {
@@ -261,6 +246,16 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
     setGenerating(false);
   };
 
+  const getBookingLabel = (b: any) => {
+    const tenant = b.tenant;
+    const guest = b.profiles;
+    const listing = b.listings as any;
+    const name = tenant
+      ? `${tenant.first_name || ""} ${tenant.last_name || ""}`.trim()
+      : `${guest?.first_name || ""} ${guest?.last_name || ""}`.trim();
+    return `${name || "?"} — ${listing?.title || "?"} (${format(new Date(b.checkin_date), "dd/MM/yy")} → ${format(new Date(b.checkout_date), "dd/MM/yy")})`;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -271,9 +266,7 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
           <div>
             <Label>Template</Label>
             <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choisir un template" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Choisir un template" /></SelectTrigger>
               <SelectContent>
                 {templates.map((t) => (
                   <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
@@ -289,19 +282,11 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
               </div>
             ) : (
               <Select value={selectedBooking} onValueChange={setSelectedBooking}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choisir une réservation" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Choisir une réservation" /></SelectTrigger>
                 <SelectContent>
-                  {bookings.map((b: any) => {
-                    const guest = b.profiles as any;
-                    const listing = b.listings as any;
-                    return (
-                      <SelectItem key={b.id} value={b.id}>
-                        {guest?.first_name || "?"} {guest?.last_name || ""} — {listing?.title || "?"} ({format(new Date(b.checkin_date), "dd/MM/yy")})
-                      </SelectItem>
-                    );
-                  })}
+                  {bookings.map((b: any) => (
+                    <SelectItem key={b.id} value={b.id}>{getBookingLabel(b)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}
