@@ -27,6 +27,7 @@ import { CreateManualBookingDialog } from "./CreateManualBookingDialog";
 import { EditManualBookingDialog } from "./EditManualBookingDialog";
 import { BookingDetailDialog, type BookingDetailData } from "./BookingDetailDialog";
 import { ImportBookingsDialog } from "./ImportBookingsDialog";
+import { ContractGenerateDialog } from "./ContractGenerateDialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Upload } from "lucide-react";
 import * as XLSX from "xlsx";
