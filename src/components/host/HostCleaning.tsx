@@ -828,3 +828,10 @@ function extractTenantFromNotes(notes: string | null): string | null {
   const match = notes.match(/Locataire:\s*([^|]+)/);
   return match ? match[1].trim() : null;
 }
+
+/** Extract block reason from notes (format: "Raison | ...") */
+function extractBlockReason(notes: string | null): string | null {
+  if (!notes) return null;
+  const parts = notes.split(' | ');
+  return parts[0]?.trim() || null;
+}
