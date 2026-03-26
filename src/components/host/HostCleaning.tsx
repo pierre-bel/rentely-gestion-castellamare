@@ -574,24 +574,28 @@ export function HostCleaning() {
 
                             {/* Outgoing */}
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Départ</p>
+                              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                                {isOutBlocked ? "Fin blocage" : "Départ"}
+                              </p>
                               <div className="flex items-center gap-2 text-sm">
                                 <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                                 <span className="font-medium">{tenantName || "Non renseigné"}</span>
                               </div>
-                              {slot.tenant?.phone && (
+                              {!isOutBlocked && slot.tenant?.phone && (
                                 <div className="flex items-center gap-2 text-sm mt-0.5">
                                   <Phone className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                                   <span>{slot.tenant.phone}</span>
                                 </div>
                               )}
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
-                                <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-                                <span>{format(parseISO(slot.checkoutBooking.checkin_date), "dd/MM")} → {format(parseISO(slot.checkoutBooking.checkout_date), "dd/MM")}</span>
-                                <Moon className="h-3.5 w-3.5 flex-shrink-0 ml-1" />
-                                <span>{slot.checkoutBooking.nights} nuit{slot.checkoutBooking.nights > 1 ? "s" : ""}</span>
-                              </div>
-                              {slot.checkoutTime && (
+                              {!isOutBlocked && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
+                                  <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                                  <span>{format(parseISO(slot.checkoutBooking.checkin_date), "dd/MM")} → {format(parseISO(slot.checkoutBooking.checkout_date), "dd/MM")}</span>
+                                  <Moon className="h-3.5 w-3.5 flex-shrink-0 ml-1" />
+                                  <span>{slot.checkoutBooking.nights} nuit{slot.checkoutBooking.nights > 1 ? "s" : ""}</span>
+                                </div>
+                              )}
+                              {!isOutBlocked && slot.checkoutTime && (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
                                   <Clock className="h-3.5 w-3.5 flex-shrink-0" />
                                   <span>Départ à {slot.checkoutTime}</span>
@@ -603,14 +607,16 @@ export function HostCleaning() {
 
                             {/* Incoming */}
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Arrivée suivante</p>
+                              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                                {isNextBlocked ? "Début blocage" : "Arrivée suivante"}
+                              </p>
                               {slot.nextCheckinBooking ? (
                                 <>
                                   <div className="flex items-center gap-2 text-sm">
                                     <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                                     <span className="font-medium">{nextTenantName || "Non renseigné"}</span>
                                   </div>
-                                  {slot.nextTenant?.phone && (
+                                  {!isNextBlocked && slot.nextTenant?.phone && (
                                     <div className="flex items-center gap-2 text-sm mt-0.5">
                                       <Phone className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                                       <span>{slot.nextTenant.phone}</span>
