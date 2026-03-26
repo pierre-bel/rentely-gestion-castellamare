@@ -453,9 +453,13 @@ function ListingCalendar({
             const isPast = isBefore(day, today) && !isSameDay(day, today);
 
             // Determine status
-            let status: "available" | "booked" | "checkin" | "checkout" | "turnaround" = "available";
+            const isBlockedBooking = info?.booking.status === 'owner_blocked';
+            const isTurnaroundBlocked = turnaround?.outgoing.status === 'owner_blocked' || turnaround?.incoming.status === 'owner_blocked';
+            let status: "available" | "booked" | "blocked" | "checkin" | "checkout" | "turnaround" = "available";
             if (turnaround) {
               status = "turnaround";
+            } else if (info?.isMid && isBlockedBooking) {
+              status = "blocked";
             } else if (info?.isMid) {
               status = "booked";
             } else if (info?.isCheckin) {
@@ -508,6 +512,8 @@ function ListingCalendar({
             let cls = base;
             if (status === "booked") {
               cls = `${base} bg-primary text-primary-foreground font-semibold cursor-pointer`;
+            } else if (status === "blocked") {
+              cls = `${base} bg-muted text-muted-foreground font-medium`;
             } else {
               cls = `${base} bg-[hsl(var(--calendar-available,142_71%_45%)/0.25)] text-foreground hover:bg-[hsl(var(--calendar-available,142_71%_45%)/0.4)]`;
             }
@@ -534,6 +540,10 @@ function ListingCalendar({
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <div className="w-3 h-3 rounded-full bg-primary" />
             Occupé
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="w-3 h-3 rounded-full bg-muted border" />
+            Bloqué
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <div className="w-3 h-3 rounded-full overflow-hidden flex">
