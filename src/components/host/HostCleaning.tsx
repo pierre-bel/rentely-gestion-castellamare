@@ -524,12 +524,18 @@ export function HostCleaning() {
 
                 <div className="space-y-2">
                   {group.slots.map((slot, idx) => {
-                    const tenantName = slot.tenant
-                      ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
-                      : extractTenantFromNotes(slot.checkoutBooking.notes);
-                    const nextTenantName = slot.nextTenant
-                      ? `${slot.nextTenant.first_name} ${slot.nextTenant.last_name || ""}`.trim()
-                      : slot.nextCheckinBooking ? extractTenantFromNotes(slot.nextCheckinBooking.notes) : null;
+                    const isOutBlocked = slot.checkoutBooking.status === 'owner_blocked';
+                    const tenantName = isOutBlocked
+                      ? (extractBlockReason(slot.checkoutBooking.notes) || "Bloqué")
+                      : (slot.tenant
+                        ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
+                        : extractTenantFromNotes(slot.checkoutBooking.notes));
+                    const isNextBlocked = slot.nextCheckinBooking?.status === 'owner_blocked';
+                    const nextTenantName = isNextBlocked
+                      ? (extractBlockReason(slot.nextCheckinBooking!.notes) || "Blocage")
+                      : (slot.nextTenant
+                        ? `${slot.nextTenant.first_name} ${slot.nextTenant.last_name || ""}`.trim()
+                        : slot.nextCheckinBooking ? extractTenantFromNotes(slot.nextCheckinBooking.notes) : null);
 
                     return (
                       <Card
