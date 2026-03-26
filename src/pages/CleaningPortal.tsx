@@ -314,30 +314,36 @@ export default function CleaningPortal() {
                               <Separator orientation="vertical" className="hidden sm:block h-12" />
                               <div className="flex-1 grid sm:grid-cols-2 gap-2 text-sm">
                                 <div>
-                                  <p className="text-xs font-medium text-muted-foreground uppercase mb-0.5">Départ</p>
+                                  <p className="text-xs font-medium text-muted-foreground uppercase mb-0.5">
+                                    {slot.outgoing.status === 'owner_blocked' ? 'Fin blocage' : 'Départ'}
+                                  </p>
                                   <p className="font-medium">{slot.outgoing.tenant_name}</p>
-                                  {slot.outgoing.tenant_phone && (
+                                  {slot.outgoing.status !== 'owner_blocked' && slot.outgoing.tenant_phone && (
                                     <p className="text-muted-foreground text-xs">{slot.outgoing.tenant_phone}</p>
                                   )}
-                                  <p className="text-muted-foreground text-xs">
-                                    {slot.outgoing.nights} nuit{slot.outgoing.nights > 1 ? "s" : ""}
-                                    {(() => {
-                                      const t = slot.outgoing.checkout_time?.slice(0, 5) || slot.listing.checkout_until?.slice(0, 5);
-                                      return t ? ` — départ ${t}` : "";
-                                    })()}
-                                  </p>
+                                  {slot.outgoing.status !== 'owner_blocked' && (
+                                    <p className="text-muted-foreground text-xs">
+                                      {slot.outgoing.nights} nuit{slot.outgoing.nights > 1 ? "s" : ""}
+                                      {(() => {
+                                        const t = slot.outgoing.checkout_time?.slice(0, 5) || slot.listing.checkout_until?.slice(0, 5);
+                                        return t ? ` — départ ${t}` : "";
+                                      })()}
+                                    </p>
+                                  )}
                                 </div>
                                 <div>
-                                  <p className="text-xs font-medium text-muted-foreground uppercase mb-0.5">Arrivée suivante</p>
+                                  <p className="text-xs font-medium text-muted-foreground uppercase mb-0.5">
+                                    {slot.incoming?.status === 'owner_blocked' ? 'Début blocage' : 'Arrivée suivante'}
+                                  </p>
                                   {slot.incoming ? (
                                     <>
                                       <p className="font-medium">{slot.incoming.tenant_name}</p>
-                                      {slot.incoming.tenant_phone && (
+                                      {slot.incoming.status !== 'owner_blocked' && slot.incoming.tenant_phone && (
                                         <p className="text-muted-foreground text-xs">{slot.incoming.tenant_phone}</p>
                                       )}
                                       <p className="text-muted-foreground text-xs capitalize">
                                         {format(parseISO(slot.incoming.checkin_date), "EEEE dd/MM", { locale: fr })}
-                                        {(() => {
+                                        {slot.incoming.status !== 'owner_blocked' && (() => {
                                           const t = slot.incoming.checkin_time?.slice(0, 5) || slot.listing.checkin_from?.slice(0, 5);
                                           return t ? ` — arrivée ${t}` : "";
                                         })()}
