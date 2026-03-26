@@ -97,7 +97,7 @@ export function HostCleaning() {
         const rangeStart = format(subMonths(monthStart, 1), "yyyy-MM-dd");
         const rangeEnd = format(addMonths(monthEnd, 1), "yyyy-MM-dd");
         return (snapshot.hostBookings || []).filter((b: any) =>
-          ["confirmed", "completed"].includes(b.status) &&
+          ["confirmed", "completed", "owner_blocked"].includes(b.status) &&
           b.checkout_date >= rangeStart &&
           b.checkin_date <= rangeEnd
         ) as Booking[];
@@ -108,7 +108,7 @@ export function HostCleaning() {
       const { data, error } = await supabase
         .from("bookings")
         .select("id, listing_id, checkin_date, checkout_date, checkin_time, checkout_time, nights, notes, pricing_breakdown, status")
-        .in("status", ["confirmed", "completed"])
+        .in("status", ["confirmed", "completed", "owner_blocked"])
         .gte("checkout_date", rangeStart)
         .lte("checkin_date", rangeEnd)
         .order("checkin_date");
