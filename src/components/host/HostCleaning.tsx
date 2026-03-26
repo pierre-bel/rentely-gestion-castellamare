@@ -246,23 +246,31 @@ export function HostCleaning() {
     let msg = `🏠 ${slot.listingTitle}\n`;
     msg += `📅 Ménage le : ${checkoutDay}${urgencyLabel}\n`;
 
-    const tenantName = slot.tenant
-      ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
-      : extractTenantFromNotes(slot.checkoutBooking.notes);
-    msg += `👤 Départ : ${tenantName || "Non renseigné"}`;
-    if (slot.checkoutTime) msg += ` — 🕐 ${slot.checkoutTime}`;
-    if (slot.tenant?.phone) msg += ` — 📞 ${slot.tenant.phone}`;
+    const isBlocked = slot.checkoutBooking.status === 'owner_blocked';
+    const tenantName = isBlocked
+      ? (extractBlockReason(slot.checkoutBooking.notes) || "Bloqué")
+      : (slot.tenant
+        ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
+        : extractTenantFromNotes(slot.checkoutBooking.notes));
+    msg += `👤 ${isBlocked ? "Fin blocage" : "Départ"} : ${tenantName || "Non renseigné"}`;
+    if (slot.checkoutTime && !isBlocked) msg += ` — 🕐 ${slot.checkoutTime}`;
+    if (slot.tenant?.phone && !isBlocked) msg += ` — 📞 ${slot.tenant.phone}`;
     msg += "\n";
-    msg += `   Séjour : ${format(parseISO(slot.checkoutBooking.checkin_date), "dd/MM")} → ${format(parseISO(slot.checkoutBooking.checkout_date), "dd/MM")} (${slot.checkoutBooking.nights} nuit${slot.checkoutBooking.nights > 1 ? "s" : ""})\n`;
+    if (!isBlocked) {
+      msg += `   Séjour : ${format(parseISO(slot.checkoutBooking.checkin_date), "dd/MM")} → ${format(parseISO(slot.checkoutBooking.checkout_date), "dd/MM")} (${slot.checkoutBooking.nights} nuit${slot.checkoutBooking.nights > 1 ? "s" : ""})\n`;
+    }
 
     if (slot.nextCheckinBooking) {
-      const nextName = slot.nextTenant
-        ? `${slot.nextTenant.first_name} ${slot.nextTenant.last_name || ""}`.trim()
-        : extractTenantFromNotes(slot.nextCheckinBooking.notes);
+      const isNextBlocked = slot.nextCheckinBooking.status === 'owner_blocked';
+      const nextName = isNextBlocked
+        ? (extractBlockReason(slot.nextCheckinBooking.notes) || "Blocage")
+        : (slot.nextTenant
+          ? `${slot.nextTenant.first_name} ${slot.nextTenant.last_name || ""}`.trim()
+          : extractTenantFromNotes(slot.nextCheckinBooking.notes));
       const nextCheckin = format(parseISO(slot.nextCheckinBooking.checkin_date), "EEEE dd MMMM", { locale: fr });
-      msg += `👤 Arrivée suivante : ${nextName || "Non renseigné"} — ${nextCheckin}`;
-      if (slot.nextCheckinTime) msg += ` — 🕐 ${slot.nextCheckinTime}`;
-      if (slot.nextTenant?.phone) msg += ` — 📞 ${slot.nextTenant.phone}`;
+      msg += `👤 ${isNextBlocked ? "Début blocage" : "Arrivée suivante"} : ${nextName || "Non renseigné"} — ${nextCheckin}`;
+      if (slot.nextCheckinTime && !isNextBlocked) msg += ` — 🕐 ${slot.nextCheckinTime}`;
+      if (slot.nextTenant?.phone && !isNextBlocked) msg += ` — 📞 ${slot.nextTenant.phone}`;
       msg += "\n";
       if (slot.hoursAvailable !== null) {
         const days = Math.floor(slot.hoursAvailable / 24);
