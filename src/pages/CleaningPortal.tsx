@@ -314,30 +314,36 @@ export default function CleaningPortal() {
                               <Separator orientation="vertical" className="hidden sm:block h-12" />
                               <div className="flex-1 grid sm:grid-cols-2 gap-2 text-sm">
                                 <div>
-                                  <p className="text-xs font-medium text-muted-foreground uppercase mb-0.5">Départ</p>
+                                  <p className="text-xs font-medium text-muted-foreground uppercase mb-0.5">
+                                    {slot.outgoing.status === 'owner_blocked' ? 'Fin blocage' : 'Départ'}
+                                  </p>
                                   <p className="font-medium">{slot.outgoing.tenant_name}</p>
-                                  {slot.outgoing.tenant_phone && (
+                                  {slot.outgoing.status !== 'owner_blocked' && slot.outgoing.tenant_phone && (
                                     <p className="text-muted-foreground text-xs">{slot.outgoing.tenant_phone}</p>
                                   )}
-                                  <p className="text-muted-foreground text-xs">
-                                    {slot.outgoing.nights} nuit{slot.outgoing.nights > 1 ? "s" : ""}
-                                    {(() => {
-                                      const t = slot.outgoing.checkout_time?.slice(0, 5) || slot.listing.checkout_until?.slice(0, 5);
-                                      return t ? ` — départ ${t}` : "";
-                                    })()}
-                                  </p>
+                                  {slot.outgoing.status !== 'owner_blocked' && (
+                                    <p className="text-muted-foreground text-xs">
+                                      {slot.outgoing.nights} nuit{slot.outgoing.nights > 1 ? "s" : ""}
+                                      {(() => {
+                                        const t = slot.outgoing.checkout_time?.slice(0, 5) || slot.listing.checkout_until?.slice(0, 5);
+                                        return t ? ` — départ ${t}` : "";
+                                      })()}
+                                    </p>
+                                  )}
                                 </div>
                                 <div>
-                                  <p className="text-xs font-medium text-muted-foreground uppercase mb-0.5">Arrivée suivante</p>
+                                  <p className="text-xs font-medium text-muted-foreground uppercase mb-0.5">
+                                    {slot.incoming?.status === 'owner_blocked' ? 'Début blocage' : 'Arrivée suivante'}
+                                  </p>
                                   {slot.incoming ? (
                                     <>
                                       <p className="font-medium">{slot.incoming.tenant_name}</p>
-                                      {slot.incoming.tenant_phone && (
+                                      {slot.incoming.status !== 'owner_blocked' && slot.incoming.tenant_phone && (
                                         <p className="text-muted-foreground text-xs">{slot.incoming.tenant_phone}</p>
                                       )}
                                       <p className="text-muted-foreground text-xs capitalize">
                                         {format(parseISO(slot.incoming.checkin_date), "EEEE dd/MM", { locale: fr })}
-                                        {(() => {
+                                        {slot.incoming.status !== 'owner_blocked' && (() => {
                                           const t = slot.incoming.checkin_time?.slice(0, 5) || slot.listing.checkin_from?.slice(0, 5);
                                           return t ? ` — arrivée ${t}` : "";
                                         })()}
@@ -447,9 +453,13 @@ function ListingCalendar({
             const isPast = isBefore(day, today) && !isSameDay(day, today);
 
             // Determine status
-            let status: "available" | "booked" | "checkin" | "checkout" | "turnaround" = "available";
+            const isBlockedBooking = info?.booking.status === 'owner_blocked';
+            const isTurnaroundBlocked = turnaround?.outgoing.status === 'owner_blocked' || turnaround?.incoming.status === 'owner_blocked';
+            let status: "available" | "booked" | "blocked" | "checkin" | "checkout" | "turnaround" = "available";
             if (turnaround) {
               status = "turnaround";
+            } else if (info?.isMid && isBlockedBooking) {
+              status = "blocked";
             } else if (info?.isMid) {
               status = "booked";
             } else if (info?.isCheckin) {
@@ -502,6 +512,8 @@ function ListingCalendar({
             let cls = base;
             if (status === "booked") {
               cls = `${base} bg-primary text-primary-foreground font-semibold cursor-pointer`;
+            } else if (status === "blocked") {
+              cls = `${base} bg-muted text-muted-foreground font-medium`;
             } else {
               cls = `${base} bg-[hsl(var(--calendar-available,142_71%_45%)/0.25)] text-foreground hover:bg-[hsl(var(--calendar-available,142_71%_45%)/0.4)]`;
             }
@@ -528,6 +540,10 @@ function ListingCalendar({
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <div className="w-3 h-3 rounded-full bg-primary" />
             Occupé
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="w-3 h-3 rounded-full bg-muted border" />
+            Bloqué
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <div className="w-3 h-3 rounded-full overflow-hidden flex">
