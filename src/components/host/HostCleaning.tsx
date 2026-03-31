@@ -236,123 +236,173 @@ export function HostCleaning() {
     return slots.sort((a, b) => a.cleaningDate.getTime() - b.cleaningDate.getTime());
   }, [bookings, selectedListingId, listings, monthStart, monthEnd, tenantMap, staffByListing]);
 
-  // ── Message generation ─────────────────────────────
+  // ── Event-based message generation ──────────────────
 
-  const buildSlotText = (slot: CleaningSlot) => {
-    const checkoutDay = format(slot.cleaningDate, "EEEE dd MMMM", { locale: fr });
-    const urgencyLabel = slot.hoursAvailable !== null && slot.hoursAvailable <= 24
-      ? " ⚠️ URGENT" : slot.hoursAvailable !== null && slot.hoursAvailable <= 48 ? " ⏰" : "";
+  interface CleaningEvent {
+    date: string; // yyyy-MM-dd
+    listingId: string;
+    listingTitle: string;
+    type: "departure" | "arrival" | "block_end" | "block_start";
+    tenantName: string | null;
+    phone: string | null;
+    time: string | null;
+    nights: number | null;
+    booking: Booking;
+    staffMember: CleaningStaff | null;
+    hasFollowingArrival?: boolean; // for departures: is there an arrival same day same listing?
+  }
 
-    let msg = `🏠 ${slot.listingTitle}\n`;
-    msg += `📅 Ménage le : ${checkoutDay}${urgencyLabel}\n`;
+  const buildEvents = useCallback((slotsToUse: CleaningSlot[]): CleaningEvent[] => {
+    const events: CleaningEvent[] = [];
+    // Set to track arrivals we've already added (avoid duplicates)
+    const addedArrivals = new Set<string>();
 
-    const isBlocked = slot.checkoutBooking.status === 'owner_blocked';
-    const tenantName = isBlocked
-      ? (extractBlockReason(slot.checkoutBooking.notes) || "Bloqué")
-      : (slot.tenant
-        ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
-        : extractTenantFromNotes(slot.checkoutBooking.notes));
-    msg += `👤 ${isBlocked ? "Fin blocage" : "Départ"} : ${tenantName || "Non renseigné"}`;
-    if (slot.checkoutTime && !isBlocked) msg += ` — 🕐 ${slot.checkoutTime}`;
-    if (slot.tenant?.phone && !isBlocked) msg += ` — 📞 ${slot.tenant.phone}`;
-    msg += "\n";
-    if (!isBlocked) {
-      msg += `   Séjour : ${format(parseISO(slot.checkoutBooking.checkin_date), "dd/MM")} → ${format(parseISO(slot.checkoutBooking.checkout_date), "dd/MM")} (${slot.checkoutBooking.nights} nuit${slot.checkoutBooking.nights > 1 ? "s" : ""})\n`;
-    }
+    for (const slot of slotsToUse) {
+      const isBlocked = slot.checkoutBooking.status === "owner_blocked";
 
-    if (slot.nextCheckinBooking) {
-      const isNextBlocked = slot.nextCheckinBooking.status === 'owner_blocked';
-      const nextName = isNextBlocked
-        ? (extractBlockReason(slot.nextCheckinBooking.notes) || "Blocage")
-        : (slot.nextTenant
-          ? `${slot.nextTenant.first_name} ${slot.nextTenant.last_name || ""}`.trim()
-          : extractTenantFromNotes(slot.nextCheckinBooking.notes));
-      const nextCheckin = format(parseISO(slot.nextCheckinBooking.checkin_date), "EEEE dd MMMM", { locale: fr });
-      msg += `👤 ${isNextBlocked ? "Début blocage" : "Arrivée suivante"} : ${nextName || "Non renseigné"} — ${nextCheckin}`;
-      if (slot.nextCheckinTime && !isNextBlocked) msg += ` — 🕐 ${slot.nextCheckinTime}`;
-      if (slot.nextTenant?.phone && !isNextBlocked) msg += ` — 📞 ${slot.nextTenant.phone}`;
-      msg += "\n";
-      if (slot.hoursAvailable !== null) {
-        const days = Math.floor(slot.hoursAvailable / 24);
-        msg += `⏱️ Temps disponible : ${days} jour${days > 1 ? "s" : ""}\n`;
+      // Departure / block_end event
+      const depName = isBlocked
+        ? (extractBlockReason(slot.checkoutBooking.notes) || "Bloqué")
+        : (slot.tenant
+          ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
+          : extractTenantFromNotes(slot.checkoutBooking.notes));
+
+      events.push({
+        date: slot.checkoutBooking.checkout_date,
+        listingId: slot.listingId,
+        listingTitle: slot.listingTitle,
+        type: isBlocked ? "block_end" : "departure",
+        tenantName: depName || "Non renseigné",
+        phone: (!isBlocked && slot.tenant?.phone) ? slot.tenant.phone : null,
+        time: !isBlocked ? slot.checkoutTime : null,
+        nights: !isBlocked ? slot.checkoutBooking.nights : null,
+        booking: slot.checkoutBooking,
+        staffMember: slot.staffMember,
+        hasFollowingArrival: !!slot.nextCheckinBooking,
+      });
+
+      // Arrival / block_start event for the next booking (if its checkin is within the month)
+      if (slot.nextCheckinBooking) {
+        const arrKey = `${slot.nextCheckinBooking.id}-checkin`;
+        const checkinDate = parseISO(slot.nextCheckinBooking.checkin_date);
+        if (!addedArrivals.has(arrKey) && isWithinInterval(checkinDate, { start: monthStart, end: monthEnd })) {
+          addedArrivals.add(arrKey);
+          const isNextBlocked = slot.nextCheckinBooking.status === "owner_blocked";
+          const arrName = isNextBlocked
+            ? (extractBlockReason(slot.nextCheckinBooking.notes) || "Blocage")
+            : (slot.nextTenant
+              ? `${slot.nextTenant.first_name} ${slot.nextTenant.last_name || ""}`.trim()
+              : extractTenantFromNotes(slot.nextCheckinBooking.notes));
+
+          events.push({
+            date: slot.nextCheckinBooking.checkin_date,
+            listingId: slot.listingId,
+            listingTitle: slot.listingTitle,
+            type: isNextBlocked ? "block_start" : "arrival",
+            tenantName: arrName || "Non renseigné",
+            phone: (!isNextBlocked && slot.nextTenant?.phone) ? slot.nextTenant.phone : null,
+            time: !isNextBlocked ? slot.nextCheckinTime : null,
+            nights: !isNextBlocked ? slot.nextCheckinBooking.nights : null,
+            booking: slot.nextCheckinBooking,
+            staffMember: slot.staffMember,
+          });
+        }
       }
-    } else {
-      msg += `👤 Pas de réservation suivante\n`;
     }
-    return msg;
+
+    // Sort by date, then departures before arrivals, then listing
+    events.sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      const typeOrder = { departure: 0, block_end: 0, arrival: 1, block_start: 1 };
+      if (typeOrder[a.type] !== typeOrder[b.type]) return typeOrder[a.type] - typeOrder[b.type];
+      return a.listingTitle.localeCompare(b.listingTitle);
+    });
+
+    return events;
+  }, [monthStart, monthEnd]);
+
+  const formatEventLine = (ev: CleaningEvent, showListing: boolean): string => {
+    let lines: string[] = [];
+    if (showListing) lines.push(`  🏠 ${ev.listingTitle}`);
+
+    if (ev.type === "departure") {
+      let depLine = `  🚪 DÉPART — ${ev.tenantName}`;
+      if (ev.time) depLine += ` — 🕐 ${ev.time}`;
+      lines.push(depLine);
+      lines.push("  🧹 Ménage à faire");
+    } else if (ev.type === "block_end") {
+      lines.push(`  🔒 FIN BLOCAGE — ${ev.tenantName}`);
+      lines.push("  🧹 Ménage à faire");
+    } else if (ev.type === "arrival") {
+      let arrLine = `  🔑 ARRIVÉE — ${ev.tenantName}`;
+      if (ev.time) arrLine += ` — 🕐 ${ev.time}`;
+      if (ev.phone) arrLine += ` — 📞 ${ev.phone}`;
+      if (ev.nights) arrLine += ` — ${ev.nights} nuit${ev.nights > 1 ? "s" : ""}`;
+      lines.push(arrLine);
+    } else if (ev.type === "block_start") {
+      lines.push(`  🔒 DÉBUT BLOCAGE — ${ev.tenantName}`);
+    }
+
+    return lines.join("\n");
+  };
+
+  const buildDayByDayMessage = (events: CleaningEvent[], header: string): string => {
+    if (events.length === 0) return "";
+    let msg = header + "\n" + "═".repeat(40) + "\n";
+
+    // Group by date
+    const grouped = new Map<string, CleaningEvent[]>();
+    for (const ev of events) {
+      const arr = grouped.get(ev.date) || [];
+      arr.push(ev);
+      grouped.set(ev.date, arr);
+    }
+
+    let first = true;
+    for (const [dateStr, dayEvents] of grouped) {
+      if (!first) msg += "\n  " + "─".repeat(30) + "\n";
+      first = false;
+
+      const dayLabel = format(parseISO(dateStr), "EEEE dd MMMM", { locale: fr });
+      msg += `\n📅 ${dayLabel.toUpperCase()}\n\n`;
+
+      // Check if there are departures and arrivals on the same day for same listing (tight turnover)
+      const depListings = new Set(dayEvents.filter(e => e.type === "departure" || e.type === "block_end").map(e => e.listingId));
+      const arrListings = new Set(dayEvents.filter(e => e.type === "arrival" || e.type === "block_start").map(e => e.listingId));
+      const tightTurnovers = new Set([...depListings].filter(id => arrListings.has(id)));
+
+      for (const ev of dayEvents) {
+        const isTightTurnover = tightTurnovers.has(ev.listingId) && (ev.type === "departure" || ev.type === "block_end");
+        msg += formatEventLine(ev, true);
+        if (isTightTurnover) msg += "\n  ⚠️ Enchaînement serré !";
+        msg += "\n";
+      }
+
+      // Check departures without following arrival
+      const departures = dayEvents.filter(e => e.type === "departure" || e.type === "block_end");
+      for (const dep of departures) {
+        if (!dep.hasFollowingArrival && !tightTurnovers.has(dep.listingId)) {
+          // no arrival message already shown via the event itself
+        }
+      }
+    }
+
+    return msg.trim();
   };
 
   const generateFullMessage = () => {
-    if (cleaningSlots.length === 0) return "";
+    const events = buildEvents(cleaningSlots);
     const monthLabel = format(currentMonth, "MMMM yyyy", { locale: fr });
-    let msg = `🧹 PLANNING MÉNAGE — ${monthLabel.toUpperCase()}\n` + "═".repeat(40) + "\n\n";
-    for (const slot of cleaningSlots) msg += buildSlotText(slot) + "\n";
-    return msg.trim();
+    return buildDayByDayMessage(events, `🧹 PLANNING MÉNAGE — ${monthLabel.toUpperCase()}`);
   };
 
   const generatePerStaffMessage = (staff: CleaningStaff) => {
     const staffSlots = cleaningSlots
       .filter(s => s.staffMember?.id === staff.id)
       .sort((a, b) => a.cleaningDate.getTime() - b.cleaningDate.getTime());
-    if (staffSlots.length === 0) return "";
+    const events = buildEvents(staffSlots);
     const monthLabel = format(currentMonth, "MMMM yyyy", { locale: fr });
-    let msg = `🧹 PLANNING MÉNAGE — ${staff.name.toUpperCase()}\n`;
-    msg += `📆 ${monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}\n`;
-    msg += "═".repeat(40) + "\n\n";
-
-    // Group by date for clarity
-    let lastDateKey = "";
-    for (const slot of staffSlots) {
-      const dateKey = format(slot.cleaningDate, "yyyy-MM-dd");
-      if (dateKey !== lastDateKey) {
-        if (lastDateKey) msg += "─".repeat(30) + "\n\n";
-        const dayLabel = format(slot.cleaningDate, "📅 EEEE dd MMMM", { locale: fr }).toUpperCase();
-        msg += `${dayLabel}\n\n`;
-        lastDateKey = dateKey;
-      }
-      msg += buildSlotTextCompact(slot) + "\n";
-    }
-    return msg.trim();
-  };
-
-  const buildSlotTextCompact = (slot: CleaningSlot) => {
-    const urgencyLabel = slot.hoursAvailable !== null && slot.hoursAvailable <= 24
-      ? " ⚠️ URGENT" : slot.hoursAvailable !== null && slot.hoursAvailable <= 48 ? " ⏰" : "";
-
-    let msg = `🏠 ${slot.listingTitle}${urgencyLabel}\n`;
-
-    const isBlocked = slot.checkoutBooking.status === 'owner_blocked';
-    const tenantName = isBlocked
-      ? (extractBlockReason(slot.checkoutBooking.notes) || "Bloqué")
-      : (slot.tenant
-        ? `${slot.tenant.first_name} ${slot.tenant.last_name || ""}`.trim()
-        : extractTenantFromNotes(slot.checkoutBooking.notes));
-    msg += `   ↗ ${isBlocked ? "Fin blocage" : "Départ"} : ${tenantName || "Non renseigné"}`;
-    if (slot.checkoutTime && !isBlocked) msg += ` — 🕐 ${slot.checkoutTime}`;
-    if (slot.tenant?.phone && !isBlocked) msg += ` — 📞 ${slot.tenant.phone}`;
-    if (!isBlocked) msg += ` (${slot.checkoutBooking.nights} nuit${slot.checkoutBooking.nights > 1 ? "s" : ""})`;
-    msg += "\n";
-
-    if (slot.nextCheckinBooking) {
-      const isNextBlocked = slot.nextCheckinBooking.status === 'owner_blocked';
-      const nextName = isNextBlocked
-        ? (extractBlockReason(slot.nextCheckinBooking.notes) || "Blocage")
-        : (slot.nextTenant
-          ? `${slot.nextTenant.first_name} ${slot.nextTenant.last_name || ""}`.trim()
-          : extractTenantFromNotes(slot.nextCheckinBooking.notes));
-      const nextCheckin = format(parseISO(slot.nextCheckinBooking.checkin_date), "EEEE dd/MM", { locale: fr });
-      msg += `   ↘ ${isNextBlocked ? "Début blocage" : "Arrivée"} : ${nextName || "Non renseigné"} — ${nextCheckin}`;
-      if (slot.nextCheckinTime && !isNextBlocked) msg += ` — 🕐 ${slot.nextCheckinTime}`;
-      if (slot.nextTenant?.phone && !isNextBlocked) msg += ` — 📞 ${slot.nextTenant.phone}`;
-      msg += "\n";
-      if (slot.hoursAvailable !== null) {
-        const days = Math.floor(slot.hoursAvailable / 24);
-        msg += `   ⏱️ ${days === 0 ? "Même jour !" : `${days} jour${days > 1 ? "s" : ""} avant arrivée`}\n`;
-      }
-    } else {
-      msg += `   ✅ Pas d'arrivée prévue ensuite\n`;
-    }
-    return msg;
+    return buildDayByDayMessage(events, `🧹 PLANNING MÉNAGE — ${staff.name.toUpperCase()}\n📆 ${monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1)}`);
   };
 
   const handleCopyAll = () => {
