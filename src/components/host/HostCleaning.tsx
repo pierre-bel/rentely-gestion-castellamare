@@ -249,7 +249,6 @@ export function HostCleaning() {
     nights: number | null;
     booking: Booking;
     staffMember: CleaningStaff | null;
-    hasFollowingArrival?: boolean; // for departures: is there an arrival same day same listing?
   }
 
   const buildEvents = useCallback((slotsToUse: CleaningSlot[]): CleaningEvent[] => {
