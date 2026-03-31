@@ -394,14 +394,6 @@ export function HostCleaning() {
         if (isTightTurnover) msg += "\n  ⚠️ Enchaînement serré !";
         msg += "\n";
       }
-
-      // Check departures without following arrival
-      const departures = dayEvents.filter(e => e.type === "departure" || e.type === "block_end");
-      for (const dep of departures) {
-        if (!dep.hasFollowingArrival && !tightTurnovers.has(dep.listingId)) {
-          // no arrival message already shown via the event itself
-        }
-      }
     }
 
     return msg.trim();
