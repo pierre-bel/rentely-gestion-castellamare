@@ -22,7 +22,7 @@ function getCivility(gender: string | null): string {
 async function buildVariablesFromBooking(supabase: any, bookingId: string): Promise<Record<string, string>> {
   const { data: booking } = await supabase
     .from('bookings')
-    .select('id, checkin_date, checkout_date, nights, guests, total_price, guest_user_id, listing_id, pricing_breakdown, igloohome_code')
+    .select('id, checkin_date, checkout_date, checkin_time, checkout_time, nights, guests, total_price, guest_user_id, listing_id, pricing_breakdown, igloohome_code, access_token')
     .eq('id', bookingId)
     .single();
 
@@ -30,7 +30,7 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
 
   const { data: listing } = await supabase
     .from('listings')
-    .select('title, address, city, country')
+    .select('title, address, city, country, host_user_id, checkin_from, checkout_until')
     .eq('id', booking.listing_id)
     .single();
 
@@ -42,14 +42,15 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
   let tenantEmail = '';
   let tenantGender: string | null = null;
 
+  const serviceClient = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  );
+
   if (tenantId) {
-    const serviceClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
     const { data: tenant } = await serviceClient
       .from('tenants')
-      .select('first_name, last_name, email, gender')
+      .select('first_name, last_name, email, gender, phone')
       .eq('id', tenantId)
       .single();
     if (tenant) {
@@ -73,14 +74,51 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
     }
   }
 
-  // Fetch host's bank settings for QR generation
-  const listingHostId = listing ? (await supabase.from('listings').select('host_user_id').eq('id', booking.listing_id).single()).data?.host_user_id : null;
+  // Checkin/checkout times
+  let checkinTime = booking.checkin_time || '';
+  let checkoutTime = booking.checkout_time || '';
+  if (!checkinTime && listing?.checkin_from) checkinTime = listing.checkin_from;
+  if (!checkoutTime && listing?.checkout_until) checkoutTime = listing.checkout_until;
+
+  // Payment items
+  const { data: paymentItems } = await serviceClient
+    .from('booking_payment_items')
+    .select('label, amount, is_paid, due_date')
+    .eq('booking_id', booking.id)
+    .order('sort_order', { ascending: true });
+
+  const items = paymentItems || [];
+  let depositAmount = '';
+  let depositDueDate = '';
+  let balanceAmount = '';
+  let balanceDueDate = '';
+  let paymentAmount = '';
+  let paymentLabel = '';
+  let paymentDueDate = '';
+
+  const depositItem = items.find((i: any) => i.label?.toLowerCase().includes("acompte")) || items[0];
+  const balanceItem = items.find((i: any) => i.label?.toLowerCase().includes("solde") || i.label?.toLowerCase().includes("décompte")) || items[items.length - 1];
+
+  if (depositItem) {
+    depositAmount = `${Number(depositItem.amount).toFixed(2)} €`;
+    depositDueDate = depositItem.due_date || '';
+  }
+  if (balanceItem && balanceItem !== depositItem) {
+    balanceAmount = `${Number(balanceItem.amount).toFixed(2)} €`;
+    balanceDueDate = balanceItem.due_date || '';
+  }
+
+  const nextUnpaid = items.find((p: any) => !p.is_paid);
+  if (nextUnpaid) {
+    paymentAmount = `${Number(nextUnpaid.amount).toFixed(2)} €`;
+    paymentLabel = nextUnpaid.label || '';
+    paymentDueDate = nextUnpaid.due_date || '';
+  }
+
+  // Bank QR info
+  const listingHostId = listing?.host_user_id || null;
   let qrPaiementHtml = '';
   if (listingHostId) {
-    const serviceClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
     const { data: bankSettings } = await serviceClient
       .from('portal_settings')
       .select('bank_beneficiary_name, bank_iban, bank_bic, bank_transfer_reference_template')
@@ -89,7 +127,6 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
 
     if (bankSettings?.bank_beneficiary_name && bankSettings?.bank_iban && bankSettings?.bank_bic) {
       const refTemplate = bankSettings.bank_transfer_reference_template || '{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}';
-      // Build reference from template
       let ref = refTemplate;
       const refVars: Record<string, string> = {
         guest_last_name: tenantLastName || '',
@@ -103,19 +140,6 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
       }
       ref = ref.substring(0, 140);
 
-      // Build EPC string and generate QR as base64
-      const epcLines = [
-        'BCD', '002', '1', 'SCT',
-        bankSettings.bank_bic.replace(/\s/g, '').toUpperCase(),
-        bankSettings.bank_beneficiary_name.substring(0, 70),
-        bankSettings.bank_iban.replace(/\s/g, '').toUpperCase(),
-        `EUR${Number(booking.total_price).toFixed(2)}`,
-        '', '', ref,
-      ];
-      const epcString = epcLines.join('\n');
-      
-      // Use a simple QR generation approach for edge functions
-      // We'll embed the EPC data as text since we can't use canvas in Deno
       qrPaiementHtml = `<div style="text-align:center;margin:16px 0;padding:16px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb"><p style="font-size:13px;color:#374151;margin:0 0 8px">💳 Paiement par virement SEPA</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>Bénéficiaire :</strong> ${bankSettings.bank_beneficiary_name}</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>IBAN :</strong> ${bankSettings.bank_iban}</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>BIC :</strong> ${bankSettings.bank_bic}</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>Montant :</strong> ${Number(booking.total_price).toFixed(2)} €</p><p style="font-size:12px;color:#6b7280;margin:0"><strong>Communication :</strong> ${ref}</p></div>`;
     }
   }
@@ -128,6 +152,8 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
     guest_civility: getCivility(tenantGender),
     checkin_date: booking.checkin_date,
     checkout_date: booking.checkout_date,
+    checkin_time: checkinTime,
+    checkout_time: checkoutTime,
     nights: String(booking.nights),
     guests_count: String(booking.guests),
     total_price: booking.total_price ? `${Number(booking.total_price).toFixed(2)} €` : '',
@@ -137,8 +163,15 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
     listing_country: listing?.country || '',
     booking_id: booking.id,
     igloohome_code: booking.igloohome_code || '',
+    deposit_amount: depositAmount,
+    deposit_due_date: depositDueDate,
+    balance_amount: balanceAmount,
+    balance_due_date: balanceDueDate,
+    payment_amount: paymentAmount,
+    payment_label: paymentLabel,
+    payment_due_date: paymentDueDate,
     qr_paiement: qrPaiementHtml,
-    portal_link: `https://gestioncastellamare.lovable.app/booking/${booking.access_token}`,
+    portal_link: `https://gestioncastellamare.lovable.app/booking/${booking.access_token || ''}`,
   };
 }
 
