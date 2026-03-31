@@ -349,10 +349,8 @@ export function HostCleaning() {
       let depLine = `  🚪 DÉPART — ${ev.tenantName}`;
       if (ev.time) depLine += ` — 🕐 ${ev.time}`;
       lines.push(depLine);
-      lines.push("  🧹 Ménage à faire");
     } else if (ev.type === "block_end") {
       lines.push(`  🔒 FIN BLOCAGE — ${ev.tenantName}`);
-      lines.push("  🧹 Ménage à faire");
     } else if (ev.type === "arrival") {
       let arrLine = `  🔑 ARRIVÉE — ${ev.tenantName}`;
       if (ev.time) arrLine += ` — 🕐 ${ev.time}`;
