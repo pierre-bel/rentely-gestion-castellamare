@@ -1,65 +1,60 @@
 
 
-## Plan : Amélioration complète du système de contrats
+## Plan : Améliorer le planning ménage (message à copier-coller)
 
-### Contexte
+### Problème actuel
 
-Le PDF fourni montre un contrat professionnel avec : un bloc d'adresse décalé (style Word), des encadrés, des espacements contrôlés, du gras, des tableaux, et une mise en page soignée. L'éditeur actuel TipTap manque de fonctionnalités de mise en page avancée (indentation/blocs décalés, encadrés, espacements). De plus, la liste de réservations dans le dialog de génération affiche le nom du propriétaire au lieu du locataire, et il n'y a pas de bouton "Générer contrat" depuis les réservations ni d'export PDF/Word.
+Le message est organisé par **créneau de ménage** (chaque départ génère un bloc). C'est confus car les arrivées et départs sont mélangés dans un même bloc. Le format n'est pas chronologique jour par jour.
 
-### Changements prévus
+### Nouveau format proposé
 
-#### 1. Enrichir l'éditeur de contrats (ContractTemplateEditor + ContractToolbar)
+Un planning **jour par jour**, listant clairement chaque événement (départ ou arrivée) pour chaque jour du mois où il se passe quelque chose :
 
-Ajouter les extensions TipTap suivantes :
-- **Indent / Text Indent** — possibilité de décaler un bloc vers la droite (pour les adresses comme dans le PDF)
-- **Blockquote** — pour les encadrés avec bordure
-- **Spacer** — bouton pour insérer un espace vertical (paragraphe vide ou `<br>`)  
-- **Font size** — sélecteur de taille de police
-- Vérifier que **gras, tableaux, listes numérotées** fonctionnent déjà correctement dans le rendu final
+```text
+🧹 PLANNING MÉNAGE — AVRIL 2026
+════════════════════════════════
 
-Nouveaux boutons dans la toolbar :
-- Indentation gauche/droite (augmenter/diminuer le retrait)
-- Encadré (blockquote stylé avec bordure)
-- Espace vertical
-- Taille de police
+📅 SAMEDI 4 AVRIL
 
-#### 2. Corriger l'affichage des réservations dans ContractGenerateDialog
+  🏠 Appartement Mer
+  🚪 DÉPART — Jean Dupont — 🕐 10:00
+  🧹 Ménage à faire
 
-Actuellement le `SelectItem` affiche correctement `guest.first_name guest.last_name — listing.title (date)` (le code est bon mais les profils ne se chargent peut-être pas). Vérifier et s'assurer que l'affichage montre :
-- **Nom du locataire** (pas du propriétaire)
-- **Dates du séjour** (checkin → checkout)
-- **Nom de l'appartement**
+  🏠 Appartement Mer
+  🔑 ARRIVÉE — Marie Martin — 🕐 16:00 — 📞 0612345678 — 7 nuits
 
-#### 3. Bouton "Générer contrat" sur chaque réservation
+  ────────────────────────────
 
-Ajouter dans `BookingDetailDialog` un bouton "Générer contrat" qui :
-- Ouvre le `ContractGenerateDialog` pré-rempli avec la réservation sélectionnée
-- Ou génère directement le contrat avec le premier/seul template disponible
+📅 LUNDI 6 AVRIL
 
-#### 4. Export PDF et Word du contrat généré
+  🏠 Studio Plage
+  🚪 DÉPART — Pierre Leroy — 🕐 10:00
+  ✅ Pas d'arrivée prévue ensuite
 
-Dans `ContractPreviewDialog`, ajouter deux boutons :
-- **Télécharger en PDF** — utiliser `html2canvas` + `jsPDF` pour convertir le HTML en PDF
-- **Télécharger en Word** — utiliser `html-docx-js` ou `docx` pour générer un `.docx` depuis le HTML
+  ────────────────────────────
 
-#### 5. Améliorer le rendu des contrats générés
+📅 MERCREDI 8 AVRIL
 
-S'assurer que les styles inline dans le HTML généré (indentation, encadrés, tableaux) sont correctement rendus dans :
-- L'aperçu du dialogue
-- L'export PDF
-- L'export Word
+  🏠 Studio Plage
+  🔒 FIN BLOCAGE — Travaux
+  🧹 Ménage à faire
 
-### Détails techniques
+  🏠 Studio Plage
+  🔑 ARRIVÉE — Sophie Blanc — 🕐 15:00 — 📞 0698765432 — 3 nuits
+```
 
-**Fichiers modifiés :**
-- `src/components/host/ContractToolbar.tsx` — Ajout boutons indent, blockquote, spacer, font size
-- `src/components/host/ContractTemplateEditor.tsx` — Ajout extensions TipTap (Blockquote, Indent)
-- `src/components/host/ContractGenerateDialog.tsx` — Corriger affichage réservations, ajouter prop pour pré-sélection
-- `src/components/host/ContractPreviewDialog.tsx` — Ajout boutons export PDF et Word
-- `src/components/host/BookingDetailDialog.tsx` — Ajout bouton "Générer contrat"
-- `src/components/host/HostContracts.tsx` — Enrichir l'affichage des contrats (nom locataire, appartement)
+### Changements techniques
 
-**Dépendances à installer :**
-- `jspdf` + `html2canvas` pour export PDF
-- `html-docx-js` ou approche alternative pour export Word
+**Fichier modifié** : `src/components/host/HostCleaning.tsx`
+
+- Réécrire `generateFullMessage()` et `generatePerStaffMessage()` pour :
+  1. Collecter tous les événements du mois (départs + arrivées) avec leurs détails
+  2. Les grouper par date
+  3. Pour chaque jour, lister chronologiquement :
+     - **Départs** : nom du locataire, heure de départ, mention "Ménage à faire"
+     - **Arrivées** : nom du locataire, heure d'arrivée, téléphone, nombre de nuits
+     - **Blocages** : "Fin blocage" / "Début blocage" avec raison
+  4. Ajouter les indicateurs d'urgence (⚠️ si enchaînement serré)
+
+- Les fonctions `buildSlotText()` et `buildSlotTextCompact()` seront remplacées par une logique basée sur les événements plutôt que sur les slots de ménage
 
