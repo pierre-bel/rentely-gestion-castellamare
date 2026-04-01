@@ -9,7 +9,6 @@ import {
   DollarSign, 
   ArrowUpCircle, 
   Wallet, 
-  Clock, 
   Clock
 } from "lucide-react";
 import { subMonths, startOfMonth, addMonths } from "date-fns";
