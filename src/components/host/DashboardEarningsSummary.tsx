@@ -10,7 +10,7 @@ import {
   ArrowUpCircle, 
   Wallet, 
   Clock, 
-  Receipt 
+  Clock
 } from "lucide-react";
 import { subMonths, startOfMonth, addMonths } from "date-fns";
 import type { HostEarningsReport } from "./types/earnings";
