@@ -19,6 +19,13 @@ function getCivility(gender: string | null): string {
   return '';
 }
 
+function formatDateFR(dateStr: string | null | undefined): string {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  return `${parts[2]}-${parts[1]}-${parts[0]}`;
+}
+
 async function buildVariablesFromBooking(supabase: any, bookingId: string): Promise<Record<string, string>> {
   const { data: booking } = await supabase
     .from('bookings')
