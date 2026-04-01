@@ -99,8 +99,8 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-        {[...Array(6)].map((_, i) => (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+        {[...Array(5)].map((_, i) => (
           <Card key={i} className="bg-muted/5">
             <CardContent className="p-6">
               <Skeleton className="h-5 w-32 mb-4" />

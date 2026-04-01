@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { TextLinkButton } from "@/components/ui/text-link-button";
 import DashboardEarningsSummary from "@/components/host/DashboardEarningsSummary";
 import DashboardRecentListings from "@/components/host/DashboardRecentListings";
-import DashboardInbox from "@/components/host/DashboardInbox";
+import DashboardRecentEmails from "@/components/host/DashboardRecentEmails";
 import DashboardRecentBookings from "@/components/host/DashboardRecentBookings";
 import DashboardUpcomingBookings from "@/components/host/DashboardUpcomingBookings";
 import DashboardRecentPayouts from "@/components/host/DashboardRecentPayouts";
+import DashboardOverduePayments from "@/components/host/DashboardOverduePayments";
 
 const HostDashboard = () => {
   const { user } = useAuth();
@@ -35,7 +36,7 @@ const HostDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Prochaines locations et Messagerie */}
+      {/* Prochaines locations et Derniers e-mails */}
       {user && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
           {/* Prochaines locations - 2/3 */}
@@ -55,19 +56,19 @@ const HostDashboard = () => {
             </Card>
           </div>
 
-          {/* Messagerie - 1/3 */}
+          {/* Derniers e-mails - 1/3 */}
           <div className="lg:col-span-1">
             <Card className="bg-card h-full flex flex-col">
               <CardHeader className="border-b pb-4">
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-xl font-semibold">Messagerie</CardTitle>
+                  <CardTitle className="text-xl font-semibold">Derniers e-mails</CardTitle>
                   <TextLinkButton href="/host/inbox">
                     Voir tout
                   </TextLinkButton>
                 </div>
               </CardHeader>
               <CardContent className="p-0 flex-1">
-                <DashboardInbox userId={user.id} />
+                <DashboardRecentEmails userId={user.id} />
               </CardContent>
             </Card>
           </div>
@@ -109,7 +110,7 @@ const HostDashboard = () => {
         </div>
       )}
 
-      {/* Versements */}
+      {/* Versements avec paiements en retard */}
       {user && (
         <div className="mt-6">
           <Card className="bg-card h-full flex flex-col">
@@ -122,6 +123,7 @@ const HostDashboard = () => {
               </div>
             </CardHeader>
             <CardContent className="p-6 flex-1">
+              <DashboardOverduePayments userId={user.id} />
               <DashboardRecentPayouts userId={user.id} />
             </CardContent>
           </Card>
