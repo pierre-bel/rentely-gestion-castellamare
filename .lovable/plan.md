@@ -1,60 +1,60 @@
 
 
-## Plan : Améliorer le planning ménage (message à copier-coller)
+## Plan : Corrections multiples du tableau de bord hôte et des balises e-mail
 
-### Problème actuel
+### 1. Corriger la balise `{{portal_link}}` dans les e-mails automatiques
 
-Le message est organisé par **créneau de ménage** (chaque départ génère un bloc). C'est confus car les arrivées et départs sont mélangés dans un même bloc. Le format n'est pas chronologique jour par jour.
+**Problème** : Les deux Edge Functions (`process-email-automations` et `send-email`) génèrent `portal_link` avec le chemin `/booking/` alors que la route réelle est `/portal/:token`.
 
-### Nouveau format proposé
+**Correction** :
+- `supabase/functions/process-email-automations/index.ts` ligne 450 : changer `/booking/` → `/portal/`
+- `supabase/functions/send-email/index.ts` ligne 174 : idem
 
-Un planning **jour par jour**, listant clairement chaque événement (départ ou arrivée) pour chaque jour du mois où il se passe quelque chose :
+### 2. Formater toutes les dates en JJ-MM-AAAA dans les balises e-mail
 
-```text
-🧹 PLANNING MÉNAGE — AVRIL 2026
-════════════════════════════════
+**Problème** : Les dates `checkin_date`, `checkout_date`, `deposit_due_date`, `balance_due_date`, `payment_due_date` sont renvoyées au format brut ISO (`2026-04-15`).
 
-📅 SAMEDI 4 AVRIL
+**Correction** dans les deux Edge Functions (`process-email-automations` et `send-email`) :
+- Ajouter une fonction utilitaire `formatDateFR(dateStr)` → `"15-04-2026"`
+- L'appliquer à toutes les variables de dates dans `buildVariablesForBooking`
 
-  🏠 Appartement Mer
-  🚪 DÉPART — Jean Dupont — 🕐 10:00
-  🧹 Ménage à faire
+### 3. Supprimer "Frais payés" de l'aperçu des revenus
 
-  🏠 Appartement Mer
-  🔑 ARRIVÉE — Marie Martin — 🕐 16:00 — 📞 0612345678 — 7 nuits
+**Fichier** : `src/components/host/DashboardEarningsSummary.tsx`
+- Retirer l'entrée `{ label: "Frais payés", ... }` du tableau `metrics` (ligne ~171-181)
+- Passer la grille de 6 à 5 colonnes (`lg:grid-cols-5`)
 
-  ────────────────────────────
+### 4. Remplacer la messagerie du dashboard par les derniers e-mails reçus
 
-📅 LUNDI 6 AVRIL
+**Problème** : La section "Messagerie" affiche les conversations non lues (messages internes). L'utilisateur veut voir les derniers e-mails reçus (`inbox_emails`).
 
-  🏠 Studio Plage
-  🚪 DÉPART — Pierre Leroy — 🕐 10:00
-  ✅ Pas d'arrivée prévue ensuite
+**Fichier** : `src/pages/host/Dashboard.tsx`
+- Remplacer `DashboardInbox` par un nouveau composant `DashboardRecentEmails`
+- Renommer le titre de "Messagerie" en "Derniers e-mails"
+- Le lien "Voir tout" pointe vers `/host/inbox`
 
-  ────────────────────────────
+**Nouveau composant** : `src/components/host/DashboardRecentEmails.tsx`
+- Query `inbox_emails` filtrée par `host_id`, triée par `received_at desc`, limitée à 7 lignes
+- Afficher : expéditeur (`from_name` ou `from_email`), sujet, date, indicateur lu/non lu
+- Style similaire aux autres composants du dashboard
 
-📅 MERCREDI 8 AVRIL
+### 5. Afficher les paiements en retard dans la section Versements du dashboard
 
-  🏠 Studio Plage
-  🔒 FIN BLOCAGE — Travaux
-  🧹 Ménage à faire
+**Fichier** : `src/pages/host/Dashboard.tsx` et `src/components/host/DashboardRecentPayouts.tsx`
 
-  🏠 Studio Plage
-  🔑 ARRIVÉE — Sophie Blanc — 🕐 15:00 — 📞 0698765432 — 3 nuits
-```
+- Avant le tableau des versements, ajouter un bloc "Paiements en retard"
+- Requêter les `booking_payment_items` non payés avec `due_date < aujourd'hui`, joints aux bookings confirmés de l'hôte
+- Afficher : nom du locataire, bien, montant dû, date d'échéance, avec style rouge/destructif
+- Réutiliser la logique existante de `OverduePaymentsList` en version simplifiée (sans bouton rappel, juste l'info)
 
-### Changements techniques
+### Fichiers modifiés
 
-**Fichier modifié** : `src/components/host/HostCleaning.tsx`
-
-- Réécrire `generateFullMessage()` et `generatePerStaffMessage()` pour :
-  1. Collecter tous les événements du mois (départs + arrivées) avec leurs détails
-  2. Les grouper par date
-  3. Pour chaque jour, lister chronologiquement :
-     - **Départs** : nom du locataire, heure de départ, mention "Ménage à faire"
-     - **Arrivées** : nom du locataire, heure d'arrivée, téléphone, nombre de nuits
-     - **Blocages** : "Fin blocage" / "Début blocage" avec raison
-  4. Ajouter les indicateurs d'urgence (⚠️ si enchaînement serré)
-
-- Les fonctions `buildSlotText()` et `buildSlotTextCompact()` seront remplacées par une logique basée sur les événements plutôt que sur les slots de ménage
+| Fichier | Modification |
+|---|---|
+| `supabase/functions/process-email-automations/index.ts` | Fix portal_link + formatage dates |
+| `supabase/functions/send-email/index.ts` | Fix portal_link + formatage dates |
+| `src/components/host/DashboardEarningsSummary.tsx` | Retirer "Frais payés" |
+| `src/pages/host/Dashboard.tsx` | Remplacer messagerie par e-mails, intégrer retards |
+| `src/components/host/DashboardRecentEmails.tsx` | Nouveau composant |
+| `src/components/host/DashboardRecentPayouts.tsx` | Ajouter section paiements en retard |
 
