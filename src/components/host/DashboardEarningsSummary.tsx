@@ -170,15 +170,6 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
       borderColor: "hover:border-accent-warm/30",
       href: "/host/payouts",
     },
-    {
-      label: "Frais payés",
-      value: formatCurrency(summaryData.hostFeesPaid),
-      icon: Receipt,
-      bgColor: "bg-muted",
-      iconColor: "text-muted-foreground",
-      borderColor: "hover:border-border",
-      href: "/host/earnings-report",
-    },
   ];
 
   return (
