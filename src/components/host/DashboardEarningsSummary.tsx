@@ -9,8 +9,7 @@ import {
   DollarSign, 
   ArrowUpCircle, 
   Wallet, 
-  Clock, 
-  Receipt 
+  Clock
 } from "lucide-react";
 import { subMonths, startOfMonth, addMonths } from "date-fns";
 import type { HostEarningsReport } from "./types/earnings";
@@ -99,8 +98,8 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-        {[...Array(6)].map((_, i) => (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+        {[...Array(5)].map((_, i) => (
           <Card key={i} className="bg-muted/5">
             <CardContent className="p-6">
               <Skeleton className="h-5 w-32 mb-4" />
@@ -170,19 +169,10 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
       borderColor: "hover:border-accent-warm/30",
       href: "/host/payouts",
     },
-    {
-      label: "Frais payés",
-      value: formatCurrency(summaryData.hostFeesPaid),
-      icon: Receipt,
-      bgColor: "bg-muted",
-      iconColor: "text-muted-foreground",
-      borderColor: "hover:border-border",
-      href: "/host/earnings-report",
-    },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
       {metrics.map((metric, index) => {
         const Icon = metric.icon;
         return (

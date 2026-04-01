@@ -19,6 +19,13 @@ function getCivility(gender: string | null): string {
   return '';
 }
 
+function formatDateFR(dateStr: string | null | undefined): string {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  return `${parts[2]}-${parts[1]}-${parts[0]}`;
+}
+
 function addDays(date: Date, days: number): Date {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
@@ -426,8 +433,8 @@ async function buildVariablesForBooking(
     guest_full_name: `${tenantFirstName} ${tenantLastName}`.trim(),
     guest_email: tenantEmail,
     guest_civility: getCivility(tenantGender),
-    checkin_date: booking.checkin_date,
-    checkout_date: booking.checkout_date,
+    checkin_date: formatDateFR(booking.checkin_date),
+    checkout_date: formatDateFR(booking.checkout_date),
     checkin_time: checkinTime,
     checkout_time: checkoutTime,
     nights: String(booking.nights),
@@ -441,12 +448,12 @@ async function buildVariablesForBooking(
     igloohome_code: booking.igloohome_code || '',
     payment_amount: paymentAmount,
     payment_label: paymentLabel,
-    payment_due_date: paymentDueDate,
+    payment_due_date: formatDateFR(paymentDueDate),
     deposit_amount: depositAmount,
-    deposit_due_date: depositDueDate,
+    deposit_due_date: formatDateFR(depositDueDate),
     balance_amount: balanceAmount,
-    balance_due_date: balanceDueDate,
+    balance_due_date: formatDateFR(balanceDueDate),
     qr_paiement: qrPaiementHtml,
-    portal_link: `https://gestioncastellamare.lovable.app/booking/${booking.access_token || ''}`,
+    portal_link: `https://gestioncastellamare.lovable.app/portal/${booking.access_token || ''}`,
   };
 }
