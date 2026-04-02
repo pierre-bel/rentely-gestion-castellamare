@@ -606,14 +606,6 @@ export default function HostBookings() {
                 toast({ title: "Filtre par défaut enregistré" });
               }}
             />
-              maxPrice={maxPrice}
-              checkinStart={checkinStart}
-              checkinEnd={checkinEnd}
-              checkoutStart={checkoutStart}
-              checkoutEnd={checkoutEnd}
-              onApplyFilters={handleApplyFilters}
-              onClearFilters={handleClearFilters}
-            />
             <Select value={sortValue} onValueChange={setSortValue}>
               <SelectTrigger className="w-[160px] sm:w-[200px]">
                 <SelectValue placeholder="Trier par" />

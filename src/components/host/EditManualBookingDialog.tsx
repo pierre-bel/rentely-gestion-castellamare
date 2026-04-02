@@ -15,7 +15,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, differenceInCalendarDays, parseISO, subDays, addDays } from "date-fns";
+import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
