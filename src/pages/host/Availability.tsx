@@ -231,6 +231,8 @@ export default function Availability() {
       listing_title: booking.listing_title,
       checkin_date: booking.checkin_date,
       checkout_date: booking.checkout_date,
+      checkin_time: booking.checkin_time,
+      checkout_time: booking.checkout_time,
       nights: booking.nights,
       guests: booking.guests,
       total_price: booking.total_price,
@@ -238,6 +240,8 @@ export default function Availability() {
       notes: booking.notes,
       status: booking.status,
       pricing_breakdown: booking.pricing_breakdown,
+      igloohome_code: booking.igloohome_code,
+      beach_cabin: booking.beach_cabin,
     });
     setEditOpen(true);
   };
