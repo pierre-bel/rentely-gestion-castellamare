@@ -1,60 +1,84 @@
 
 
-## Plan : Corrections multiples du tableau de bord hôte et des balises e-mail
+## Plan : 7 améliorations du tableau de bord et des réservations
 
-### 1. Corriger la balise `{{portal_link}}` dans les e-mails automatiques
+### 1. Renommer "Versements" en "Paiements" sur le dashboard
 
-**Problème** : Les deux Edge Functions (`process-email-automations` et `send-email`) génèrent `portal_link` avec le chemin `/booking/` alors que la route réelle est `/portal/:token`.
+**Fichier** : `src/pages/host/Dashboard.tsx` (ligne 119)
+- Changer `"Versements"` → `"Paiements"`
 
-**Correction** :
-- `supabase/functions/process-email-automations/index.ts` ligne 450 : changer `/booking/` → `/portal/`
-- `supabase/functions/send-email/index.ts` ligne 174 : idem
+**Fichier** : `src/components/host/DashboardEarningsSummary.tsx` (ligne 164)
+- Changer `"Versements en attente"` → `"Paiements en attente"`
 
-### 2. Formater toutes les dates en JJ-MM-AAAA dans les balises e-mail
-
-**Problème** : Les dates `checkin_date`, `checkout_date`, `deposit_due_date`, `balance_due_date`, `payment_due_date` sont renvoyées au format brut ISO (`2026-04-15`).
-
-**Correction** dans les deux Edge Functions (`process-email-automations` et `send-email`) :
-- Ajouter une fonction utilitaire `formatDateFR(dateStr)` → `"15-04-2026"`
-- L'appliquer à toutes les variables de dates dans `buildVariablesForBooking`
-
-### 3. Supprimer "Frais payés" de l'aperçu des revenus
+### 2. Aperçu des revenus : afficher le total YTD
 
 **Fichier** : `src/components/host/DashboardEarningsSummary.tsx`
-- Retirer l'entrée `{ label: "Frais payés", ... }` du tableau `metrics` (ligne ~171-181)
-- Passer la grille de 6 à 5 colonnes (`lg:grid-cols-5`)
+- Modifier la query pour filtrer sur l'année en cours (1er janvier → aujourd'hui) au lieu des 12 derniers mois glissants
+- Changer le sous-titre de la carte parent pour indiquer "Année en cours (YTD)"
 
-### 4. Remplacer la messagerie du dashboard par les derniers e-mails reçus
+### 3. Blocage : permettre de choisir un locataire (pas seulement un nom libre)
 
-**Problème** : La section "Messagerie" affiche les conversations non lues (messages internes). L'utilisateur veut voir les derniers e-mails reçus (`inbox_emails`).
+**Fichier** : `src/components/host/CreateManualBookingDialog.tsx` (lignes 500-511)
+- Pour le type `owner_blocked`, remplacer le champ texte libre "Raison / Nom" par deux champs :
+  - Un sélecteur de locataire (même select que pour les réservations normales, optionnel)
+  - Un champ texte "Raison / Notes" pour les notes
+- Lors de la sauvegarde, stocker le `tenant_id` dans `pricing_breakdown` comme pour les réservations normales, et le nom du locataire dans les notes
 
-**Fichier** : `src/pages/host/Dashboard.tsx`
-- Remplacer `DashboardInbox` par un nouveau composant `DashboardRecentEmails`
-- Renommer le titre de "Messagerie" en "Derniers e-mails"
-- Le lien "Voir tout" pointe vers `/host/inbox`
+### 4. Modifier la réservation : ajouter les échéances de paiement
 
-**Nouveau composant** : `src/components/host/DashboardRecentEmails.tsx`
-- Query `inbox_emails` filtrée par `host_id`, triée par `received_at desc`, limitée à 7 lignes
-- Afficher : expéditeur (`from_name` ou `from_email`), sujet, date, indicateur lu/non lu
-- Style similaire aux autres composants du dashboard
+**Fichier** : `src/components/host/EditManualBookingDialog.tsx`
+- Ajouter une query pour charger les `booking_payment_items` existants de la réservation
+- Afficher les échéances (libellé, montant, date d'échéance) en mode éditable, similaire à `CreateManualBookingDialog`
+- Lors du save : supprimer les anciens `booking_payment_items` puis insérer les nouveaux
+- Supprimer l'ancien système deposit/remaining basé sur `pricing_breakdown` et le remplacer par les payment items réels
 
-### 5. Afficher les paiements en retard dans la section Versements du dashboard
+### 5. Heures par défaut lors de l'encodage
 
-**Fichier** : `src/pages/host/Dashboard.tsx` et `src/components/host/DashboardRecentPayouts.tsx`
+**Fichier** : `src/components/host/CreateManualBookingDialog.tsx`
+- Actuellement les heures sont pré-remplies depuis les defaults du listing (lignes 179-184), mais si l'utilisateur ne les modifie pas et que le champ `<input type="time">` affiche la valeur, elle est bien envoyée au save (ligne 358). Vérifier que le `checkin_time` et `checkout_time` sont bien sauvegardés même si non modifiés par l'utilisateur.
+- Ajouter un texte indicatif sous les champs d'heure montrant "(Par défaut: HH:MM)" basé sur le listing sélectionné
 
-- Avant le tableau des versements, ajouter un bloc "Paiements en retard"
-- Requêter les `booking_payment_items` non payés avec `due_date < aujourd'hui`, joints aux bookings confirmés de l'hôte
-- Afficher : nom du locataire, bien, montant dû, date d'échéance, avec style rouge/destructif
-- Réutiliser la logique existante de `OverduePaymentsList` en version simplifiée (sans bouton rappel, juste l'info)
+### 6. Calendrier iframe : corriger l'envoi de message
+
+**Fichier** : `supabase/functions/send-booking-inquiry/index.ts`
+- La fonction existe et fonctionne côté serveur. Le problème est probablement côté RLS ou CORS puisque l'appel est fait depuis un iframe sur un domaine externe.
+- Vérifier que la fonction est bien accessible sans JWT (car l'utilisateur public n'est pas authentifié)
+- Ajouter une gestion d'erreur plus explicite côté client dans `BookingInquiryForm.tsx` pour afficher le message d'erreur exact
+
+**Fichier** : `supabase/config.toml`
+- Ajouter `[functions.send-booking-inquiry]` avec `verify_jwt = false` si nécessaire (la plupart des fonctions sont déjà déployées avec `verify_jwt = false` par défaut)
+
+### 7. Calendrier : modifier les réservations depuis le détail
+
+**Fichier** : `src/components/host/AvailabilityCalendar.tsx`
+- Le calendrier en vue grille n'a pas de `onBookingClick`. Ajouter un prop `onBookingClick` et l'appeler au clic sur une cellule réservée
+- Connecter dans `src/pages/host/Availability.tsx` pour la vue grille aussi
+
+**Fichier** : `src/pages/host/Availability.tsx`
+- Passer `onBookingClick={handleBookingClick}` au composant `AvailabilityCalendar` (déjà fait pour `TimelineOverview` mais pas pour la grille)
+
+### 8. Réservations : filtre par défaut persistant
+
+**Fichier** : `src/components/host/HostBookings.tsx`
+- Sauvegarder les filtres actifs dans `localStorage` sous une clé comme `host-bookings-default-filters`
+- Ajouter un bouton "Définir comme filtre par défaut" dans le sheet de filtres
+- Au chargement de la page, restaurer les filtres depuis `localStorage`
+
+**Fichier** : `src/components/host/BookingsFiltersSheet.tsx`
+- Ajouter un bouton "Enregistrer comme défaut" dans le footer du sheet
 
 ### Fichiers modifiés
 
 | Fichier | Modification |
 |---|---|
-| `supabase/functions/process-email-automations/index.ts` | Fix portal_link + formatage dates |
-| `supabase/functions/send-email/index.ts` | Fix portal_link + formatage dates |
-| `src/components/host/DashboardEarningsSummary.tsx` | Retirer "Frais payés" |
-| `src/pages/host/Dashboard.tsx` | Remplacer messagerie par e-mails, intégrer retards |
-| `src/components/host/DashboardRecentEmails.tsx` | Nouveau composant |
-| `src/components/host/DashboardRecentPayouts.tsx` | Ajouter section paiements en retard |
+| `src/pages/host/Dashboard.tsx` | Renommer "Versements" → "Paiements" |
+| `src/components/host/DashboardEarningsSummary.tsx` | Renommer label + filtrer YTD |
+| `src/components/host/CreateManualBookingDialog.tsx` | Locataire pour blocages + affichage heures défaut |
+| `src/components/host/EditManualBookingDialog.tsx` | Ajouter édition des échéances de paiement |
+| `src/components/host/AvailabilityCalendar.tsx` | Ajouter onBookingClick |
+| `src/pages/host/Availability.tsx` | Passer onBookingClick à la grille |
+| `src/components/host/HostBookings.tsx` | Filtre par défaut persistant |
+| `src/components/host/BookingsFiltersSheet.tsx` | Bouton "Enregistrer comme défaut" |
+| `supabase/functions/send-booking-inquiry/index.ts` | Debug envoi message |
+| `src/components/embed/BookingInquiryForm.tsx` | Meilleur affichage erreurs |
 
