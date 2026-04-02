@@ -15,7 +15,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, differenceInCalendarDays, parseISO } from "date-fns";
+import { format, differenceInCalendarDays, parseISO, subDays, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,7 +51,13 @@ interface Props {
   booking: BookingToEdit | null;
 }
 
-const DEPOSIT_PERCENTAGE = 30;
+interface ScheduleItem {
+  id?: string;
+  label: string;
+  amount: number;
+  due_date: string;
+  is_paid?: boolean;
+}
 
 export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) {
   const { user } = useAuth();
@@ -63,12 +69,12 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
   const [checkoutDate, setCheckoutDate] = useState<Date>();
   const [rentalPrice, setRentalPrice] = useState("");
   const [cleaningFee, setCleaningFee] = useState("");
-  const [deposit, setDeposit] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedTenantId, setSelectedTenantId] = useState("");
   const [beachCabin, setBeachCabin] = useState(false);
   const [checkinTime, setCheckinTime] = useState("");
   const [checkoutTime, setCheckoutTime] = useState("");
+  const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
 
   // Fetch tenants
   const { data: tenants = [] } = useQuery({
@@ -84,6 +90,22 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
       return data as Tenant[];
     },
     enabled: !!user?.id && open,
+  });
+
+  // Fetch existing payment items for this booking
+  const { data: existingPaymentItems = [] } = useQuery({
+    queryKey: ["booking-payment-items-edit", booking?.id],
+    queryFn: async () => {
+      if (!booking?.id) return [];
+      const { data, error } = await supabase
+        .from("booking_payment_items")
+        .select("id, label, amount, due_date, is_paid, sort_order")
+        .eq("booking_id", booking.id)
+        .order("sort_order");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!booking?.id && open,
   });
 
   // Fetch beach cabin period settings
@@ -109,14 +131,11 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
       setCheckoutDate(parseISO(booking.checkout_date));
       const cf = booking.cleaning_fee || 0;
       setCleaningFee(String(cf));
-      // Derive rental price = total - cleaning
       const rental = booking.total_price - cf;
       setRentalPrice(String(rental));
-
-      const bd = booking.pricing_breakdown;
-      setDeposit(bd?.deposit ? String(bd.deposit) : String(Math.round(booking.total_price * DEPOSIT_PERCENTAGE / 100 / 10) * 10));
       
       // Pre-select tenant
+      const bd = booking.pricing_breakdown;
       if (bd?.tenant_id && tenants.length > 0) {
         const found = tenants.find(t => t.id === bd.tenant_id);
         if (found) setSelectedTenantId(found.id);
@@ -140,6 +159,19 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
     }
   }, [booking, open, tenants]);
 
+  // Load existing payment items into schedule
+  useEffect(() => {
+    if (existingPaymentItems.length > 0 && booking && open) {
+      setScheduleItems(existingPaymentItems.map(pi => ({
+        id: pi.id,
+        label: pi.label,
+        amount: Number(pi.amount),
+        due_date: pi.due_date || "",
+        is_paid: pi.is_paid,
+      })));
+    }
+  }, [existingPaymentItems, booking, open]);
+
   const nights = checkinDate && checkoutDate
     ? differenceInCalendarDays(checkoutDate, checkinDate)
     : 0;
@@ -148,15 +180,17 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
   const cleaningNum = parseFloat(cleaningFee) || 0;
   const totalNum = rentalNum + cleaningNum;
 
-  // Recalc deposit when total changes
-  useEffect(() => {
-    if (totalNum > 0) {
-      setDeposit((Math.round(totalNum * DEPOSIT_PERCENTAGE / 100 / 10) * 10).toFixed(2));
-    }
-  }, [totalNum]);
-
-  const depositNum = parseFloat(deposit) || 0;
-  const remaining = Math.max(0, totalNum - depositNum);
+  const updateScheduleItem = (index: number, field: keyof ScheduleItem, value: any) => {
+    setScheduleItems(prev => {
+      const updated = prev.map((item, i) => i === index ? { ...item, [field]: value } : item);
+      // Auto-adjust last item when any other amount changes
+      if (field === "amount" && updated.length > 1 && index < updated.length - 1) {
+        const sumOthers = updated.slice(0, -1).reduce((s, i) => s + i.amount, 0);
+        updated[updated.length - 1] = { ...updated[updated.length - 1], amount: Math.max(0, totalNum - sumOthers) };
+      }
+      return updated;
+    });
+  };
 
   const handleSave = async () => {
     if (!user || !booking || !checkinDate || !checkoutDate || nights <= 0) return;
@@ -180,23 +214,49 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
         beach_cabin: beachCabin,
         pricing_breakdown: {
           rental_price: rentalNum,
-          deposit: depositNum,
-          remaining: remaining,
-          deposit_percentage: DEPOSIT_PERCENTAGE,
           tenant_id: selectedTenantId || undefined,
         },
         notes: [
           tenant ? `Locataire: ${tenant.first_name} ${tenant.last_name || ""}`.trim() : null,
-          depositNum > 0 ? `Acompte: ${depositNum.toFixed(2)} € | Solde: ${remaining.toFixed(2)} €` : null,
           notes.trim() || null,
         ].filter(Boolean).join(" | ") || null,
       }).eq("id", booking.id);
 
       if (error) throw error;
 
+      // Update payment items: delete old ones and insert new ones
+      // First delete existing items
+      const { error: deleteErr } = await supabase
+        .from("booking_payment_items")
+        .delete()
+        .eq("booking_id", booking.id);
+      if (deleteErr) throw deleteErr;
+
+      // Insert updated items
+      if (scheduleItems.length > 0) {
+        const paymentItems = scheduleItems
+          .filter(s => s.label.trim() && s.amount > 0)
+          .map((s, i) => ({
+            booking_id: booking.id,
+            label: s.label,
+            amount: s.amount,
+            due_date: s.due_date || null,
+            sort_order: i,
+            is_paid: s.is_paid || false,
+            paid_at: s.is_paid ? (existingPaymentItems.find(ep => ep.id === s.id)?.is_paid ? undefined : new Date().toISOString()) : null,
+          }));
+
+        if (paymentItems.length > 0) {
+          const { error: pErr } = await supabase.from("booking_payment_items").insert(paymentItems);
+          if (pErr) throw pErr;
+        }
+      }
+
       toast({ title: "Réservation modifiée", description: "Les modifications ont été enregistrées." });
       queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
       queryClient.invalidateQueries({ queryKey: ["host-calendar-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["host-payments-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["booking-payment-items-edit"] });
       onOpenChange(false);
     } catch (error: any) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
@@ -319,16 +379,43 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
             <Input type="number" value={totalNum.toFixed(2)} readOnly className="bg-muted" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Acompte ({DEPOSIT_PERCENTAGE}%) (€)</Label>
-              <Input type="number" min="0" step="0.01" value={deposit} onChange={(e) => setDeposit(e.target.value)} />
-            </div>
-            <div>
-              <Label>Solde restant (€)</Label>
-              <Input type="number" value={remaining.toFixed(2)} readOnly className="bg-muted" />
-            </div>
-          </div>
+          {/* Payment schedule */}
+          <Separator />
+          <p className="text-sm font-medium">Échéances de paiement</p>
+
+          {scheduleItems.length === 0 && (
+            <p className="text-xs text-muted-foreground">
+              Aucune échéance de paiement définie.
+            </p>
+          )}
+
+          {scheduleItems.map((item, idx) => {
+            const isLast = idx === scheduleItems.length - 1 && scheduleItems.length > 1;
+            return (
+              <div key={idx} className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <Label className="text-xs">Libellé</Label>
+                  <Input value={item.label} readOnly className="bg-muted" />
+                </div>
+                <div className="w-24">
+                  <Label className="text-xs">Montant</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={item.amount || ""}
+                    readOnly={isLast}
+                    className={isLast ? "bg-muted" : ""}
+                    onChange={e => updateScheduleItem(idx, "amount", parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+                <div className="w-32">
+                  <Label className="text-xs">Échéance</Label>
+                  <Input type="date" value={item.due_date} onChange={e => updateScheduleItem(idx, "due_date", e.target.value)} />
+                </div>
+              </div>
+            );
+          })}
 
           {/* Beach Cabin */}
           <div className="flex items-center space-x-2">
