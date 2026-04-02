@@ -498,16 +498,44 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
               </div>
             )}
 
-            {/* Name field for blocked */}
+            {/* Tenant + Name field for blocked */}
             {bookingType !== "normal" && (
-              <div>
-                <Label>Raison / Nom</Label>
-                <Input
-                  value={blockName}
-                  onChange={(e) => setBlockName(e.target.value)}
-                  placeholder="Ex: Séjour personnel"
-                />
-              </div>
+              <>
+                <div>
+                  <Label>Occupant (optionnel)</Label>
+                  <div className="flex gap-2">
+                    <Select value={selectedTenantId} onValueChange={setSelectedTenantId}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Choisir un locataire..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tenants.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.first_name} {t.last_name || ""} {t.email ? `(${t.email})` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setNewTenantDialogOpen(true)}
+                      title="Nouveau locataire"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <Label>Raison / Notes</Label>
+                  <Input
+                    value={blockName}
+                    onChange={(e) => setBlockName(e.target.value)}
+                    placeholder="Ex: Séjour personnel, famille, travaux..."
+                  />
+                </div>
+              </>
             )}
 
             {/* Dates */}
