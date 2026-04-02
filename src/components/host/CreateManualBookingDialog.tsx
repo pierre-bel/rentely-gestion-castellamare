@@ -319,8 +319,10 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
     try {
       if (bookingType === "owner_blocked") {
         // Simplified booking for blocked
+        const tenant = tenants.find((t) => t.id === selectedTenantId);
         const noteParts = [];
-        if (blockName.trim()) noteParts.push(`Blocage: ${blockName.trim()}`);
+        if (tenant) noteParts.push(`Blocage: ${tenant.first_name} ${tenant.last_name || ""}`.trim());
+        else if (blockName.trim()) noteParts.push(`Blocage: ${blockName.trim()}`);
         if (notes.trim()) noteParts.push(notes.trim());
 
         const { error } = await supabase.from("bookings").insert({
