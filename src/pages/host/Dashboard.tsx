@@ -22,7 +22,7 @@ const HostDashboard = () => {
         <CardHeader className="border-b pb-4 bg-gradient-to-r from-primary/5 via-transparent to-accent-cool/5">
           <CardTitle className="text-xl sm:text-2xl font-bold">Aperçu des revenus</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            Indicateurs de performance sur toute la période
+            Indicateurs de performance — Année {new Date().getFullYear()} (YTD)
           </p>
         </CardHeader>
         <CardContent className="p-3 sm:p-6">
