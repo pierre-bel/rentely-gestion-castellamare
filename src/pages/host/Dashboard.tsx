@@ -110,13 +110,13 @@ const HostDashboard = () => {
         </div>
       )}
 
-      {/* Versements avec paiements en retard */}
+      {/* Paiements avec paiements en retard */}
       {user && (
         <div className="mt-6">
           <Card className="bg-card h-full flex flex-col">
             <CardHeader className="border-b pb-4">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-xl font-semibold">Versements</CardTitle>
+                <CardTitle className="text-xl font-semibold">Paiements</CardTitle>
                 <TextLinkButton href="/host/payouts">
                   Voir tout
                 </TextLinkButton>

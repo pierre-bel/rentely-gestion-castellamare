@@ -339,6 +339,7 @@ export default function Availability() {
           bookings={bookings || []}
           blockedDates={blockedDates || []}
           currentMonth={currentMonth}
+          onBookingClick={handleBookingClick}
         />
       )}
 

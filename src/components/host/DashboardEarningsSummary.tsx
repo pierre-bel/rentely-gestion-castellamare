@@ -162,7 +162,7 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
       href: "/host/earnings-report",
     },
     {
-      label: "Versements en attente",
+      label: "Paiements en attente",
       value: formatCurrency(Number(payoutData?.pending_payouts || 0)),
       icon: Clock,
       bgColor: "bg-accent-warm/15",

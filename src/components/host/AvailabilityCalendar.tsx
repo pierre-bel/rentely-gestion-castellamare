@@ -220,7 +220,12 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
                 return (
                   <Tooltip key={day.toISOString()}>
                     <TooltipTrigger asChild>
-                      <div className="flex items-center justify-center">
+                      <div
+                        className={cn("flex items-center justify-center", booking && onBookingClick && "cursor-pointer")}
+                        onClick={() => {
+                          if (booking && onBookingClick) onBookingClick(booking);
+                        }}
+                      >
                         {(status === "checkin-only" || status === "checkout-only" || status === "turnaround") ? (
                           <div className={cn(
                             "relative flex flex-col items-center justify-start h-10 sm:h-14 md:h-16 rounded-lg text-xs sm:text-sm font-medium cursor-default select-none mx-auto overflow-hidden w-full p-0.5 sm:p-1",

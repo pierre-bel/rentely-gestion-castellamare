@@ -325,13 +325,32 @@ export const BookingsFiltersSheet = ({
           </div>
         </div>
 
-        <SheetFooter className="flex gap-2">
-          <Button variant="outline" onClick={handleClear} className="flex-1">
-            Réinitialiser
-          </Button>
-          <Button onClick={handleApply} className="flex-1">
-            Appliquer
-          </Button>
+        <SheetFooter className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleClear} className="flex-1">
+              Réinitialiser
+            </Button>
+            <Button onClick={handleApply} className="flex-1">
+              Appliquer
+            </Button>
+          </div>
+          {onSaveAsDefault && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground"
+              onClick={() => {
+                onSaveAsDefault({
+                  statusFilter: pendingStatusFilter,
+                  minPrice: pendingMinPrice,
+                  maxPrice: pendingMaxPrice,
+                });
+                handleApply();
+              }}
+            >
+              Enregistrer comme filtre par défaut
+            </Button>
+          )}
         </SheetFooter>
       </SheetContent>
     </Sheet>

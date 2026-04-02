@@ -596,10 +596,22 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
               <div>
                 <Label>Heure d'arrivée</Label>
                 <Input type="time" value={checkinTime} onChange={(e) => setCheckinTime(e.target.value)} />
+                {(() => {
+                  const listing = listings.find((l) => l.id === selectedListingId);
+                  return listing?.checkin_from ? (
+                    <p className="text-xs text-muted-foreground mt-1">(Par défaut: {listing.checkin_from.slice(0, 5)})</p>
+                  ) : null;
+                })()}
               </div>
               <div>
                 <Label>Heure de départ</Label>
                 <Input type="time" value={checkoutTime} onChange={(e) => setCheckoutTime(e.target.value)} />
+                {(() => {
+                  const listing = listings.find((l) => l.id === selectedListingId);
+                  return listing?.checkout_until ? (
+                    <p className="text-xs text-muted-foreground mt-1">(Par défaut: {listing.checkout_until.slice(0, 5)})</p>
+                  ) : null;
+                })()}
               </div>
             </div>
 
