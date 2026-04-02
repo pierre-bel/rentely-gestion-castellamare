@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -43,6 +43,7 @@ interface BookingToEdit {
   status: string;
   pricing_breakdown: any;
   beach_cabin?: boolean;
+  igloohome_code?: string | null;
 }
 
 interface Props {
@@ -58,6 +59,15 @@ interface ScheduleItem {
   due_date: string;
   is_paid?: boolean;
 }
+
+const STATUS_OPTIONS = [
+  { value: "confirmed", label: "Confirmée" },
+  { value: "pending_payment", label: "En attente de paiement" },
+  { value: "checked_in", label: "En cours" },
+  { value: "completed", label: "Terminée" },
+  { value: "cancelled_guest", label: "Annulée (locataire)" },
+  { value: "cancelled_host", label: "Annulée (hôte)" },
+];
 
 export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) {
   const { user } = useAuth();
@@ -75,6 +85,8 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
   const [checkinTime, setCheckinTime] = useState("");
   const [checkoutTime, setCheckoutTime] = useState("");
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
+  const [igloohomeCode, setIgloohomeCode] = useState("");
+  const [status, setStatus] = useState("");
 
   // Fetch tenants
   const { data: tenants = [] } = useQuery({
@@ -133,6 +145,8 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
       setCleaningFee(String(cf));
       const rental = booking.total_price - cf;
       setRentalPrice(String(rental));
+      setStatus(booking.status || "confirmed");
+      setIgloohomeCode(booking.igloohome_code || "");
       
       // Pre-select tenant
       const bd = booking.pricing_breakdown;
@@ -183,7 +197,6 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
   const updateScheduleItem = (index: number, field: keyof ScheduleItem, value: any) => {
     setScheduleItems(prev => {
       const updated = prev.map((item, i) => i === index ? { ...item, [field]: value } : item);
-      // Auto-adjust last item when any other amount changes
       if (field === "amount" && updated.length > 1 && index < updated.length - 1) {
         const sumOthers = updated.slice(0, -1).reduce((s, i) => s + i.amount, 0);
         updated[updated.length - 1] = { ...updated[updated.length - 1], amount: Math.max(0, totalNum - sumOthers) };
@@ -192,6 +205,22 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
     });
   };
 
+  const addScheduleItem = () => {
+    const existingSum = scheduleItems.reduce((s, i) => s + i.amount, 0);
+    setScheduleItems(prev => [...prev, {
+      label: "",
+      amount: Math.max(0, totalNum - existingSum),
+      due_date: "",
+      is_paid: false,
+    }]);
+  };
+
+  const removeScheduleItem = (index: number) => {
+    setScheduleItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const isBlockedBooking = booking?.status === "owner_blocked";
+
   const handleSave = async () => {
     if (!user || !booking || !checkinDate || !checkoutDate || nights <= 0) return;
     setSaving(true);
@@ -199,7 +228,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
     try {
       const tenant = tenants.find((t) => t.id === selectedTenantId);
 
-      const { error } = await supabase.from("bookings").update({
+      const updateData: any = {
         checkin_date: format(checkinDate, "yyyy-MM-dd"),
         checkout_date: format(checkoutDate, "yyyy-MM-dd"),
         checkin_time: checkinTime || null,
@@ -212,6 +241,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
         host_payout_gross: totalNum,
         host_payout_net: totalNum,
         beach_cabin: beachCabin,
+        igloohome_code: igloohomeCode.replace(/\D/g, "") || null,
         pricing_breakdown: {
           rental_price: rentalNum,
           tenant_id: selectedTenantId || undefined,
@@ -220,19 +250,23 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
           tenant ? `Locataire: ${tenant.first_name} ${tenant.last_name || ""}`.trim() : null,
           notes.trim() || null,
         ].filter(Boolean).join(" | ") || null,
-      }).eq("id", booking.id);
+      };
 
+      // Only allow status change for non-blocked bookings
+      if (!isBlockedBooking && status) {
+        updateData.status = status;
+      }
+
+      const { error } = await supabase.from("bookings").update(updateData).eq("id", booking.id);
       if (error) throw error;
 
       // Update payment items: delete old ones and insert new ones
-      // First delete existing items
       const { error: deleteErr } = await supabase
         .from("booking_payment_items")
         .delete()
         .eq("booking_id", booking.id);
       if (deleteErr) throw deleteErr;
 
-      // Insert updated items
       if (scheduleItems.length > 0) {
         const paymentItems = scheduleItems
           .filter(s => s.label.trim() && s.amount > 0)
@@ -278,6 +312,25 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
             <Label>Bien</Label>
             <Input value={booking.listing_title} readOnly className="bg-muted" />
           </div>
+
+          {/* Status */}
+          {!isBlockedBooking && (
+            <div>
+              <Label>Statut</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Statut..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Tenant */}
           <div>
@@ -347,75 +400,111 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
             </div>
           </div>
 
-            {nights > 0 && <p className="text-sm text-muted-foreground">{nights} nuit(s)</p>}
+          {nights > 0 && <p className="text-sm text-muted-foreground">{nights} nuit(s)</p>}
 
-            {/* Times */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Heure d'arrivée</Label>
-                <Input type="time" value={checkinTime} onChange={(e) => setCheckinTime(e.target.value)} />
-              </div>
-              <div>
-                <Label>Heure de départ</Label>
-                <Input type="time" value={checkoutTime} onChange={(e) => setCheckoutTime(e.target.value)} />
-              </div>
+          {/* Times */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Heure d'arrivée</Label>
+              <Input type="time" value={checkinTime} onChange={(e) => setCheckinTime(e.target.value)} />
             </div>
-
-            <Separator />
-          <p className="text-sm font-medium">Tarification</p>
-
-          <div>
-            <Label>Prix de location (€)</Label>
-            <Input type="number" min="0" step="0.01" value={rentalPrice} onChange={(e) => setRentalPrice(e.target.value)} />
+            <div>
+              <Label>Heure de départ</Label>
+              <Input type="time" value={checkoutTime} onChange={(e) => setCheckoutTime(e.target.value)} />
+            </div>
           </div>
 
-          <div>
-            <Label>Frais de ménage (€)</Label>
-            <Input type="number" min="0" step="0.01" value={cleaningFee} onChange={(e) => setCleaningFee(e.target.value)} />
-          </div>
+          {!isBlockedBooking && (
+            <>
+              <Separator />
+              <p className="text-sm font-medium">Tarification</p>
 
-          <div>
-            <Label>Prix total (€)</Label>
-            <Input type="number" value={totalNum.toFixed(2)} readOnly className="bg-muted" />
-          </div>
-
-          {/* Payment schedule */}
-          <Separator />
-          <p className="text-sm font-medium">Échéances de paiement</p>
-
-          {scheduleItems.length === 0 && (
-            <p className="text-xs text-muted-foreground">
-              Aucune échéance de paiement définie.
-            </p>
-          )}
-
-          {scheduleItems.map((item, idx) => {
-            const isLast = idx === scheduleItems.length - 1 && scheduleItems.length > 1;
-            return (
-              <div key={idx} className="flex gap-2 items-end">
-                <div className="flex-1">
-                  <Label className="text-xs">Libellé</Label>
-                  <Input value={item.label} readOnly className="bg-muted" />
-                </div>
-                <div className="w-24">
-                  <Label className="text-xs">Montant</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={item.amount || ""}
-                    readOnly={isLast}
-                    className={isLast ? "bg-muted" : ""}
-                    onChange={e => updateScheduleItem(idx, "amount", parseFloat(e.target.value) || 0)}
-                  />
-                </div>
-                <div className="w-32">
-                  <Label className="text-xs">Échéance</Label>
-                  <Input type="date" value={item.due_date} onChange={e => updateScheduleItem(idx, "due_date", e.target.value)} />
-                </div>
+              <div>
+                <Label>Prix de location (€)</Label>
+                <Input type="number" min="0" step="0.01" value={rentalPrice} onChange={(e) => setRentalPrice(e.target.value)} />
               </div>
-            );
-          })}
+
+              <div>
+                <Label>Frais de ménage (€)</Label>
+                <Input type="number" min="0" step="0.01" value={cleaningFee} onChange={(e) => setCleaningFee(e.target.value)} />
+              </div>
+
+              <div>
+                <Label>Prix total (€)</Label>
+                <Input type="number" value={totalNum.toFixed(2)} readOnly className="bg-muted" />
+              </div>
+
+              {/* Payment schedule */}
+              <Separator />
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Échéances de paiement</p>
+                <Button type="button" variant="outline" size="sm" className="gap-1" onClick={addScheduleItem}>
+                  <Plus className="h-3.5 w-3.5" /> Ajouter
+                </Button>
+              </div>
+
+              {scheduleItems.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Aucune échéance de paiement définie.
+                </p>
+              )}
+
+              {scheduleItems.map((item, idx) => {
+                const isLast = idx === scheduleItems.length - 1 && scheduleItems.length > 1;
+                return (
+                  <div key={idx} className="flex gap-2 items-end">
+                    <div className="flex-1">
+                      <Label className="text-xs">Libellé</Label>
+                      <Input
+                        value={item.label}
+                        onChange={e => updateScheduleItem(idx, "label", e.target.value)}
+                        placeholder="Ex: Acompte, Solde..."
+                      />
+                    </div>
+                    <div className="w-24">
+                      <Label className="text-xs">Montant</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.amount || ""}
+                        readOnly={isLast}
+                        className={isLast ? "bg-muted" : ""}
+                        onChange={e => updateScheduleItem(idx, "amount", parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div className="w-32">
+                      <Label className="text-xs">Échéance</Label>
+                      <Input type="date" value={item.due_date} onChange={e => updateScheduleItem(idx, "due_date", e.target.value)} />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 shrink-0 text-destructive hover:text-destructive"
+                      onClick={() => removeScheduleItem(idx)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                );
+              })}
+
+              {/* Igloohome Code */}
+              <Separator />
+              <div>
+                <Label>Code clé Igloohome</Label>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  value={igloohomeCode.replace(/\D/g, "").replace(/(\d{3})(?=\d)/g, "$1 ")}
+                  onChange={(e) => setIgloohomeCode(e.target.value.replace(/\D/g, ""))}
+                  placeholder="123 456 789"
+                  maxLength={15}
+                />
+              </div>
+            </>
+          )}
 
           {/* Beach Cabin */}
           <div className="flex items-center space-x-2">
