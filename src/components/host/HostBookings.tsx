@@ -55,10 +55,18 @@ export default function HostBookings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isDemoMode, migrationComplete, getHostBookingsFiltered, updateBooking, getDisputeForBooking, getOrCreateThread, storeProfile } = useDemoData();
+  // Load default filters from localStorage
+  const defaultFilters = (() => {
+    try {
+      const saved = localStorage.getItem("host-bookings-default-filters");
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  })();
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
+  const [statusFilter, setStatusFilter] = useState(defaultFilters?.statusFilter || "all");
+  const [minPrice, setMinPrice] = useState(defaultFilters?.minPrice || "");
+  const [maxPrice, setMaxPrice] = useState(defaultFilters?.maxPrice || "");
   const [checkinStart, setCheckinStart] = useState<Date | undefined>();
   const [checkinEnd, setCheckinEnd] = useState<Date | undefined>();
   const [checkoutStart, setCheckoutStart] = useState<Date | undefined>();
