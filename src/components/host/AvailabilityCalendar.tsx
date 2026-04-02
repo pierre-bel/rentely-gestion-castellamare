@@ -48,6 +48,7 @@ interface AvailabilityCalendarProps {
   bookings: BookingWithGuest[];
   blockedDates: { id: string; listing_id: string; start_date: string; end_date: string; price: number | null }[];
   currentMonth: Date;
+  onBookingClick?: (booking: BookingWithGuest) => void;
 }
 
 type DayStatus = "available" | "booked" | "pending" | "blocked" | "checkin-only" | "checkout-only" | "turnaround";
