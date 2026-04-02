@@ -63,7 +63,7 @@ const STATUS_LABELS: Record<string, string> = {
   pre_reservation: "En attente",
 };
 
-export default function AvailabilityCalendar({ listings, bookings, blockedDates, currentMonth }: AvailabilityCalendarProps) {
+export default function AvailabilityCalendar({ listings, bookings, blockedDates, currentMonth, onBookingClick }: AvailabilityCalendarProps) {
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
