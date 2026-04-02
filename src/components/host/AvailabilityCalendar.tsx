@@ -48,6 +48,7 @@ interface AvailabilityCalendarProps {
   bookings: BookingWithGuest[];
   blockedDates: { id: string; listing_id: string; start_date: string; end_date: string; price: number | null }[];
   currentMonth: Date;
+  onBookingClick?: (booking: BookingWithGuest) => void;
 }
 
 type DayStatus = "available" | "booked" | "pending" | "blocked" | "checkin-only" | "checkout-only" | "turnaround";
@@ -62,7 +63,7 @@ const STATUS_LABELS: Record<string, string> = {
   pre_reservation: "En attente",
 };
 
-export default function AvailabilityCalendar({ listings, bookings, blockedDates, currentMonth }: AvailabilityCalendarProps) {
+export default function AvailabilityCalendar({ listings, bookings, blockedDates, currentMonth, onBookingClick }: AvailabilityCalendarProps) {
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -135,7 +136,7 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
   };
 
   const getDayClasses = (status: DayStatus, inMonth: boolean, today: boolean): string => {
-    const base = "relative flex flex-col items-center justify-start h-10 sm:h-14 md:h-16 rounded-lg text-xs sm:text-sm transition-all cursor-default select-none mx-auto w-full p-0.5 sm:p-1 overflow-hidden";
+    const base = "relative flex flex-col items-center justify-start h-10 sm:h-14 md:h-16 rounded-lg text-xs sm:text-sm transition-all select-none mx-auto w-full p-0.5 sm:p-1 overflow-hidden";
 
     if (!inMonth) return cn(base, "opacity-20 text-muted-foreground");
 
@@ -219,7 +220,12 @@ export default function AvailabilityCalendar({ listings, bookings, blockedDates,
                 return (
                   <Tooltip key={day.toISOString()}>
                     <TooltipTrigger asChild>
-                      <div className="flex items-center justify-center">
+                      <div
+                        className={cn("flex items-center justify-center", booking && onBookingClick && "cursor-pointer")}
+                        onClick={() => {
+                          if (booking && onBookingClick) onBookingClick(booking);
+                        }}
+                      >
                         {(status === "checkin-only" || status === "checkout-only" || status === "turnaround") ? (
                           <div className={cn(
                             "relative flex flex-col items-center justify-start h-10 sm:h-14 md:h-16 rounded-lg text-xs sm:text-sm font-medium cursor-default select-none mx-auto overflow-hidden w-full p-0.5 sm:p-1",

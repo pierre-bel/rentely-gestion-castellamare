@@ -21,8 +21,9 @@ interface DashboardEarningsSummaryProps {
 const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => {
   const navigate = useNavigate();
   
-  const defaultEndMonth = startOfMonth(addMonths(new Date(), 1));
-  const defaultStartMonth = startOfMonth(subMonths(defaultEndMonth, 12));
+  const now = new Date();
+  const defaultStartMonth = new Date(now.getFullYear(), 0, 1); // Jan 1st of current year
+  const defaultEndMonth = startOfMonth(addMonths(now, 1));
 
   const { data: reports, isLoading: reportsLoading } = useQuery({
     queryKey: ["host-dashboard-earnings-report", userId],
@@ -161,7 +162,7 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
       href: "/host/earnings-report",
     },
     {
-      label: "Versements en attente",
+      label: "Paiements en attente",
       value: formatCurrency(Number(payoutData?.pending_payouts || 0)),
       icon: Clock,
       bgColor: "bg-accent-warm/15",

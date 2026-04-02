@@ -319,8 +319,10 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
     try {
       if (bookingType === "owner_blocked") {
         // Simplified booking for blocked
+        const tenant = tenants.find((t) => t.id === selectedTenantId);
         const noteParts = [];
-        if (blockName.trim()) noteParts.push(`Blocage: ${blockName.trim()}`);
+        if (tenant) noteParts.push(`Blocage: ${tenant.first_name} ${tenant.last_name || ""}`.trim());
+        else if (blockName.trim()) noteParts.push(`Blocage: ${blockName.trim()}`);
         if (notes.trim()) noteParts.push(notes.trim());
 
         const { error } = await supabase.from("bookings").insert({
@@ -498,16 +500,44 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
               </div>
             )}
 
-            {/* Name field for blocked */}
+            {/* Tenant + Name field for blocked */}
             {bookingType !== "normal" && (
-              <div>
-                <Label>Raison / Nom</Label>
-                <Input
-                  value={blockName}
-                  onChange={(e) => setBlockName(e.target.value)}
-                  placeholder="Ex: Séjour personnel"
-                />
-              </div>
+              <>
+                <div>
+                  <Label>Occupant (optionnel)</Label>
+                  <div className="flex gap-2">
+                    <Select value={selectedTenantId} onValueChange={setSelectedTenantId}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Choisir un locataire..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tenants.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.first_name} {t.last_name || ""} {t.email ? `(${t.email})` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setNewTenantDialogOpen(true)}
+                      title="Nouveau locataire"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <Label>Raison / Notes</Label>
+                  <Input
+                    value={blockName}
+                    onChange={(e) => setBlockName(e.target.value)}
+                    placeholder="Ex: Séjour personnel, famille, travaux..."
+                  />
+                </div>
+              </>
             )}
 
             {/* Dates */}
@@ -566,10 +596,22 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
               <div>
                 <Label>Heure d'arrivée</Label>
                 <Input type="time" value={checkinTime} onChange={(e) => setCheckinTime(e.target.value)} />
+                {(() => {
+                  const listing = listings.find((l) => l.id === selectedListingId);
+                  return listing?.checkin_from ? (
+                    <p className="text-xs text-muted-foreground mt-1">(Par défaut: {listing.checkin_from.slice(0, 5)})</p>
+                  ) : null;
+                })()}
               </div>
               <div>
                 <Label>Heure de départ</Label>
                 <Input type="time" value={checkoutTime} onChange={(e) => setCheckoutTime(e.target.value)} />
+                {(() => {
+                  const listing = listings.find((l) => l.id === selectedListingId);
+                  return listing?.checkout_until ? (
+                    <p className="text-xs text-muted-foreground mt-1">(Par défaut: {listing.checkout_until.slice(0, 5)})</p>
+                  ) : null;
+                })()}
               </div>
             </div>
 
