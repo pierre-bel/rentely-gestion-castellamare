@@ -29,6 +29,11 @@ interface BookingsFiltersSheetProps {
     checkoutEnd: Date | undefined;
   }) => void;
   onClearFilters: () => void;
+  onSaveAsDefault?: (filters: {
+    statusFilter: string;
+    minPrice: string;
+    maxPrice: string;
+  }) => void;
 }
 
 export const BookingsFiltersSheet = ({
