@@ -46,6 +46,7 @@ export const BookingsFiltersSheet = ({
   checkoutEnd,
   onApplyFilters,
   onClearFilters,
+  onSaveAsDefault,
 }: BookingsFiltersSheetProps) => {
   const [open, setOpen] = useState(false);
   
