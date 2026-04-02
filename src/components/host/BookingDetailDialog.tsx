@@ -34,6 +34,8 @@ export interface BookingDetailData {
   guest_email: string;
   guest_phone: string | null;
   access_token?: string | null;
+  igloohome_code?: string | null;
+  beach_cabin?: boolean;
 }
 
 interface Props {
