@@ -57,7 +57,7 @@ export default function BookingInquiryForm({
 
     setSending(true);
     try {
-      const { error } = await supabase.functions.invoke("send-booking-inquiry", {
+      const { data, error } = await supabase.functions.invoke("send-booking-inquiry", {
         body: {
           hostId,
           listingTitle,
@@ -71,7 +71,13 @@ export default function BookingInquiryForm({
           guestMessage: parsed.data.message || "",
         },
       });
-      if (error) throw error;
+      if (error) {
+        console.error("Edge function error:", error);
+        throw new Error(error.message || "Erreur d'envoi");
+      }
+      if (data?.error) {
+        throw new Error(data.error);
+      }
       setSent(true);
     } catch (err) {
       console.error("Inquiry send error:", err);
