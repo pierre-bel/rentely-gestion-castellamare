@@ -633,7 +633,7 @@ export default function HostBookings() {
               try {
                 const { data, error } = await supabase
                   .from("bookings")
-                  .select("id, listing_id, checkin_date, checkout_date, nights, guests, total_price, cleaning_fee, notes, status, pricing_breakdown, beach_cabin")
+                  .select("id, listing_id, checkin_date, checkout_date, checkin_time, checkout_time, nights, guests, total_price, cleaning_fee, notes, status, pricing_breakdown, beach_cabin, igloohome_code")
                   .eq("id", booking.id)
                   .maybeSingle();
                 if (error) throw error;
