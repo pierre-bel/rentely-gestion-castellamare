@@ -156,11 +156,30 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
     enabled: !!user?.id && open,
   });
 
+  // Check for overlapping bookings
+  const { data: overlappingBookings = [] } = useQuery({
+    queryKey: ["booking-overlap-check", selectedListingId, checkinDate?.toISOString(), checkoutDate?.toISOString()],
+    queryFn: async () => {
+      if (!selectedListingId || !checkinDate || !checkoutDate) return [];
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("id, checkin_date, checkout_date, notes, status")
+        .eq("listing_id", selectedListingId)
+        .not("status", "in", '("cancelled","cancelled_guest","cancelled_host")')
+        .lt("checkin_date", format(checkoutDate, "yyyy-MM-dd"))
+        .gt("checkout_date", format(checkinDate, "yyyy-MM-dd"));
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedListingId && !!checkinDate && !!checkoutDate && open,
+  });
+
   const nights = checkinDate && checkoutDate
     ? differenceInCalendarDays(checkoutDate, checkinDate)
     : 0;
 
   const [pricingSuggested, setPricingSuggested] = useState(false);
+
 
   // Auto-check beach cabin based on dates
   useEffect(() => {
