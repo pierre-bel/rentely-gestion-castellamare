@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { MobileHostSidebar } from "./HostSidebar";
 import { CreateManualBookingDialog } from "./CreateManualBookingDialog";
+import { GlobalSearchDialog } from "./GlobalSearchDialog";
 
 interface HostPageHeaderProps {
   title: string;
