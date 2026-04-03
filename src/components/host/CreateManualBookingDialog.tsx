@@ -640,6 +640,20 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
               <p className="text-sm text-muted-foreground">{nights} nuit(s)</p>
             )}
 
+            {overlappingBookings.length > 0 && (
+              <Alert variant="destructive" className="py-2">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  ⚠ {overlappingBookings.length} réservation(s) existante(s) sur ce créneau
+                  {overlappingBookings.slice(0, 2).map((ob: any) => (
+                    <span key={ob.id} className="block text-xs mt-0.5">
+                      {format(new Date(ob.checkin_date + "T00:00:00"), "d MMM", { locale: fr })} → {format(new Date(ob.checkout_date + "T00:00:00"), "d MMM", { locale: fr })}
+                    </span>
+                  ))}
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Pricing section - normal only */}
             {bookingType === "normal" && (
               <>
