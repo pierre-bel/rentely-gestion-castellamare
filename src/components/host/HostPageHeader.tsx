@@ -43,7 +43,18 @@ export const HostPageHeader = ({ title }: HostPageHeaderProps) => {
       </div>
 
       {/* Right Side - Icons and Avatar */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Search Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full w-10 h-10 bg-white hover:bg-white/90"
+          onClick={() => setSearchOpen(true)}
+          title="Rechercher"
+        >
+          <Search className="h-5 w-5" />
+        </Button>
+
         {/* Add Booking Button */}
         <Button
           variant="ghost"
