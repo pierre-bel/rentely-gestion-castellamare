@@ -71,6 +71,8 @@ export const HostPageHeader = ({ title }: HostPageHeaderProps) => {
           onOpenChange={setCreateBookingOpen}
         />
 
+        <GlobalSearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+
         {/* User Avatar with Dropdown */}
         <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
           <DropdownMenuTrigger asChild>
