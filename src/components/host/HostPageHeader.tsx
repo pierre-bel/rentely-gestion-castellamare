@@ -21,6 +21,7 @@ export const HostPageHeader = ({ title }: HostPageHeaderProps) => {
   const { signOut, user } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [createBookingOpen, setCreateBookingOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const handleLogout = async () => {
     setIsMenuOpen(false);
