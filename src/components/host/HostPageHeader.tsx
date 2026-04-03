@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { MobileHostSidebar } from "./HostSidebar";
 import { CreateManualBookingDialog } from "./CreateManualBookingDialog";
+import { GlobalSearchDialog } from "./GlobalSearchDialog";
 
 interface HostPageHeaderProps {
   title: string;
@@ -20,6 +21,7 @@ export const HostPageHeader = ({ title }: HostPageHeaderProps) => {
   const { signOut, user } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [createBookingOpen, setCreateBookingOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const handleLogout = async () => {
     setIsMenuOpen(false);
@@ -41,7 +43,18 @@ export const HostPageHeader = ({ title }: HostPageHeaderProps) => {
       </div>
 
       {/* Right Side - Icons and Avatar */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Search Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full w-10 h-10 bg-white hover:bg-white/90"
+          onClick={() => setSearchOpen(true)}
+          title="Rechercher"
+        >
+          <Search className="h-5 w-5" />
+        </Button>
+
         {/* Add Booking Button */}
         <Button
           variant="ghost"
@@ -57,6 +70,8 @@ export const HostPageHeader = ({ title }: HostPageHeaderProps) => {
           open={createBookingOpen}
           onOpenChange={setCreateBookingOpen}
         />
+
+        <GlobalSearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
 
         {/* User Avatar with Dropdown */}
         <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>

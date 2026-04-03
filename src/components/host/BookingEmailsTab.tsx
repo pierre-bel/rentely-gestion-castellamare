@@ -3,8 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useDemoData } from "@/hooks/useDemoData";
 import { format, parseISO, addDays, isBefore, isAfter } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Mail, Clock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Mail, Clock, CheckCircle2, XCircle, Loader2, Send } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface EmailLog {
   id: string;
@@ -28,6 +32,12 @@ interface ScheduledEmail {
   is_late: boolean;
 }
 
+interface AutomationTemplate {
+  id: string;
+  name: string;
+  subject: string;
+}
+
 interface Props {
   bookingId: string;
   checkinDate: string;
@@ -47,9 +57,13 @@ const TRIGGER_LABELS: Record<string, string> = {
 
 export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate, listingId }: Props) {
   const { isDemoMode } = useDemoData();
+  const { user } = useAuth();
   const [sentEmails, setSentEmails] = useState<EmailLog[]>([]);
   const [scheduledEmails, setScheduledEmails] = useState<ScheduledEmail[]>([]);
+  const [automationTemplates, setAutomationTemplates] = useState<AutomationTemplate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAutomationId, setSelectedAutomationId] = useState("");
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     fetchEmails();
@@ -62,21 +76,25 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
     }
 
     try {
-      // Fetch sent emails for this booking
       const { data: logs } = await supabase
         .from("email_send_log")
         .select("id, subject, recipient_email, status, created_at, error_message, automation_id")
         .eq("booking_id", bookingId)
         .order("created_at", { ascending: false });
 
-      // Fetch automations that target this listing to compute scheduled emails
       const { data: automations } = await supabase
         .from("email_automations")
         .select("id, name, subject, trigger_type, trigger_days, is_enabled, listing_ids, recipient_type, recipient_email, send_if_late")
         .eq("is_enabled", true);
 
+      // Store all automations as templates for manual send
+      if (automations) {
+        setAutomationTemplates(
+          automations.map((a: any) => ({ id: a.id, name: a.name, subject: a.subject }))
+        );
+      }
+
       if (logs) {
-        // Enrich with automation name
         const enriched: EmailLog[] = logs.map((log: any) => {
           const auto = automations?.find((a: any) => a.id === log.automation_id);
           return { ...log, automation_name: auto?.name || null };
@@ -84,7 +102,6 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
         setSentEmails(enriched);
       }
 
-      // Compute scheduled (future) emails
       if (automations) {
         const checkin = parseISO(checkinDate);
         const checkout = parseISO(checkoutDate);
@@ -93,16 +110,13 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
 
         const scheduled: ScheduledEmail[] = [];
         for (const auto of automations as any[]) {
-          // Check if automation targets this listing
           const targets = auto.listing_ids as string[] | null;
           if (targets && targets.length > 0 && !targets.includes(listingId)) continue;
-
-          // Skip if already sent for this booking
           if (sentAutomationIds.has(auto.id)) continue;
 
           let scheduledDate: Date | null = null;
           if (auto.trigger_type === "booking_confirmed") {
-            continue; // Already sent or instant
+            continue;
           } else if (auto.trigger_type === "days_before_checkin") {
             scheduledDate = addDays(checkin, -auto.trigger_days);
           } else if (auto.trigger_type === "day_of_checkin") {
@@ -134,7 +148,7 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
           }
         }
 
-        scheduled.sort((a, b) => 
+        scheduled.sort((a, b) =>
           new Date(a.scheduled_date!).getTime() - new Date(b.scheduled_date!).getTime()
         );
         setScheduledEmails(scheduled);
@@ -146,6 +160,30 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
     }
   };
 
+  const handleManualSend = async () => {
+    if (!selectedAutomationId) return;
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-email", {
+        body: {
+          action: "send_for_booking",
+          automation_id: selectedAutomationId,
+          booking_id: bookingId,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("E-mail envoyé avec succès");
+      setSelectedAutomationId("");
+      await fetchEmails();
+    } catch (err: any) {
+      console.error("Manual email send error:", err);
+      toast.error(`Erreur : ${err.message || "Impossible d'envoyer l'e-mail"}`);
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -154,19 +192,40 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
     );
   }
 
-  const hasNoEmails = sentEmails.length === 0 && scheduledEmails.length === 0;
-
-  if (hasNoEmails) {
-    return (
-      <div className="text-center py-8">
-        <Mail className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-        <p className="text-sm text-muted-foreground">Aucun e-mail envoyé ou planifié pour cette réservation</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
+      {/* Manual send section */}
+      {automationTemplates.length > 0 && (
+        <div className="border rounded-lg p-3 bg-muted/30">
+          <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+            <Send className="h-4 w-4 text-primary" />
+            Envoyer un e-mail manuellement
+          </h4>
+          <div className="flex items-center gap-2">
+            <Select value={selectedAutomationId} onValueChange={setSelectedAutomationId}>
+              <SelectTrigger className="flex-1 h-9 text-sm">
+                <SelectValue placeholder="Choisir un template..." />
+              </SelectTrigger>
+              <SelectContent>
+                {automationTemplates.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              onClick={handleManualSend}
+              disabled={!selectedAutomationId || sending}
+            >
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              <span className="ml-1.5 hidden sm:inline">Envoyer</span>
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Sent emails */}
       {sentEmails.length > 0 && (
         <div>
@@ -247,6 +306,13 @@ export default function BookingEmailsTab({ bookingId, checkinDate, checkoutDate,
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {sentEmails.length === 0 && scheduledEmails.length === 0 && automationTemplates.length === 0 && (
+        <div className="text-center py-8">
+          <Mail className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">Aucun e-mail envoyé ou planifié pour cette réservation</p>
         </div>
       )}
     </div>

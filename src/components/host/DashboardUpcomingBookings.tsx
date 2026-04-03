@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, parseISO, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarClock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +49,7 @@ const getInitials = (name: string | null) => {
 };
 
 const getDaysUntilLabel = (checkinDate: string) => {
-  const days = differenceInDays(new Date(checkinDate), new Date());
+  const days = differenceInDays(startOfDay(parseISO(checkinDate)), startOfDay(new Date()));
   if (days < 0) return { label: "En cours", className: "bg-primary/10 text-primary border-primary/20" };
   if (days === 0) return { label: "Aujourd'hui", className: "bg-destructive/10 text-destructive border-destructive/20" };
   if (days === 1) return { label: "Demain", className: "bg-warning/10 text-warning border-warning/20" };

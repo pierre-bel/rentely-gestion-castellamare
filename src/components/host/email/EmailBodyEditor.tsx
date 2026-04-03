@@ -26,7 +26,7 @@ interface EmailBodyEditorProps {
 
 function editorHtmlToEmailHtml(html: string): string {
   // Wrap the editor output in a styled email container
-  return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;background:#ffffff;border-radius:8px;">${html}</div>`;
+  return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;background:#ffffff;border-radius:8px;text-align:left;">${html}</div>`;
 }
 
 function emailHtmlToEditorHtml(html: string): string {

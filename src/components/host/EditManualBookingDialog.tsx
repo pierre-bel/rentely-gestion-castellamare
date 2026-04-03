@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, Trash2 } from "lucide-react";
+import { CalendarIcon, Plus, Trash2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -26,6 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { isBeachCabinPeriod } from "@/lib/beachCabinUtils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface BookingToEdit {
   id: string;
@@ -185,6 +186,25 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
       })));
     }
   }, [existingPaymentItems, booking, open]);
+
+  // Check for overlapping bookings (exclude current booking)
+  const { data: overlappingBookings = [] } = useQuery({
+    queryKey: ["booking-overlap-edit", booking?.listing_id, checkinDate?.toISOString(), checkoutDate?.toISOString(), booking?.id],
+    queryFn: async () => {
+      if (!booking?.listing_id || !checkinDate || !checkoutDate) return [];
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("id, checkin_date, checkout_date, notes, status")
+        .eq("listing_id", booking.listing_id)
+        .neq("id", booking.id)
+        .not("status", "in", '("cancelled","cancelled_guest","cancelled_host")')
+        .lt("checkin_date", format(checkoutDate, "yyyy-MM-dd"))
+        .gt("checkout_date", format(checkinDate, "yyyy-MM-dd"));
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!booking?.listing_id && !!checkinDate && !!checkoutDate && open,
+  });
 
   const nights = checkinDate && checkoutDate
     ? differenceInCalendarDays(checkoutDate, checkinDate)
@@ -401,6 +421,20 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
           </div>
 
           {nights > 0 && <p className="text-sm text-muted-foreground">{nights} nuit(s)</p>}
+
+          {overlappingBookings.length > 0 && (
+            <Alert variant="destructive" className="py-2">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                ⚠ {overlappingBookings.length} réservation(s) existante(s) sur ce créneau
+                {overlappingBookings.slice(0, 2).map((ob: any) => (
+                  <span key={ob.id} className="block text-xs mt-0.5">
+                    {format(new Date(ob.checkin_date + "T00:00:00"), "d MMM", { locale: fr })} → {format(new Date(ob.checkout_date + "T00:00:00"), "d MMM", { locale: fr })}
+                  </span>
+                ))}
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Times */}
           <div className="grid grid-cols-2 gap-4">

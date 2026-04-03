@@ -28,6 +28,8 @@ import { calculatePricingFromWeeklyRates } from "@/lib/pricingUtils";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { isBeachCabinPeriod } from "@/lib/beachCabinUtils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 interface Listing {
   id: string;
@@ -154,11 +156,30 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
     enabled: !!user?.id && open,
   });
 
+  // Check for overlapping bookings
+  const { data: overlappingBookings = [] } = useQuery({
+    queryKey: ["booking-overlap-check", selectedListingId, checkinDate?.toISOString(), checkoutDate?.toISOString()],
+    queryFn: async () => {
+      if (!selectedListingId || !checkinDate || !checkoutDate) return [];
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("id, checkin_date, checkout_date, notes, status")
+        .eq("listing_id", selectedListingId)
+        .not("status", "in", '("cancelled","cancelled_guest","cancelled_host")')
+        .lt("checkin_date", format(checkoutDate, "yyyy-MM-dd"))
+        .gt("checkout_date", format(checkinDate, "yyyy-MM-dd"));
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedListingId && !!checkinDate && !!checkoutDate && open,
+  });
+
   const nights = checkinDate && checkoutDate
     ? differenceInCalendarDays(checkoutDate, checkinDate)
     : 0;
 
   const [pricingSuggested, setPricingSuggested] = useState(false);
+
 
   // Auto-check beach cabin based on dates
   useEffect(() => {
@@ -617,6 +638,20 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
 
             {nights > 0 && (
               <p className="text-sm text-muted-foreground">{nights} nuit(s)</p>
+            )}
+
+            {overlappingBookings.length > 0 && (
+              <Alert variant="destructive" className="py-2">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  ⚠ {overlappingBookings.length} réservation(s) existante(s) sur ce créneau
+                  {overlappingBookings.slice(0, 2).map((ob: any) => (
+                    <span key={ob.id} className="block text-xs mt-0.5">
+                      {format(new Date(ob.checkin_date + "T00:00:00"), "d MMM", { locale: fr })} → {format(new Date(ob.checkout_date + "T00:00:00"), "d MMM", { locale: fr })}
+                    </span>
+                  ))}
+                </AlertDescription>
+              </Alert>
             )}
 
             {/* Pricing section - normal only */}
