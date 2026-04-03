@@ -187,6 +187,25 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
     }
   }, [existingPaymentItems, booking, open]);
 
+  // Check for overlapping bookings (exclude current booking)
+  const { data: overlappingBookings = [] } = useQuery({
+    queryKey: ["booking-overlap-edit", booking?.listing_id, checkinDate?.toISOString(), checkoutDate?.toISOString(), booking?.id],
+    queryFn: async () => {
+      if (!booking?.listing_id || !checkinDate || !checkoutDate) return [];
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("id, checkin_date, checkout_date, notes, status")
+        .eq("listing_id", booking.listing_id)
+        .neq("id", booking.id)
+        .not("status", "in", '("cancelled","cancelled_guest","cancelled_host")')
+        .lt("checkin_date", format(checkoutDate, "yyyy-MM-dd"))
+        .gt("checkout_date", format(checkinDate, "yyyy-MM-dd"));
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!booking?.listing_id && !!checkinDate && !!checkoutDate && open,
+  });
+
   const nights = checkinDate && checkoutDate
     ? differenceInCalendarDays(checkoutDate, checkinDate)
     : 0;
