@@ -28,6 +28,8 @@ import { calculatePricingFromWeeklyRates } from "@/lib/pricingUtils";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { isBeachCabinPeriod } from "@/lib/beachCabinUtils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 interface Listing {
   id: string;
