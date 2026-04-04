@@ -77,12 +77,15 @@ export default function BookingInquiryForm({
       }
       if (data?.error) {
         console.error("API error:", data.error, data.details);
-        throw new Error(data.error);
+        throw new Error(data.details ? `${data.error} — ${data.details}` : data.error);
       }
       setSent(true);
     } catch (err) {
       console.error("Inquiry send error:", err);
-      setErrors({ form: "Une erreur est survenue. Réessayez." });
+      const message = err instanceof Error && err.message
+        ? err.message
+        : "Une erreur est survenue. Réessayez.";
+      setErrors({ form: message });
     } finally {
       setSending(false);
     }

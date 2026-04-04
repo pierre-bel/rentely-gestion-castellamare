@@ -157,31 +157,51 @@ Deno.serve(async (req) => {
       });
     }
 
-    const resendRes = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'Castellamare <noreply@castellamare.com>',
-        to: [hostEmail],
-        reply_to: guestEmail,
-        subject: `Nouvelle demande de réservation - ${listingTitle}`,
-        html: htmlBody,
-      }),
-    });
+    const sendWithFrom = async (from: string) => {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from,
+          to: [hostEmail],
+          reply_to: guestEmail,
+          subject: `Nouvelle demande de réservation - ${listingTitle}`,
+          html: htmlBody,
+        }),
+      });
 
-    if (!resendRes.ok) {
-      const errText = await resendRes.text();
-      console.error('Resend error:', errText);
-      return new Response(JSON.stringify({ error: "Failed to send email", details: errText }), {
+      const responseText = await response.text();
+      return { ok: response.ok, text: responseText, from };
+    };
+
+    let resendResult = await sendWithFrom('Castellamare <noreply@castellamare.com>');
+
+    if (!resendResult.ok) {
+      const looksLikeUnverifiedDomain = resendResult.text.toLowerCase().includes('domain is not verified');
+      if (looksLikeUnverifiedDomain) {
+        console.warn('Primary sender domain not verified, retrying with Resend sandbox sender');
+        resendResult = await sendWithFrom('Castellamare <onboarding@resend.dev>');
+      }
+    }
+
+    if (!resendResult.ok) {
+      console.error('Resend error:', resendResult.text);
+      let userMessage = "Échec de l'envoi de l'e-mail";
+      const lowerText = resendResult.text.toLowerCase();
+      if (lowerText.includes('testing emails are only allowed')) {
+        userMessage = "Le service d'e-mail est en mode test et n'autorise que l'adresse propriétaire du compte.";
+      }
+      return new Response(JSON.stringify({
+        error: userMessage,
+        details: resendResult.text,
+      }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    await resendRes.json();
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
