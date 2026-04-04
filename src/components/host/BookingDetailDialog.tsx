@@ -44,6 +44,7 @@ interface Props {
   booking: BookingDetailData | null;
   onEdit: (booking: BookingDetailData) => void;
   onGenerateContract?: (bookingId: string) => void;
+  onRefresh?: () => void;
 }
 
 const formatPrice = (price: number) =>
