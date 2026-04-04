@@ -60,8 +60,9 @@ const STATUS_LABELS: Record<string, string> = {
   expired: "Expirée",
 };
 
-export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGenerateContract }: Props) {
+export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGenerateContract, onRefresh }: Props) {
   const [linkCopied, setLinkCopied] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   
   const tenantId = booking?.pricing_breakdown?.tenant_id;
   
