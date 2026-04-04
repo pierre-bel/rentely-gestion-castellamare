@@ -104,6 +104,24 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
   const deposit = bd?.deposit;
   const remaining = bd?.remaining;
   const canEdit = booking.status === "confirmed" || booking.status === "pending_payment";
+  const isBlockage = booking.status === "owner_blocked";
+
+  const handleDeleteBlockage = async () => {
+    if (!booking) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from("bookings").delete().eq("id", booking.id);
+      if (error) throw error;
+      toast({ title: "Blocage supprimé" });
+      onOpenChange(false);
+      onRefresh?.();
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erreur lors de la suppression", variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const cleanNotes = booking.notes
     ? booking.notes.split(" | ").filter((p) => !p.startsWith("Locataire:") && !p.startsWith("Acompte:")).join(" | ").trim()
