@@ -82,7 +82,10 @@ export default function BookingInquiryForm({
       setSent(true);
     } catch (err) {
       console.error("Inquiry send error:", err);
-      setErrors({ form: "Une erreur est survenue. Réessayez." });
+      const message = err instanceof Error && err.message
+        ? err.message
+        : "Une erreur est survenue. Réessayez.";
+      setErrors({ form: message });
     } finally {
       setSending(false);
     }
