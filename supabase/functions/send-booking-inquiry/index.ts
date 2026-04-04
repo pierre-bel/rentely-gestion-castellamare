@@ -189,8 +189,13 @@ Deno.serve(async (req) => {
 
     if (!resendResult.ok) {
       console.error('Resend error:', resendResult.text);
+      let userMessage = "Échec de l'envoi de l'e-mail";
+      const lowerText = resendResult.text.toLowerCase();
+      if (lowerText.includes('testing emails are only allowed')) {
+        userMessage = "Le service d'e-mail est en mode test et n'autorise que l'adresse propriétaire du compte.";
+      }
       return new Response(JSON.stringify({
-        error: 'Failed to send email',
+        error: userMessage,
         details: resendResult.text,
       }), {
         status: 500,
