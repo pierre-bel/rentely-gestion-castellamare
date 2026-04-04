@@ -281,8 +281,14 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
               {linkCopied ? "Copié" : "Portail client"}
             </Button>
           )}
+          {isBlockage && (
+            <Button variant="destructive" size="sm" className="gap-1.5" disabled={deleting} onClick={handleDeleteBlockage}>
+              {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+              Supprimer le blocage
+            </Button>
+          )}
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
-          {canEdit && (
+          {(canEdit || isBlockage) && (
             <Button onClick={() => { onOpenChange(false); onEdit(booking); }} className="gap-1.5">
               <Pencil className="h-3.5 w-3.5" /> Modifier
             </Button>

@@ -76,6 +76,7 @@ export default function BookingInquiryForm({
         throw new Error(error.message || "Erreur d'envoi");
       }
       if (data?.error) {
+        console.error("API error:", data.error, data.details);
         throw new Error(data.error);
       }
       setSent(true);

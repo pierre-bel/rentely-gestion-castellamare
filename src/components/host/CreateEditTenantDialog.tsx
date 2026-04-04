@@ -67,7 +67,7 @@ export function CreateEditTenantDialog({ open, onOpenChange, tenant, prefillData
       setStreetNumber(src.street_number || pre.streetNumber || "");
       setPostalCode(src.postal_code || pre.postalCode || "");
       setCity(src.city || pre.city || "");
-      setCountry(src.country || pre.country || "");
+      setCountry(src.country || pre.country || "Belgique");
       setNotes(src.notes || "");
     }
   }, [open, tenant, prefillData]);
