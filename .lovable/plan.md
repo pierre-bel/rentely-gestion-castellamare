@@ -1,67 +1,90 @@
 
 
-## Plan : 6 améliorations (envoi e-mail manuel, alignement, arrivées, chevauchement, notes, recherche)
+## Plan : 9 corrections et améliorations
 
-### 1. Envoi manuel d'un template e-mail depuis l'onglet E-mails d'une réservation
+### 1. Portail client : "baby_crib" → afficher "Lit bébé" correctement
 
-**Fichier** : `src/components/host/BookingEmailsTab.tsx`
-- Ajouter une section "Envoyer un e-mail" en haut de l'onglet
-- Charger les `email_automations` du host (déjà récupérées) et les afficher dans un select
-- Bouton "Envoyer" qui appelle `supabase.functions.invoke('send-email', { body: { action: 'send_for_booking', automation_id, booking_id } })`
-- Afficher un toast de confirmation ou d'erreur, puis rafraîchir la liste des e-mails envoyés
+**Fichier** : `src/pages/BookingPortal.tsx` (ligne 383)
+- Le label `baby_crib` dans `bedLabels` est déjà "Lit bébé" mais l'icône utilisée est `Bed` pour toutes les pièces. Pour les pièces contenant un lit bébé, utiliser une icône plus adaptée (ex: `Baby` de lucide-react) ou simplement afficher le texte sans l'icône de lit adulte.
+- Vérifier le rendu : actuellement `1× Lit bébé` est correct en texte, le problème est probablement cosmétique. Remplacer l'icône `Bed` par `Baby` pour les chambres qui ne contiennent que des lits bébé, ou distinguer visuellement.
 
-### 2. Aligner le texte à gauche dans les e-mails automatiques
+### 2. Modifier / supprimer un blocage de dates
 
-**Fichier** : `src/components/host/email/EmailBodyEditor.tsx`
-- Le wrapper HTML généré utilise `margin:0 auto` (centrage du conteneur, ce qui est correct) mais le texte à l'intérieur n'a pas de `text-align:left` explicite
-- Modifier `editorHtmlToEmailHtml` pour ajouter `text-align:left` au style du div wrapper : `style="font-family:...;text-align:left;..."`
-- Cela garantit que le contenu du mail est aligné à gauche dans tous les clients e-mail
+**Fichier** : `src/pages/host/Availability.tsx`
+- Quand on clique sur un blocage (status `owner_blocked`) dans le calendrier, le `BookingDetailDialog` s'ouvre déjà. Ajouter un bouton "Supprimer" dans `BookingDetailDialog` pour les blocages uniquement.
 
-### 3. Corriger le décalage d'un jour sur les arrivées du dashboard
+**Fichier** : `src/components/host/BookingDetailDialog.tsx`
+- Si `booking.status === "owner_blocked"`, afficher un bouton "Supprimer le blocage" qui supprime la réservation (DELETE from bookings) puis ferme le dialog et rafraîchit les données.
+- Le bouton "Modifier" existant permet déjà d'éditer un blocage via `EditManualBookingDialog`.
 
-**Fichier** : `src/components/host/DashboardUpcomingBookings.tsx`
-- Le problème vient de `getDaysUntilLabel` (ligne 52) : `new Date(checkinDate)` avec une chaîne `YYYY-MM-DD` crée une date en UTC minuit, tandis que `new Date()` est en heure locale → décalage d'un jour
-- Corriger en parsant la date avec `parseISO` ou en ajoutant `T00:00:00` et en comparant les dates sans heures : `differenceInDays(startOfDay(parseISO(checkinDate)), startOfDay(new Date()))`
+### 3. Onglet Paiement : YTD = année complète (janvier → décembre)
 
-### 4. Vérification de chevauchement lors de l'encodage d'une réservation
+**Fichier** : `src/components/host/DashboardEarningsSummary.tsx`
+- Changer `defaultEndMonth` de `startOfMonth(addMonths(now, 1))` (mois suivant) vers `new Date(now.getFullYear(), 11, 31)` (31 décembre de l'année en cours) pour afficher les projections sur l'année entière, pas juste jusqu'à aujourd'hui.
 
-**Fichier** : `src/components/host/CreateManualBookingDialog.tsx`
-- Après sélection du listing + dates, vérifier s'il existe une réservation qui chevauche pour ce bien
-- Query : `bookings` où `listing_id = X` et `status != cancelled*` et `checkin_date < checkout_sélectionné` et `checkout_date > checkin_sélectionné`
-- Si résultat > 0, afficher un message d'alerte (Badge rouge) indiquant "⚠ Une réservation existe déjà sur ce créneau" avec le nom du locataire et les dates
-- Ne pas bloquer la sauvegarde (l'utilisateur peut volontairement créer un blocage qui chevauche) mais avertir clairement
+### 4. Iframe : corriger l'envoi d'e-mail depuis le simulateur
 
-**Fichier** : `src/components/host/EditManualBookingDialog.tsx`
-- Même logique, en excluant la réservation en cours d'édition du check
+**Fichier** : `supabase/functions/send-booking-inquiry/index.ts`
+- La fonction utilise Resend avec `from: 'Castellamare <noreply@castellamare.com>'`. L'erreur vient probablement du domaine non vérifié sur Resend en mode sandbox.
+- Investiguer les logs Edge Function pour identifier l'erreur exacte.
+- Solution de repli : si Resend échoue, logger l'erreur détaillée côté serveur et renvoyer le message d'erreur exact au client.
 
-### 5. Supprimer le "Tableau de bord" parasite en haut de la page Notes
+**Fichier** : `src/components/embed/BookingInquiryForm.tsx`
+- Améliorer l'affichage d'erreur pour montrer le message exact au lieu d'un générique.
 
-**Fichier** : `src/layouts/HostLayout.tsx`
-- Le layout affiche `HostPageHeader` avec le titre déduit de la route (ligne 32 : fallback `"Tableau de bord"`)
-- La route `/host/notes` n'est pas listée dans `getPageTitle` → affiche "Tableau de bord" par défaut
-- Ajouter `if (pathname === "/host/notes") return "Notes";` dans `getPageTitle`
-- Le composant `NotesPanel` a déjà un `HostPageHeader title="Notes"` dans `pages/host/Notes.tsx` → il faut soit retirer celui du layout (en ajoutant `/host/notes` à `shouldHideHeader`) soit retirer celui de `Notes.tsx`. Solution : ajouter le titre dans le layout et retirer le `HostPageHeader` de `Notes.tsx`
+### 5. Belgique par défaut pour le pays lors de l'encodage
 
-### 6. Ajouter une barre de recherche globale à côté du bouton "+" dans le header
+**Fichier** : `src/components/host/CreateEditTenantDialog.tsx` (ligne 70)
+- Changer le fallback du champ country : `setCountry(src.country || pre.country || "Belgique")` au lieu de `""`.
 
-**Fichier** : `src/components/host/HostPageHeader.tsx`
-- Ajouter un bouton icône "Recherche" (loupe) à côté du bouton "+"
-- Au clic, ouvrir un Dialog/Popover de recherche avec un champ texte
-- Rechercher dans les réservations (via `host_search_bookings` RPC) et les locataires (table `tenants`) en temps réel (debounce 300ms)
-- Afficher les résultats groupés : "Réservations" et "Locataires"
-- Clic sur un résultat → naviguer vers `/host/bookings` avec un filtre ou ouvrir le détail de la réservation / fiche locataire
-- Ce composant apparaît sur toutes les pages host car il est dans le header partagé
+### 6. Corriger les dates d'échéance de l'acompte
+
+**Fichier** : `src/components/host/CreateManualBookingDialog.tsx` (lignes 244-258)
+- Le problème : pour `due_type === "on_booking"`, la date est mise à `new Date()` (aujourd'hui). C'est correct pour "à la réservation".
+- Mais si le paramétrage dit `due_type === "before_checkin"` avec `due_days = 30`, le calcul `subDays(checkinDate, 30)` est correct. **Vérifier** que les `defaultSchedules` sont bien chargés avec les bons `due_type` et `due_days`.
+- Le bug probable : les données `host_payment_schedules` ont `due_type = "before_checkin"` et `due_days = X`, mais le code utilise `s.due_days || 0` qui retourne 0 si `due_days` est null ou 0 → résultat = date du checkin.
+- **Fix** : S'assurer que la query charge bien `due_days` et que le calcul est correct. Vérifier aussi que la date n'est pas écrasée par un autre useEffect.
+
+### 7. Recherche globale : ouvrir la fiche locataire directement
+
+**Fichier** : `src/components/host/GlobalSearchDialog.tsx` (ligne 101-108)
+- Actuellement `handleSelect` navigue vers `/host/tenants` pour les locataires. Remplacer par l'ouverture directe du `TenantDetailDialog` dans le dialog lui-même.
+- Ajouter un state `selectedTenant` et afficher `TenantDetailDialog` quand un locataire est sélectionné.
+- Pour les réservations, ouvrir `BookingDetailDialog` directement au lieu de naviguer vers la page réservations.
+
+### 8. Recherche de réservations par nom du locataire
+
+**Fichier** : Migration SQL pour modifier `host_search_bookings`
+- Le RPC actuel cherche dans `profiles.first_name`, `profiles.last_name`, `profiles.email` mais pas dans `tenants`.
+- Modifier la fonction pour joindre aussi la table `tenants` via `pricing_breakdown->>'tenant_id'` et chercher dans `tenants.first_name`, `tenants.last_name`, `tenants.email`.
+- Nouvelle clause WHERE :
+```sql
+AND (search_query IS NULL OR 
+     l.title ILIKE '%' || search_query || '%' OR
+     p.first_name ILIKE '%' || search_query || '%' OR
+     p.last_name ILIKE '%' || search_query || '%' OR
+     p.email ILIKE '%' || search_query || '%' OR
+     t.first_name ILIKE '%' || search_query || '%' OR
+     t.last_name ILIKE '%' || search_query || '%' OR
+     t.email ILIKE '%' || search_query || '%')
+```
+
+### 9. Portail client : section code d'accès toujours visible
+
+**Fichier** : `src/pages/BookingPortal.tsx` (lignes 276-322)
+- Le code actuel fonctionne déjà correctement : la section est toujours affichée, le code est masqué si non payé. Confirmer que `show_access_code` est bien activé dans les paramètres du portail. Aucun changement de code nécessaire si le comportement est déjà correct.
 
 ### Fichiers modifiés
 
 | Fichier | Modification |
 |---|---|
-| `src/components/host/BookingEmailsTab.tsx` | Section envoi manuel d'un template |
-| `src/components/host/email/EmailBodyEditor.tsx` | Ajouter `text-align:left` au wrapper |
-| `src/components/host/DashboardUpcomingBookings.tsx` | Fix décalage timezone arrivées |
-| `src/components/host/CreateManualBookingDialog.tsx` | Alerte chevauchement réservation |
-| `src/components/host/EditManualBookingDialog.tsx` | Alerte chevauchement réservation |
-| `src/layouts/HostLayout.tsx` | Ajouter route "Notes" dans getPageTitle |
-| `src/pages/host/Notes.tsx` | Retirer HostPageHeader dupliqué |
-| `src/components/host/HostPageHeader.tsx` | Ajouter recherche globale |
+| `src/pages/BookingPortal.tsx` | Icône "baby crib" |
+| `src/components/host/BookingDetailDialog.tsx` | Bouton supprimer blocage |
+| `src/components/host/DashboardEarningsSummary.tsx` | YTD année complète |
+| `supabase/functions/send-booking-inquiry/index.ts` | Debug envoi e-mail |
+| `src/components/embed/BookingInquiryForm.tsx` | Meilleure gestion erreurs |
+| `src/components/host/CreateEditTenantDialog.tsx` | Belgique par défaut |
+| `src/components/host/CreateManualBookingDialog.tsx` | Fix dates échéances |
+| `src/components/host/GlobalSearchDialog.tsx` | Ouvrir fiche locataire directement |
+| Migration SQL | Modifier `host_search_bookings` pour chercher dans tenants |
 
