@@ -245,7 +245,7 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
         const amount = Math.round(totalNum * s.percentage / 100 / 10) * 10;
         let dueDate: Date;
         if (s.due_type === "on_booking") {
-          dueDate = new Date();
+          dueDate = addDays(new Date(), s.due_days || 0);
         } else if (s.due_type === "before_checkin") {
           dueDate = subDays(checkinDate, s.due_days || 0);
         } else {

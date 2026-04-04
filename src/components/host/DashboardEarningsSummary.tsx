@@ -23,7 +23,7 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
   
   const now = new Date();
   const defaultStartMonth = new Date(now.getFullYear(), 0, 1); // Jan 1st of current year
-  const defaultEndMonth = startOfMonth(addMonths(now, 1));
+  const defaultEndMonth = new Date(now.getFullYear(), 11, 31);
 
   const { data: reports, isLoading: reportsLoading } = useQuery({
     queryKey: ["host-dashboard-earnings-report", userId],

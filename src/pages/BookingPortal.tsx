@@ -6,7 +6,7 @@ import { fr } from "date-fns/locale";
 import {
   CalendarDays, Users, Home, Euro, MapPin, Clock,
   ShieldCheck, Bed, Bath, DoorOpen, CheckCircle2, XCircle,
-  KeyRound, Loader2, Mail, Phone, MessageCircle, Facebook
+  KeyRound, Loader2, Mail, Phone, MessageCircle, Facebook, Baby
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -384,9 +384,11 @@ export default function BookingPortal() {
                 const label = room.name || typeLabels[room.room_type] || "Pièce";
                 const beds = room.beds || [];
                 const features = room.features || [];
+                const hasBabyCribOnly = beds.length > 0 && beds.every((b: any) => b.type === "baby_crib");
+                const RoomIcon = hasBabyCribOnly ? Baby : Bed;
                 return (
                   <div key={room.id} className="flex items-start gap-2.5 py-2">
-                    <Bed className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <RoomIcon className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-sm font-medium">{label}</p>
                       {room.room_type === "bedroom" && beds.length > 0 && (

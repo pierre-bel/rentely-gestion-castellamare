@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarDays, Users, Home, Euro, FileText, Pencil, Mail, Link2, Check, CreditCard, Phone, MapPin, Star, Sparkles } from "lucide-react";
+import { CalendarDays, Users, Home, Euro, FileText, Pencil, Mail, Link2, Check, CreditCard, Phone, MapPin, Star, Sparkles, Trash2, Loader2 } from "lucide-react";
 import BookingEmailsTab from "./BookingEmailsTab";
 import { BookingPaymentSection } from "./BookingPaymentSection";
 import { toast } from "@/hooks/use-toast";
@@ -44,6 +44,7 @@ interface Props {
   booking: BookingDetailData | null;
   onEdit: (booking: BookingDetailData) => void;
   onGenerateContract?: (bookingId: string) => void;
+  onRefresh?: () => void;
 }
 
 const formatPrice = (price: number) =>
@@ -59,8 +60,9 @@ const STATUS_LABELS: Record<string, string> = {
   expired: "Expirée",
 };
 
-export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGenerateContract }: Props) {
+export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGenerateContract, onRefresh }: Props) {
   const [linkCopied, setLinkCopied] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   
   const tenantId = booking?.pricing_breakdown?.tenant_id;
   
@@ -102,6 +104,24 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
   const deposit = bd?.deposit;
   const remaining = bd?.remaining;
   const canEdit = booking.status === "confirmed" || booking.status === "pending_payment";
+  const isBlockage = booking.status === "owner_blocked";
+
+  const handleDeleteBlockage = async () => {
+    if (!booking) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from("bookings").delete().eq("id", booking.id);
+      if (error) throw error;
+      toast({ title: "Blocage supprimé" });
+      onOpenChange(false);
+      onRefresh?.();
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erreur lors de la suppression", variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const cleanNotes = booking.notes
     ? booking.notes.split(" | ").filter((p) => !p.startsWith("Locataire:") && !p.startsWith("Acompte:")).join(" | ").trim()
@@ -261,8 +281,14 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
               {linkCopied ? "Copié" : "Portail client"}
             </Button>
           )}
+          {isBlockage && (
+            <Button variant="destructive" size="sm" className="gap-1.5" disabled={deleting} onClick={handleDeleteBlockage}>
+              {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+              Supprimer le blocage
+            </Button>
+          )}
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
-          {canEdit && (
+          {(canEdit || isBlockage) && (
             <Button onClick={() => { onOpenChange(false); onEdit(booking); }} className="gap-1.5">
               <Pencil className="h-3.5 w-3.5" /> Modifier
             </Button>
