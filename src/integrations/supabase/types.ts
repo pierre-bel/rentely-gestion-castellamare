@@ -3663,69 +3663,37 @@ export type Database = {
         Args: { p_booking_id: string }
         Returns: Json
       }
-      host_search_bookings:
-        | {
-            Args: {
-              checkin_end?: string
-              checkin_start?: string
-              checkout_end?: string
-              checkout_start?: string
-              host_id: string
-              max_price?: number
-              min_price?: number
-              search_query?: string
-              sort_by?: string
-              sort_order?: string
-              status_filter?: Database["public"]["Enums"]["booking_status"]
-            }
-            Returns: {
-              checkin_date: string
-              checkout_date: string
-              created_at: string
-              guest_avatar: string
-              guest_email: string
-              guest_name: string
-              guest_user_id: string
-              guests: number
-              host_payout_gross: number
-              id: string
-              listing_id: string
-              listing_title: string
-              nights: number
-              status: Database["public"]["Enums"]["booking_status"]
-            }[]
-          }
-        | {
-            Args: {
-              checkin_end?: string
-              checkin_start?: string
-              checkout_end?: string
-              checkout_start?: string
-              host_id: string
-              max_price?: number
-              min_price?: number
-              search_query?: string
-              sort_by?: string
-              sort_order?: string
-              status_filter?: string
-            }
-            Returns: {
-              checkin_date: string
-              checkout_date: string
-              created_at: string
-              guest_avatar: string
-              guest_email: string
-              guest_name: string
-              guest_user_id: string
-              guests: number
-              host_payout_gross: number
-              id: string
-              listing_id: string
-              listing_title: string
-              nights: number
-              status: string
-            }[]
-          }
+      host_search_bookings: {
+        Args: {
+          checkin_end?: string
+          checkin_start?: string
+          checkout_end?: string
+          checkout_start?: string
+          host_id: string
+          max_price?: number
+          min_price?: number
+          search_query?: string
+          sort_by?: string
+          sort_order?: string
+          status_filter?: string
+        }
+        Returns: {
+          checkin_date: string
+          checkout_date: string
+          created_at: string
+          guest_avatar: string
+          guest_email: string
+          guest_name: string
+          guest_user_id: string
+          guests: number
+          host_payout_gross: number
+          id: string
+          listing_id: string
+          listing_title: string
+          nights: number
+          status: string
+        }[]
+      }
       host_search_listings: {
         Args: {
           host_id: string
