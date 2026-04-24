@@ -155,7 +155,7 @@ export default function BookingPortal() {
       const resolvedHostUserId = (bookingRow as any)?.listings?.host_user_id;
       setHostUserId(resolvedHostUserId || null);
       const hostUserId = resolvedHostUserId;
-      const [paymentsRes, settingsRes, customRes] = await Promise.all([
+      const [paymentsRes, settingsRes, customRes, bankRes] = await Promise.all([
         supabase.from("booking_payment_items").select("*").eq("booking_id", bookingId).order("sort_order"),
         hostUserId
           ? supabase.from("public_portal_settings").select("*").eq("host_user_id", hostUserId).maybeSingle()
@@ -163,13 +163,19 @@ export default function BookingPortal() {
         hostUserId
           ? supabase.from("public_portal_custom_sections").select("*").eq("host_user_id", hostUserId).order("sort_order")
           : Promise.resolve({ data: null }),
+        supabase.rpc("get_portal_bank_info", { _access_token: token }),
       ]);
 
       if (paymentsRes.data) setPayments(paymentsRes.data as PaymentItem[]);
       if (settingsRes.data) {
         const s = settingsRes.data as any;
+        const bank = Array.isArray(bankRes?.data) ? bankRes.data[0] : null;
         setSettings({
           ...s,
+          bank_beneficiary_name: bank?.bank_beneficiary_name ?? null,
+          bank_iban: bank?.bank_iban ?? null,
+          bank_bic: bank?.bank_bic ?? null,
+          bank_transfer_reference_template: bank?.bank_transfer_reference_template ?? null,
           section_order: s.section_order || DEFAULT_SETTINGS.section_order,
           require_full_payment_for_access_code: s.require_full_payment_for_access_code ?? true,
           contact_email: s.contact_email || null,
