@@ -2744,10 +2744,6 @@ export type Database = {
       }
       public_portal_settings: {
         Row: {
-          bank_beneficiary_name: string | null
-          bank_bic: string | null
-          bank_iban: string | null
-          bank_transfer_reference_template: string | null
           contact_email: string | null
           contact_facebook_url: string | null
           contact_phone: string | null
@@ -2767,10 +2763,6 @@ export type Database = {
           welcome_message: string | null
         }
         Insert: {
-          bank_beneficiary_name?: string | null
-          bank_bic?: string | null
-          bank_iban?: string | null
-          bank_transfer_reference_template?: string | null
           contact_email?: string | null
           contact_facebook_url?: string | null
           contact_phone?: string | null
@@ -2790,10 +2782,6 @@ export type Database = {
           welcome_message?: string | null
         }
         Update: {
-          bank_beneficiary_name?: string | null
-          bank_bic?: string | null
-          bank_iban?: string | null
-          bank_transfer_reference_template?: string | null
           contact_email?: string | null
           contact_facebook_url?: string | null
           contact_phone?: string | null
@@ -3623,6 +3611,15 @@ export type Database = {
           p_participant_2_id: string
         }
         Returns: string
+      }
+      get_portal_bank_info: {
+        Args: { _access_token: string }
+        Returns: {
+          bank_beneficiary_name: string
+          bank_bic: string
+          bank_iban: string
+          bank_transfer_reference_template: string
+        }[]
       }
       get_public_profiles: {
         Args: never
