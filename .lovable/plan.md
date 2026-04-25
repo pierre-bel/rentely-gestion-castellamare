@@ -1,35 +1,79 @@
+## Plan : restaurer le calendrier des disponibilités partagé
 
+### Diagnostic
+La régression vient du backend, pas des réservations elles-mêmes.
 
-## Plan : Corriger la duplication du RPC `host_search_bookings`
+Le bouton **Partager** ouvre `/embed/availability/all/:hostId`, qui charge les réservations via la vue SQL **`public.public_booking_dates`**.
 
-### Cause racine
+Or cette vue a été modifiée récemment par la migration :
+- `supabase/migrations/20260424155119_e690f4d0-ce40-441a-83c1-e43e23f178a3.sql`
 
-Deux signatures de `host_search_bookings` coexistent dans la base :
-1. **Ancienne** : `status_filter booking_status` → renvoie `status booking_status`
-2. **Nouvelle** (créée hier dans la migration de fix) : `status_filter text` → renvoie `status text`
-
-PostgreSQL ne peut pas choisir → toutes les requêtes vers ce RPC échouent. Résultat : onglet réservations vide, dashboard vide, recherche globale cassée, alors que les **508 réservations sont bien présentes** dans la base (la dernière créée ce matin à 06:36 UTC est bien là).
-
-### Correction (1 migration SQL)
-
+Cette migration a forcé :
 ```sql
-DROP FUNCTION IF EXISTS public.host_search_bookings(
-  uuid, text, booking_status, numeric, numeric, date, date, date, date, text, text
-);
+ALTER VIEW public.public_booking_dates SET (security_invoker = on);
 ```
 
-Cela supprime uniquement l'ancienne signature et garde la nouvelle (celle avec `status_filter text`) qui est déjà appelée par le frontend.
+Conséquence : la vue réutilise les permissions de l’utilisateur anonyme qui consulte le lien partagé. Mais la table `bookings` **n’autorise pas les anonymes à lire les réservations** via RLS.
 
-### Vérification post-fix
+Résultat concret :
+- les appartements peuvent encore apparaître,
+- mais **les réservations ne remontent plus du tout**,
+- donc le calendrier partagé paraît vide.
 
-1. `SELECT COUNT(*) FROM host_search_bookings('327b2716...'::uuid, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'created_at', 'desc');` → doit retourner 508
-2. Onglet `/host/bookings` doit afficher toutes les réservations
-3. La réservation créée ce matin (`2e21761e-c35c-4356-8668-80813b58aa8c`, check-in 20/04/2026) doit apparaître en tête
-4. Recherche globale et dashboard doivent revivre
+C’est cohérent avec la mémoire projet déjà définie :
+- `mem://security/access-control` précise que **`public_booking_dates` est l’exception** et doit rester une vue publique standard pour les contrôles calendrier anonymes.
 
-### Fichier modifié
+### Correction prévue
 
-| Fichier | Modification |
-|---|---|
-| Nouvelle migration SQL | DROP de l'ancienne signature `host_search_bookings(..., booking_status, ...)` |
+#### 1. Corriger la vue publique des réservations
+Créer une migration SQL qui :
+- recrée `public.public_booking_dates` **sans `security_invoker=on`**,
+- conserve uniquement les colonnes non sensibles :
+  - `listing_id`
+  - `checkin_date`
+  - `checkout_date`
+- garde le filtrage actuel sur les statuts visibles dans le calendrier.
 
+Forme attendue :
+```sql
+DROP VIEW IF EXISTS public.public_booking_dates;
+CREATE VIEW public.public_booking_dates AS
+SELECT listing_id, checkin_date, checkout_date
+FROM public.bookings
+WHERE status = ANY (ARRAY['confirmed'::booking_status, 'completed'::booking_status, 'pending_payment'::booking_status]);
+
+GRANT SELECT ON public.public_booking_dates TO anon, authenticated;
+```
+
+#### 2. Vérifier s’il faut aussi réajuster `public_listing_availability`
+Je vais contrôler si la partie “dates bloquées” dépend de la même régression ou si elle reste fonctionnelle avec les policies actuelles.
+
+But :
+- ne pas élargir l’accès inutilement,
+- corriger uniquement ce qui casse l’affichage partagé.
+
+#### 3. Vérifier les pages concernées côté front
+Contrôler le flux utilisé par :
+- `src/pages/host/Availability.tsx` → génération du lien partagé
+- `src/pages/EmbedAllAvailability.tsx` → calendrier partagé “tous les appartements”
+- `src/pages/EmbedAvailability.tsx` → calendrier partagé d’un seul bien
+
+Je ne prévois pas de gros refactor front : le code paraît bon, il consomme simplement une vue backend devenue trop restrictive.
+
+### Vérifications après fix
+1. Ouvrir le lien **Partager** depuis `/host/availability`
+2. Vérifier que les réservations réapparaissent dans :
+   - la vue partagée globale
+   - la vue partagée d’un logement individuel
+3. Vérifier que les jours réservés sont à nouveau marqués correctement
+4. Vérifier qu’aucune donnée sensible n’est exposée :
+   - pas de nom voyageur
+   - pas d’e-mail
+   - seulement les dates occupées
+
+### Détail technique
+- **Cause racine** : `security_invoker=on` sur `public_booking_dates`
+- **Impact** : les lectures anonymes du calendrier partagé héritent de la RLS de `bookings`, qui bloque l’accès
+- **Fix minimal et sûr** : revenir à une vue publique limitée aux dates, sans données personnelles
+
+Si vous validez, j’applique directement la migration et je sécurise la régression proprement.
