@@ -166,7 +166,7 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
               <Users className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Locataire</p>
-                <p className="text-sm font-medium">{booking.guest_name}</p>
+                <p className="text-sm font-medium">{tenant ? (`${tenant.first_name || ""} ${tenant.last_name || ""}`.trim() || booking.guest_name) : booking.guest_name}</p>
                 {(tenant?.email || booking.guest_email) && <p className="text-xs text-muted-foreground">{tenant?.email || booking.guest_email}</p>}
                 {(tenant?.phone || booking.guest_phone) && (
                   <p className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" />{tenant?.phone || booking.guest_phone}</p>
