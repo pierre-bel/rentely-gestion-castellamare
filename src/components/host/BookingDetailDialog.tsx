@@ -64,9 +64,15 @@ const STATUS_LABELS: Record<string, string> = {
   expired: "Expirée",
 };
 
+const TAB_ORDER = ["details", "payments", "emails"] as const;
+type TabValue = typeof TAB_ORDER[number];
+
 export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGenerateContract, onRefresh }: Props) {
   const [linkCopied, setLinkCopied] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabValue>("details");
+  const isMobile = useIsMobile();
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
   
   const tenantId = booking?.pricing_breakdown?.tenant_id;
   
