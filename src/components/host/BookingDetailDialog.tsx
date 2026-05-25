@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useRef, ReactNode } from "react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter,
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type StatusValue } from "@/components/ui/status-badge";
 import { Separator } from "@/components/ui/separator";
@@ -14,6 +17,7 @@ import { BookingPaymentSection } from "./BookingPaymentSection";
 import { toast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface BookingDetailData {
   id: string;
