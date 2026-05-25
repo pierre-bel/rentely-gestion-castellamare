@@ -1,45 +1,52 @@
-## Problème
+## Plan : Rendre l'app vraiment mobile-friendly
 
-Quand on ouvre une réservation depuis le tableau de bord (Recent / Upcoming), c'est **le nom de l'hôte** qui apparaît dans le champ "Locataire", pas celui du vrai locataire.
+### 1. Aperçu d'une réservation → Drawer plein écran sur mobile
 
-## Cause racine
+`BookingDetailDialog.tsx` utilise `Dialog` qui s'affiche centré, mal dimensionné sur 360px (boutons du footer qui débordent, padding trop large, titre tronqué).
 
-Pour les réservations créées manuellement par l'hôte (`CreateManualBookingDialog.tsx`), le champ `bookings.guest_user_id` est rempli avec **`user.id` (l'ID de l'hôte lui-même)**, car le locataire n'a pas de compte. Le vrai locataire est stocké dans la table `tenants` et référencé via `pricing_breakdown.tenant_id`.
+**Changements** :
+- Sur mobile (`< 768px`) : utiliser le composant `Drawer` (bottom sheet plein hauteur 90vh) au lieu de `Dialog`.
+- Sur desktop : conserver le `Dialog` actuel.
+- Pattern : hook `useIsMobile()` + rendu conditionnel `<Drawer>` / `<Dialog>` avec le même contenu interne extrait.
+- Footer : empiler les boutons en colonne sur mobile, espacement `gap-2`, boutons `w-full`.
+- Padding réduit (`p-4` au lieu de `p-6`), titre `text-lg`.
 
-Or dans `DashboardRecentBookings.tsx` (ligne 86-107) et `DashboardUpcomingBookings.tsx` (ligne 102-123), le code fait :
+### 2. Swipe entre onglets (Détails / Paiements / E-mails)
 
-```ts
-const { data: profile } = await supabase
-  .from("profiles")
-  .select("first_name, last_name, email, phone")
-  .eq("id", full.guest_user_id)   // ← c'est l'hôte !
-  .single();
+Les `Tabs` shadcn ne supportent pas le swipe natif. Ajouter un wrapper de swipe gestuel uniquement sur mobile dans le `BookingDetailDialog`.
 
-setSelectedBooking({
-  ...
-  guest_name: profile ? `${profile.first_name} ${profile.last_name}` : booking.guest_email,
-  ...
-});
-```
+**Implémentation** :
+- Convertir `defaultValue="details"` en état contrôlé `value` / `onValueChange`.
+- Ajouter handlers `onTouchStart` / `onTouchEnd` sur le conteneur `TabsContent` :
+  - swipe gauche → onglet suivant
+  - swipe droite → onglet précédent
+  - seuil : 50px horizontal, ignorer si vertical > horizontal (pour ne pas casser le scroll).
+- Indicateur visuel : les `TabsTrigger` actuels restent (highlight de l'onglet actif).
 
-Résultat : `guest_name` = nom du propriétaire.
+### 3. Liste des réservations (`HostBookings.tsx`)
 
-`BookingDetailDialog` charge bien le tenant via `pricing_breakdown.tenant_id`, mais l'affichage du nom (ligne 169) utilise `booking.guest_name` qui est déjà pollué.
+Vérifier rapidement le tableau : sur mobile il faut une vue en cartes plutôt qu'un tableau qui scrolle horizontalement. Si déjà présent, ne rien changer ; sinon, ajouter un rendu en cartes empilées sous `md`.
 
-## Correction
+### 4. Ajustements responsive globaux légers
 
-**`src/components/host/BookingDetailDialog.tsx`** (ligne 169) — utiliser le nom du tenant en priorité :
+- `DialogFooter` (composant UI) : déjà `flex-col-reverse sm:flex-row` → OK.
+- Vérifier `DialogContent` : ajouter `max-w-[95vw] sm:max-w-lg` et `max-h-[90vh]` par défaut pour éviter que les autres dialogs débordent.
 
-```tsx
-<p className="text-sm font-medium">
-  {tenant
-    ? `${tenant.first_name || ""} ${tenant.last_name || ""}`.trim() || booking.guest_name
-    : booking.guest_name}
-</p>
-```
+### Fichiers modifiés
 
-Cela corrige le problème pour **toutes** les sources qui ouvrent le dialog (dashboard recent, upcoming, HostBookings, GlobalSearch, Availability) sans toucher chaque appelant.
+| Fichier | Modification |
+|---|---|
+| `src/components/host/BookingDetailDialog.tsx` | Drawer mobile, Tabs contrôlés + swipe, footer empilé |
+| `src/components/ui/dialog.tsx` (mineur) | `max-w-[95vw]` + `max-h-[90vh]` par défaut |
+| `src/components/host/HostBookings.tsx` (si besoin) | Vérif vue mobile en cartes |
 
-## Fichier modifié
+### Hors scope
 
-- `src/components/host/BookingDetailDialog.tsx` (1 ligne)
+- Refonte visuelle (couleurs, typo) — uniquement responsive/UX.
+- Autres dialogs (édition, etc.) — peuvent suivre dans un second passage si tu veux.
+- Le calendrier (déjà responsive).
+
+### Validation
+
+- Preview 360px : ouvrir une réservation → drawer plein écran, swipe entre les 3 onglets fonctionne, boutons du footer empilés et accessibles.
+- Preview desktop : comportement inchangé (Dialog modal centré).
