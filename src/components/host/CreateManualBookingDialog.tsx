@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { Tenant } from "./HostTenants";
+import { TenantSearchCombobox } from "./TenantSearchCombobox";
 import { CreateEditTenantDialog } from "./CreateEditTenantDialog";
 import { Separator } from "@/components/ui/separator";
 import { calculatePricingFromWeeklyRates } from "@/lib/pricingUtils";
@@ -496,18 +497,13 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
               <div>
                 <Label>Locataire</Label>
                 <div className="flex gap-2">
-                  <Select value={selectedTenantId} onValueChange={setSelectedTenantId}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Choisir un locataire..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tenants.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.first_name} {t.last_name || ""} {t.email ? `(${t.email})` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <TenantSearchCombobox
+                    tenants={tenants}
+                    value={selectedTenantId}
+                    onChange={setSelectedTenantId}
+                    allowClear
+                    clearLabel="Aucun locataire"
+                  />
                   <Button
                     type="button"
                     variant="outline"
