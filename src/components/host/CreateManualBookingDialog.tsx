@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { Tenant } from "./HostTenants";
+import { TenantSearchCombobox } from "./TenantSearchCombobox";
 import { CreateEditTenantDialog } from "./CreateEditTenantDialog";
 import { Separator } from "@/components/ui/separator";
 import { calculatePricingFromWeeklyRates } from "@/lib/pricingUtils";
@@ -63,6 +64,7 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
   const [bookingType, setBookingType] = useState<"normal" | "owner_blocked">("normal");
   const [selectedListingId, setSelectedListingId] = useState("");
   const [selectedTenantId, setSelectedTenantId] = useState("");
+  const [blockedTenantId, setBlockedTenantId] = useState("");
   const [checkinDate, setCheckinDate] = useState<Date>();
   const [checkoutDate, setCheckoutDate] = useState<Date>();
   const [rentalPrice, setRentalPrice] = useState("");
@@ -300,6 +302,7 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
     setBookingType("normal");
     setSelectedListingId("");
     setSelectedTenantId("");
+    setBlockedTenantId("");
     setCheckinDate(undefined);
     setCheckoutDate(undefined);
     setRentalPrice("");
@@ -340,7 +343,7 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
     try {
       if (bookingType === "owner_blocked") {
         // Simplified booking for blocked
-        const tenant = tenants.find((t) => t.id === selectedTenantId);
+        const tenant = tenants.find((t) => t.id === blockedTenantId);
         const noteParts = [];
         if (tenant) noteParts.push(`Blocage: ${tenant.first_name} ${tenant.last_name || ""}`.trim());
         else if (blockName.trim()) noteParts.push(`Blocage: ${blockName.trim()}`);
@@ -496,18 +499,13 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
               <div>
                 <Label>Locataire</Label>
                 <div className="flex gap-2">
-                  <Select value={selectedTenantId} onValueChange={setSelectedTenantId}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Choisir un locataire..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tenants.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.first_name} {t.last_name || ""} {t.email ? `(${t.email})` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <TenantSearchCombobox
+                    tenants={tenants}
+                    value={selectedTenantId}
+                    onChange={setSelectedTenantId}
+                    allowClear
+                    clearLabel="Aucun locataire"
+                  />
                   <Button
                     type="button"
                     variant="outline"
@@ -527,18 +525,13 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
                 <div>
                   <Label>Occupant (optionnel)</Label>
                   <div className="flex gap-2">
-                    <Select value={selectedTenantId} onValueChange={setSelectedTenantId}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Choisir un locataire..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {tenants.map((t) => (
-                          <SelectItem key={t.id} value={t.id}>
-                            {t.first_name} {t.last_name || ""} {t.email ? `(${t.email})` : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <TenantSearchCombobox
+                      tenants={tenants}
+                      value={blockedTenantId}
+                      onChange={setBlockedTenantId}
+                      allowClear
+                      clearLabel="Aucun occupant"
+                    />
                     <Button
                       type="button"
                       variant="outline"
