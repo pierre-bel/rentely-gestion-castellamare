@@ -64,6 +64,7 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
   const [bookingType, setBookingType] = useState<"normal" | "owner_blocked">("normal");
   const [selectedListingId, setSelectedListingId] = useState("");
   const [selectedTenantId, setSelectedTenantId] = useState("");
+  const [blockedTenantId, setBlockedTenantId] = useState("");
   const [checkinDate, setCheckinDate] = useState<Date>();
   const [checkoutDate, setCheckoutDate] = useState<Date>();
   const [rentalPrice, setRentalPrice] = useState("");
@@ -301,6 +302,7 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
     setBookingType("normal");
     setSelectedListingId("");
     setSelectedTenantId("");
+    setBlockedTenantId("");
     setCheckinDate(undefined);
     setCheckoutDate(undefined);
     setRentalPrice("");
@@ -341,7 +343,7 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
     try {
       if (bookingType === "owner_blocked") {
         // Simplified booking for blocked
-        const tenant = tenants.find((t) => t.id === selectedTenantId);
+        const tenant = tenants.find((t) => t.id === blockedTenantId);
         const noteParts = [];
         if (tenant) noteParts.push(`Blocage: ${tenant.first_name} ${tenant.last_name || ""}`.trim());
         else if (blockName.trim()) noteParts.push(`Blocage: ${blockName.trim()}`);
@@ -525,8 +527,8 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
                   <div className="flex gap-2">
                     <TenantSearchCombobox
                       tenants={tenants}
-                      value={selectedTenantId}
-                      onChange={setSelectedTenantId}
+                      value={blockedTenantId}
+                      onChange={setBlockedTenantId}
                       allowClear
                       clearLabel="Aucun occupant"
                     />
