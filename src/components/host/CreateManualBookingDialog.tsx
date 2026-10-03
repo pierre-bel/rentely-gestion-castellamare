@@ -523,18 +523,13 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
                 <div>
                   <Label>Occupant (optionnel)</Label>
                   <div className="flex gap-2">
-                    <Select value={selectedTenantId} onValueChange={setSelectedTenantId}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Choisir un locataire..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {tenants.map((t) => (
-                          <SelectItem key={t.id} value={t.id}>
-                            {t.first_name} {t.last_name || ""} {t.email ? `(${t.email})` : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <TenantSearchCombobox
+                      tenants={tenants}
+                      value={selectedTenantId}
+                      onChange={setSelectedTenantId}
+                      allowClear
+                      clearLabel="Aucun occupant"
+                    />
                     <Button
                       type="button"
                       variant="outline"
