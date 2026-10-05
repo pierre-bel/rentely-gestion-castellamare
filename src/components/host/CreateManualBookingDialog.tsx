@@ -23,6 +23,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { Tenant } from "./HostTenants";
 import { TenantSearchCombobox } from "./TenantSearchCombobox";
+import { fetchYearlyStayTimes, getStayTimesForDate } from "@/lib/stayTimes";
 import { CreateEditTenantDialog } from "./CreateEditTenantDialog";
 import { Separator } from "@/components/ui/separator";
 import { calculatePricingFromWeeklyRates } from "@/lib/pricingUtils";
