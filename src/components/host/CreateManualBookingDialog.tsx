@@ -23,6 +23,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { Tenant } from "./HostTenants";
 import { TenantSearchCombobox } from "./TenantSearchCombobox";
+import { fetchYearlyStayTimes, getStayTimesForDate } from "@/lib/stayTimes";
 import { CreateEditTenantDialog } from "./CreateEditTenantDialog";
 import { Separator } from "@/components/ui/separator";
 import { calculatePricingFromWeeklyRates } from "@/lib/pricingUtils";
@@ -198,14 +199,20 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
     }
   }, [checkinDate, checkoutDate, portalSettings]);
 
-  // Auto-fill check-in/check-out times from listing defaults
+  // Auto-fill check-in/check-out times (yearly override, else listing defaults)
+  const { data: yearlyStayTimes = [] } = useQuery({
+    queryKey: ["yearly-stay-times", selectedListingId],
+    queryFn: () => fetchYearlyStayTimes([selectedListingId]),
+    enabled: !!selectedListingId,
+  });
   useEffect(() => {
     const listing = listings.find((l) => l.id === selectedListingId);
     if (listing) {
-      setCheckinTime(listing.checkin_from?.slice(0, 5) || "");
-      setCheckoutTime(listing.checkout_until?.slice(0, 5) || "");
+      const t = getStayTimesForDate(listing, checkinDate, yearlyStayTimes);
+      setCheckinTime(t.checkin);
+      setCheckoutTime(t.checkout);
     }
-  }, [selectedListingId, listings]);
+  }, [selectedListingId, listings, checkinDate?.getFullYear?.(), yearlyStayTimes]);
 
   // Auto-fill prices when listing or dates change
   useEffect(() => {

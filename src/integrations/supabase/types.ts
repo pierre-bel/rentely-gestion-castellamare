@@ -974,6 +974,39 @@ export type Database = {
         }
         Relationships: []
       }
+      host_api_keys: {
+        Row: {
+          created_at: string
+          host_id: string
+          id: string
+          key_hash: string
+          last_used_at: string | null
+          name: string
+          prefix: string
+          revoked_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          host_id: string
+          id?: string
+          key_hash: string
+          last_used_at?: string | null
+          name: string
+          prefix: string
+          revoked_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          host_id?: string
+          id?: string
+          key_hash?: string
+          last_used_at?: string | null
+          name?: string
+          prefix?: string
+          revoked_at?: string | null
+        }
+        Relationships: []
+      }
       host_notes: {
         Row: {
           content: string
@@ -1478,6 +1511,62 @@ export type Database = {
           },
           {
             foreignKeyName: "listing_weekly_pricing_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_yearly_stay_times: {
+        Row: {
+          checkin_time: string | null
+          checkout_time: string | null
+          created_at: string
+          id: string
+          listing_id: string
+          year: number
+        }
+        Insert: {
+          checkin_time?: string | null
+          checkout_time?: string | null
+          created_at?: string
+          id?: string
+          listing_id: string
+          year: number
+        }
+        Update: {
+          checkin_time?: string | null
+          checkout_time?: string | null
+          created_at?: string
+          id?: string
+          listing_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_yearly_stay_times_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "embed_host_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_yearly_stay_times_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "embed_listing_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_yearly_stay_times_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_yearly_stay_times_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "public_listings"
