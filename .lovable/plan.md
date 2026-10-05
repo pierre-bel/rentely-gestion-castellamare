@@ -1,52 +1,30 @@
-## Plan : Rendre l'app vraiment mobile-friendly
+# Heures d'arrivée/départ par année + onglet Connexions API
 
-### 1. Aperçu d'une réservation → Drawer plein écran sur mobile
+## 1. Heures d'arrivée et de départ par année (par appartement)
 
-`BookingDetailDialog.tsx` utilise `Dialog` qui s'affiche centré, mal dimensionné sur 360px (boutons du footer qui débordent, padding trop large, titre tronqué).
+Dans la fiche de chaque appartement (modification d'annonce), nouvelle section « Heures par année » :
+- Tableau : Année | Heure d'arrivée | Heure de départ | Supprimer.
+- Bouton « Ajouter une année ».
+- Les heures par défaut actuelles de l'appartement restent la règle de secours quand aucune année n'est définie.
 
-**Changements** :
-- Sur mobile (`< 768px`) : utiliser le composant `Drawer` (bottom sheet plein hauteur 90vh) au lieu de `Dialog`.
-- Sur desktop : conserver le `Dialog` actuel.
-- Pattern : hook `useIsMobile()` + rendu conditionnel `<Drawer>` / `<Dialog>` avec le même contenu interne extrait.
-- Footer : empiler les boutons en colonne sur mobile, espacement `gap-2`, boutons `w-full`.
-- Padding réduit (`p-4` au lieu de `p-6`), titre `text-lg`.
+Application automatique : lors d'une nouvelle réservation (manuelle, import, demande via calendrier), l'heure proposée est celle de l'année de la date d'arrivée si elle existe, sinon l'heure par défaut. Les réservations existantes ne sont pas modifiées (l'heure reste modifiable à la main).
 
-### 2. Swipe entre onglets (Détails / Paiements / E-mails)
+## 2. Nouvel onglet « Connexions API »
 
-Les `Tabs` shadcn ne supportent pas le swipe natif. Ajouter un wrapper de swipe gestuel uniquement sur mobile dans le `BookingDetailDialog`.
+Nouvel onglet dans le menu de gestion :
+- Créer une clé API (nom libre, ex. « Mon logiciel compta »). La clé complète n'est affichée qu'une seule fois, avec bouton Copier.
+- Liste des clés : nom, date de création, dernière utilisation, bouton Révoquer.
+- Documentation intégrée : adresse à appeler et exemples.
 
-**Implémentation** :
-- Convertir `defaultValue="details"` en état contrôlé `value` / `onValueChange`.
-- Ajouter handlers `onTouchStart` / `onTouchEnd` sur le conteneur `TabsContent` :
-  - swipe gauche → onglet suivant
-  - swipe droite → onglet précédent
-  - seuil : 50px horizontal, ignorer si vertical > horizontal (pour ne pas casser le scroll).
-- Indicateur visuel : les `TabsTrigger` actuels restent (highlight de l'onglet actif).
+Ce que l'autre logiciel pourra faire avec la clé :
+- Lire la liste des appartements.
+- Lire les réservations (filtre par dates / appartement).
+- Créer une réservation (statut « En attente »).
 
-### 3. Liste des réservations (`HostBookings.tsx`)
+## Détails techniques
 
-Vérifier rapidement le tableau : sur mobile il faut une vue en cartes plutôt qu'un tableau qui scrolle horizontalement. Si déjà présent, ne rien changer ; sinon, ajouter un rendu en cartes empilées sous `md`.
-
-### 4. Ajustements responsive globaux légers
-
-- `DialogFooter` (composant UI) : déjà `flex-col-reverse sm:flex-row` → OK.
-- Vérifier `DialogContent` : ajouter `max-w-[95vw] sm:max-w-lg` et `max-h-[90vh]` par défaut pour éviter que les autres dialogs débordent.
-
-### Fichiers modifiés
-
-| Fichier | Modification |
-|---|---|
-| `src/components/host/BookingDetailDialog.tsx` | Drawer mobile, Tabs contrôlés + swipe, footer empilé |
-| `src/components/ui/dialog.tsx` (mineur) | `max-w-[95vw]` + `max-h-[90vh]` par défaut |
-| `src/components/host/HostBookings.tsx` (si besoin) | Vérif vue mobile en cartes |
-
-### Hors scope
-
-- Refonte visuelle (couleurs, typo) — uniquement responsive/UX.
-- Autres dialogs (édition, etc.) — peuvent suivre dans un second passage si tu veux.
-- Le calendrier (déjà responsive).
-
-### Validation
-
-- Preview 360px : ouvrir une réservation → drawer plein écran, swipe entre les 3 onglets fonctionne, boutons du footer empilés et accessibles.
-- Preview desktop : comportement inchangé (Dialog modal centré).
+- Table `listing_yearly_stay_times` (listing_id, year, checkin_time, checkout_time, unique listing+year), RLS propriétaire du listing, GRANTs.
+- Helper `getStayTimesForDate(listing, date)` utilisé par CreateManualBookingDialog, import et send-booking-inquiry.
+- Table `host_api_keys` (host_id, name, key_hash SHA-256, prefix, last_used_at, revoked_at), RLS host_id = auth.uid().
+- Edge function `public-api` (verify_jwt off) : auth via header `X-API-Key` hashé, endpoints GET /listings, GET /bookings, POST /bookings, limités aux données de l'hôte de la clé.
+- Route `/host/api` + entrée dans HostSidebar.
