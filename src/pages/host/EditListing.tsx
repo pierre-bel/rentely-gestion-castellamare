@@ -15,6 +15,7 @@ import StepRooms from "@/components/listing/StepRooms";
 import StepDetails from "@/components/listing/StepDetails";
 import StepPhotos from "@/components/listing/StepPhotos";
 import StepRules from "@/components/listing/StepRules";
+import YearlyStayTimesEditor from "@/components/listing/YearlyStayTimesEditor";
 import StepPricing from "@/components/listing/StepPricing";
 import StepReview from "@/components/listing/StepReview";
 import StepAvailability from "@/components/listing/StepAvailability";
@@ -721,7 +722,10 @@ const EditListing = () => {
               <StepDetails formData={formData} updateFormData={updateFormData} />
             )}
             {currentStep === 5 && (
-              <StepRules formData={formData} updateFormData={updateFormData} />
+              <>
+                <StepRules formData={formData} updateFormData={updateFormData} />
+                {id && <YearlyStayTimesEditor listingId={id} />}
+              </>
             )}
             {currentStep === 6 && (
               <StepPricing formData={formData} updateFormData={updateFormData} />
