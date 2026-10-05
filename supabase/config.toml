@@ -17,3 +17,5 @@ verify_jwt = false
 
 [functions.extract-booking-info]
 verify_jwt = false
+[functions.public-api]
+verify_jwt = false
