@@ -213,12 +213,15 @@ export function HostPaymentsBookingsList() {
     );
   }
 
-  const totalRevenue = bookings.reduce((s, b) => s + b.total_price, 0);
-  const paidTotal = bookings
+  // Chiffres limités à l'année en cours (YTD), basés sur la date d'arrivée
+  const currentYear = new Date().getFullYear();
+  const ytdBookings = bookings.filter(b => new Date(b.checkin_date).getFullYear() === currentYear);
+  const totalRevenue = ytdBookings.reduce((s, b) => s + b.total_price, 0);
+  const paidTotal = ytdBookings
     .flatMap(b => b.payment_items)
     .filter(i => i.is_paid)
     .reduce((s, i) => s + i.amount, 0);
-  const overdueTotal = bookings.reduce((s, b) => s + getOverdueAmount(b.payment_items), 0);
+  const overdueTotal = ytdBookings.reduce((s, b) => s + getOverdueAmount(b.payment_items), 0);
   const pendingTotal = totalRevenue - paidTotal;
 
   return (
