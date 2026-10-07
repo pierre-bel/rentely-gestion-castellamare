@@ -345,6 +345,10 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
 
   const handleSave = async () => {
     if (!user || !selectedListingId || !checkinDate || !checkoutDate || nights <= 0) return;
+    if (overlappingBookings.length > 0) {
+      toast({ title: "Appartement déjà loué", description: "Ces dates chevauchent une réservation existante.", variant: "destructive" });
+      return;
+    }
     setSaving(true);
 
     try {
@@ -650,7 +654,7 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
                     const t: any = tid ? tenants.find((x: any) => x.id === tid) : null;
                     const name = t
                       ? `${t.first_name || ""} ${t.last_name || ""}`.trim()
-                      : (ob.status === "blocked" ? (ob.notes ? `Blocage (${ob.notes})` : "Blocage") : (ob.notes || "Locataire inconnu"));
+                      : (ob.status === "owner_blocked" ? (ob.notes ? `Blocage (${ob.notes})` : "Blocage") : (ob.notes || "Locataire inconnu"));
                     return (
                       <span key={ob.id} className="block text-xs mt-0.5">
                         Du {format(new Date(ob.checkin_date + "T00:00:00"), "dd-MM-yyyy")} au {format(new Date(ob.checkout_date + "T00:00:00"), "dd-MM-yyyy")} — {name || "Locataire inconnu"}
@@ -773,7 +777,7 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
             <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
             <Button
               onClick={handleSave}
-              disabled={saving || !selectedListingId || !checkinDate || !checkoutDate || nights <= 0}
+              disabled={saving || !selectedListingId || !checkinDate || !checkoutDate || nights <= 0 || overlappingBookings.length > 0}
               className={cn(
                 bookingType === "owner_blocked" && "bg-[hsl(var(--calendar-blocked))] hover:bg-[hsl(var(--calendar-blocked)/0.9)]"
               )}

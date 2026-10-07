@@ -88,6 +88,26 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [igloohomeCode, setIgloohomeCode] = useState("");
   const [status, setStatus] = useState("");
+  const [selectedListingId, setSelectedListingId] = useState("");
+
+  const { data: hostListings = [] } = useQuery({
+    queryKey: ["host-listings-edit-booking", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("listings")
+        .select("id, title")
+        .eq("host_user_id", user.id)
+        .order("title");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user && open,
+  });
+
+  useEffect(() => {
+    if (booking && open) setSelectedListingId(booking.listing_id);
+  }, [booking, open]);
 
   // Fetch tenants
   const { data: tenants = [] } = useQuery({
@@ -189,13 +209,13 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
 
   // Check for overlapping bookings (exclude current booking)
   const { data: overlappingBookings = [] } = useQuery({
-    queryKey: ["booking-overlap-edit", booking?.listing_id, checkinDate?.toISOString(), checkoutDate?.toISOString(), booking?.id],
+    queryKey: ["booking-overlap-edit", selectedListingId, checkinDate?.toISOString(), checkoutDate?.toISOString(), booking?.id],
     queryFn: async () => {
-      if (!booking?.listing_id || !checkinDate || !checkoutDate) return [];
+      if (!booking || !selectedListingId || !checkinDate || !checkoutDate) return [];
       const { data, error } = await supabase
         .from("bookings")
-        .select("id, checkin_date, checkout_date, notes, status")
-        .eq("listing_id", booking.listing_id)
+        .select("id, checkin_date, checkout_date, notes, status, pricing_breakdown")
+        .eq("listing_id", selectedListingId)
         .neq("id", booking.id)
         .not("status", "in", '("cancelled","cancelled_guest","cancelled_host")')
         .lt("checkin_date", format(checkoutDate, "yyyy-MM-dd"))
@@ -203,7 +223,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
       if (error) throw error;
       return data || [];
     },
-    enabled: !!booking?.listing_id && !!checkinDate && !!checkoutDate && open,
+    enabled: !!booking && !!selectedListingId && !!checkinDate && !!checkoutDate && open,
   });
 
   const nights = checkinDate && checkoutDate
@@ -243,12 +263,17 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
 
   const handleSave = async () => {
     if (!user || !booking || !checkinDate || !checkoutDate || nights <= 0) return;
+    if (overlappingBookings.length > 0) {
+      toast({ title: "Appartement déjà loué", description: "Ces dates chevauchent une réservation existante.", variant: "destructive" });
+      return;
+    }
     setSaving(true);
 
     try {
       const tenant = tenants.find((t) => t.id === selectedTenantId);
 
       const updateData: any = {
+        listing_id: selectedListingId || booking.listing_id,
         checkin_date: format(checkinDate, "yyyy-MM-dd"),
         checkout_date: format(checkoutDate, "yyyy-MM-dd"),
         checkin_time: checkinTime || null,
@@ -330,7 +355,16 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
         <div className="space-y-4">
           <div>
             <Label>Bien</Label>
-            <Input value={booking.listing_title} readOnly className="bg-muted" />
+            <Select value={selectedListingId} onValueChange={setSelectedListingId}>
+              <SelectTrigger>
+                <SelectValue placeholder={booking.listing_title} />
+              </SelectTrigger>
+              <SelectContent>
+                {hostListings.map((l: any) => (
+                  <SelectItem key={l.id} value={l.id}>{l.title}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Status */}
@@ -426,12 +460,19 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
             <Alert variant="destructive" className="py-2">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription className="text-sm">
-                ⚠ {overlappingBookings.length} réservation(s) existante(s) sur ce créneau
-                {overlappingBookings.slice(0, 2).map((ob: any) => (
-                  <span key={ob.id} className="block text-xs mt-0.5">
-                    {format(new Date(ob.checkin_date + "T00:00:00"), "d MMM", { locale: fr })} → {format(new Date(ob.checkout_date + "T00:00:00"), "d MMM", { locale: fr })}
-                  </span>
-                ))}
+                <span className="font-medium">L'appartement est déjà loué à ces dates :</span>
+                {overlappingBookings.map((ob: any) => {
+                  const tid = ob.pricing_breakdown?.tenant_id;
+                  const t: any = tid ? tenants.find((x: any) => x.id === tid) : null;
+                  const name = t
+                    ? `${t.first_name || ""} ${t.last_name || ""}`.trim()
+                    : (ob.status === "owner_blocked" ? (ob.notes ? `Blocage (${ob.notes})` : "Blocage") : (ob.notes || "Locataire inconnu"));
+                  return (
+                    <span key={ob.id} className="block text-xs mt-0.5">
+                      Du {format(new Date(ob.checkin_date + "T00:00:00"), "dd-MM-yyyy")} au {format(new Date(ob.checkout_date + "T00:00:00"), "dd-MM-yyyy")} — {name || "Locataire inconnu"}
+                    </span>
+                  );
+                })}
               </AlertDescription>
             </Alert>
           )}
@@ -568,7 +609,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
           <Button
             onClick={handleSave}
-            disabled={saving || !checkinDate || !checkoutDate || nights <= 0}
+            disabled={saving || !checkinDate || !checkoutDate || nights <= 0 || overlappingBookings.length > 0}
           >
             {saving ? "Enregistrement..." : "Enregistrer"}
           </Button>
