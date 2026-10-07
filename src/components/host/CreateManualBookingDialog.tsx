@@ -166,7 +166,7 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
       if (!selectedListingId || !checkinDate || !checkoutDate) return [];
       const { data, error } = await supabase
         .from("bookings")
-        .select("id, checkin_date, checkout_date, notes, status")
+        .select("id, checkin_date, checkout_date, notes, status, pricing_breakdown")
         .eq("listing_id", selectedListingId)
         .not("status", "in", '("cancelled","cancelled_guest","cancelled_host")')
         .lt("checkin_date", format(checkoutDate, "yyyy-MM-dd"))
@@ -644,12 +644,19 @@ export function CreateManualBookingDialog({ open, onOpenChange, prefillData }: P
               <Alert variant="destructive" className="py-2">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription className="text-sm">
-                  ⚠ {overlappingBookings.length} réservation(s) existante(s) sur ce créneau
-                  {overlappingBookings.slice(0, 2).map((ob: any) => (
-                    <span key={ob.id} className="block text-xs mt-0.5">
-                      {format(new Date(ob.checkin_date + "T00:00:00"), "d MMM", { locale: fr })} → {format(new Date(ob.checkout_date + "T00:00:00"), "d MMM", { locale: fr })}
-                    </span>
-                  ))}
+                  <span className="font-medium">L'appartement est déjà loué à ces dates :</span>
+                  {overlappingBookings.map((ob: any) => {
+                    const tid = ob.pricing_breakdown?.tenant_id;
+                    const t: any = tid ? tenants.find((x: any) => x.id === tid) : null;
+                    const name = t
+                      ? `${t.first_name || ""} ${t.last_name || ""}`.trim()
+                      : (ob.status === "blocked" ? (ob.notes ? `Blocage (${ob.notes})` : "Blocage") : (ob.notes || "Locataire inconnu"));
+                    return (
+                      <span key={ob.id} className="block text-xs mt-0.5">
+                        Du {format(new Date(ob.checkin_date + "T00:00:00"), "dd-MM-yyyy")} au {format(new Date(ob.checkout_date + "T00:00:00"), "dd-MM-yyyy")} — {name || "Locataire inconnu"}
+                      </span>
+                    );
+                  })}
                 </AlertDescription>
               </Alert>
             )}
