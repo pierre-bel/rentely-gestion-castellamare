@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarDays, Users, Home, Euro, FileText, Pencil, Mail, Link2, Check, CreditCard, Phone, MapPin, Star, Sparkles, Trash2, Loader2 } from "lucide-react";
+import { CalendarDays, Users, Home, Euro, FileText, Pencil, Mail, Link2, Check, Copy, CreditCard, Phone, MapPin, Star, Sparkles, Trash2, Loader2 } from "lucide-react";
 import BookingEmailsTab from "./BookingEmailsTab";
 import { BookingPaymentSection } from "./BookingPaymentSection";
 import { toast } from "@/hooks/use-toast";
@@ -64,13 +64,14 @@ const STATUS_LABELS: Record<string, string> = {
   expired: "Expirée",
 };
 
-const TAB_ORDER = ["details", "payments", "emails"] as const;
+const TAB_ORDER = ["details", "payments", "emails", "contrat"] as const;
 type TabValue = typeof TAB_ORDER[number];
 
 export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGenerateContract, onRefresh }: Props) {
   const [linkCopied, setLinkCopied] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState<TabValue>("details");
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   
@@ -141,6 +142,27 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
     ? [tenant.street_number, tenant.street, tenant.postal_code, tenant.city, tenant.country].filter(Boolean).join(", ")
     : null;
 
+  const guestNameParts = (booking.guest_name || "").trim().split(" ");
+  const contractFields: { label: string; value: string }[] = [
+    { label: "Prénom", value: tenant?.first_name || (booking.guest_name ? guestNameParts[0] : "") || "" },
+    { label: "Nom", value: tenant?.last_name || (booking.guest_name && guestNameParts.length > 1 ? guestNameParts.slice(1).join(" ") : "") || "" },
+    { label: "Téléphone", value: tenant?.phone || booking.guest_phone || "" },
+    { label: "E-mail", value: tenant?.email || booking.guest_email || "" },
+    { label: "Rue et numéro", value: [tenant?.street, tenant?.street_number].filter(Boolean).join(" ") },
+    { label: "Code postal et ville", value: [tenant?.postal_code, tenant?.city].filter(Boolean).join(" ") },
+  ];
+
+  const copyToClipboard = async (value: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedField(key);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erreur lors de la copie", variant: "destructive" });
+    }
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0];
     touchStart.current = { x: t.clientX, y: t.clientY };
@@ -166,6 +188,9 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
         </TabsTrigger>
         <TabsTrigger value="emails" className="flex-1 gap-1.5">
           <Mail className="h-3.5 w-3.5" /> E-mails
+        </TabsTrigger>
+        <TabsTrigger value="contrat" className="flex-1 gap-1.5">
+          <FileText className="h-3.5 w-3.5" /> Contrat
         </TabsTrigger>
       </TabsList>
 
@@ -269,6 +294,44 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
 
         <TabsContent value="emails" className="mt-4">
           <BookingEmailsTab bookingId={booking.id} checkinDate={booking.checkin_date} checkoutDate={booking.checkout_date} listingId={booking.listing_id} />
+        </TabsContent>
+
+        <TabsContent value="contrat" className="mt-4 space-y-3">
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-7 text-xs"
+              disabled={!contractFields.some((f) => f.value)}
+              onClick={() =>
+                copyToClipboard(
+                  contractFields.filter((f) => f.value).map((f) => `${f.label} : ${f.value}`).join("\n"),
+                  "all"
+                )
+              }
+            >
+              {copiedField === "all" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              {copiedField === "all" ? "Copié" : "Copier tout"}
+            </Button>
+          </div>
+          {contractFields.map((f) => (
+            <div key={f.label} className="flex items-center justify-between gap-2 border-b pb-2 last:border-b-0">
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">{f.label}</p>
+                <p className="text-sm font-medium break-words">{f.value || "—"}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1 h-7 text-xs flex-shrink-0"
+                disabled={!f.value}
+                onClick={() => copyToClipboard(f.value, f.label)}
+              >
+                {copiedField === f.label ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copiedField === f.label ? "Copié" : "Copier"}
+              </Button>
+            </div>
+          ))}
         </TabsContent>
       </div>
     </Tabs>
