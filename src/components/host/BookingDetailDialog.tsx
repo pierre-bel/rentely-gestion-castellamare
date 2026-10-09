@@ -155,12 +155,24 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
   const copyToClipboard = async (value: string, key: string) => {
     try {
       await navigator.clipboard.writeText(value);
-      setCopiedField(key);
-      setTimeout(() => setCopiedField(null), 2000);
-    } catch (err) {
-      console.error(err);
-      toast({ title: "Erreur lors de la copie", variant: "destructive" });
+    } catch {
+      // Fallback for contexts where the Clipboard API is blocked
+      const ta = document.createElement("textarea");
+      ta.value = value;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+      } catch (err) {
+        console.error(err);
+        toast({ title: "Erreur lors de la copie", variant: "destructive" });
+      }
+      document.body.removeChild(ta);
     }
+    setCopiedField(key);
+    setTimeout(() => setCopiedField(null), 2000);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
