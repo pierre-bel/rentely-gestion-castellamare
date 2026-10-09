@@ -189,6 +189,9 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
         <TabsTrigger value="emails" className="flex-1 gap-1.5">
           <Mail className="h-3.5 w-3.5" /> E-mails
         </TabsTrigger>
+        <TabsTrigger value="contrat" className="flex-1 gap-1.5">
+          <FileText className="h-3.5 w-3.5" /> Contrat
+        </TabsTrigger>
       </TabsList>
 
       <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} className="touch-pan-y">
@@ -291,6 +294,44 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
 
         <TabsContent value="emails" className="mt-4">
           <BookingEmailsTab bookingId={booking.id} checkinDate={booking.checkin_date} checkoutDate={booking.checkout_date} listingId={booking.listing_id} />
+        </TabsContent>
+
+        <TabsContent value="contrat" className="mt-4 space-y-3">
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-7 text-xs"
+              disabled={!contractFields.some((f) => f.value)}
+              onClick={() =>
+                copyToClipboard(
+                  contractFields.filter((f) => f.value).map((f) => `${f.label} : ${f.value}`).join("\n"),
+                  "all"
+                )
+              }
+            >
+              {copiedField === "all" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              {copiedField === "all" ? "Copié" : "Copier tout"}
+            </Button>
+          </div>
+          {contractFields.map((f) => (
+            <div key={f.label} className="flex items-center justify-between gap-2 border-b pb-2 last:border-b-0">
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">{f.label}</p>
+                <p className="text-sm font-medium break-words">{f.value || "—"}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1 h-7 text-xs flex-shrink-0"
+                disabled={!f.value}
+                onClick={() => copyToClipboard(f.value, f.label)}
+              >
+                {copiedField === f.label ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copiedField === f.label ? "Copié" : "Copier"}
+              </Button>
+            </div>
+          ))}
         </TabsContent>
       </div>
     </Tabs>
