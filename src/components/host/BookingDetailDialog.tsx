@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CalendarDays, Users, Home, Euro, FileText, Pencil, Mail, Link2, Check, CreditCard, Phone, MapPin, Star, Sparkles, Trash2, Loader2 } from "lucide-react";
+import { CalendarDays, Users, Home, Euro, FileText, Pencil, Mail, Link2, Check, Copy, CreditCard, Phone, MapPin, Star, Sparkles, Trash2, Loader2 } from "lucide-react";
 import BookingEmailsTab from "./BookingEmailsTab";
 import { BookingPaymentSection } from "./BookingPaymentSection";
 import { toast } from "@/hooks/use-toast";
@@ -64,13 +64,14 @@ const STATUS_LABELS: Record<string, string> = {
   expired: "Expirée",
 };
 
-const TAB_ORDER = ["details", "payments", "emails"] as const;
+const TAB_ORDER = ["details", "payments", "emails", "contrat"] as const;
 type TabValue = typeof TAB_ORDER[number];
 
 export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGenerateContract, onRefresh }: Props) {
   const [linkCopied, setLinkCopied] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState<TabValue>("details");
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   
