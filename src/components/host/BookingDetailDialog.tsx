@@ -142,6 +142,27 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
     ? [tenant.street_number, tenant.street, tenant.postal_code, tenant.city, tenant.country].filter(Boolean).join(", ")
     : null;
 
+  const guestNameParts = (booking.guest_name || "").trim().split(" ");
+  const contractFields: { label: string; value: string }[] = [
+    { label: "Prénom", value: tenant?.first_name || (booking.guest_name ? guestNameParts[0] : "") || "" },
+    { label: "Nom", value: tenant?.last_name || (booking.guest_name && guestNameParts.length > 1 ? guestNameParts.slice(1).join(" ") : "") || "" },
+    { label: "Téléphone", value: tenant?.phone || booking.guest_phone || "" },
+    { label: "E-mail", value: tenant?.email || booking.guest_email || "" },
+    { label: "Rue et numéro", value: [tenant?.street, tenant?.street_number].filter(Boolean).join(" ") },
+    { label: "Code postal et ville", value: [tenant?.postal_code, tenant?.city].filter(Boolean).join(" ") },
+  ];
+
+  const copyToClipboard = async (value: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedField(key);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erreur lors de la copie", variant: "destructive" });
+    }
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0];
     touchStart.current = { x: t.clientX, y: t.clientY };
