@@ -8,7 +8,7 @@ import DashboardRecentListings from "@/components/host/DashboardRecentListings";
 import DashboardRecentEmails from "@/components/host/DashboardRecentEmails";
 import DashboardRecentBookings from "@/components/host/DashboardRecentBookings";
 import DashboardUpcomingBookings from "@/components/host/DashboardUpcomingBookings";
-import DashboardRecentPayouts from "@/components/host/DashboardRecentPayouts";
+import { HostPaymentsBookingsList } from "@/components/host/HostPaymentsBookingsList";
 import DashboardOverduePayments from "@/components/host/DashboardOverduePayments";
 
 const HostDashboard = () => {
@@ -123,8 +123,8 @@ const HostDashboard = () => {
               </div>
             </CardHeader>
             <CardContent className="p-6 flex-1">
+              <HostPaymentsBookingsList summaryOnly />
               <DashboardOverduePayments userId={user.id} />
-              <DashboardRecentPayouts userId={user.id} />
             </CardContent>
           </Card>
         </div>

@@ -374,6 +374,7 @@ export function HostPaymentsBookingsList({ summaryOnly = false }: { summaryOnly?
           </div>
         </CardContent>
       </Card>
+      </>)}
 
       <BookingPaymentDetailDialog
         booking={selectedBooking}
