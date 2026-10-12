@@ -33,20 +33,50 @@ export function TenantDetailDialog({ open, onOpenChange, tenant }: Props) {
     queryKey: ["tenant-bookings", tenant?.id],
     queryFn: async () => {
       if (!tenant?.id) return [];
+      // bookings n'a pas de colonne guest_name : les infos sont dans pricing_breakdown.tenant_id / tenants
       const { data, error } = await supabase
         .from("bookings")
         .select(`id, checkin_date, checkout_date, checkin_time, checkout_time, nights, guests, total_price,
-                 cleaning_fee, notes, status, listing_id, pricing_breakdown, guest_name, guest_email, guest_phone,
+                 cleaning_fee, notes, status, listing_id, pricing_breakdown,
                  listings!bookings_listing_id_fkey(title)`)
         .not("status", "eq", "owner_blocked");
 
       if (error) throw error;
 
-      // Filter client-side by tenant_id in pricing_breakdown
+      // Lien direct par tenant_id, ou identité (e-mail / nom) via la résolution du locataire de chaque résa
+      const fullName = `${tenant.first_name || ""} ${tenant.last_name || ""}`.trim().toLowerCase();
+      const tenantEmail = (tenant.email || "").toLowerCase();
+
+      const tenantIds = new Set(
+        (data || [])
+          .map((b: any) => (b.pricing_breakdown as any)?.tenant_id)
+          .filter(Boolean)
+      );
+      const tenantById = new Map<string, any>();
+      if (tenantIds.size > 0) {
+        const { data: linkedTenants, error: tErr } = await supabase
+          .from("tenants")
+          .select("id, first_name, last_name, email")
+          .in("id", [...tenantIds]);
+        if (!tErr && linkedTenants) {
+          linkedTenants.forEach((t: any) => tenantById.set(t.id, t));
+        }
+      }
+
+      const sameIdentity = (t: any) => {
+        if (!t) return false;
+        const tName = `${t.first_name || ""} ${t.last_name || ""}`.trim().toLowerCase();
+        const tEmail = (t.email || "").toLowerCase();
+        if (tenantEmail && tEmail && tEmail === tenantEmail) return true;
+        if (fullName && tName && tName === fullName) return true;
+        return false;
+      };
+
       return (data || [])
         .filter((b: any) => {
-          const pb = b.pricing_breakdown as any;
-          return pb?.tenant_id === tenant.id;
+          const linkedId = (b.pricing_breakdown as any)?.tenant_id;
+          if (linkedId === tenant.id) return true;
+          return sameIdentity(tenantById.get(linkedId));
         })
         .sort((a: any, b: any) => b.checkin_date.localeCompare(a.checkin_date));
     },
