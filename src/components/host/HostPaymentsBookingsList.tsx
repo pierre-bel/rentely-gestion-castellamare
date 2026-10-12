@@ -75,7 +75,7 @@ function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
   }
 }
 
-export function HostPaymentsBookingsList() {
+export function HostPaymentsBookingsList({ summaryOnly = false }: { summaryOnly?: boolean } = {}) {
   const { user } = useAuth();
   const [selectedBooking, setSelectedBooking] = useState<BookingWithPayments | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -274,6 +274,7 @@ export function HostPaymentsBookingsList() {
         </Card>
       </div>
 
+      {!summaryOnly && (<>
       {/* Overdue payments list */}
       <OverduePaymentsList bookings={bookings} onViewBooking={handleView} />
 
