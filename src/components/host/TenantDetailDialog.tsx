@@ -42,11 +42,18 @@ export function TenantDetailDialog({ open, onOpenChange, tenant }: Props) {
 
       if (error) throw error;
 
-      // Filter client-side by tenant_id in pricing_breakdown
+      // Match by tenant link (pricing_breakdown), or fallback on guest name / email
+      const fullName = `${tenant.first_name || ""} ${tenant.last_name || ""}`.trim().toLowerCase();
+      const tenantEmail = (tenant.email || "").toLowerCase();
       return (data || [])
         .filter((b: any) => {
           const pb = b.pricing_breakdown as any;
-          return pb?.tenant_id === tenant.id;
+          if (pb?.tenant_id === tenant.id) return true;
+          const guestName = (b.guest_name || "").trim().toLowerCase();
+          if (fullName && guestName && guestName === fullName) return true;
+          const guestEmail = (b.guest_email || "").toLowerCase();
+          if (tenantEmail && guestEmail && guestEmail === tenantEmail) return true;
+          return false;
         })
         .sort((a: any, b: any) => b.checkin_date.localeCompare(a.checkin_date));
     },
