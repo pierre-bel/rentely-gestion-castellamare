@@ -132,7 +132,11 @@ export function TenantDetailDialog({ open, onOpenChange, tenant }: Props) {
                     const listing = booking.listings;
                     const st = statusLabels[booking.status] || { label: booking.status, className: "" };
                     return (
-                      <TableRow key={booking.id} className={i % 2 === 0 ? "bg-muted/30" : ""}>
+                      <TableRow
+                        key={booking.id}
+                        className={`${i % 2 === 0 ? "bg-muted/30" : ""} cursor-pointer hover:bg-muted/60`}
+                        onClick={() => setSelectedBooking(booking as BookingDetailData)}
+                      >
                         <TableCell className="font-medium text-sm">{listing?.title || "—"}</TableCell>
                         <TableCell className="text-sm">
                           {format(new Date(booking.checkin_date), "dd MMM yyyy", { locale: fr })} → {format(new Date(booking.checkout_date), "dd MMM yyyy", { locale: fr })}
@@ -151,6 +155,14 @@ export function TenantDetailDialog({ open, onOpenChange, tenant }: Props) {
           )}
         </div>
       </DialogContent>
+
+      <BookingDetailDialog
+        open={!!selectedBooking}
+        onOpenChange={(o) => { if (!o) setSelectedBooking(null); }}
+        booking={selectedBooking}
+        onEdit={() => {}}
+        onRefresh={refreshBookings}
+      />
     </Dialog>
   );
 }
