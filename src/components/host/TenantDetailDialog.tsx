@@ -1,12 +1,14 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarDays, Mail, Phone, MapPin, User } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { BookingDetailDialog, type BookingDetailData } from "./BookingDetailDialog";
 import type { Tenant } from "./HostTenants";
 
 interface Props {
@@ -24,13 +26,18 @@ const statusLabels: Record<string, { label: string; className: string }> = {
 };
 
 export function TenantDetailDialog({ open, onOpenChange, tenant }: Props) {
+  const [selectedBooking, setSelectedBooking] = useState<BookingDetailData | null>(null);
+  const queryClient = useQueryClient();
+
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: ["tenant-bookings", tenant?.id],
     queryFn: async () => {
       if (!tenant?.id) return [];
       const { data, error } = await supabase
         .from("bookings")
-        .select("id, checkin_date, checkout_date, nights, total_price, status, listing_id, pricing_breakdown, listings!bookings_listing_id_fkey(title)")
+        .select(`id, checkin_date, checkout_date, checkin_time, checkout_time, nights, guests, total_price,
+                 cleaning_fee, notes, status, listing_id, pricing_breakdown, guest_name, guest_email, guest_phone,
+                 listings!bookings_listing_id_fkey(title)`)
         .not("status", "eq", "owner_blocked");
 
       if (error) throw error;
@@ -47,6 +54,10 @@ export function TenantDetailDialog({ open, onOpenChange, tenant }: Props) {
   });
 
   if (!tenant) return null;
+
+  const refreshBookings = () => {
+    queryClient.invalidateQueries({ queryKey: ["tenant-bookings", tenant.id] });
+  };
 
   const fullAddress = [
     tenant.street_number,
@@ -121,7 +132,11 @@ export function TenantDetailDialog({ open, onOpenChange, tenant }: Props) {
                     const listing = booking.listings;
                     const st = statusLabels[booking.status] || { label: booking.status, className: "" };
                     return (
-                      <TableRow key={booking.id} className={i % 2 === 0 ? "bg-muted/30" : ""}>
+                      <TableRow
+                        key={booking.id}
+                        className={`${i % 2 === 0 ? "bg-muted/30" : ""} cursor-pointer hover:bg-muted/60`}
+                        onClick={() => setSelectedBooking({ ...booking, listing_title: booking.listings?.title || "—" } as BookingDetailData)}
+                      >
                         <TableCell className="font-medium text-sm">{listing?.title || "—"}</TableCell>
                         <TableCell className="text-sm">
                           {format(new Date(booking.checkin_date), "dd MMM yyyy", { locale: fr })} → {format(new Date(booking.checkout_date), "dd MMM yyyy", { locale: fr })}
@@ -140,6 +155,14 @@ export function TenantDetailDialog({ open, onOpenChange, tenant }: Props) {
           )}
         </div>
       </DialogContent>
+
+      <BookingDetailDialog
+        open={!!selectedBooking}
+        onOpenChange={(o) => { if (!o) setSelectedBooking(null); }}
+        booking={selectedBooking}
+        onEdit={() => {}}
+        onRefresh={refreshBookings}
+      />
     </Dialog>
   );
 }
