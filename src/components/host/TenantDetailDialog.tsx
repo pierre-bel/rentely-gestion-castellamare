@@ -135,7 +135,7 @@ export function TenantDetailDialog({ open, onOpenChange, tenant }: Props) {
                       <TableRow
                         key={booking.id}
                         className={`${i % 2 === 0 ? "bg-muted/30" : ""} cursor-pointer hover:bg-muted/60`}
-                        onClick={() => setSelectedBooking(booking as BookingDetailData)}
+                        onClick={() => setSelectedBooking({ ...booking, listing_title: booking.listings?.title || "—" } as BookingDetailData)}
                       >
                         <TableCell className="font-medium text-sm">{listing?.title || "—"}</TableCell>
                         <TableCell className="text-sm">
