@@ -26,13 +26,18 @@ const statusLabels: Record<string, { label: string; className: string }> = {
 };
 
 export function TenantDetailDialog({ open, onOpenChange, tenant }: Props) {
+  const [selectedBooking, setSelectedBooking] = useState<BookingDetailData | null>(null);
+  const queryClient = useQueryClient();
+
   const { data: bookings = [], isLoading } = useQuery({
     queryKey: ["tenant-bookings", tenant?.id],
     queryFn: async () => {
       if (!tenant?.id) return [];
       const { data, error } = await supabase
         .from("bookings")
-        .select("id, checkin_date, checkout_date, nights, total_price, status, listing_id, pricing_breakdown, listings!bookings_listing_id_fkey(title)")
+        .select(`id, checkin_date, checkout_date, checkin_time, checkout_time, nights, guests, total_price,
+                 cleaning_fee, notes, status, listing_id, pricing_breakdown, guest_name, guest_email, guest_phone,
+                 listings!bookings_listing_id_fkey(title)`)
         .not("status", "eq", "owner_blocked");
 
       if (error) throw error;
@@ -49,6 +54,10 @@ export function TenantDetailDialog({ open, onOpenChange, tenant }: Props) {
   });
 
   if (!tenant) return null;
+
+  const refreshBookings = () => {
+    queryClient.invalidateQueries({ queryKey: ["tenant-bookings", tenant.id] });
+  };
 
   const fullAddress = [
     tenant.street_number,
