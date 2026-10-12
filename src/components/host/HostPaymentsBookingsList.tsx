@@ -75,7 +75,7 @@ function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
   }
 }
 
-export function HostPaymentsBookingsList() {
+export function HostPaymentsBookingsList({ summaryOnly = false }: { summaryOnly?: boolean } = {}) {
   const { user } = useAuth();
   const [selectedBooking, setSelectedBooking] = useState<BookingWithPayments | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -103,13 +103,18 @@ export function HostPaymentsBookingsList() {
 
       let paymentItemsMap: Record<string, PaymentItem[]> = {};
       if (bookingIds.length > 0) {
-        const { data: items, error: pErr } = await supabase
-          .from("booking_payment_items")
-          .select("*")
-          .in("booking_id", bookingIds)
-          .order("sort_order");
-        if (pErr) throw pErr;
-        for (const item of (items || [])) {
+        // Par lots : évite la limite de 1000 lignes et les URL trop longues
+        const items: any[] = [];
+        for (let k = 0; k < bookingIds.length; k += 100) {
+          const { data: chunk, error: pErr } = await supabase
+            .from("booking_payment_items")
+            .select("*")
+            .in("booking_id", bookingIds.slice(k, k + 100))
+            .order("sort_order");
+          if (pErr) throw pErr;
+          items.push(...(chunk || []));
+        }
+        for (const item of items) {
           if (!paymentItemsMap[item.booking_id]) paymentItemsMap[item.booking_id] = [];
           paymentItemsMap[item.booking_id].push(item as PaymentItem);
         }
@@ -121,11 +126,16 @@ export function HostPaymentsBookingsList() {
 
       let tenantMap: Record<string, string> = {};
       if (tenantIds.length > 0) {
-        const { data: tenants } = await supabase
-          .from("tenants")
-          .select("id, first_name, last_name")
-          .in("id", tenantIds);
-        for (const t of (tenants || [])) {
+        const tenants: any[] = [];
+        const uniq = Array.from(new Set(tenantIds));
+        for (let k = 0; k < uniq.length; k += 100) {
+          const { data: chunk } = await supabase
+            .from("tenants")
+            .select("id, first_name, last_name")
+            .in("id", uniq.slice(k, k + 100));
+          tenants.push(...(chunk || []));
+        }
+        for (const t of tenants) {
           tenantMap[t.id] = `${t.first_name} ${t.last_name || ""}`.trim();
         }
       }
@@ -264,6 +274,7 @@ export function HostPaymentsBookingsList() {
         </Card>
       </div>
 
+      {!summaryOnly && (<>
       {/* Overdue payments list */}
       <OverduePaymentsList bookings={bookings} onViewBooking={handleView} />
 
@@ -363,6 +374,7 @@ export function HostPaymentsBookingsList() {
           </div>
         </CardContent>
       </Card>
+      </>)}
 
       <BookingPaymentDetailDialog
         booking={selectedBooking}

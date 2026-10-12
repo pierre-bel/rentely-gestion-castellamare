@@ -30,13 +30,16 @@ export default function DashboardOverduePayments({ userId }: DashboardOverduePay
         .select(`
           id, label, amount, due_date,
           bookings!inner (
-            id, checkin_date, checkout_date, pricing_breakdown, guest_user_id,
+            id, checkin_date, status, checkout_date, pricing_breakdown, guest_user_id,
             listings!inner ( id, title, host_user_id )
           )
         `)
         .eq("is_paid", false)
         .lt("due_date", today)
         .eq("bookings.listings.host_user_id", userId)
+        .in("bookings.status", ["confirmed", "completed", "pending_payment"])
+        .gte("bookings.checkin_date", `${new Date().getFullYear()}-01-01`)
+        .lte("bookings.checkin_date", `${new Date().getFullYear()}-12-31`)
         .order("due_date", { ascending: true });
 
       if (error) throw error;
