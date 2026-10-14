@@ -390,35 +390,47 @@ export type Database = {
       cleaning_staff: {
         Row: {
           access_token: string
+          all_listings: boolean
           created_at: string
           host_user_id: string
           id: string
+          is_active: boolean
+          is_external: boolean
           name: string
           phone: string | null
           portal_future_months: number
           portal_past_months: number
+          show_tenant_names: boolean
           updated_at: string
         }
         Insert: {
           access_token?: string
+          all_listings?: boolean
           created_at?: string
           host_user_id: string
           id?: string
+          is_active?: boolean
+          is_external?: boolean
           name: string
           phone?: string | null
           portal_future_months?: number
           portal_past_months?: number
+          show_tenant_names?: boolean
           updated_at?: string
         }
         Update: {
           access_token?: string
+          all_listings?: boolean
           created_at?: string
           host_user_id?: string
           id?: string
+          is_active?: boolean
+          is_external?: boolean
           name?: string
           phone?: string | null
           portal_future_months?: number
           portal_past_months?: number
+          show_tenant_names?: boolean
           updated_at?: string
         }
         Relationships: []
