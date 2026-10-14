@@ -1,3 +1,4 @@
+import { ExternalCleaningLinksDialog } from "./ExternalCleaningLinksDialog";
 import { useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,6 +69,7 @@ export function HostCleaning() {
   const [selectedListingId, setSelectedListingId] = useState("all");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [staffDialogOpen, setStaffDialogOpen] = useState(false);
+  const [externalDialogOpen, setExternalDialogOpen] = useState(false);
 
   // ── Data fetching ──────────────────────────────────
 
@@ -141,7 +143,7 @@ export function HostCleaning() {
         return (snapshot.cleaningStaff || []) as CleaningStaff[];
       }
       if (!user?.id) return [];
-      const { data, error } = await supabase.from("cleaning_staff").select("id, name, phone, access_token, portal_past_months, portal_future_months").eq("host_user_id", user.id).order("name");
+      const { data, error } = await supabase.from("cleaning_staff").select("id, name, phone, access_token, portal_past_months, portal_future_months").eq("host_user_id", user.id).eq("is_external", false).order("name");
       if (error) throw error;
       return data as CleaningStaff[];
     },
@@ -158,7 +160,9 @@ export function HostCleaning() {
       if (!user?.id) return [];
       const { data, error } = await supabase.from("cleaning_staff_listings").select("id, cleaning_staff_id, listing_id").eq("host_user_id", user.id);
       if (error) throw error;
-      return data as StaffAssignment[];
+      const { data: ext } = await supabase.from("cleaning_staff").select("id").eq("host_user_id", user.id).eq("is_external", true);
+      const extIds = new Set((ext || []).map((e: any) => e.id));
+      return (data as StaffAssignment[]).filter(a => !extIds.has(a.cleaning_staff_id));
     },
     enabled: isDemoMode ? !!demoUserId : !!user?.id,
   });
@@ -474,6 +478,12 @@ export function HostCleaning() {
             <Settings2 className="h-4 w-4 mr-2" />
             Équipe ménage
           </Button>
+          {!isDemoMode && (
+            <Button onClick={() => setExternalDialogOpen(true)} variant="outline" size="sm">
+              <Link2 className="h-4 w-4 mr-2" />
+              Liens externes
+            </Button>
+          )}
           <Button onClick={handleCopyAll} variant="outline" size="sm">
             <Copy className="h-4 w-4 mr-2" />
             Copier tout
@@ -713,6 +723,7 @@ export function HostCleaning() {
         </div>
       )}
 
+      <ExternalCleaningLinksDialog open={externalDialogOpen} onOpenChange={setExternalDialogOpen} listings={listings} />
       {/* Staff management dialog */}
       <CleaningStaffDialog
         open={staffDialogOpen}
