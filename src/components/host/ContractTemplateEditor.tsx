@@ -44,6 +44,12 @@ const DYNAMIC_VARIABLES_GROUPS = [
       { key: "{{guest_civility}}", label: "Civilité (Monsieur/Madame)" },
       { key: "{{guest_email}}", label: "E-mail" },
       { key: "{{guest_phone}}", label: "Téléphone" },
+      { key: "{{guest_street}}", label: "Rue" },
+      { key: "{{guest_street_number}}", label: "Numéro" },
+      { key: "{{guest_postal_code}}", label: "Code postal" },
+      { key: "{{guest_city}}", label: "Ville" },
+      { key: "{{guest_country}}", label: "Pays" },
+      { key: "{{guest_address}}", label: "Adresse complète" },
     ],
   },
   {
