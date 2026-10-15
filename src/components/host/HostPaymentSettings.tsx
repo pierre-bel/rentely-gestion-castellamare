@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Plus, GripVertical, Umbrella, CreditCard, QrCode, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { PaymentQRCode, buildEpcString } from "@/components/portal/PaymentQRCode";
-import QRCode from "qrcode";
+import { buildQRBlockHtml } from "@/components/portal/PaymentQRCode";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 
 interface PaymentScheduleTemplate {
   id: string;
@@ -175,6 +176,8 @@ function BankCredentialsSettings() {
   const [bic, setBic] = useState("");
   const [referenceTemplate, setReferenceTemplate] = useState("{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}");
   const [testQrSvg, setTestQrSvg] = useState<string | null>(null);
+  const [qrSize, setQrSize] = useState(150);
+  const [qrShowDetails, setQrShowDetails] = useState(true);
   const [testingQr, setTestingQr] = useState(false);
 
   const { data: settings } = useQuery({
@@ -183,7 +186,7 @@ function BankCredentialsSettings() {
       if (!user?.id) return null;
       const { data, error } = await selectOne(
         "portal_settings", "host_user_id", user.id,
-        "bank_beneficiary_name, bank_iban, bank_bic, bank_transfer_reference_template"
+        "bank_beneficiary_name, bank_iban, bank_bic, bank_transfer_reference_template, qr_size, qr_show_details"
       );
       if (error) throw new Error(error);
       return data;
@@ -196,6 +199,8 @@ function BankCredentialsSettings() {
       setBeneficiary(settings.bank_beneficiary_name || "");
       setIban(settings.bank_iban || "");
       setBic(settings.bank_bic || "");
+      setQrSize(settings.qr_size ?? 150);
+      setQrShowDetails(settings.qr_show_details ?? true);
       setReferenceTemplate(settings.bank_transfer_reference_template || "{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}");
     }
   }, [settings]);
@@ -209,6 +214,8 @@ function BankCredentialsSettings() {
         bank_iban: iban.replace(/\s/g, "").toUpperCase() || null,
         bank_bic: bic.replace(/\s/g, "").toUpperCase() || null,
         bank_transfer_reference_template: referenceTemplate.trim() || null,
+        qr_size: qrSize,
+        qr_show_details: qrShowDetails,
       }),
       toast, "Coordonnées bancaires enregistrées"
     );
@@ -224,15 +231,12 @@ function BankCredentialsSettings() {
     setTestingQr(true);
     setTestQrSvg(null);
     try {
-      const epcString = buildEpcString({
-        beneficiary: beneficiary.trim(),
-        iban: iban.replace(/\s/g, "").toUpperCase(),
-        bic: bic.replace(/\s/g, "").toUpperCase(),
-        amount: 150,
-        reference: "Test - Location Exemple - 01/07 au 08/07",
-      });
-      const svg = await QRCode.toString(epcString, { type: "svg", margin: 2, width: 200 });
-      setTestQrSvg(svg);
+      const bank = { beneficiary: beneficiary.trim(), iban: iban.replace(/\s/g, "").toUpperCase(), bic: bic.replace(/\s/g, "").toUpperCase() };
+      const ref = "Dupont - Appartement - 01/07/2026 au 08/07/2026";
+      const opts = { size: qrSize, showDetails: qrShowDetails };
+      const a = await buildQRBlockHtml({ ...bank, amount: 300, reference: `${ref} - Acompte` }, { ...opts, title: "Acompte" });
+      const d = await buildQRBlockHtml({ ...bank, amount: 700, reference: `${ref} - Décompte` }, { ...opts, title: "Décompte" });
+      setTestQrSvg(`<div style="display:flex;flex-wrap:wrap;gap:24px;justify-content:center">${a}${d}</div>`);
       toast({ title: "QR code généré avec succès !" });
     } catch (e) {
       console.error("QR test failed:", e);
@@ -277,6 +281,28 @@ function BankCredentialsSettings() {
             Variables disponibles : <code className="text-[10px]">{"{{guest_last_name}}, {{guest_full_name}}, {{listing_title}}, {{checkin_date}}, {{checkout_date}}"}</code>
           </p>
         </div>
+        <div className="space-y-3 border-t pt-4">
+          <p className="text-sm font-medium">Affichage du QR code</p>
+          <div className="space-y-2">
+            <Label className="text-xs">Taille : {qrSize} px {qrSize <= 110 ? "(petit)" : qrSize <= 170 ? "(moyen)" : "(grand)"}</Label>
+            <Slider min={80} max={300} step={10} value={[qrSize]} onValueChange={v => setQrSize(v[0])} />
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <Label className="text-xs">Afficher les détails sous le QR (bénéficiaire, IBAN, montant, communication)</Label>
+            <Switch checked={qrShowDetails} onCheckedChange={setQrShowDetails} />
+          </div>
+        </div>
+        <div className="rounded-lg border bg-muted/30 p-3 space-y-2 text-xs">
+          <p className="font-medium text-sm">Comment ça marche ?</p>
+          <p className="text-muted-foreground">Le QR code est un virement SEPA pré-rempli : le locataire le scanne avec son application bancaire, et le bénéficiaire, l'IBAN, le montant et la communication sont remplis automatiquement. Le montant vient des échéances de la réservation (onglet Paiements).</p>
+          <p className="text-muted-foreground">Balises à insérer dans vos e-mails et contrats :</p>
+          <ul className="space-y-1">
+            <li><code>{"{{qr_acompte}}"}</code> — QR pour le montant de l'acompte (communication suivie de « - Acompte »)</li>
+            <li><code>{"{{qr_decompte}}"}</code> — QR pour le montant du décompte / solde (« - Décompte »)</li>
+            <li><code>{"{{qr_paiement}}"}</code> — QR pour tout ce qui reste à payer</li>
+          </ul>
+          <p className="text-muted-foreground">Si l'échéance n'existe pas ou si les coordonnées bancaires sont incomplètes, la balise est simplement retirée.</p>
+        </div>
         <p className="text-xs text-muted-foreground">
           Ces données sont uniquement encodées dans le QR code affiché sur le portail, dans les e-mails et les contrats.
         </p>
@@ -292,7 +318,7 @@ function BankCredentialsSettings() {
 
         {testQrSvg && (
           <div className="border rounded-lg p-4 bg-muted/30 space-y-2">
-            <p className="text-xs font-medium text-center">Aperçu du QR code (montant test : 150,00 €)</p>
+            <p className="text-xs font-medium text-center">Aperçu (exemple : acompte 300 €, décompte 700 €)</p>
             <div dangerouslySetInnerHTML={{ __html: testQrSvg }} className="flex justify-center" />
             <p className="text-[10px] text-muted-foreground text-center max-w-[250px] mx-auto">
               Scannez ce QR code avec votre application bancaire pour vérifier que les informations sont correctes.
