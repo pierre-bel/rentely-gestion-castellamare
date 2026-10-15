@@ -1,0 +1,1 @@
+ALTER TABLE public.portal_settings ADD COLUMN IF NOT EXISTS qr_size integer NOT NULL DEFAULT 150, ADD COLUMN IF NOT EXISTS qr_show_details boolean NOT NULL DEFAULT true;

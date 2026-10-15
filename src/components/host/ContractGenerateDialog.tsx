@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { generateQRDataUrl, buildTransferReference } from "@/components/portal/PaymentQRCode";
+import { buildQRBlockHtml, buildTransferReference } from "@/components/portal/PaymentQRCode";
 
 const escapeHtml = (str: string): string =>
   str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -199,10 +199,11 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       "{{igloohome_code}}": booking.igloohome_code || "",
     };
 
-    if (template.body_html.includes("{{qr_paiement}}")) {
+    if (/\{\{qr_(paiement|acompte|decompte)\}\}/.test(template.body_html)) {
+      replacements["{{qr_paiement}}"] = ""; replacements["{{qr_acompte}}"] = ""; replacements["{{qr_decompte}}"] = "";
       const { data: bankSettings } = await supabase
         .from("portal_settings")
-        .select("bank_beneficiary_name, bank_iban, bank_bic, bank_transfer_reference_template")
+        .select("bank_beneficiary_name, bank_iban, bank_bic, bank_transfer_reference_template, qr_size, qr_show_details")
         .eq("host_user_id", user!.id)
         .maybeSingle();
 
@@ -219,15 +220,15 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
         const totalUnpaid = items.filter((i: any) => !i.is_paid).reduce((s: number, i: any) => s + Number(i.amount), 0);
         const amount = totalUnpaid > 0 ? totalUnpaid : Number(booking.total_price);
 
+        const bank = { beneficiary: bankSettings.bank_beneficiary_name, iban: bankSettings.bank_iban, bic: bankSettings.bank_bic };
+        const qrOpts = { size: (bankSettings as any).qr_size, showDetails: (bankSettings as any).qr_show_details };
         try {
-          const qrDataUrl = await generateQRDataUrl({ beneficiary: bankSettings.bank_beneficiary_name, iban: bankSettings.bank_iban, bic: bankSettings.bank_bic, amount, reference });
-          replacements["{{qr_paiement}}"] = `<div style="text-align:center;margin:16px 0"><img src="${qrDataUrl}" width="200" height="200" alt="QR code de paiement SEPA" style="display:inline-block" /><br/><span style="font-size:11px;color:#666">Scannez pour payer par virement</span></div>`;
+          replacements["{{qr_paiement}}"] = await buildQRBlockHtml({ ...bank, amount, reference }, { ...qrOpts, title: "Paiement par virement" });
+          if (deposit) replacements["{{qr_acompte}}"] = await buildQRBlockHtml({ ...bank, amount: Number(deposit.amount), reference: `${reference} - Acompte` }, { ...qrOpts, title: "Acompte" });
+          if (balance && balance !== deposit) replacements["{{qr_decompte}}"] = await buildQRBlockHtml({ ...bank, amount: Number(balance.amount), reference: `${reference} - Décompte` }, { ...qrOpts, title: "Décompte" });
         } catch (e) {
           console.error("QR generation failed", e);
-          replacements["{{qr_paiement}}"] = "";
         }
-      } else {
-        replacements["{{qr_paiement}}"] = "";
       }
     }
 
