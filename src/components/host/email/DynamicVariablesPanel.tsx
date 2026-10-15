@@ -28,7 +28,9 @@ export const DYNAMIC_VARIABLES = [
   { key: "listing_country", label: "Pays du bien" },
   { key: "booking_id", label: "ID de réservation" },
   { key: "igloohome_code", label: "Code clé Igloohome" },
-  { key: "qr_paiement", label: "QR code de paiement SEPA (image)" },
+  { key: "qr_paiement", label: "QR code paiement (reste à payer)" },
+  { key: "qr_acompte", label: "QR code acompte" },
+  { key: "qr_decompte", label: "QR code décompte" },
   { key: "portal_link", label: "Lien vers le portail client" },
 ];
 
