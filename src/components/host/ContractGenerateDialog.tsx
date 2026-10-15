@@ -75,7 +75,7 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
         if (tenantIds.length > 0) {
           const { data: tenants } = await supabase
             .from("tenants" as any)
-            .select("id, first_name, last_name, email, phone, gender")
+            .select("id, first_name, last_name, email, phone, gender, street, street_number, postal_code, city, country")
             .in("id", tenantIds);
           tenantMap = new Map((tenants || []).map((t: any) => [t.id, t]));
         }
@@ -156,6 +156,18 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
       "{{guest_email}}": escapeHtml(tenant?.email || guest?.email || "N/A"),
       "{{guest_phone}}": escapeHtml(tenant?.phone || guest?.phone || "N/A"),
       "{{guest_civility}}": escapeHtml(getCivility(tenant?.gender || null)),
+      "{{guest_street}}": escapeHtml(tenant?.street || "N/A"),
+      "{{guest_street_number}}": escapeHtml(tenant?.street_number || "N/A"),
+      "{{guest_postal_code}}": escapeHtml(tenant?.postal_code || "N/A"),
+      "{{guest_city}}": escapeHtml(tenant?.city || "N/A"),
+      "{{guest_country}}": escapeHtml(tenant?.country || "N/A"),
+      "{{guest_address}}": escapeHtml(
+        [
+          [tenant?.street, tenant?.street_number].filter(Boolean).join(" "),
+          [tenant?.postal_code, tenant?.city].filter(Boolean).join(" "),
+          tenant?.country,
+        ].filter(Boolean).join(", ") || "N/A"
+      ),
       "{{booking_id}}": booking.id,
       "{{checkin_date}}": formatDate(booking.checkin_date),
       "{{checkout_date}}": formatDate(booking.checkout_date),
