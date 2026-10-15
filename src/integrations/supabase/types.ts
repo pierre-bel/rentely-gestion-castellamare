@@ -2057,6 +2057,8 @@ export type Database = {
           custom_footer_text: string | null
           host_user_id: string
           id: string
+          qr_show_details: boolean
+          qr_size: number
           require_full_payment_for_access_code: boolean
           section_order: Json | null
           show_access_code: boolean
@@ -2087,6 +2089,8 @@ export type Database = {
           custom_footer_text?: string | null
           host_user_id: string
           id?: string
+          qr_show_details?: boolean
+          qr_size?: number
           require_full_payment_for_access_code?: boolean
           section_order?: Json | null
           show_access_code?: boolean
@@ -2117,6 +2121,8 @@ export type Database = {
           custom_footer_text?: string | null
           host_user_id?: string
           id?: string
+          qr_show_details?: boolean
+          qr_size?: number
           require_full_payment_for_access_code?: boolean
           section_order?: Json | null
           show_access_code?: boolean
