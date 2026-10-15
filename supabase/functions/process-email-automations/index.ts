@@ -1,3 +1,4 @@
+import { qrBlockHtml } from "../_shared/qrPayment.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -381,9 +382,11 @@ async function buildVariablesForBooking(
 
   // Bank QR info
   let qrPaiementHtml = '';
+  let qrAcompteHtml = '';
+  let qrDecompteHtml = '';
   const { data: bankSettings } = await supabase
     .from('portal_settings')
-    .select('bank_beneficiary_name, bank_iban, bank_bic, bank_transfer_reference_template')
+    .select('bank_beneficiary_name, bank_iban, bank_bic, bank_transfer_reference_template, qr_size, qr_show_details')
     .eq('host_user_id', listing.host_user_id)
     .maybeSingle();
 
@@ -402,7 +405,14 @@ async function buildVariablesForBooking(
     }
     ref = ref.substring(0, 140);
 
-    qrPaiementHtml = `<div style="text-align:center;margin:16px 0;padding:16px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb"><p style="font-size:13px;color:#374151;margin:0 0 8px">💳 Paiement par virement SEPA</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>Bénéficiaire :</strong> ${bankSettings.bank_beneficiary_name}</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>IBAN :</strong> ${bankSettings.bank_iban}</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>BIC :</strong> ${bankSettings.bank_bic}</p><p style="font-size:12px;color:#6b7280;margin:0 0 4px"><strong>Montant :</strong> ${Number(booking.total_price).toFixed(2)} €</p><p style="font-size:12px;color:#6b7280;margin:0"><strong>Communication :</strong> ${ref}</p></div>`;
+    const _bk = { name: bankSettings.bank_beneficiary_name, iban: bankSettings.bank_iban, bic: bankSettings.bank_bic, size: bankSettings.qr_size, showDetails: bankSettings.qr_show_details };
+    const _items = (paymentItems || []) as any[];
+    const _dep = _items.find((i: any) => i.label?.toLowerCase().includes('acompte')) || _items[0];
+    const _bal = _items.find((i: any) => i.label?.toLowerCase().includes('solde') || i.label?.toLowerCase().includes('décompte')) || _items[_items.length - 1];
+    const _unpaid = _items.filter((i: any) => !i.is_paid).reduce((s: number, i: any) => s + Number(i.amount), 0);
+    qrPaiementHtml = qrBlockHtml({ ..._bk, title: 'Paiement par virement', amount: _unpaid > 0 ? _unpaid : Number(booking.total_price), ref });
+    if (_dep) qrAcompteHtml = qrBlockHtml({ ..._bk, title: 'Acompte', amount: Number(_dep.amount), ref: `${ref} - Acompte`.substring(0, 140) });
+    if (_bal && _bal !== _dep) qrDecompteHtml = qrBlockHtml({ ..._bk, title: 'Décompte', amount: Number(_bal.amount), ref: `${ref} - Décompte`.substring(0, 140) });
   }
 
   // Deposit & balance
@@ -454,6 +464,8 @@ async function buildVariablesForBooking(
     balance_amount: balanceAmount,
     balance_due_date: formatDateFR(balanceDueDate),
     qr_paiement: qrPaiementHtml,
+    qr_acompte: qrAcompteHtml,
+    qr_decompte: qrDecompteHtml,
     portal_link: `https://gestioncastellamare.lovable.app/portal/${booking.access_token || ''}`,
   };
 }
