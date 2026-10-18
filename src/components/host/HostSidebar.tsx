@@ -76,9 +76,9 @@ const SidebarContent = ({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0 flex-1">
       {/* Logo */}
-      <Link to="/" className="flex items-center gap-3 mb-8 cursor-pointer hover:opacity-80 transition-opacity">
+      <Link to="/" className="flex items-center gap-3 mb-6 shrink-0 cursor-pointer hover:opacity-80 transition-opacity">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-warm to-accent-cool flex items-center justify-center">
           <Building2 className="h-5 w-5 text-white" />
         </div>
@@ -86,7 +86,7 @@ const SidebarContent = ({
       </Link>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 overflow-y-auto min-h-0">
+      <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain min-h-0 -mx-1 px-1 pb-4 [-webkit-overflow-scrolling:touch] touch-pan-y">
         {navigationItems.map((item) => {
           const activeNavPath = getActiveNavItem(location.pathname, location.state);
           
@@ -119,7 +119,7 @@ const SidebarContent = ({
       <Button
         variant="outline"
         onClick={handleLogout}
-        className="w-full justify-center gap-3 mt-auto rounded-full border-border bg-transparent text-foreground hover:bg-accent/30"
+        className="w-full shrink-0 justify-center gap-3 mt-3 rounded-full border-border bg-transparent text-foreground hover:bg-accent/30"
       >
         <LogOut className="h-5 w-5" />
         <span>Déconnexion</span>
@@ -155,7 +155,7 @@ export const MobileHostSidebar = ({ navigationItems, logoText }: SidebarProps) =
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-[275px] p-7 bg-card">
+        <SheetContent side="left" className="w-[85vw] max-w-[300px] h-[100dvh] p-5 pt-6 bg-card flex flex-col overflow-hidden">
           <SidebarContent 
             onNavigate={() => setOpen(false)}
             navigationItems={navigationItems}

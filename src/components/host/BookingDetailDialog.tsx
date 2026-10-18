@@ -193,16 +193,16 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
 
   const body = (
     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
-      <TabsList className="w-full">
+      <TabsList className="w-full grid grid-cols-4 h-auto sticky top-0 z-10 [&>button]:px-1 [&>button]:text-xs sm:[&>button]:text-sm">
         <TabsTrigger value="details" className="flex-1">Détails</TabsTrigger>
         <TabsTrigger value="payments" className="flex-1 gap-1.5">
-          <CreditCard className="h-3.5 w-3.5" /> Paiements
+          <CreditCard className="h-3.5 w-3.5 hidden sm:inline" /> Paiements
         </TabsTrigger>
         <TabsTrigger value="emails" className="flex-1 gap-1.5">
-          <Mail className="h-3.5 w-3.5" /> E-mails
+          <Mail className="h-3.5 w-3.5 hidden sm:inline" /> E-mails
         </TabsTrigger>
         <TabsTrigger value="contrat" className="flex-1 gap-1.5">
-          <FileText className="h-3.5 w-3.5" /> Contrat
+          <FileText className="h-3.5 w-3.5 hidden sm:inline" /> Contrat
         </TabsTrigger>
       </TabsList>
 
@@ -395,14 +395,14 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[92vh]">
-          <DrawerHeader className="text-left pb-2">
+        <DrawerContent className="h-[94dvh] max-h-[94dvh] flex flex-col">
+          <DrawerHeader className="text-left pb-2 pt-2 shrink-0">
             <DrawerTitle className="text-base">Détails de la réservation</DrawerTitle>
           </DrawerHeader>
-          <div className="px-4 overflow-y-auto flex-1">
+          <div data-vaul-no-drag className="px-4 pb-4 overflow-y-auto overscroll-contain flex-1 min-h-0 touch-pan-y">
             {body}
           </div>
-          <DrawerFooter className="flex flex-col gap-2 pt-3 border-t">
+          <DrawerFooter className="shrink-0 flex flex-row flex-wrap gap-2 p-3 border-t bg-background pb-[max(0.75rem,env(safe-area-inset-bottom))] [&>button]:flex-1 [&>button]:min-w-[30%]">
             {footerButtons}
           </DrawerFooter>
         </DrawerContent>
