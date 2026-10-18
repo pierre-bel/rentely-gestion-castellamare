@@ -193,7 +193,7 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
 
   const body = (
     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
-      <TabsList className="w-full">
+      <TabsList className="w-full grid grid-cols-4 h-auto sticky top-0 z-10 [&>button]:px-1 [&>button]:text-xs sm:[&>button]:text-sm">
         <TabsTrigger value="details" className="flex-1">Détails</TabsTrigger>
         <TabsTrigger value="payments" className="flex-1 gap-1.5">
           <CreditCard className="h-3.5 w-3.5" /> Paiements
