@@ -99,7 +99,7 @@ export default function PublicAvailability() {
   const { data: bookedRanges = [], isLoading: bookingsLoading } = useQuery({
     queryKey: ["public-booked-ranges", format(currentMonth, "yyyy-MM")],
     queryFn: async () => {
-      const rangeStart = format(startOfMonth(subMonths(currentMonth, 1)), "yyyy-MM-dd");
+      const rangeStart = format(startOfMonth(subMonths(new Date(), 2)), "yyyy-MM-dd");
       const rangeEnd = format(endOfMonth(addMonths(currentMonth, 2)), "yyyy-MM-dd");
       const { data, error } = await supabase
         .from("public_booking_dates")
@@ -115,7 +115,7 @@ export default function PublicAvailability() {
   const { data: blockedDates = [] } = useQuery({
     queryKey: ["public-blocked-dates", format(currentMonth, "yyyy-MM")],
     queryFn: async () => {
-      const rangeStart = format(startOfMonth(subMonths(currentMonth, 1)), "yyyy-MM-dd");
+      const rangeStart = format(startOfMonth(subMonths(new Date(), 2)), "yyyy-MM-dd");
       const rangeEnd = format(endOfMonth(addMonths(currentMonth, 2)), "yyyy-MM-dd");
       const { data, error } = await supabase
         .from("public_listing_availability")
