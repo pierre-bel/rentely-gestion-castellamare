@@ -395,14 +395,14 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[92vh]">
-          <DrawerHeader className="text-left pb-2">
+        <DrawerContent className="h-[94dvh] max-h-[94dvh] flex flex-col">
+          <DrawerHeader className="text-left pb-2 pt-2 shrink-0">
             <DrawerTitle className="text-base">Détails de la réservation</DrawerTitle>
           </DrawerHeader>
-          <div className="px-4 overflow-y-auto flex-1">
+          <div data-vaul-no-drag className="px-4 pb-4 overflow-y-auto overscroll-contain flex-1 min-h-0 touch-pan-y">
             {body}
           </div>
-          <DrawerFooter className="flex flex-col gap-2 pt-3 border-t">
+          <DrawerFooter className="shrink-0 flex flex-row flex-wrap gap-2 p-3 border-t bg-background pb-[max(0.75rem,env(safe-area-inset-bottom))] [&>button]:flex-1 [&>button]:min-w-[30%]">
             {footerButtons}
           </DrawerFooter>
         </DrawerContent>
