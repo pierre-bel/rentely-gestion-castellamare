@@ -85,11 +85,11 @@ export default function EmbedAllAvailability() {
 
   // Fetch booked dates
   const { data: bookedRanges = [] } = useQuery({
-    queryKey: ["embed-all-booked", hostListingIds, format(currentMonth, "yyyy-MM")],
+    queryKey: ["embed-all-booked", hostListingIds],
     queryFn: async () => {
       if (hostListingIds.length === 0) return [];
-      const rangeStart = format(startOfMonth(subMonths(currentMonth, 1)), "yyyy-MM-dd");
-      const rangeEnd = format(endOfMonth(addMonths(currentMonth, 1)), "yyyy-MM-dd");
+      const rangeStart = format(startOfMonth(subMonths(new Date(), 2)), "yyyy-MM-dd");
+      const rangeEnd = format(endOfMonth(addMonths(new Date(), 36)), "yyyy-MM-dd");
       const { data, error } = await supabase
         .from("public_booking_dates")
         .select("listing_id, checkin_date, checkout_date")
@@ -104,11 +104,11 @@ export default function EmbedAllAvailability() {
 
   // Fetch blocked dates
   const { data: blockedDates = [] } = useQuery({
-    queryKey: ["embed-all-blocked", hostListingIds, format(currentMonth, "yyyy-MM")],
+    queryKey: ["embed-all-blocked", hostListingIds],
     queryFn: async () => {
       if (hostListingIds.length === 0) return [];
-      const rangeStart = format(startOfMonth(subMonths(currentMonth, 1)), "yyyy-MM-dd");
-      const rangeEnd = format(endOfMonth(addMonths(currentMonth, 1)), "yyyy-MM-dd");
+      const rangeStart = format(startOfMonth(subMonths(new Date(), 2)), "yyyy-MM-dd");
+      const rangeEnd = format(endOfMonth(addMonths(new Date(), 36)), "yyyy-MM-dd");
       const { data, error } = await supabase
         .from("public_listing_availability")
         .select("listing_id, start_date, end_date")
