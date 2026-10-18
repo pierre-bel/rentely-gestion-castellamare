@@ -196,13 +196,13 @@ export function BookingDetailDialog({ open, onOpenChange, booking, onEdit, onGen
       <TabsList className="w-full grid grid-cols-4 h-auto sticky top-0 z-10 [&>button]:px-1 [&>button]:text-xs sm:[&>button]:text-sm">
         <TabsTrigger value="details" className="flex-1">Détails</TabsTrigger>
         <TabsTrigger value="payments" className="flex-1 gap-1.5">
-          <CreditCard className="h-3.5 w-3.5" /> Paiements
+          <CreditCard className="h-3.5 w-3.5 hidden sm:inline" /> Paiements
         </TabsTrigger>
         <TabsTrigger value="emails" className="flex-1 gap-1.5">
-          <Mail className="h-3.5 w-3.5" /> E-mails
+          <Mail className="h-3.5 w-3.5 hidden sm:inline" /> E-mails
         </TabsTrigger>
         <TabsTrigger value="contrat" className="flex-1 gap-1.5">
-          <FileText className="h-3.5 w-3.5" /> Contrat
+          <FileText className="h-3.5 w-3.5 hidden sm:inline" /> Contrat
         </TabsTrigger>
       </TabsList>
 
