@@ -85,7 +85,8 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
           const tenant = tenantId ? tenantMap.get(tenantId) : null;
           return {
             ...b,
-            profiles: profileMap.get(b.guest_user_id) || null,
+            // Manual bookings store the host as guest_user_id — never use the host's own profile as the tenant
+            profiles: b.guest_user_id !== user?.id ? profileMap.get(b.guest_user_id) || null : null,
             tenant,
           };
         });
