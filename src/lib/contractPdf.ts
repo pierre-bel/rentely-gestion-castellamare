@@ -27,7 +27,8 @@ const SHEET_CSS = `
   -webkit-font-smoothing: antialiased; word-wrap: break-word; overflow-wrap: break-word; }
 .cpdf-sheet * { box-sizing: border-box; }
 .cpdf-sheet p { margin: 0; }
-.cpdf-sheet h1, .cpdf-sheet h2, .cpdf-sheet h3, .cpdf-sheet h4 { margin: 0; line-height: 1.3; font-weight: bold; }
+.cpdf-sheet h1, .cpdf-sheet h2, .cpdf-sheet h3, .cpdf-sheet h4, .cpdf-sheet h5, .cpdf-sheet h6 {
+  margin: 0; line-height: 1.3; font-weight: bold; font-family: Arial, Helvetica, sans-serif; letter-spacing: normal; }
 .cpdf-sheet h1 { font-size: 20pt; }
 .cpdf-sheet h2 { font-size: 15pt; }
 .cpdf-sheet h3 { font-size: 13pt; }
@@ -42,7 +43,7 @@ const SHEET_CSS = `
 .cpdf-sheet td p, .cpdf-sheet th p { margin: 0; }
 .cpdf-sheet blockquote { border-left: 4px solid #ccc; padding-left: 16px; margin: 12px 0; }
 .cpdf-sheet hr { border: 0; border-top: 1px solid #999; margin: 12px 0; }
-.cpdf-sheet img { max-width: 200px; height: auto; }
+.cpdf-sheet img { display: inline-block; max-width: 200px; height: auto; }
 .cpdf-sheet strong, .cpdf-sheet b { font-weight: bold; }
 .cpdf-sheet mark { padding: 0; }
 .cpdf-signature { margin-top: 24px; border-top: 1px solid #ccc; padding-top: 16px; }
@@ -209,6 +210,13 @@ export async function exportContractPdf(options: {
         width: CONTENT_W_PX,
         height,
         windowWidth: CONTENT_W_PX + 100,
+        // The app's global reset makes <img> display:block, which breaks
+        // html2canvas' baseline measurement and shifts all text downwards.
+        onclone: (doc) => {
+          const fix = doc.createElement("style");
+          fix.textContent = "img { display: inline-block !important; }";
+          doc.head.appendChild(fix);
+        },
       });
       host.removeChild(frame);
 
