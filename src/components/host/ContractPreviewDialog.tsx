@@ -17,9 +17,12 @@ interface ContractPreviewDialogProps {
     signature_data: string | null;
     created_at: string;
   };
+  /** File name without extension, e.g. "Dupont - Appartement Mer - Juillet 2026" */
+  fileBaseName?: string;
 }
 
-export const ContractPreviewDialog = ({ open, onOpenChange, contract }: ContractPreviewDialogProps) => {
+export const ContractPreviewDialog = ({ open, onOpenChange, contract, fileBaseName }: ContractPreviewDialogProps) => {
+  const baseName = fileBaseName || `contrat-${contract.id.slice(0, 8)}`;
   const contentRef = useRef<HTMLDivElement>(null);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportingWord, setExportingWord] = useState(false);
@@ -57,7 +60,7 @@ export const ContractPreviewDialog = ({ open, onOpenChange, contract }: Contract
         heightLeft -= (pdfHeight - 20);
       }
 
-      pdf.save(`contrat-${contract.id.slice(0, 8)}.pdf`);
+      pdf.save(`${baseName}.pdf`);
     } catch (e) {
       console.error("PDF export failed", e);
     }
@@ -89,7 +92,7 @@ export const ContractPreviewDialog = ({ open, onOpenChange, contract }: Contract
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `contrat-${contract.id.slice(0, 8)}.docx`;
+      a.download = `${baseName}.docx`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (e) {

@@ -12,6 +12,7 @@ import { fr } from "date-fns/locale";
 import { ContractTemplateEditor } from "./ContractTemplateEditor";
 import { ContractGenerateDialog } from "./ContractGenerateDialog";
 import { ContractPreviewDialog } from "./ContractPreviewDialog";
+import { buildContractFileName } from "@/lib/contractFileName";
 
 interface Template {
   id: string;
@@ -250,6 +251,11 @@ const HostContracts = () => {
           open={!!previewContract}
           onOpenChange={(open) => !open && setPreviewContract(null)}
           contract={previewContract}
+          fileBaseName={buildContractFileName(
+            previewContract.booking_guest_last_name,
+            previewContract.booking_listing_title,
+            previewContract.booking_checkin,
+          )}
         />
       )}
     </div>
