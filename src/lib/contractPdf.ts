@@ -49,6 +49,9 @@ const SHEET_CSS = `
 .cpdf-signature { margin-top: 24px; border-top: 1px solid #ccc; padding-top: 16px; }
 .cpdf-signature p { font-size: 11px; color: #666; }
 .cpdf-signature img { max-height: 80px; max-width: 240px; }
+/* html2canvas measures font baselines with a 1x1 probe <img> appended to <body>;
+   the app's global reset makes it display:block, which shifts all text down. */
+body > div > img[width="1"][height="1"] { display: inline !important; }
 `;
 
 /** Empty TipTap paragraphs (`<p></p>`) are blank lines in Word; keep them as such. */
