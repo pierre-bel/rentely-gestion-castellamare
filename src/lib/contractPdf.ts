@@ -34,6 +34,9 @@ const SHEET_CSS = `
 .cpdf-sheet h3 { font-size: 13pt; }
 .cpdf-sheet h4 { font-size: 12pt; }
 .cpdf-sheet ul, .cpdf-sheet ol { margin: 0; padding-left: 28px; }
+.cpdf-sheet ul, .cpdf-sheet ol { margin-bottom: 6pt; }
+.cpdf-sheet :is(ul, ol):has(+ p > br:only-child) { margin-bottom: 0; }
+.cpdf-sheet li :is(ul, ol) { margin-bottom: 0; }
 .cpdf-sheet ul { list-style: disc outside; }
 .cpdf-sheet ol { list-style: decimal outside; }
 .cpdf-sheet ul ul { list-style-type: circle; }

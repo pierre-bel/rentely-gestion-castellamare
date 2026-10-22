@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,44 +23,18 @@ interface ContractPreviewDialogProps {
 
 export const ContractPreviewDialog = ({ open, onOpenChange, contract, fileBaseName }: ContractPreviewDialogProps) => {
   const baseName = fileBaseName || `contrat-${contract.id.slice(0, 8)}`;
-  const contentRef = useRef<HTMLDivElement>(null);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportingWord, setExportingWord] = useState(false);
 
   const handleExportPdf = async () => {
-    if (!contentRef.current) return;
     setExportingPdf(true);
     try {
-      const html2canvas = (await import("html2canvas")).default;
-      const { jsPDF } = await import("jspdf");
-
-      const canvas = await html2canvas(contentRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
+      const { exportContractPdf } = await import("@/lib/contractPdf");
+      await exportContractPdf({
+        html: DOMPurify.sanitize(contract.generated_html, { ADD_TAGS: ["img"], ADD_ATTR: ["src", "alt", "width", "height", "style"] }),
+        signatureData: contract.signature_data,
+        fileName: baseName,
       });
-
-      const imgData = canvas.toDataURL("image/jpeg", 0.95);
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth - 20;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 10;
-
-      pdf.addImage(imgData, "JPEG", 10, position, imgWidth, imgHeight);
-      heightLeft -= (pdfHeight - 20);
-
-      while (heightLeft > 0) {
-        position = position - (pdfHeight - 20);
-        pdf.addPage();
-        pdf.addImage(imgData, "JPEG", 10, position, imgWidth, imgHeight);
-        heightLeft -= (pdfHeight - 20);
-      }
-
-      pdf.save(`${baseName}.pdf`);
     } catch (e) {
       console.error("PDF export failed", e);
     }
@@ -130,7 +104,6 @@ export const ContractPreviewDialog = ({ open, onOpenChange, contract, fileBaseNa
 
         <div className="overflow-y-auto flex-1">
           <div
-            ref={contentRef}
             className="prose prose-sm max-w-none text-foreground border rounded-lg p-6 bg-white text-black [&_table]:border-collapse [&_table]:w-full [&_td]:border [&_td]:border-gray-300 [&_td]:p-2 [&_th]:border [&_th]:border-gray-300 [&_th]:p-2 [&_th]:bg-gray-100 [&_th]:font-semibold [&_blockquote]:border-l-4 [&_blockquote]:border-gray-400 [&_blockquote]:pl-4 [&_blockquote]:py-2 [&_blockquote]:bg-gray-50 [&_blockquote]:rounded-r"
             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(contract.generated_html, { ADD_TAGS: ['img'], ADD_ATTR: ['src', 'alt', 'width', 'height', 'style'] }) }}
           />
