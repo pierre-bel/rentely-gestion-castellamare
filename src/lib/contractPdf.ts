@@ -34,6 +34,10 @@ const SHEET_CSS = `
 .cpdf-sheet h3 { font-size: 13pt; }
 .cpdf-sheet h4 { font-size: 12pt; }
 .cpdf-sheet ul, .cpdf-sheet ol { margin: 0; padding-left: 28px; }
+.cpdf-sheet ul { list-style: disc outside; }
+.cpdf-sheet ol { list-style: decimal outside; }
+.cpdf-sheet ul ul { list-style-type: circle; }
+.cpdf-sheet li { display: list-item; }
 .cpdf-sheet li { margin: 0; }
 .cpdf-sheet li > p { margin: 0; }
 .cpdf-sheet table { border-collapse: collapse; width: 100% !important; min-width: 0 !important; margin: 0; table-layout: auto; }
@@ -70,6 +74,14 @@ function collectAtoms(sheet: HTMLElement): Atom[] {
   const origin = sheet.getBoundingClientRect().top;
   const atoms: Atom[] = [];
   const isHeading = (el: Element | null) => !!el?.closest("h1,h2,h3,h4,h5,h6");
+  // A paragraph introducing a list ("Au départ, le locataire doit :") stays with it
+  const introducesList = (el: Element | null) => {
+    const p = el?.closest("p");
+    if (!p || p.closest("li, td, th")) return false;
+    let next = p.nextElementSibling;
+    while (next && next.tagName === "P" && !next.textContent?.trim()) next = next.nextElementSibling;
+    return !!next && (next.tagName === "UL" || next.tagName === "OL");
+  };
 
   const walker = document.createTreeWalker(sheet, NodeFilter.SHOW_TEXT);
   const range = document.createRange();
@@ -79,7 +91,7 @@ function collectAtoms(sheet: HTMLElement): Atom[] {
     // Text inside a table row is handled by the row itself
     if (node.parentElement?.closest("tr")) continue;
     range.selectNodeContents(node);
-    const keep = isHeading(node.parentElement);
+    const keep = isHeading(node.parentElement) || introducesList(node.parentElement);
     for (const r of Array.from(range.getClientRects())) {
       if (r.height <= 0) continue;
       atoms.push({ top: r.top - origin, bottom: r.bottom - origin, keepWithNext: keep });
