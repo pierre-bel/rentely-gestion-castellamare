@@ -29,6 +29,7 @@ interface BookingContract {
   signature_data: string | null;
   created_at: string;
   booking_guest_name?: string;
+  booking_guest_last_name?: string | null;
   booking_listing_title?: string;
   booking_checkin?: string;
   booking_checkout?: string;
@@ -50,24 +51,34 @@ const HostContracts = () => {
     setLoading(true);
     const [tRes, cRes] = await Promise.all([
       supabase.from("contract_templates").select("*").eq("host_user_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("booking_contracts").select("*, bookings(checkin_date, checkout_date, guest_user_id, listings(title))").order("created_at", { ascending: false }),
+      supabase.from("booking_contracts").select("*, bookings(checkin_date, checkout_date, guest_user_id, pricing_breakdown, listings(title))").order("created_at", { ascending: false }),
     ]);
     if (tRes.data) setTemplates(tRes.data as Template[]);
     if (cRes.data) {
       const contractItems = cRes.data as any[];
-      // Fetch guest profiles
-      const guestIds = [...new Set(contractItems.map((c: any) => c.bookings?.guest_user_id).filter(Boolean))];
+      // Tenant (locataire) linked to the booking — the guest_user_id is often the host for manual bookings
+      const tenantIds = [...new Set(contractItems.map((c: any) => (c.bookings?.pricing_breakdown as any)?.tenant_id).filter(Boolean))];
+      let tenantMap = new Map();
+      if (tenantIds.length > 0) {
+        const { data: tenants } = await supabase.from("tenants").select("id, first_name, last_name").in("id", tenantIds as string[]);
+        tenantMap = new Map((tenants || []).map((t: any) => [t.id, t]));
+      }
+      // Fallback: guest profiles, excluding the host himself
+      const guestIds = [...new Set(contractItems.map((c: any) => c.bookings?.guest_user_id).filter((id: string) => id && id !== user.id))];
       let profileMap = new Map();
       if (guestIds.length > 0) {
-        const { data: profiles } = await supabase.from("profiles").select("id, first_name, last_name").in("id", guestIds);
+        const { data: profiles } = await supabase.from("profiles").select("id, first_name, last_name").in("id", guestIds as string[]);
         profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
       }
       const enriched = contractItems.map((c: any) => {
         const booking = c.bookings;
-        const guest = booking ? profileMap.get(booking.guest_user_id) : null;
+        const tenantId = (booking?.pricing_breakdown as any)?.tenant_id;
+        const person = (tenantId && tenantMap.get(tenantId)) || (booking ? profileMap.get(booking.guest_user_id) : null);
+        const fullName = person ? `${person.first_name || ""} ${person.last_name || ""}`.trim() : "";
         return {
           ...c,
-          booking_guest_name: guest ? `${guest.first_name || ""} ${guest.last_name || ""}`.trim() : null,
+          booking_guest_name: fullName || null,
+          booking_guest_last_name: person ? (person.last_name || person.first_name || null) : null,
           booking_listing_title: booking?.listings?.title || null,
           booking_checkin: booking?.checkin_date || null,
           booking_checkout: booking?.checkout_date || null,
