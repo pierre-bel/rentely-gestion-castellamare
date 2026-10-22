@@ -63,7 +63,10 @@ body > div > img[width="1"][height="1"] { display: inline !important; }
 
 /** Empty TipTap paragraphs (`<p></p>`) are blank lines in Word; keep them as such. */
 export function normalizeContractHtml(html: string): string {
-  return html.replace(/<p([^>]*)>(\s|&nbsp;)*<\/p>/gi, "<p$1><br></p>");
+  return html
+    // Empty bullet points would show a lonely "•"
+    .replace(/<li[^>]*>\s*(<p[^>]*>(\s|&nbsp;|<br\s*\/?>)*<\/p>\s*)*<\/li>/gi, "")
+    .replace(/<p([^>]*)>(\s|&nbsp;)*<\/p>/gi, "<p$1><br></p>");
 }
 
 interface Atom {
