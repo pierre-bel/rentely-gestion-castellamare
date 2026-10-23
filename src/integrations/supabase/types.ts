@@ -1019,6 +1019,36 @@ export type Database = {
         }
         Relationships: []
       }
+      host_documents: {
+        Row: {
+          created_at: string
+          file_path: string
+          host_user_id: string
+          id: string
+          mime_type: string | null
+          name: string
+          size_bytes: number
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          host_user_id: string
+          id?: string
+          mime_type?: string | null
+          name: string
+          size_bytes?: number
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          host_user_id?: string
+          id?: string
+          mime_type?: string | null
+          name?: string
+          size_bytes?: number
+        }
+        Relationships: []
+      }
       host_notes: {
         Row: {
           content: string

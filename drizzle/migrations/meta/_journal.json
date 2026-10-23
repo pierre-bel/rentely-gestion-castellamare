@@ -22,6 +22,13 @@
       "when": 1792049454877,
       "tag": "0002_qr_payment_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792747114901,
+      "tag": "0003_host_documents",
+      "breakpoints": true
     }
   ]
 }
