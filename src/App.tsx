@@ -60,6 +60,7 @@ const EmailAutomations = lazy(() => import("./pages/host/EmailAutomations"));
 const PortalSettings = lazy(() => import("./pages/host/PortalSettings"));
 const HostInbox = lazy(() => import("./pages/host/Inbox"));
 const HostNotes = lazy(() => import("./pages/host/Notes"));
+const HostDocuments = lazy(() => import("./pages/host/Documents"));
 const ApiConnections = lazy(() => import("./pages/host/ApiConnections"));
 
 // Guest pages
@@ -147,6 +148,7 @@ const App = () => (
                 <Route path="contracts" element={<HostContracts />} />
                 <Route path="inbox" element={<HostInbox />} />
                 <Route path="notes" element={<HostNotes />} />
+                <Route path="documents" element={<HostDocuments />} />
                 <Route path="api" element={<ApiConnections />} />
                 <Route path="email-automations" element={<EmailAutomations />} />
                 <Route path="portal-settings" element={<PortalSettings />} />
