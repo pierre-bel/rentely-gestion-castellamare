@@ -11,80 +11,76 @@ import {
   Wallet, 
   Clock
 } from "lucide-react";
-import { subMonths, startOfMonth, addMonths } from "date-fns";
-import type { HostEarningsReport } from "./types/earnings";
 
 interface DashboardEarningsSummaryProps {
   userId: string;
 }
 
+const ACTIVE_STATUSES = ["confirmed", "completed", "pending_payment"];
+
 const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => {
   const navigate = useNavigate();
-  
-  const now = new Date();
-  const defaultStartMonth = new Date(now.getFullYear(), 0, 1); // Jan 1st of current year
-  const defaultEndMonth = new Date(now.getFullYear(), 11, 31);
+  const year = new Date().getFullYear();
 
-  const { data: reports, isLoading: reportsLoading } = useQuery({
-    queryKey: ["host-dashboard-earnings-report", userId],
+  const { data, isLoading } = useQuery({
+    queryKey: ["host-dashboard-ytd-summary", userId, year],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_host_earnings_report", {
-        p_host_user_id: userId,
-        p_start_month: defaultStartMonth.toISOString().split("T")[0],
-        p_end_month: defaultEndMonth.toISOString().split("T")[0],
-        p_search_query: null,
-        p_listing_ids: null,
-        p_min_gross: null,
-        p_max_gross: null,
-        p_min_net: null,
-        p_max_net: null,
-        p_sort_by: "month_date",
-        p_sort_order: "desc",
-      });
-      if (error) throw error;
-      return data as unknown as HostEarningsReport[];
+      const { data: listings, error: lErr } = await supabase
+        .from("listings")
+        .select("id")
+        .eq("host_user_id", userId);
+      if (lErr) throw lErr;
+      const listingIds = (listings || []).map((l) => l.id);
+      if (listingIds.length === 0) return { listingsCount: 0, bookings: [], items: [] };
+
+      const bookings: any[] = [];
+      for (let from = 0; ; from += 1000) {
+        const { data: b, error } = await supabase
+          .from("bookings")
+          .select("id, total_price, cleaning_fee, nights")
+          .in("listing_id", listingIds)
+          .in("status", ACTIVE_STATUSES as any)
+          .gte("checkin_date", `${year}-01-01`)
+          .lte("checkin_date", `${year}-12-31`)
+          .range(from, from + 999);
+        if (error) throw error;
+        bookings.push(...(b || []));
+        if (!b || b.length < 1000) break;
+      }
+
+      const items: any[] = [];
+      const ids = bookings.map((b) => b.id);
+      for (let i = 0; i < ids.length; i += 100) {
+        const { data: it, error } = await supabase
+          .from("booking_payment_items")
+          .select("amount, is_paid")
+          .in("booking_id", ids.slice(i, i + 100));
+        if (error) throw error;
+        items.push(...(it || []));
+      }
+      return { listingsCount: listingIds.length, bookings, items };
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: payoutData, isLoading: payoutsLoading } = useQuery({
-    queryKey: ["host-dashboard-payouts", userId],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_host_dashboard_kpis", {
-        p_host_user_id: userId,
-      });
-      if (error) throw error;
-      return data[0] as { pending_payouts: number; host_fees_paid: number };
-    },
-    enabled: !!userId,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const isLoading = reportsLoading || payoutsLoading;
+  const reports = data?.bookings;
 
   const summaryData = useMemo(() => {
-    if (!reports || reports.length === 0) {
-      return {
-        totalGrossRevenue: 0,
-        averageRate: 0,
-        actualNetRevenue: 0,
-        occupancyRate: 0,
-        hostFeesPaid: 0,
-      };
-    }
-
-    const totalGrossRevenue = reports.reduce((sum, r) => sum + Number(r.gross_earnings), 0);
-    const actualNetRevenue = reports.reduce((sum, r) => sum + Number(r.actual_net_earnings), 0);
-    const hostFeesPaid = reports.reduce((sum, r) => sum + Number(r.platform_fees), 0);
-    const totalNights = reports.reduce((sum, r) => sum + Number(r.nights_booked), 0);
-    const weightedRate = reports.reduce((sum, r) => sum + Number(r.average_nightly_rate) * Number(r.nights_booked), 0);
-    const averageRate = totalNights > 0 ? weightedRate / totalNights : 0;
-    const weightedOccupancy = reports.reduce((sum, r) => sum + Number(r.occupancy_percentage) * Number(r.nights_booked), 0);
-    const occupancyRate = totalNights > 0 ? weightedOccupancy / totalNights : 0;
-
-    return { totalGrossRevenue, averageRate, actualNetRevenue, occupancyRate, hostFeesPaid };
-  }, [reports]);
+    const bookings = data?.bookings || [];
+    const totalGrossRevenue = bookings.reduce((s, b) => s + Number(b.total_price || 0), 0);
+    const totalCleaning = bookings.reduce((s, b) => s + Number(b.cleaning_fee || 0), 0);
+    const totalNights = bookings.reduce((s, b) => s + Number(b.nights || 0), 0);
+    const actualNetRevenue = totalGrossRevenue - totalCleaning;
+    const averageRate = totalNights > 0 ? actualNetRevenue / totalNights : 0;
+    const daysInYear = (Date.UTC(year + 1, 0, 1) - Date.UTC(year, 0, 1)) / 86400000;
+    const capacity = (data?.listingsCount || 0) * daysInYear;
+    const occupancyRate = capacity > 0 ? (totalNights / capacity) * 100 : 0;
+    const remaining = (data?.items || [])
+      .filter((i) => !i.is_paid)
+      .reduce((s, i) => s + Number(i.amount || 0), 0);
+    return { totalGrossRevenue, averageRate, actualNetRevenue, occupancyRate, remaining };
+  }, [data, year]);
 
   const formatCurrency = (value: number, showCents: boolean = false) => {
     return new Intl.NumberFormat("fr-FR", {
