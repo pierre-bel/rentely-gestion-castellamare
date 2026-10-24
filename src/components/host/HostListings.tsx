@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { formatEuro } from "@/lib/utils";
+import { formatEuro, getHideDecimals } from "@/lib/utils";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { selectByOwner } from "@/lib/supabase-helpers";
 import { supabase } from "@/integrations/supabase/client";
@@ -168,7 +168,7 @@ export default function HostListings() {
         </div>
         <p className="text-sm text-muted-foreground">{listing.city}</p>
         <div className="flex items-center gap-4 mt-1">
-          <p className="text-sm font-medium">{formatEuro(listing.base_price)}/nuit</p>
+          <p className="text-sm font-medium">{getHideDecimals() ? formatEuro(listing.base_price) : `${listing.base_price} €`}/nuit</p>
           {listing.rating_count > 0 && (
             <p className="text-sm text-muted-foreground">
               ⭐ {listing.rating_avg.toFixed(1)} ({listing.rating_count})

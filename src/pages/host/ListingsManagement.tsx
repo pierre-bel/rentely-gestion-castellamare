@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatEuro } from "@/lib/utils";
+import { formatEuro, getHideDecimals } from "@/lib/utils";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -432,7 +432,7 @@ const ListingsManagement = () => {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold text-lg">{formatEuro(listing.base_price)}/nuit</p>
+                      <p className="font-semibold text-lg">{getHideDecimals() ? formatEuro(listing.base_price) : new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 0 }).format(listing.base_price)}/nuit</p>
                       {listing.rating_count > 0 && (
                         <p className="text-sm text-muted-foreground">
                           ⭐ {listing.rating_avg.toFixed(1)} ({listing.rating_count})

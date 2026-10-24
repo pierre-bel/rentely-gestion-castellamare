@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatEuro } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
