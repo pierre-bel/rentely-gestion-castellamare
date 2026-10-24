@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { buildQRBlockHtml } from "@/components/portal/PaymentQRCode";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
+import { formatEuro, setHideDecimals } from "@/lib/utils";
 
 interface PaymentScheduleTemplate {
   id: string;
@@ -84,6 +85,7 @@ export function HostPaymentSettings() {
 
   return (
     <div className="space-y-6">
+      <AmountDisplaySettings />
       <Card>
         <CardHeader>
           <CardTitle>Échéances de paiement par défaut</CardTitle>
@@ -325,6 +327,69 @@ function BankCredentialsSettings() {
             </p>
           </div>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function AmountDisplaySettings() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [hide, setHide] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const { data: settings } = useQuery({
+    queryKey: ["portal-settings-amount-display", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await selectOne("portal_settings", "host_user_id", user.id, "hide_decimals");
+      if (error) throw new Error(error);
+      return data as { hide_decimals?: boolean } | null;
+    },
+    enabled: !!user?.id,
+  });
+
+  useEffect(() => {
+    if (settings) setHide(!!settings.hide_decimals);
+  }, [settings]);
+
+  const handleToggle = async (value: boolean) => {
+    if (!user?.id) return;
+    const previous = hide;
+    setHide(value);
+    setSaving(true);
+    const success = await withToast(
+      () => upsertByOwner("portal_settings", "host_user_id", user.id, { hide_decimals: value }),
+      toast, value ? "Les montants s'affichent sans décimales" : "Les montants s'affichent avec décimales"
+    );
+    if (success) {
+      setHideDecimals(value);
+      queryClient.invalidateQueries();
+    } else {
+      setHide(previous);
+    }
+    setSaving(false);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Affichage des montants</CardTitle>
+        <CardDescription>
+          S'applique partout : application, portail client, e-mails et contrats.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-1">
+            <Label htmlFor="hide-decimals" className="text-sm font-medium">Aucun chiffre après la virgule</Label>
+            <p className="text-xs text-muted-foreground">
+              Exemple : {formatEuro(165, { hideDecimals: hide })} au lieu de {formatEuro(165, { hideDecimals: false })}. Les montants avec centimes sont arrondis à l'euro le plus proche à l'affichage ; les montants enregistrés et les QR codes de paiement restent exacts.
+            </p>
+          </div>
+          <Switch id="hide-decimals" checked={hide} onCheckedChange={handleToggle} disabled={saving} />
+        </div>
       </CardContent>
     </Card>
   );
