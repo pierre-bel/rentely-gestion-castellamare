@@ -10,6 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import DemoBanner from "@/components/DemoBanner";
+import { supabase } from "@/integrations/supabase/client";
+import { getHideDecimals, setHideDecimals } from "@/lib/utils";
 
 // Map routes to page titles
 const getPageTitle = (pathname: string): string => {
@@ -44,14 +46,31 @@ const HostLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isHost, isGuest, requestHostRole, loading: roleLoading } = useUserRole();
-  const { isTeamMember, loading: teamLoading } = useTeamAccess();
+  const { isTeamMember, memberships, loading: teamLoading } = useTeamAccess();
   const [requesting, setRequesting] = useState(false);
+  const [moneyFormatVersion, setMoneyFormatVersion] = useState(0);
   const { toast } = useToast();
   
   const pageTitle = getPageTitle(location.pathname);
   const hideHeader = shouldHideHeader(location.pathname);
 
   const isLoading = roleLoading || teamLoading;
+
+  // Load the "no decimals" display preference of the host (own account or the host we work for)
+  const settingsHostId = isHost ? user?.id : memberships[0]?.host_user_id ?? user?.id;
+  useEffect(() => {
+    if (isLoading || !settingsHostId) return;
+    let cancelled = false;
+    supabase.rpc("get_host_hide_decimals", { _host_id: settingsHostId }).then(({ data, error }) => {
+      if (cancelled || error) return;
+      const value = data === true;
+      if (value !== getHideDecimals()) {
+        setHideDecimals(value);
+        setMoneyFormatVersion((v) => v + 1);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [isLoading, settingsHostId]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -140,7 +159,7 @@ const HostLayout = () => {
             />
           </div>
         )}
-        <Outlet />
+        <Outlet key={moneyFormatVersion} />
       </div>
     </div>
   );
