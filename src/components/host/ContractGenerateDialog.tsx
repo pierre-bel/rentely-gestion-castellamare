@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatEuro,getHideDecimals } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -128,7 +129,7 @@ export const ContractGenerateDialog = ({ open, onOpenChange, templates, onGenera
     const deposit = items.find((i: any) => i.label?.toLowerCase().includes("acompte")) || items[0];
     const balance = items.find((i: any) => i.label?.toLowerCase().includes("solde") || i.label?.toLowerCase().includes("décompte")) || items[items.length - 1];
 
-    const formatCurrency = (val: number | null) => val != null ? `${Number(val).toFixed(2)} €` : "N/A";
+    const formatCurrency = (val: number | null) => val != null ? (getHideDecimals() ? formatEuro(val) : `${Number(val).toFixed(2)} €`) : "N/A";
     const formatDate = (d: string | null) => d ? format(new Date(d), "d MMMM yyyy", { locale: fr }) : "N/A";
     const formatStatus = (item: any) => item ? (item.is_paid ? "Payé" : "Non payé") : "N/A";
 

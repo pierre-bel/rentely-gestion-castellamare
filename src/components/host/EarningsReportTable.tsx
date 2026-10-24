@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { formatEuro } from "@/lib/utils";
 import { fr } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,7 +67,7 @@ const EarningsReportTable = ({ reports, isLoading }: EarningsReportTableProps) =
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(amount));
+    return formatEuro(Number(amount));
   };
 
   return (

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatEuro } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -363,7 +364,7 @@ export default function HostBookings() {
         const refundAmount = response.refund_amount || 0;
         toast({
           title: "Booking Cancelled",
-          description: `La réservation a été annulée. Le locataire recevra un remboursement de ${refundAmount.toFixed(2)} €.`,
+          description: `La réservation a été annulée. Le locataire recevra un remboursement de ${formatEuro(refundAmount)}.`,
         });
 
         setCancelDialogOpen(false);
@@ -695,7 +696,7 @@ export default function HostBookings() {
             <AlertDialogDescription className="space-y-2">
               <p className="text-foreground">
                 Le locataire sera intégralement remboursé du montant total 
-                ({bookingToCancel?.host_payout_gross.toFixed(2)} €). Cette action est irréversible.
+                ({formatEuro(bookingToCancel?.host_payout_gross)}). Cette action est irréversible.
               </p>
               <div className="pt-2 text-sm text-foreground">
                 <p className="font-semibold">Détails :</p>

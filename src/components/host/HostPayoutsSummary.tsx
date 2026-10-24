@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { formatEuro } from "@/lib/utils";
 import { ArrowUpCircle, Clock, AlertCircle, Wallet } from "lucide-react";
 import { HostPayout } from "./types/financial";
 
@@ -7,7 +8,7 @@ interface HostPayoutsSummaryProps {
 }
 
 const formatPrice = (amount: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount);
+  formatEuro(amount);
 
 export function HostPayoutsSummary({ payouts }: HostPayoutsSummaryProps) {
   const grossRevenue = payouts

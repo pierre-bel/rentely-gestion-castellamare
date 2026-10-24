@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatEuro } from "@/lib/utils";
 import { selectByOwner, selectWhereIn } from "@/lib/supabase-helpers";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +23,7 @@ interface BookingEarning {
 }
 
 const formatPrice = (amount: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount);
+  formatEuro(amount);
 
 export default function HostEarnings() {
   const { user } = useAuth();

@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { formatEuro } from "@/lib/utils";
 import { fr } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -79,7 +80,7 @@ function getRowClassName(payout: HostPayout): string {
 }
 
 const formatPrice = (amount: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount);
+  formatEuro(amount);
 
 const formatDate = (date: string) => format(new Date(date), "d MMM yyyy", { locale: fr });
 const formatDateShort = (date: string) => format(new Date(date), "d MMM", { locale: fr });

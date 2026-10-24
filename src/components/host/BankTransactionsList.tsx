@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { formatEuro } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -322,7 +323,7 @@ export function BankTransactionsList() {
                         {format(new Date(tx.transaction_date), "dd MMM yyyy", { locale: fr })}
                       </TableCell>
                       <TableCell className="font-medium text-emerald-600 whitespace-nowrap">
-                        +{Number(tx.amount).toFixed(2)} €
+                        +{formatEuro(tx.amount)}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell max-w-[200px] truncate text-muted-foreground text-sm">
                         {tx.description || "—"}
