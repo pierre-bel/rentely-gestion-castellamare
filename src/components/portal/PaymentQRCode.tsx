@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatEuro, getHideDecimals } from "@/lib/utils";
 import QRCode from "qrcode";
 import { QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -91,6 +92,6 @@ export async function buildQRBlockHtml(
   const url = await QRCode.toDataURL(buildEpcString({ ...props, reference: ref }), { margin: 2, width: size * 2 });
   const p = (l: string, v: string) => `<p style="font-size:11px;color:#555;margin:0 0 2px"><strong>${l} :</strong> ${v}</p>`;
   const details = opts.showDetails === false ? "" :
-    `<div style="margin-top:6px">${p("Bénéficiaire", props.beneficiary)}${p("IBAN", props.iban)}${p("BIC", props.bic)}${p("Montant", `${props.amount.toFixed(2)} €`)}${p("Communication", ref)}</div>`;
+    `<div style="margin-top:6px">${p("Bénéficiaire", props.beneficiary)}${p("IBAN", props.iban)}${p("BIC", props.bic)}${p("Montant", getHideDecimals() ? formatEuro(props.amount) : `${props.amount.toFixed(2)} €`)}${p("Communication", ref)}</div>`;
   return `<div style="text-align:center;margin:12px 0"><p style="font-size:12px;margin:0 0 4px"><strong>${opts.title}</strong></p><img src="${url}" width="${size}" height="${size}" alt="QR code ${opts.title}" style="display:inline-block;width:${size}px;height:${size}px" /><br/><span style="font-size:10px;color:#666">Scannez avec votre application bancaire</span>${details}</div>`;
 }

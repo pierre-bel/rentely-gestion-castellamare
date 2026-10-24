@@ -15,8 +15,12 @@ import { Badge } from "@/components/ui/badge";
 import PortalReviewForm from "@/components/portal/PortalReviewForm";
 import { PaymentQRCode, buildTransferReference } from "@/components/portal/PaymentQRCode";
 
+// Host preference "no decimals" (loaded with the portal data)
+let portalHideDecimals = false;
 const formatPrice = (price: number, currency = "EUR") =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(price);
+  portalHideDecimals
+    ? new Intl.NumberFormat("fr-FR", { style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(Number(price) || 0))
+    : new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(price);
 
 function formatTime(t: string | null) {
   if (!t) return null;
@@ -165,6 +169,8 @@ export default function BookingPortal() {
           : Promise.resolve({ data: null }),
         supabase.rpc("get_portal_bank_info", { _access_token: token }),
       ]);
+      const { data: hideDec } = await supabase.rpc("get_portal_hide_decimals", { _access_token: token });
+      portalHideDecimals = hideDec === true;
 
       if (paymentsRes.data) setPayments(paymentsRes.data as PaymentItem[]);
       if (settingsRes.data) {
