@@ -2085,6 +2085,7 @@ export type Database = {
           contact_whatsapp: string | null
           created_at: string
           custom_footer_text: string | null
+          hide_decimals: boolean
           host_user_id: string
           id: string
           qr_show_details: boolean
@@ -2117,6 +2118,7 @@ export type Database = {
           contact_whatsapp?: string | null
           created_at?: string
           custom_footer_text?: string | null
+          hide_decimals?: boolean
           host_user_id: string
           id?: string
           qr_show_details?: boolean
@@ -2149,6 +2151,7 @@ export type Database = {
           contact_whatsapp?: string | null
           created_at?: string
           custom_footer_text?: string | null
+          hide_decimals?: boolean
           host_user_id?: string
           id?: string
           qr_show_details?: boolean
@@ -3688,6 +3691,7 @@ export type Database = {
           platform_fees: number
         }[]
       }
+      get_host_hide_decimals: { Args: { _host_id: string }; Returns: boolean }
       get_host_reviews: {
         Args: { _host_user_id: string }
         Returns: {
@@ -3757,6 +3761,10 @@ export type Database = {
           bank_iban: string
           bank_transfer_reference_template: string
         }[]
+      }
+      get_portal_hide_decimals: {
+        Args: { _access_token: string }
+        Returns: boolean
       }
       get_public_profiles: {
         Args: never
