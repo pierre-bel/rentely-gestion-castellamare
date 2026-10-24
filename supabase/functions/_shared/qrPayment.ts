@@ -1,4 +1,13 @@
 // Shared SEPA (EPC069-12) QR builders for emails.
+
+/** Amount text for emails. Without hide: legacy "165.00 €"; with hide: "165 €" (rounded). */
+export function formatEuroText(amount: number | string | null | undefined, hideDecimals?: boolean | null): string {
+  const n = Number(amount) || 0;
+  if (!hideDecimals) return `${n.toFixed(2)} €`;
+  const r = Math.round(n);
+  const sign = r < 0 ? "-" : "";
+  return `${sign}${String(Math.abs(r)).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00A0")} €`;
+}
 export function buildEpc(b: { name: string; iban: string; bic: string }, amount: number, ref: string): string {
   return [
     "BCD", "002", "1", "SCT",
@@ -11,7 +20,7 @@ export function buildEpc(b: { name: string; iban: string; bic: string }, amount:
 
 export function qrBlockHtml(opts: {
   title: string; name: string; iban: string; bic: string; amount: number; ref: string;
-  size?: number | null; showDetails?: boolean | null;
+  size?: number | null; showDetails?: boolean | null; hideDecimals?: boolean | null;
 }): string {
   if (!(opts.amount > 0)) return "";
   const size = Math.min(300, Math.max(80, Number(opts.size) || 150));
@@ -19,6 +28,6 @@ export function qrBlockHtml(opts: {
   const img = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=${size * 2}x${size * 2}&margin=4&data=${data}" width="${size}" height="${size}" alt="QR code ${opts.title}" style="display:inline-block;width:${size}px;height:${size}px" />`;
   const p = (l: string, v: string) => `<p style="font-size:12px;color:#6b7280;margin:0 0 2px"><strong>${l} :</strong> ${v}</p>`;
   const details = opts.showDetails === false ? "" :
-    `<div style="margin-top:8px">${p("Bénéficiaire", opts.name)}${p("IBAN", opts.iban)}${p("BIC", opts.bic)}${p("Montant", `${opts.amount.toFixed(2)} €`)}${p("Communication", opts.ref)}</div>`;
+    `<div style="margin-top:8px">${p("Bénéficiaire", opts.name)}${p("IBAN", opts.iban)}${p("BIC", opts.bic)}${p("Montant", formatEuroText(opts.amount, opts.hideDecimals))}${p("Communication", opts.ref)}</div>`;
   return `<div style="text-align:center;margin:12px 0;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;display:inline-block"><p style="font-size:13px;color:#374151;margin:0 0 6px"><strong>${opts.title}</strong></p>${img}<p style="font-size:11px;color:#6b7280;margin:6px 0 0">Scannez avec votre application bancaire</p>${details}</div>`;
 }

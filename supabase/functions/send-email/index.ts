@@ -1,4 +1,4 @@
-import { qrBlockHtml } from "../_shared/qrPayment.ts";
+import { qrBlockHtml, formatEuroText } from "../_shared/qrPayment.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -44,6 +44,15 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
 
   const pricingBreakdown = booking.pricing_breakdown as Record<string, unknown> | null;
   const tenantId = pricingBreakdown?.tenant_id as string | undefined;
+
+  // Host preference: amounts without decimals
+  let hideDecimals = false;
+  if (listing?.host_user_id) {
+    const _sc = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const { data: _fmt } = await _sc.from('portal_settings').select('hide_decimals').eq('host_user_id', listing.host_user_id).maybeSingle();
+    hideDecimals = !!_fmt?.hide_decimals;
+  }
+  const fmtEur = (v: unknown) => formatEuroText(v as number, hideDecimals);
 
   let tenantFirstName = '';
   let tenantLastName = '';
@@ -108,17 +117,17 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
   const balanceItem = items.find((i: any) => i.label?.toLowerCase().includes("solde") || i.label?.toLowerCase().includes("décompte")) || items[items.length - 1];
 
   if (depositItem) {
-    depositAmount = `${Number(depositItem.amount).toFixed(2)} €`;
+    depositAmount = fmtEur(depositItem.amount);
     depositDueDate = depositItem.due_date || '';
   }
   if (balanceItem && balanceItem !== depositItem) {
-    balanceAmount = `${Number(balanceItem.amount).toFixed(2)} €`;
+    balanceAmount = fmtEur(balanceItem.amount);
     balanceDueDate = balanceItem.due_date || '';
   }
 
   const nextUnpaid = items.find((p: any) => !p.is_paid);
   if (nextUnpaid) {
-    paymentAmount = `${Number(nextUnpaid.amount).toFixed(2)} €`;
+    paymentAmount = fmtEur(nextUnpaid.amount);
     paymentLabel = nextUnpaid.label || '';
     paymentDueDate = nextUnpaid.due_date || '';
   }
@@ -150,7 +159,7 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
       }
       ref = ref.substring(0, 140);
 
-      const _bk = { name: bankSettings.bank_beneficiary_name, iban: bankSettings.bank_iban, bic: bankSettings.bank_bic, size: bankSettings.qr_size, showDetails: bankSettings.qr_show_details };
+      const _bk = { name: bankSettings.bank_beneficiary_name, iban: bankSettings.bank_iban, bic: bankSettings.bank_bic, size: bankSettings.qr_size, showDetails: bankSettings.qr_show_details, hideDecimals };
     const _items = (paymentItems || []) as any[];
     const _dep = _items.find((i: any) => i.label?.toLowerCase().includes('acompte')) || _items[0];
     const _bal = _items.find((i: any) => i.label?.toLowerCase().includes('solde') || i.label?.toLowerCase().includes('décompte')) || _items[_items.length - 1];
@@ -173,7 +182,8 @@ async function buildVariablesFromBooking(supabase: any, bookingId: string): Prom
     checkout_time: checkoutTime,
     nights: String(booking.nights),
     guests_count: String(booking.guests),
-    total_price: booking.total_price ? `${Number(booking.total_price).toFixed(2)} €` : '',
+    total_price: booking.total_price ? fmtEur(booking.total_price) : '',
+    hide_decimals: hideDecimals ? '1' : '',
     listing_title: listing?.title || '',
     listing_address: listing?.address || '',
     listing_city: listing?.city || '',
@@ -225,7 +235,7 @@ function buildReminderHtml(variables: Record<string, string>, paymentLabel: stri
         </tr>
         <tr>
           <td style="padding: 6px 0; color: #6b7280; font-size: 14px;">Montant</td>
-          <td style="padding: 6px 0; text-align: right; font-weight: 700; color: #dc2626; font-size: 18px;">${paymentAmount.toFixed(2)} €</td>
+          <td style="padding: 6px 0; text-align: right; font-weight: 700; color: #dc2626; font-size: 18px;">${formatEuroText(paymentAmount, variables.hide_decimals === '1')}</td>
         </tr>
         <tr>
           <td style="padding: 6px 0; color: #6b7280; font-size: 14px;">Date d'échéance</td>
@@ -426,7 +436,7 @@ Deno.serve(async (req) => {
       // Add payment-specific variables
       const formattedDueDate = new Date(due_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
       variables.payment_label = payment_label;
-      variables.payment_amount = `${Number(payment_amount).toFixed(2)} €`;
+      variables.payment_amount = formatEuroText(payment_amount, variables.hide_decimals === '1');
       variables.payment_due_date = formattedDueDate;
 
       // Try to find a payment_reminder automation template for this host

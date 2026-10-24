@@ -1,4 +1,4 @@
-import { qrBlockHtml } from "../_shared/qrPayment.ts";
+import { qrBlockHtml, formatEuroText } from "../_shared/qrPayment.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -386,9 +386,11 @@ async function buildVariablesForBooking(
   let qrDecompteHtml = '';
   const { data: bankSettings } = await supabase
     .from('portal_settings')
-    .select('bank_beneficiary_name, bank_iban, bank_bic, bank_transfer_reference_template, qr_size, qr_show_details')
+    .select('bank_beneficiary_name, bank_iban, bank_bic, bank_transfer_reference_template, qr_size, qr_show_details, hide_decimals')
     .eq('host_user_id', listing.host_user_id)
     .maybeSingle();
+  const hideDecimals = !!bankSettings?.hide_decimals;
+  const fmtEur = (v: unknown) => formatEuroText(v as number, hideDecimals);
 
   if (bankSettings?.bank_beneficiary_name && bankSettings?.bank_iban && bankSettings?.bank_bic) {
     const refTemplate = bankSettings.bank_transfer_reference_template || '{{guest_last_name}} - {{listing_title}} - {{checkin_date}} au {{checkout_date}}';
@@ -405,7 +407,7 @@ async function buildVariablesForBooking(
     }
     ref = ref.substring(0, 140);
 
-    const _bk = { name: bankSettings.bank_beneficiary_name, iban: bankSettings.bank_iban, bic: bankSettings.bank_bic, size: bankSettings.qr_size, showDetails: bankSettings.qr_show_details };
+    const _bk = { name: bankSettings.bank_beneficiary_name, iban: bankSettings.bank_iban, bic: bankSettings.bank_bic, size: bankSettings.qr_size, showDetails: bankSettings.qr_show_details, hideDecimals };
     const _items = (paymentItems || []) as any[];
     const _dep = _items.find((i: any) => i.label?.toLowerCase().includes('acompte')) || _items[0];
     const _bal = _items.find((i: any) => i.label?.toLowerCase().includes('solde') || i.label?.toLowerCase().includes('décompte')) || _items[_items.length - 1];
@@ -421,18 +423,18 @@ async function buildVariablesForBooking(
   const balanceItem = items.find((i: any) => i.label?.toLowerCase().includes("solde") || i.label?.toLowerCase().includes("décompte")) || items[items.length - 1];
 
   if (depositItem) {
-    depositAmount = `${Number(depositItem.amount).toFixed(2)} €`;
+    depositAmount = fmtEur(depositItem.amount);
     depositDueDate = depositItem.due_date || '';
   }
   if (balanceItem && balanceItem !== depositItem) {
-    balanceAmount = `${Number(balanceItem.amount).toFixed(2)} €`;
+    balanceAmount = fmtEur(balanceItem.amount);
     balanceDueDate = balanceItem.due_date || '';
   }
 
   // Next unpaid payment (for payment_reminder variables)
   const nextUnpaid = items.find((p: any) => !p.is_paid);
   if (nextUnpaid) {
-    paymentAmount = `${Number(nextUnpaid.amount).toFixed(2)} €`;
+    paymentAmount = fmtEur(nextUnpaid.amount);
     paymentLabel = nextUnpaid.label || '';
     paymentDueDate = nextUnpaid.due_date || '';
   }
@@ -449,7 +451,7 @@ async function buildVariablesForBooking(
     checkout_time: checkoutTime,
     nights: String(booking.nights),
     guests_count: String(booking.guests),
-    total_price: booking.total_price ? `${Number(booking.total_price).toFixed(2)} €` : '',
+    total_price: booking.total_price ? fmtEur(booking.total_price) : '',
     listing_title: listing.title || '',
     listing_address: listing.address || '',
     listing_city: listing.city || '',
