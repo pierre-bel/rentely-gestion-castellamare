@@ -158,8 +158,8 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
       href: "/host/earnings-report",
     },
     {
-      label: "Paiements en attente",
-      value: formatCurrency(Number(payoutData?.pending_payouts || 0)),
+      label: "Reste à encaisser",
+      value: formatCurrency(summaryData.remaining),
       icon: Clock,
       bgColor: "bg-accent-warm/15",
       iconColor: "text-accent-warm",
