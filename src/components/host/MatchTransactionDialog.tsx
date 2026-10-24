@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatEuro } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -99,7 +100,7 @@ export function MatchTransactionDialog({
         <DialogHeader>
           <DialogTitle>Assigner le virement</DialogTitle>
           <DialogDescription>
-            Virement de <strong>+{transactionAmount.toFixed(2)} €</strong> du{" "}
+            Virement de <strong>+{formatEuro(transactionAmount)}</strong> du{" "}
             {format(new Date(transactionDate), "dd MMMM yyyy", { locale: fr })}
           </DialogDescription>
         </DialogHeader>
@@ -145,7 +146,7 @@ export function MatchTransactionDialog({
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className={`text-sm font-medium ${amountMatch ? "text-emerald-600" : ""}`}>
-                      {Number(b.total_price).toFixed(2)} €
+                      {formatEuro(b.total_price)}
                     </span>
                     {amountMatch && (
                       <Badge className="bg-emerald-100 text-emerald-700 text-xs">

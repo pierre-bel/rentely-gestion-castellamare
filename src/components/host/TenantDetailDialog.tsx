@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatEuro } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -172,7 +173,7 @@ export function TenantDetailDialog({ open, onOpenChange, tenant }: Props) {
                           {format(new Date(booking.checkin_date), "dd MMM yyyy", { locale: fr })} → {format(new Date(booking.checkout_date), "dd MMM yyyy", { locale: fr })}
                         </TableCell>
                         <TableCell className="text-sm">{booking.nights}</TableCell>
-                        <TableCell className="text-sm tabular-nums">{Number(booking.total_price).toFixed(2)} €</TableCell>
+                        <TableCell className="text-sm tabular-nums">{formatEuro(booking.total_price)}</TableCell>
                         <TableCell>
                           <Badge className={`${st.className} hover:${st.className} text-[11px]`}>{st.label}</Badge>
                         </TableCell>

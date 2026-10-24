@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { formatEuro } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, DollarSign, ArrowUpCircle, Wallet } from "lucide-react";
 
@@ -18,10 +19,7 @@ const EarningsSummaryCards = ({
   isLoading,
 }: EarningsSummaryCardsProps) => {
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "EUR",
-    }).format(value);
+    return formatEuro(value);
   };
 
   const cards = [

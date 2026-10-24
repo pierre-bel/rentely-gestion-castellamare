@@ -29,6 +29,13 @@
       "when": 1792747114901,
       "tag": "0003_host_documents",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792851827835,
+      "tag": "0004_hide_decimals_setting",
+      "breakpoints": true
     }
   ]
 }

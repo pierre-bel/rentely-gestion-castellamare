@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Plus, Trash2, AlertTriangle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getHideDecimals } from "@/lib/utils";
 import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
@@ -506,7 +506,7 @@ export function EditManualBookingDialog({ open, onOpenChange, booking }: Props) 
 
               <div>
                 <Label>Prix total (€)</Label>
-                <Input type="number" value={totalNum.toFixed(2)} readOnly className="bg-muted" />
+                <Input type="number" value={getHideDecimals() ? String(Math.round(totalNum)) : totalNum.toFixed(2)} readOnly className="bg-muted" />
               </div>
 
               {/* Payment schedule */}

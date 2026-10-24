@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { formatEuro } from "@/lib/utils";
 import { HostPayout } from "./types/financial";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -14,7 +15,7 @@ interface PayoutDetailsDialogProps {
 }
 
 const formatPrice = (amount: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(amount);
+  formatEuro(amount);
 
 const formatDate = (date: string) => format(new Date(date), "d MMM yyyy", { locale: fr });
 const formatDateTime = (date: string) => format(new Date(date), "d MMM yyyy à HH:mm", { locale: fr });

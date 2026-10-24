@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatEuro } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -37,7 +38,7 @@ const formatBookingDates = (checkin: string, checkout: string) => {
 };
 
 const formatPrice = (price: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(price);
+  formatEuro(price);
 
 const getInitials = (name: string | null) => {
   if (!name) return "?";

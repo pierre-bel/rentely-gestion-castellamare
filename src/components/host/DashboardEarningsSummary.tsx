@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { formatEuro } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,12 +84,7 @@ const DashboardEarningsSummary = ({ userId }: DashboardEarningsSummaryProps) => 
   }, [data, year]);
 
   const formatCurrency = (value: number, showCents: boolean = false) => {
-    return new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "EUR",
-      minimumFractionDigits: showCents ? 2 : 0,
-      maximumFractionDigits: showCents ? 2 : 0,
-    }).format(value);
+    return showCents ? formatEuro(value) : formatEuro(value, { hideDecimals: true });
   };
 
   const formatPercentage = (value: number) => `${value.toFixed(1)}%`;

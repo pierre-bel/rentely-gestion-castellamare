@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatEuro } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
@@ -67,34 +68,34 @@ const PriceSummaryTable = ({ base_price, cleaning_fee }: PriceSummaryTableProps)
             <tr className="border-t border-table-stripe">
               <td className="p-2 md:p-3">Tarif de base</td>
               <td className="p-2 md:p-3">{base_price} € × {nights} nuits</td>
-              <td className="p-2 md:p-3 text-right">{subtotal.toFixed(2)} €</td>
+              <td className="p-2 md:p-3 text-right">{formatEuro(subtotal)}</td>
             </tr>
             {cleaning_fee > 0 && (
               <tr className="border-t border-table-stripe bg-table-stripe">
                 <td className="p-2 md:p-3">Frais de ménage</td>
                 <td className="p-2 md:p-3">Fixe</td>
-                <td className="p-2 md:p-3 text-right">{cleaning_fee.toFixed(2)} €</td>
+                <td className="p-2 md:p-3 text-right">{formatEuro(cleaning_fee)}</td>
               </tr>
             )}
             <tr className="border-t border-table-stripe">
               <td className="p-2 md:p-3">Taxes ({(taxRate * 100).toFixed(0)}%)</td>
               <td className="p-2 md:p-3">Appliquées automatiquement</td>
-              <td className="p-2 md:p-3 text-right">{taxes.toFixed(2)} €</td>
+              <td className="p-2 md:p-3 text-right">{formatEuro(taxes)}</td>
             </tr>
             <tr className="border-t border-table-stripe bg-table-stripe">
               <td className="p-2 md:p-3">Frais de service (côté voyageur)</td>
               <td className="p-2 md:p-3">{(guestServiceFeeRate * 100).toFixed(0)}% de commission</td>
-              <td className="p-2 md:p-3 text-right">{platformFee.toFixed(2)} €</td>
+              <td className="p-2 md:p-3 text-right">{formatEuro(platformFee)}</td>
             </tr>
             <tr className="border-t border-table-stripe">
               <td className="p-2 md:p-3 font-medium">Total (payé par le voyageur)</td>
               <td className="p-2 md:p-3"></td>
-              <td className="p-2 md:p-3 text-right font-medium">{totalGuest.toFixed(2)} €</td>
+              <td className="p-2 md:p-3 text-right font-medium">{formatEuro(totalGuest)}</td>
             </tr>
             <tr className="border-t border-table-stripe bg-table-stripe">
               <td className="p-2 md:p-3 text-xs md:text-sm font-bold">Revenu hôte (après commission {(hostCommissionRate * 100).toFixed(0)}%)</td>
-              <td className="p-2 md:p-3 text-xs md:text-sm">({subtotal.toFixed(2)} € + {cleaning_fee.toFixed(2)} €) − {(hostCommissionRate * 100).toFixed(0)}%</td>
-              <td className="p-2 md:p-3 text-right text-xs md:text-sm font-bold">{hostPayout.toFixed(2)} €</td>
+              <td className="p-2 md:p-3 text-xs md:text-sm">({formatEuro(subtotal)} + {formatEuro(cleaning_fee)}) − {(hostCommissionRate * 100).toFixed(0)}%</td>
+              <td className="p-2 md:p-3 text-right text-xs md:text-sm font-bold">{formatEuro(hostPayout)}</td>
             </tr>
           </tbody>
         </table>

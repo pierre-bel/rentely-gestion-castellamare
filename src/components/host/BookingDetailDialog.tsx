@@ -1,4 +1,5 @@
 import { useState, useRef, ReactNode } from "react";
+import { formatEuro } from "@/lib/utils";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -52,7 +53,7 @@ interface Props {
 }
 
 const formatPrice = (price: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(price);
+  formatEuro(price);
 
 const STATUS_LABELS: Record<string, string> = {
   confirmed: "Confirmée",
