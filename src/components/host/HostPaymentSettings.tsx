@@ -385,7 +385,7 @@ function AmountDisplaySettings() {
           <div className="space-y-1">
             <Label htmlFor="hide-decimals" className="text-sm font-medium">Aucun chiffre après la virgule</Label>
             <p className="text-xs text-muted-foreground">
-              Exemple : {formatEuro(165, { hideDecimals: hide })} au lieu de {formatEuro(165, { hideDecimals: false })}. Les montants avec centimes sont arrondis à l'euro le plus proche à l'affichage ; les montants enregistrés et les QR codes de paiement restent exacts.
+              Exemple : {formatEuro(165, { hideDecimals: true })} au lieu de {formatEuro(165, { hideDecimals: false })}. Les montants avec centimes sont arrondis à l'euro le plus proche à l'affichage ; les montants enregistrés et les QR codes de paiement restent exacts.
             </p>
           </div>
           <Switch id="hide-decimals" checked={hide} onCheckedChange={handleToggle} disabled={saving} />
