@@ -2098,6 +2098,7 @@ export type Database = {
           show_contact: boolean
           show_house_rules: boolean
           show_map_link: boolean
+          show_payment_qr: boolean
           show_payment_schedule: boolean
           show_price: boolean
           updated_at: string
@@ -2131,6 +2132,7 @@ export type Database = {
           show_contact?: boolean
           show_house_rules?: boolean
           show_map_link?: boolean
+          show_payment_qr?: boolean
           show_payment_schedule?: boolean
           show_price?: boolean
           updated_at?: string
@@ -2164,6 +2166,7 @@ export type Database = {
           show_contact?: boolean
           show_house_rules?: boolean
           show_map_link?: boolean
+          show_payment_qr?: boolean
           show_payment_schedule?: boolean
           show_price?: boolean
           updated_at?: string
@@ -2890,6 +2893,8 @@ export type Database = {
           contact_whatsapp: string | null
           custom_footer_text: string | null
           host_user_id: string | null
+          qr_show_details: boolean | null
+          qr_size: number | null
           require_full_payment_for_access_code: boolean | null
           section_order: Json | null
           show_access_code: boolean | null
@@ -2898,6 +2903,7 @@ export type Database = {
           show_contact: boolean | null
           show_house_rules: boolean | null
           show_map_link: boolean | null
+          show_payment_qr: boolean | null
           show_payment_schedule: boolean | null
           show_price: boolean | null
           welcome_message: string | null
@@ -2909,6 +2915,8 @@ export type Database = {
           contact_whatsapp?: string | null
           custom_footer_text?: string | null
           host_user_id?: string | null
+          qr_show_details?: boolean | null
+          qr_size?: number | null
           require_full_payment_for_access_code?: boolean | null
           section_order?: Json | null
           show_access_code?: boolean | null
@@ -2917,6 +2925,7 @@ export type Database = {
           show_contact?: boolean | null
           show_house_rules?: boolean | null
           show_map_link?: boolean | null
+          show_payment_qr?: boolean | null
           show_payment_schedule?: boolean | null
           show_price?: boolean | null
           welcome_message?: string | null
@@ -2928,6 +2937,8 @@ export type Database = {
           contact_whatsapp?: string | null
           custom_footer_text?: string | null
           host_user_id?: string | null
+          qr_show_details?: boolean | null
+          qr_size?: number | null
           require_full_payment_for_access_code?: boolean | null
           section_order?: Json | null
           show_access_code?: boolean | null
@@ -2936,6 +2947,7 @@ export type Database = {
           show_contact?: boolean | null
           show_house_rules?: boolean | null
           show_map_link?: boolean | null
+          show_payment_qr?: boolean | null
           show_payment_schedule?: boolean | null
           show_price?: boolean | null
           welcome_message?: string | null
@@ -3611,8 +3623,10 @@ export type Database = {
           guest_first_name: string
           guest_last_name: string
           guests: number
+          has_access_code: boolean
           house_rules: string
           igloohome_code: string
+          is_fully_paid: boolean
           latitude: number
           listing_images: string[]
           listing_title: string
@@ -3765,6 +3779,18 @@ export type Database = {
       get_portal_hide_decimals: {
         Args: { _access_token: string }
         Returns: boolean
+      }
+      get_portal_payment_items: {
+        Args: { _access_token: string }
+        Returns: {
+          amount: number
+          due_date: string
+          id: string
+          is_paid: boolean
+          label: string
+          paid_at: string
+          sort_order: number
+        }[]
       }
       get_public_profiles: {
         Args: never
