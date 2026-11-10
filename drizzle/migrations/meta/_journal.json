@@ -36,6 +36,13 @@
       "when": 1792851827835,
       "tag": "0004_hide_decimals_setting",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794327621037,
+      "tag": "0005_portal_review",
+      "breakpoints": true
     }
   ]
 }

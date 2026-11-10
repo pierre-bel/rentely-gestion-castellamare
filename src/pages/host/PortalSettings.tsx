@@ -47,6 +47,7 @@ interface PortalSettingsData {
   custom_footer_text: string | null;
   section_order: string[];
   require_full_payment_for_access_code: boolean;
+  show_payment_qr: boolean;
   contact_email: string | null;
   contact_phone: string | null;
   contact_whatsapp: string | null;
@@ -100,6 +101,7 @@ const DEFAULT_SETTINGS: PortalSettingsData = {
   custom_footer_text: null,
   section_order: DEFAULT_SECTION_ORDER,
   require_full_payment_for_access_code: true,
+  show_payment_qr: true,
   contact_email: null,
   contact_phone: null,
   contact_whatsapp: null,
@@ -210,6 +212,7 @@ export default function PortalSettings() {
           custom_footer_text: d.custom_footer_text,
           section_order: d.section_order || DEFAULT_SECTION_ORDER,
           require_full_payment_for_access_code: d.require_full_payment_for_access_code ?? true,
+          show_payment_qr: d.show_payment_qr ?? true,
           contact_email: d.contact_email || null,
           contact_phone: d.contact_phone || null,
           contact_whatsapp: d.contact_whatsapp || null,
@@ -265,6 +268,7 @@ export default function PortalSettings() {
           custom_footer_text: settings.custom_footer_text,
           section_order: settings.section_order as any,
           require_full_payment_for_access_code: settings.require_full_payment_for_access_code,
+          show_payment_qr: settings.show_payment_qr,
           contact_email: settings.contact_email,
           contact_phone: settings.contact_phone,
           contact_whatsapp: settings.contact_whatsapp,
@@ -527,6 +531,16 @@ export default function PortalSettings() {
               <Switch
                 checked={settings.require_full_payment_for_access_code}
                 onCheckedChange={(checked) => setSettings((s) => ({ ...s, require_full_payment_for_access_code: checked }))}
+              />
+            </div>
+            <div className="flex items-center justify-between py-2 px-3 ml-6 border-l-2 border-border">
+              <div>
+                <Label className="text-sm">Codes QR de paiement</Label>
+                <p className="text-xs text-muted-foreground">Affiche un code QR par échéance non payée sous l'échéancier (taille et détails : Paiements → Paramètres)</p>
+              </div>
+              <Switch
+                checked={settings.show_payment_qr}
+                onCheckedChange={(checked) => setSettings((s) => ({ ...s, show_payment_qr: checked }))}
               />
             </div>
           </CardContent>
