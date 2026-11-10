@@ -13,7 +13,17 @@ import { Separator } from "@/components/ui/separator";
 import { StatusBadge, type StatusValue } from "@/components/ui/status-badge";
 import { Badge } from "@/components/ui/badge";
 import PortalReviewForm from "@/components/portal/PortalReviewForm";
-import { PaymentQRCode, buildTransferReference } from "@/components/portal/PaymentQRCode";
+import { buildTransferReference, buildEpcString, type PaymentQRCodeProps } from "@/components/portal/PaymentQRCode";
+import QRCode from "qrcode";
+
+function PaymentQRImage(props: PaymentQRCodeProps & { size: number }) {
+  const [src, setSrc] = useState("");
+  useEffect(() => {
+    QRCode.toDataURL(buildEpcString(props), { margin: 1, width: props.size * 2 }).then(setSrc).catch(console.error);
+  }, [props.beneficiary, props.iban, props.bic, props.amount, props.reference, props.size]);
+  if (!src) return null;
+  return <img src={src} alt="Code QR de paiement" width={props.size} height={props.size} />;
+}
 
 // Host preference "no decimals" (loaded with the portal data)
 let portalHideDecimals = false;
@@ -64,6 +74,8 @@ interface PortalData {
   amenities: string[] | null;
   guest_first_name: string | null;
   guest_last_name: string | null;
+  is_fully_paid?: boolean;
+  has_access_code?: boolean;
 }
 
 interface PaymentItem {
@@ -93,6 +105,9 @@ interface PortalSettings {
   contact_whatsapp: string | null;
   contact_facebook_url: string | null;
   show_contact: boolean;
+  qr_size?: number;
+  qr_show_details?: boolean;
+  show_payment_qr?: boolean;
 }
 
 interface CustomSectionData {
@@ -160,7 +175,7 @@ export default function BookingPortal() {
       setHostUserId(resolvedHostUserId || null);
       const hostUserId = resolvedHostUserId;
       const [paymentsRes, settingsRes, customRes, bankRes] = await Promise.all([
-        supabase.from("booking_payment_items").select("*").eq("booking_id", bookingId).order("sort_order"),
+        supabase.rpc("get_portal_payment_items", { _access_token: token }),
         hostUserId
           ? supabase.from("public_portal_settings").select("*").eq("host_user_id", hostUserId).maybeSingle()
           : Promise.resolve({ data: null }),
@@ -283,12 +298,13 @@ export default function BookingPortal() {
     </Card>
   );
 
-  const isFullyPaid = payments.length === 0 || payments.every((p) => p.is_paid);
+  const isFullyPaid = data.is_fully_paid ?? (payments.length === 0 || payments.every((p) => p.is_paid));
 
   const renderAccessCode = () => {
     if (!settings.show_access_code) return null;
     // Always show the section, but hide code if not fully paid
-    if (!data.igloohome_code) {
+    const codeLocked = !data.igloohome_code && data.has_access_code && !isFullyPaid;
+    if (!data.igloohome_code && !codeLocked) {
       return (
         <Card key="access_code" className="border-muted">
           <CardContent className="pt-5">
@@ -304,7 +320,7 @@ export default function BookingPortal() {
       );
     }
     // If host requires full payment, hide code until fully paid
-    if (settings.require_full_payment_for_access_code && !isFullyPaid) {
+    if (codeLocked || !data.igloohome_code) {
       return (
         <Card key="access_code" className="border-warning/30 bg-warning/5">
           <CardContent className="pt-5">
@@ -509,6 +525,21 @@ export default function BookingPortal() {
     });
   };
 
+  const unpaid = payments.filter((p) => !p.is_paid);
+  const showQr = hasBankInfo && settings.show_payment_qr !== false;
+  const qrSize = Math.min(300, Math.max(80, settings.qr_size ?? 150));
+  const InlineQR = ({ title, amount, reference }: { title: string; amount: number; reference: string }) => (
+    <div className="flex flex-col items-center gap-1 text-center" style={{ width: Math.max(qrSize, 140) }}>
+      <p className="text-xs font-medium">{title} — {formatPrice(amount, data.currency || "EUR")}</p>
+      <PaymentQRImage beneficiary={bankInfo.beneficiary!} iban={bankInfo.iban!} bic={bankInfo.bic!} amount={amount} reference={reference} size={qrSize} />
+      {settings.qr_show_details !== false && (
+        <p className="text-[10px] text-muted-foreground break-all">
+          {bankInfo.beneficiary}<br />{bankInfo.iban}<br />{reference}
+        </p>
+      )}
+    </div>
+  );
+
   const renderPaymentSchedule = () => {
     if (!settings.show_payment_schedule || payments.length === 0) return null;
     return (
@@ -527,7 +558,7 @@ export default function BookingPortal() {
                   <span className={p.is_paid ? "line-through text-muted-foreground" : ""}>{p.label}</span>
                   {p.due_date && (
                     <span className="text-xs text-muted-foreground ml-1.5">
-                      — {format(parseISO(p.due_date), "d MMM yyyy", { locale: fr })}
+                      — {format(parseISO(p.due_date), "dd-MM-yyyy")}
                     </span>
                   )}
                 </div>
@@ -536,18 +567,23 @@ export default function BookingPortal() {
                 <span className={p.is_paid ? "text-muted-foreground" : "font-medium"}>
                   {formatPrice(p.amount, data.currency || "EUR")}
                 </span>
-                {!p.is_paid && hasBankInfo && (
-                  <PaymentQRCode
-                    beneficiary={bankInfo.beneficiary!}
-                    iban={bankInfo.iban!}
-                    bic={bankInfo.bic!}
-                    amount={p.amount}
-                    reference={getPaymentReference(p.label)}
-                  />
-                )}
               </div>
             </div>
           ))}
+          {showQr && unpaid.length > 0 && (
+            <div className="pt-3 border-t space-y-2">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Payer par virement (code QR)</p>
+              <p className="text-xs text-muted-foreground">Scannez le code avec votre application bancaire : le virement est pré-rempli.</p>
+              <div className="flex flex-wrap gap-4">
+                {unpaid.map((p) => (
+                  <InlineQR key={p.id} title={p.label} amount={Number(p.amount)} reference={`${getPaymentReference(p.label)} - ${p.label}`.substring(0, 140)} />
+                ))}
+                {unpaid.length > 1 && (
+                  <InlineQR title="Reste à payer" amount={unpaid.reduce((a, p) => a + Number(p.amount), 0)} reference={getPaymentReference("Solde")} />
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
