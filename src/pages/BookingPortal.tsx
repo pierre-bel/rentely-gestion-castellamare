@@ -188,8 +188,8 @@ export default function BookingPortal() {
       portalHideDecimals = hideDec === true;
 
       if (paymentsRes.data) setPayments(paymentsRes.data as PaymentItem[]);
-      if (settingsRes.data) {
-        const s = settingsRes.data as any;
+      {
+        const s = (settingsRes.data || DEFAULT_SETTINGS) as any;
         const bank = Array.isArray(bankRes?.data) ? bankRes.data[0] : null;
         setSettings({
           ...s,
